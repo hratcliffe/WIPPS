@@ -1,0 +1,57 @@
+SDF stuff exists in Fortran, C, Python, IDL
+No writing yet
+
+C or Fortran can be paralleised easily. Can also trivially parallise in space blocks
+
+Inputs:
+wave spectrum E and/ or B Lets use SDF format for the experience eh?
+In which case, might almost as well rewrite the stuff to process. 
+Fast fft in C?
+
+Frequency axis
+What do we do with wavenumber? Our spectra can just be interpolated onto a freq axis.
+
+plasma parameters, probably from file
+
+Angular range, energy range etc etc for output
+
+-------------------------------------------------------------
+
+Use Albert (2005) equations, numbers given
+
+Whatever we do, probably make/find integrator routine which takes integrand and axis/d x, possibly jacobian for angles etc?
+
+Need to calc ERF for Gaussians (is in math.h?)
+Sin and cos also in math.h
+Derivatives
+
+FFTW
+
+Array type with an indexing function
+
+Maybe data type class of 1-d array, sizes, index fns and axes?
+
+-------------------------------------------------------------
+
+
+Read E and/or B
+
+FFT on subdivisions in space, time range
+Make powers of 2, 3, 5 for speed
+
+extract spectra, and angular dependence thereof
+
+calc refractive index as fn of space, angle
+
+Calc D
+  
+
+Integrate in wave freq, and in tan of wave angle
+
+Do bounce averaging
+
+
+
+
+
+

@@ -29,6 +29,11 @@ FFTW
 
 Array type with an indexing function
 
+class array{
+
+
+}
+
 Maybe data type class of 1-d array, sizes, index fns and axes?
 
 -------------------------------------------------------------

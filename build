@@ -1,2 +1,2 @@
 
-g++ -I /usr/local/include/ main.cpp
+g++ -I /usr/local/include/ my_array.cpp main.cpp

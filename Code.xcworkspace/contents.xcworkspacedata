@@ -5,6 +5,15 @@
       location = "group:main.cpp">
    </FileRef>
    <FileRef
+      location = "group:my_array.cpp">
+   </FileRef>
+   <FileRef
+      location = "group:my_array.h">
+   </FileRef>
+   <FileRef
+      location = "group:Pseudocode.txt">
+   </FileRef>
+   <FileRef
       location = "group:build">
    </FileRef>
    <FileRef

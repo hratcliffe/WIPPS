@@ -16,7 +16,7 @@
 #define my_type float
 //Shortcut so we can change array internal type later if needed
 
-using namespace std;
+//using namespace std;
 class my_array{
 protected:
 int n_dims;
@@ -41,7 +41,14 @@ my_array(int nx, int ny){
   //Check allocation suceeded
 }
 
-bool is_good(){return defined;}
+~my_array(){
+
+  if(data) free(data);
+  data = NULL; // technically unnecessary as desctructor deletes memebers. 
+
+}
+
+bool is_good(){return !defined;}
 
 my_type get_element(int nx, int ny){
   return data[get_index(nx, ny)];
@@ -49,10 +56,26 @@ my_type get_element(int nx, int ny){
 }
 int get_index(int nx, int ny){
 
-  return nx*dims[1] + nx;
+  return ny*dims[0] + nx;
 
 }
 int get_dims(){return n_dims;}
+
+bool set_element(int nx, int ny, int val){
+  //sets elements at nx, ny, and returns 1 if out of range, wrong no args, 0 else
+  if(n_dims != 2) return 1;
+
+  if(nx < dims[0] && ny<dims[1]){
+    data[get_index(nx, ny)] = val;
+    return 0;
+  }else{
+    return 1;
+  }
+  
+
+
+
+}
 
 //we can use [] to wrap get elements and have the args pushed into vector which we then work with to be generic
 

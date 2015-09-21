@@ -51,13 +51,23 @@ my_array(int nx, int ny){
 bool is_good(){return !defined;}
 
 my_type get_element(int nx, int ny){
-  return data[get_index(nx, ny)];
+
+  int ind = get_index(nx, ny);
+  if(ind  != -1){
+    return data[get_index(nx, ny)];
+  }else{
+    return 0;
+  }
 
 }
 int get_index(int nx, int ny){
-
-  return ny*dims[0] + nx;
-
+  
+  if(n_dims != 2) return 1;
+  if(nx < dims[0] && ny<dims[1]){
+    return ny*dims[0] + nx;
+  }else{
+    return -1;
+  }
 }
 int get_dims(){return n_dims;}
 
@@ -78,6 +88,8 @@ bool set_element(int nx, int ny, int val){
 }
 
 //we can use [] to wrap get elements and have the args pushed into vector which we then work with to be generic
+
+std::string array_self_test();
 
 };
 

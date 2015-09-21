@@ -5,6 +5,9 @@
       location = "group:main.cpp">
    </FileRef>
    <FileRef
+      location = "group:SDF/C/include/sdf.h">
+   </FileRef>
+   <FileRef
       location = "group:my_array.cpp">
    </FileRef>
    <FileRef

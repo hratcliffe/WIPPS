@@ -1,2 +1,2 @@
 
-g++ -I /usr/local/include/ my_array.cpp main.cpp
+mpic++ -I /usr/local/include/ -I ./SDF/C/ ./SDF/C/lib/libsdf.a my_array.cpp main.cpp

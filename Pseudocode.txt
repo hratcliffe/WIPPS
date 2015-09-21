@@ -58,5 +58,23 @@ Do bounce averaging
 
 
 
+##############################################
+ToDo
+
+3-D arrays
+
+Proper Makefile
+
+Work out SDF read etc
+
+File output/save
+
+FFTs
+
+Integrator
+
+
+192.168.2.222
+
 
 

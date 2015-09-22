@@ -6,15 +6,15 @@
 //
 //
 
-#include "main.h"
-#include "my_array.h"
+#include "../include/main.h"
+#include "../include/my_array.h"
 //#include <math>
 #include <boost/math/special_functions.hpp>
 #include <fstream>
 #include <iostream>
-#include "./SDF/C/include/sdf.h"
-#include "./SDF/C/include/stack_allocator.h"
-#include "./SDF/C/include/sdf_helper.h"
+#include "../SDF/C/include/sdf.h"
+#include "../SDF/C/include/stack_allocator.h"
+#include "../SDF/C/include/sdf_helper.h"
 #include <mpi.h>
 
 using namespace std;

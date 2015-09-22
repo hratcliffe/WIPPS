@@ -11,7 +11,7 @@
 #include <fstream>
 #include <iostream>
 
-#include "my_array.h"
+#include "../include/my_array.h"
 
 
 

@@ -2,24 +2,21 @@
 <Workspace
    version = "1.0">
    <FileRef
-      location = "group:main.cpp">
-   </FileRef>
-   <FileRef
       location = "group:SDF/C/include/sdf.h">
-   </FileRef>
-   <FileRef
-      location = "group:my_array.cpp">
-   </FileRef>
-   <FileRef
-      location = "group:my_array.h">
    </FileRef>
    <FileRef
       location = "group:Pseudocode.txt">
    </FileRef>
    <FileRef
+      location = "group:Makefile">
+   </FileRef>
+   <FileRef
+      location = "group:src">
+   </FileRef>
+   <FileRef
       location = "group:build">
    </FileRef>
    <FileRef
-      location = "group:main.h">
+      location = "group:include">
    </FileRef>
 </Workspace>

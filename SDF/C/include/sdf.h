@@ -5,7 +5,7 @@
    @details Routines for reading and writing SDF files.
    @author Dr Keith Bennett
    @date 15/02/2014
-   @version 5.0
+   @version 14.0
 */
 
 #ifndef _SDF_COMMON_H_
@@ -14,13 +14,15 @@
 #include <stdio.h>
 #include <inttypes.h>
 
+#include "uthash.h"
+
 #ifdef PARALLEL
 #include <mpi.h>
 #endif
 
 #define SDF_VERSION  1
 #define SDF_REVISION 2
-#define SDF_LIB_VERSION  7
+#define SDF_LIB_VERSION  14
 #define SDF_LIB_REVISION 0
 
 #define SDF_MAGIC "SDF1"
@@ -274,7 +276,7 @@ struct sdf_block {
     double *extents, *dim_mults;
     double *station_x, *station_y, *station_z;
     double mult, time, time_increment;
-    int64_t dims[3], local_dims[3];
+    int64_t dims[SDF_MAXDIMS], local_dims[SDF_MAXDIMS];
     int64_t block_start, next_block_location, data_location;
     int64_t inline_block_start, inline_next_block_location;
     int64_t summary_block_start, summary_next_block_location;
@@ -287,7 +289,7 @@ struct sdf_block {
     int32_t nstations, nvariables, step, step_increment;
     int32_t *dims_in, *station_nvars, *variable_types, *station_index;
     int32_t *station_move;
-    int nm, n_ids, opt, ng, nfaces, ngrids;
+    int nm, n_ids, opt, ng, nfaces, ngrids, offset, ngb[6];
     char const_value[16];
     char *id, *units, *mesh_id, *material_id;
     char *vfm_id, *obstacle_id, *station_id;
@@ -299,7 +301,7 @@ struct sdf_block {
     void **grids, *data;
     char done_header, done_info, done_data, dont_allocate, dont_display;
     char dont_own_data, use_mult, next_block_modified, rewrite_metadata;
-    char in_file;
+    char in_file, ng_any, no_internal_ghost;
     sdf_block_t *next, *prev;
     sdf_block_t *subblock, *subblock2;
     sdf_block_t *(*populate_data)(sdf_file_t *, sdf_block_t *);
@@ -309,7 +311,12 @@ struct sdf_block {
     int nstation_ids, nvariable_ids;
     int nstation_names, nmaterial_names;
     int option;
-    char *mimetype, *checksum_type, *checksum;
+    char *mimetype, *checksum_type, *checksum, *mmap;
+    int64_t mmap_len;
+    char derived;
+
+    UT_hash_handle hh1, hh2;
+
 #ifdef PARALLEL
     MPI_Datatype mpitype, distribution, mpitype_out;
 #endif
@@ -342,13 +349,18 @@ struct sdf_file {
     sdf_block_t *blocklist, *tail, *current_block, *last_block_in_file;
     char *mmap;
     void *ext_data;
-    int array_count;
+    void *stack_handle;
+    int array_count, fd, purge_duplicated_ids;
+    /* Flag to add internal ghost cells for the VisIt reader */
+    int internal_ghost_cells;
 #ifdef PARALLEL
     MPI_File filehandle;
 #else
     FILE *filehandle;
 #endif
     comm_t comm;
+
+    sdf_block_t *hashed_blocks_by_id, *hashed_blocks_by_name;
 };
 
 struct run_info {
@@ -737,6 +749,27 @@ int sdf_modify_rewrite_metadata(sdf_file_t *h);
 int sdf_block_set_array_section(sdf_block_t *b, const int ndims,
                                 const int64_t *starts, const int64_t *ends,
                                 const int64_t *strides);
+
+
+/**
+ @brief Reads time history data from a station block.
+ */
+int sdf_read_station_timehis(sdf_file_t *h, long *stat, int nstat,
+      char **var_names, int nvars, double t0, double t1, char **timehis,
+      int *size, int *offset, int *nrows, int *row_size);
+
+
+/**
+ @brief Returns string containing the commit id for the library
+ */
+char *sdf_get_library_commit_id(void);
+
+
+/**
+ @brief Returns string containing the commit date for the library
+ */
+char *sdf_get_library_commit_date(void);
+
 
 #ifdef __cplusplus
 }

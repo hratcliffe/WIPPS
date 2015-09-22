@@ -14,7 +14,15 @@
 #include <vector>
 
 #define my_type float
-//Shortcut so we can change array internal type later if needed
+#define my_sdf_type 3
+//Shortcut so we can change array internal type later if needed. And matching SDF type
+
+template<class T> class arrayl{
+
+T* array_values;
+T getvalue(int ix,int iy);
+
+};
 
 //using namespace std;
 class my_array{
@@ -60,6 +68,18 @@ my_type get_element(int nx, int ny){
   }
 
 }
+
+my_type * get_ptr(int nx, int ny){
+
+  int ind = get_index(nx, ny);
+  if(ind  != -1){
+    return data; //+ ind*sizeof(my_type);
+  }else{
+    return 0;
+  }
+
+}
+
 int get_index(int nx, int ny){
   
   if(n_dims != 2) return 1;
@@ -70,6 +90,12 @@ int get_index(int nx, int ny){
   }
 }
 int get_dims(){return n_dims;}
+int get_dims(int dim){
+  if(dim < n_dims){
+    return dims[dim];
+  
+  }else{return 0;}
+}
 
 bool set_element(int nx, int ny, int val){
   //sets elements at nx, ny, and returns 1 if out of range, wrong no args, 0 else
@@ -87,6 +113,10 @@ bool set_element(int nx, int ny, int val){
 
 }
 
+bool populate_data(my_type * dat_in, int nx, int ny);
+bool populate_row(void * dat_in, int nx, int y_row);
+
+
 //we can use [] to wrap get elements and have the args pushed into vector which we then work with to be generic
 
 std::string array_self_test();
@@ -95,7 +125,7 @@ std::string array_self_test();
 
 
 
-class data_array : protected my_array{
+class data_array : public my_array{
 //Adds axes for data
 
 bool ax_defined;

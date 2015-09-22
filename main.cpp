@@ -13,6 +13,8 @@
 #include <fstream>
 #include <iostream>
 #include "./SDF/C/include/sdf.h"
+#include "./SDF/C/include/stack_allocator.h"
+#include "./SDF/C/include/sdf_helper.h"
 #include <mpi.h>
 
 using namespace std;
@@ -26,10 +28,11 @@ int main(int argc, char *argv[]){
 
 //Test use and syntax of FFTW
 
+
+//data_array dat = data_array(5, 5);
+//cout<<"Good data array: "<<dat.is_good()<<endl;
+
 /*
-my_array dat = my_array(5, 5);
-bool err;
-std::string ans;
 ans = dat.array_self_test();
 cout<<ans<<endl;
 cout<<dat.get_element(3,6)<<endl;
@@ -44,11 +47,13 @@ ierr = MPI_Init(&argc, &argv);
 ierr = MPI_Comm_rank(MPI_COMM_WORLD, &my_id);
 ierr = MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
 
-sdf_file_t *handle = sdf_open("0000.sdf", MPI_COMM_WORLD, SDF_READ, 0);
+sdf_file_t *handle = sdf_open("0001.sdf", MPI_COMM_WORLD, SDF_READ, 0);
 //single threaded test!
 
 if(handle){cout<<"Success!"<<endl;}
 else{cout<<"Bleh"<<endl;}
+
+handle->stack_handle=stack_init();
 
 err=sdf_read_blocklist(handle);
 if(!err){cout<<"Yay!"<<endl;}
@@ -57,6 +62,7 @@ else{cout<<"Bum"<<endl;}
 sdf_block_t * block, * next;
 
 block = sdf_find_block_by_name(handle, "Electric Field/Ex");
+block = sdf_find_block_by_id(handle, "ex");
 
 if(block){cout<<"Success!!!"<<endl;}
 else{cout<<"Bleh"<<endl;}
@@ -82,8 +88,59 @@ for(int i =0; i< handle->nblocks; i++){
   next = next->next;
 }
 
-cout<<endl;
+//now we find the data for ex and make a data array with it, and axes
+//for now, we assume we know it's 1-d so we make a 2-d array with 2 rows
+
+data_array dat = data_array(block->dims[0], 2);
+
+cout<<dat.get_dims(0)<<" "<<dat.get_dims(1)<<endl;
+
+cout<<block->datatype_out<<" "<<SDF_DATATYPE_REAL4<<" "<<SDF_DATATYPE_REAL8<<endl;
+
+cout<<block->dims[0];
+
+if(block->data){cout<<"got data"<<endl;}
+else{cout<<"uh OH!!!"<<endl;}
+//now we memcpy from ex to our row
+//but we need to match data type...
+
+handle->current_block=block;
+cout<<handle->current_block->name<<endl;
+
+if(handle && block) cout<<"OK"<<endl;
+
+handle->current_block = block;
+//stack_alloc(handle->current_block);
+sdf_read_data(handle);
+//sdf_helper_read_data(handle, block);
+
+cout<<"read"<<endl;
+if(block->data){cout<<"got data"<<endl;}
+else{cout<<"uh OH!!!"<<endl;}
+
+
+if(block->datatype_out != my_sdf_type){
+  cout<< "Bugger wrong data type, recompile...";
+  sdf_close(handle);
+
+  return 0;
+
+}
+
+float * my_ptr = (float *)block->data;
+
+cout<< * my_ptr<<" "<<my_ptr[100]<<" "<<my_ptr[1023]<<" "<<my_ptr[4095] <<endl;
+//cout<<block->data[0]<<" "<<block->data[100]<<" "<<block->data[1023]<<" "<<block->data[4095]<<" "<<endl;
+
+dat.populate_row(block->data, block->dims[0], 0);
+
+cout<<dat.data[0]<<" "<<dat.data[100]<<" "<<dat.data[1023]<<" "<<dat.data[4095]<<" "<<endl;
+
+//sdf_stack_free(handle);
+//stack_free((stack_handle_t * )handle->stack_handle);
+
 sdf_close(handle);
+
 
 
 }

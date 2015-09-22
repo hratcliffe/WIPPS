@@ -1,7 +1,7 @@
 
 
 CC = mpic++
-INCLUDE = -I /usr/local/include/  -I ./SDF/C/include/
+INCLUDE = -I /usr/local/include/ -I ./SDF/C/include/
 SRCDIR = src
 OBJDIR = obj
 CFLAGS = -g -c $(INCLUDE)
@@ -9,7 +9,7 @@ DEBUG = -W -Wall -pedantic -D_GLIBCXX_DEBUG
 #DEBUG+= -Wno-sign-compare
 DEBUG+= -Wno-unused-parameter
 #Comment/uncomment these to hide specific errors...
-LIB = ./SDF/C/lib/libsdfc.a
+LIB = -L /usr/local/lib/ ./SDF/C/lib/libsdfc.a -lfftw3 -lm
 
 ifeq ($(strip $(MODE)),debug)
   CFLAGS += $(DEBUG)
@@ -62,7 +62,6 @@ obj/%.o:./src/%.cpp
 
 tar:
 	tar -cvzf Source.tgz $(SOURCE) $(INCLS) ./files/* Makefile input.deck
-
 
 clean:
 	@rm main $(OBJS)

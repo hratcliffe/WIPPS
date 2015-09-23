@@ -43,6 +43,8 @@ Tests my_array is working etc.
 */
 
 
+//TODO maybe we write a verify sdf which checks our files have the correct dimensionalities etc etc and contain needed blocks...
+
 int ierr, my_id, num_procs;
 int err;
 ierr = MPI_Init(&argc, &argv);
@@ -160,9 +162,11 @@ cout<<"x resolution is "<<x_res<<endl;
 sdf_close(handle);
 
 //temproary hard definitions
+//TODO this should all be wrapped away into a function which takes an input and output data_array and performs all this...
+
 int N = 4096;
 fftw_complex  *out;
-double * in, *result;
+double * in, *result, *result2;
 fftw_plan p;
 
 in = (double*) fftw_malloc(sizeof(double) * N);
@@ -185,23 +189,46 @@ fftw_destroy_plan(p);
 fftw_free(in);
 fftw_free(out);
 
+in = (double*) fftw_malloc(sizeof(double) * N*2);
+out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * N*2);
+
+std::copy(dat.data, dat.data+4096*2, in);
+
+p = fftw_plan_dft_r2c_2d(N, 2, in, out, FFTW_ESTIMATE);
+
+fftw_execute(p);
+
+result = (double*) fftw_malloc(sizeof(double) * N*2);
+abs_square(out, result, N*2);
+
+
+fftw_destroy_plan(p);
+fftw_free(in);
+fftw_free(out);
 
 //result is now an FFT'd Ex array
 //construct our axes
+//Hmm, lets put the original axis into our data array and the new data and axis into our result data array.
 my_type * x_axis;
 
 x_axis = (my_type*)malloc(N*sizeof(my_type));
 
+my_type * t_axis;
+
+t_axis = (my_type*)malloc(2*sizeof(my_type));
+
 //got x grid res from sdf block above
 
 make_axis(x_axis, N, x_res);
+make_axis(t_axis, 2, 1.0);
 
 
 
 //cyl_bessel_j(v, x) = Jv(x)
 //cyl_neumann(v, x) = Yv(x) = Nv(x)
 
-
+{
+//test code using bessel funtion. Values should be zeros.
 double bess, arg;
 int index;
 
@@ -211,7 +238,19 @@ bess = boost::math::cyl_bessel_j(index, arg);
 
 cout<<bess<<endl;
 
+index = 1;
+arg=7.01558666981561;
+bess = boost::math::cyl_bessel_j(index, arg);
 
+cout<<bess<<endl;
+
+index=5;
+arg=12.3386041974669;
+bess = boost::math::cyl_bessel_j(index, arg);
+
+cout<<bess<<endl;
+
+}
 
 free(x_axis);
 fftw_free(result);

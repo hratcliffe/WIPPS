@@ -23,7 +23,10 @@ using namespace std;
 
 #define cplx_type fftw_complex
 
+const float pi = 3.14159;
+
 void abs_square( cplx_type * array, double * out, int nx);
+void make_axis(my_type * ax, int N, float res, int offset =0);
 
 int main(int argc, char *argv[]){
 
@@ -59,7 +62,7 @@ else{
   return 0;
 }
 
-handle->stack_handle=stack_init();
+//handle->stack_handle=stack_init();
 
 err=sdf_read_blocklist(handle);
 if(!err){cout<<"Yay! Blocks read"<<endl;}
@@ -141,11 +144,26 @@ cout<<dat.data[4096+0]<<" "<<dat.data[4096+1]<<" "<<dat.data[4096+2]<<" "<<dat.d
 
 cout<<dat.get_element(0, 0)<<" "<<dat.get_element(0,1)<<endl;
 
+//now get the grids res.
+//and also grab two consecutive times to check t res?
+float x_res=0;
+
+block = sdf_find_block_by_id(handle, "grid");
+
+//checks type is plain i/e/ even gridded mesh
+if(block->blocktype != SDF_BLOCKTYPE_PLAIN_MESH){cout<< "Uh oh, grids look wrong"<<endl;}
+
+handle->current_block = block;
+sdf_read_data(handle);
+my_ptr = (float *)block->grids[0];
+if(my_ptr){x_res = my_ptr[1] - my_ptr[0];}
+cout<<"x resolution is "<<x_res<<endl;
+//gets x-axis resolution
+
 
 sdf_close(handle);
 
-
-//Now try using FFTW
+//temproary hard definitions
 int N = 4096;
 fftw_complex  *out;
 double * in, *result;
@@ -173,7 +191,17 @@ fftw_free(out);
 
 
 //result is now an FFT'd Ex array
+//construct our axes
+my_type * x_axis;
 
+x_axis = (my_type*)malloc(N*sizeof(my_type));
+
+//got x grid res from sdf block above
+
+make_axis(x_axis, N, x_res);
+
+
+free(x_axis);
 fftw_free(result);
 
 }
@@ -190,3 +218,19 @@ for(int i=0; i< nx; i++){
 }
 
 }
+
+void make_axis(my_type * ax, int N, float res, int offset){
+//construct an fft'd axis of length N, from the original resolution. Units normed as input res.
+//offset bevcause our axis array is one long consecutive 1-d one. Default is 0
+//n_x2=float(n_pts)/2.
+//ax=!pi*(findgen(n_pts)-n_x2)/n_x2/res
+
+float N2;
+N2 = ((float) N)/2.0;
+
+//for(float i= -1* N2; i< N2; i++) *(ax + (int)i) = pi * i/N2/res;
+for(int i= 0; i< N; i++) *(ax + i + offset) = pi * ((float)i - N2)/N2/res;
+
+
+}
+

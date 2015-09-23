@@ -17,7 +17,7 @@ endif
 #links against ncurses libraries
 
 #list of all header and cpp pairs. Add new files here.....
-INCLS = my_array.h
+INCLS = my_array.h d_coeff.h
 
 #make lists of source and object files, all headers plus main
 SOURCE := $(INCLS:.h=.cpp)

@@ -8,13 +8,13 @@
 
 #include "../include/main.h"
 #include "../include/my_array.h"
+#include "../include/d_coeff.h"
+
 //#include <math>
 #include <boost/math/special_functions.hpp>
 #include <fstream>
 #include <iostream>
 #include "../SDF/C/include/sdf.h"
-#include "../SDF/C/include/stack_allocator.h"
-#include "../SDF/C/include/sdf_helper.h"
 #include <mpi.h>
 #include <complex.h>
 #include <fftw3.h>
@@ -29,10 +29,6 @@ void abs_square( cplx_type * array, double * out, int nx);
 void make_axis(my_type * ax, int N, float res, int offset =0);
 
 int main(int argc, char *argv[]){
-
-//Array class from std C++11 or boost
-//own multi dim version
-//version with axes
 
 
 //data_array dat = data_array(5, 5);
@@ -199,6 +195,22 @@ x_axis = (my_type*)malloc(N*sizeof(my_type));
 //got x grid res from sdf block above
 
 make_axis(x_axis, N, x_res);
+
+
+
+//cyl_bessel_j(v, x) = Jv(x)
+//cyl_neumann(v, x) = Yv(x) = Nv(x)
+
+
+double bess, arg;
+int index;
+
+index = 0;
+arg = 2.40482555769577;
+bess = boost::math::cyl_bessel_j(index, arg);
+
+cout<<bess<<endl;
+
 
 
 free(x_axis);

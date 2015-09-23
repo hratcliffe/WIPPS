@@ -10,13 +10,33 @@
    <FileRef
       location = "group:Makefile">
    </FileRef>
-   <FileRef
-      location = "group:src">
-   </FileRef>
+   <Group
+      location = "container:include"
+      name = "include">
+      <FileRef
+         location = "group:my_array.h">
+      </FileRef>
+      <FileRef
+         location = "group:main.h">
+      </FileRef>
+      <FileRef
+         location = "group:d_coeff.h">
+      </FileRef>
+   </Group>
+   <Group
+      location = "container:src"
+      name = "src">
+      <FileRef
+         location = "group:my_array.cpp">
+      </FileRef>
+      <FileRef
+         location = "group:main.cpp">
+      </FileRef>
+      <FileRef
+         location = "group:d_coeff.cpp">
+      </FileRef>
+   </Group>
    <FileRef
       location = "group:build">
-   </FileRef>
-   <FileRef
-      location = "group:include">
    </FileRef>
 </Workspace>

@@ -21,6 +21,10 @@
 
 using namespace std;
 
+#define cplx_type fftw_complex
+
+void abs_square( cplx_type * array, double * out, int nx);
+
 int main(int argc, char *argv[]){
 
 //Array class from std C++11 or boost
@@ -144,7 +148,7 @@ sdf_close(handle);
 //Now try using FFTW
 int N = 4096;
 fftw_complex  *out;
-double * in;
+double * in, *result;
 fftw_plan p;
 
 in = (double*) fftw_malloc(sizeof(double) * N);
@@ -154,16 +158,35 @@ std::copy(dat.data, dat.data+4096, in);
 out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * N);
 
 p = fftw_plan_dft_r2c_1d(N, in, out,FFTW_ESTIMATE);
-  
+//FFTW plans find best way to perform the FFT before doing it. Ideal for when have multiple ones to do. Estimate is less optimised, but quicker to find. If have many to do, can use FFTW_CALCULATE
 //fftw_plan_dft_1d(N, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
 
-fftw_execute(p); /* repeat as needed */
+fftw_execute(p);
 
-
+result = (double*) fftw_malloc(sizeof(double) * N);
+abs_square(out, result, N);
+//copies out to result also
 
 fftw_destroy_plan(p);
 fftw_free(in);
 fftw_free(out);
 
+
+//result is now an FFT'd Ex array
+
+fftw_free(result);
+
+}
+
+//elements wise ops so treat as long 1-d arrray. nx should be total length product(dims). Input is pointer, needs to be to pre-defined memory of apporpireate size. We'll move all this inside our arrays later
+void abs_square( cplx_type * array, double * out, int nx){
+
+cplx_type * addr;
+//because double indirection is messy and cplx type is currently a 2-element array of doubles
+
+for(int i=0; i< nx; i++){
+  addr = (array + i);
+  *(out+i) = (*addr[0])*(*addr[0]) + (*addr[1])*(*addr[1]) ;
+}
 
 }

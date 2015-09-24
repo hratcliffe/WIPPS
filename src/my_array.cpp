@@ -11,6 +11,7 @@
 #include <fstream>
 #include <iostream>
 
+#include "../include/support.h"
 #include "../include/my_array.h"
 
 
@@ -74,3 +75,34 @@ return 0;
 
 
 }
+
+
+bool my_array::write_to_file(std::fstream &file){
+//TODO fill in in logical fashion....
+
+file<<"Produced by "<<VERSION<<std::endl;
+//dimension info
+file<<n_dims<<" ";
+for(int i=0;i<n_dims;i++) file<< dims[i]<<" ";
+file<<std::endl;
+
+
+
+return 0;
+
+
+}
+
+void data_array::make_linear_axis(int dim, float res, int offset){
+
+int len;
+my_type * ax_ptr = get_axis(dim, len);
+
+for(int i=0; i<len; i++){
+  *(ax_ptr +i) = ((float) (i-offset)) * res;
+
+}
+
+
+}
+

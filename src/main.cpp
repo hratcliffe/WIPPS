@@ -7,6 +7,7 @@
 //
 
 #include "../include/main.h"
+#include "../include/support.h"
 #include "../include/my_array.h"
 #include "../include/d_coeff.h"
 
@@ -14,6 +15,7 @@
 #include <boost/math/special_functions.hpp>
 #include <fstream>
 #include <iostream>
+#include <stdio.h>
 #include "../SDF/C/include/sdf.h"
 #include <mpi.h>
 #include <complex.h>
@@ -21,26 +23,11 @@
 
 using namespace std;
 
-#define cplx_type fftw_complex
-
-const float pi = 3.14159;
-
 void abs_square( cplx_type * array, double * out, int nx);
-void make_axis(my_type * ax, int N, float res, int offset =0);
+void make_fft_axis(my_type * ax, int N, float res, int offset =0);
+void test_bes();
 
 int main(int argc, char *argv[]){
-
-
-//data_array dat = data_array(5, 5);
-//cout<<"Good data array: "<<dat.is_good()<<endl;
-
-/*
-ans = dat.array_self_test();
-cout<<ans<<endl;
-cout<<dat.get_element(3,6)<<endl;
-cout<<dat.get_index(3,6)<<endl;
-Tests my_array is working etc.
-*/
 
 
 //TODO maybe we write a verify sdf which checks our files have the correct dimensionalities etc etc and contain needed blocks...
@@ -59,6 +46,8 @@ else{
   cout<<"Bleh. File open error. Aborting"<<endl;
   return 0;
 }
+//TODO do something sensible like stop when the file doesn't exist and probably prompt to continue using data obtained...
+
 
 //handle->stack_handle=stack_init();
 
@@ -82,29 +71,15 @@ cout<<block->name<<" "<<block->id<<" "<<block->ndims<<" "<<block->dims[0]<<" "<<
 cout<<"File time "<<handle->time<<endl;
 //cout<<handle->nblocks<<endl;
 
-/*
-//Cycles though blocks and prints their names, and extra info for the ex one
-next = handle->current_block;
-for(int i =0; i< handle->nblocks; i++){
-  cout<<next->name<<" "<<next->id<<endl;
-  if(strcmp(next->name, "Electric Field/Ex")==0){
-    cout<<"This one!"<<endl;
-    cout<<"ndims "<<next->ndims<<endl;
-    cout<<"dims are :"<<next->dims[0]<<" "<<next->dims[1]<<" "<<next->dims[2]<<endl;
-
-  }
-
-  //handle->current_block = next;
-  next = next->next;
-}
-*/
-
 //now we find the data for ex and make a data array with it, and axes
 //for now, we assume we know it's 1-d so we make a 2-d array with 2 rows
 
-data_array dat = data_array(block->dims[0], 2);
+int n_tims = 10;
 
-if(!dat.data){
+data_array dat = data_array(block->dims[0], n_tims);
+data_array dat_fft = data_array(block->dims[0], n_tims);
+
+if(!dat.data or !dat_fft.data){
   cout<< "Bugger, data array allocation failed. Aborting."<<endl;
   return 0;
 }
@@ -130,17 +105,9 @@ else{
 
 float * my_ptr = (float *)block->data;
 
-dat.populate_row(block->data, block->dims[0], 0);
-dat.populate_row(block->data, block->dims[0], 1);
+int N = block->dims[0];
 
-//These bits print some stuff so we check the copying worked...
-cout<<my_ptr[0]<<" "<<my_ptr[1]<<" "<<my_ptr[2]<<" "<<my_ptr[4095] <<endl;
-
-cout<<dat.data[0]<<" "<<dat.data[1]<<" "<<dat.data[2]<<" "<<dat.data[4095]<<" "<<endl;
-
-cout<<dat.data[4096+0]<<" "<<dat.data[4096+1]<<" "<<dat.data[4096+2]<<" "<<dat.data[4096+4095]<<" "<<endl;
-
-cout<<dat.get_element(0, 0)<<" "<<dat.get_element(0,1)<<endl;
+for(int i=0; i< n_tims; i++) dat.populate_row(block->data, block->dims[0], i);
 
 //now get the grids res.
 //and also grab two consecutive times to check t res?
@@ -159,76 +126,130 @@ cout<<"x resolution is "<<x_res<<endl;
 //gets x-axis resolution
 
 
-sdf_close(handle);
-
-//temproary hard definitions
-//TODO this should all be wrapped away into a function which takes an input and output data_array and performs all this...
-
-int N = 4096;
-fftw_complex  *out;
-double * in, *result, *result2;
-fftw_plan p;
-
-in = (double*) fftw_malloc(sizeof(double) * N);
-
-std::copy(dat.data, dat.data+4096, in);
-
-out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * N);
-
-p = fftw_plan_dft_r2c_1d(N, in, out,FFTW_ESTIMATE);
-//FFTW plans find best way to perform the FFT before doing it. Ideal for when have multiple ones to do. Estimate is less optimised, but quicker to find. If have many to do, can use FFTW_CALCULATE
-//fftw_plan_dft_1d(N, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
-
-fftw_execute(p);
-
-result = (double*) fftw_malloc(sizeof(double) * N);
-abs_square(out, result, N);
-//copies out to result also
-
-fftw_destroy_plan(p);
-fftw_free(in);
-fftw_free(out);
-
-in = (double*) fftw_malloc(sizeof(double) * N*2);
-out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * N*2);
-
-std::copy(dat.data, dat.data+4096*2, in);
-
-p = fftw_plan_dft_r2c_2d(N, 2, in, out, FFTW_ESTIMATE);
-
-fftw_execute(p);
-
-result = (double*) fftw_malloc(sizeof(double) * N*2);
-abs_square(out, result, N*2);
-
-
-fftw_destroy_plan(p);
-fftw_free(in);
-fftw_free(out);
-
-//result is now an FFT'd Ex array
-//construct our axes
+//construct our FFT axes
 //Hmm, lets put the original axis into our data array and the new data and axis into our result data array.
+
+//Original axes are then copied from block->grids and constructed from the times. New are made by make_axis....
+
+{
+my_type * ax_ptr;
+int len;
+
+ax_ptr = dat.get_axis(0, len);
+memcpy ((void *)ax_ptr, block->grids[0], len*sizeof(my_type));
+
+dat.make_linear_axis(1, 1.0);
+//generate uniform t axis of res 1
+}
+
 my_type * x_axis;
-
-x_axis = (my_type*)malloc(N*sizeof(my_type));
-
 my_type * t_axis;
 
-t_axis = (my_type*)malloc(2*sizeof(my_type));
+x_axis = (my_type*)malloc(N*sizeof(my_type));
+t_axis = (my_type*)malloc(n_tims*sizeof(my_type));
 
-//got x grid res from sdf block above
+make_fft_axis(x_axis, N, x_res);
+make_fft_axis(t_axis, n_tims, 1.0);
 
-make_axis(x_axis, N, x_res);
-make_axis(t_axis, 2, 1.0);
 
+sdf_close(handle);
+
+//TODO this should all be wrapped away into a function which takes an input and output data_array and performs all this...
+
+fftw_complex  *out;
+double * in, *result;
+float *result2;
+fftw_plan p;
+
+
+in = (double*) fftw_malloc(sizeof(double) * N*n_tims);
+out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * N*n_tims);
+
+std::copy(dat.data, dat.data+N*n_tims, in);
+//copy because at the moment not a double... At some point we have to cast from the input type to double. May as well here.
+
+p = fftw_plan_dft_r2c_2d(N, n_tims, in, out, FFTW_ESTIMATE);
+
+fftw_execute(p);
+
+result = (double*) fftw_malloc(sizeof(double) * N*n_tims);
+result2 = (float*) fftw_malloc(sizeof(float) * N*n_tims);
+
+abs_square(out, result, N*n_tims);
+
+
+fftw_destroy_plan(p);
+fftw_free(in);
+fftw_free(out);
+
+//test_bes();
+
+std::copy(result, result + N*n_tims, result2);
+//copy back to float. TODO fix this...
+
+//copy into our data array, and add axes also
+for(int i=0; i< n_tims; i++) dat_fft.populate_row(result2 + N*i, N, i);
+
+{
+my_type * ax_ptr;
+int len;
+
+ax_ptr = dat_fft.get_axis(0, len);
+memcpy ((void *)ax_ptr, x_axis, len*sizeof(my_type));
+
+ax_ptr = dat_fft.get_axis(1, len);
+memcpy ((void *)ax_ptr, t_axis, len*sizeof(my_type));
+
+}
+
+free(x_axis);
+free(t_axis);
+fftw_free(result);
+fftw_free(result2);
+
+//Right now we have our FFT'd data with its bounds and axes in a decent structure.
+
+
+
+
+}
+
+//elements wise ops so treat as long 1-d arrray. nx should be total length product(dims). Input is pointer, needs to be to pre-defined memory of apporpireate size. We'll move all this inside our arrays later
+void abs_square( cplx_type * array, double * out, int nx){
+
+cplx_type * addr;
+//because double indirection is messy and cplx type is currently a 2-element array of doubles
+
+for(int i=0; i< nx; i++){
+  addr = (array + i);
+  *(out+i) = (*addr[0])*(*addr[0]) + (*addr[1])*(*addr[1]) ;
+}
+
+}
+
+void make_fft_axis(my_type * ax, int N, float res, int offset){
+//construct an fft'd axis of length N, from the original resolution. Units normed as input res.
+//offset bevcause our axis array is one long consecutive 1-d one. Default is 0
+//n_x2=float(n_pts)/2.
+//ax=!pi*(findgen(n_pts)-n_x2)/n_x2/res
+
+float N2;
+N2 = ((float) N)/2.0;
+
+//for(float i= -1* N2; i< N2; i++) *(ax + (int)i) = pi * i/N2/res;
+for(int i= 0; i< N; i++) *(ax + i + offset) = pi * ((float)i - N2)/N2/res;
+
+
+}
+
+void test_bes(){
+//test code using bessel funtion. Output values should be zeros.
+//TODO expnd these things so we can test what we use before trying to proceed....
 
 
 //cyl_bessel_j(v, x) = Jv(x)
 //cyl_neumann(v, x) = Yv(x) = Nv(x)
-
-{
-//test code using bessel funtion. Values should be zeros.
+cout<<"Bessel test: "<<endl;
 double bess, arg;
 int index;
 
@@ -250,38 +271,12 @@ bess = boost::math::cyl_bessel_j(index, arg);
 
 cout<<bess<<endl;
 
-}
+index =0;
+arg =1.0;
+bess = boost::math::cyl_bessel_j(index, arg);
 
-free(x_axis);
-fftw_free(result);
-
-}
-
-//elements wise ops so treat as long 1-d arrray. nx should be total length product(dims). Input is pointer, needs to be to pre-defined memory of apporpireate size. We'll move all this inside our arrays later
-void abs_square( cplx_type * array, double * out, int nx){
-
-cplx_type * addr;
-//because double indirection is messy and cplx type is currently a 2-element array of doubles
-
-for(int i=0; i< nx; i++){
-  addr = (array + i);
-  *(out+i) = (*addr[0])*(*addr[0]) + (*addr[1])*(*addr[1]) ;
-}
+cout<<bess-0.7651976865579665514497<<endl;
 
 }
 
-void make_axis(my_type * ax, int N, float res, int offset){
-//construct an fft'd axis of length N, from the original resolution. Units normed as input res.
-//offset bevcause our axis array is one long consecutive 1-d one. Default is 0
-//n_x2=float(n_pts)/2.
-//ax=!pi*(findgen(n_pts)-n_x2)/n_x2/res
-
-float N2;
-N2 = ((float) N)/2.0;
-
-//for(float i= -1* N2; i< N2; i++) *(ax + (int)i) = pi * i/N2/res;
-for(int i= 0; i< N; i++) *(ax + i + offset) = pi * ((float)i - N2)/N2/res;
-
-
-}
 

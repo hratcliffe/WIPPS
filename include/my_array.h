@@ -13,8 +13,6 @@
 #include <stdlib.h> //for malloc eeejit
 #include <vector>
 
-#define my_type float
-#define my_sdf_type 3
 //Shortcut so we can change array internal type later if needed. And matching SDF type
 
 template<class T> class arrayl{
@@ -116,7 +114,7 @@ bool set_element(int nx, int ny, int val){
 bool populate_data(my_type * dat_in, int nx, int ny);
 bool populate_row(void * dat_in, int nx, int y_row);
 
-
+bool write_to_file(std::fstream &file);
 //we can use [] to wrap get elements and have the args pushed into vector which we then work with to be generic
 
 std::string array_self_test();
@@ -161,6 +159,10 @@ my_type * get_axis(int dim, int & length){
   }
 
 }
+
+void make_linear_axis(int dim, float res, int offset=0);
+//Generates a linear axis for dimension dim, with resolution res, starting at value of offset*res
+
 
 };
 

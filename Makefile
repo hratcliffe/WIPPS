@@ -25,7 +25,7 @@ SOURCE += main.cpp
 OBJS := $(SOURCE:.cpp=.o)
 
 #header files only (no .cpp)
-#INCLS += cmd_aliases.h
+#INCLS += support.h
 
 #add directory prefixes
 SOURCE := $(addprefix $(SRCDIR)/, $(SOURCE))

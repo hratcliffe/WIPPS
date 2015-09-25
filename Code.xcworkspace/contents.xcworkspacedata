@@ -23,6 +23,9 @@
          location = "group:main.h">
       </FileRef>
       <FileRef
+         location = "group:spectrum.h">
+      </FileRef>
+      <FileRef
          location = "group:support.h">
       </FileRef>
       <FileRef
@@ -37,6 +40,9 @@
       </FileRef>
       <FileRef
          location = "group:main.cpp">
+      </FileRef>
+      <FileRef
+         location = "group:spectrum.cpp">
       </FileRef>
       <FileRef
          location = "group:d_coeff.cpp">

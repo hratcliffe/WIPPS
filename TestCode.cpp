@@ -62,3 +62,15 @@ fftw_destroy_plan(p);
 fftw_free(in);
 fftw_free(out);
 */
+
+/*
+#include <stdint.h>
+#if UINTPTR_MAX == 0xffffffff
+/ 32-bit /
+#elif UINTPTR_MAX == 0xffffffffffffffff
+/ 64-bit /
+#else
+/ wtf /
+#endif
+
+*/

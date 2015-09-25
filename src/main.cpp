@@ -89,6 +89,10 @@ if(block->datatype_out != my_sdf_type){
   return 0;
 }
 
+dat.block_id = block->id;
+dat_fft.block_id = block->id;
+//set them to know what field they contain
+
 //cout<<block->datatype_out<<" "<<SDF_DATATYPE_REAL4<<" "<<SDF_DATATYPE_REAL8<<endl;
 
 handle->current_block = block;
@@ -208,6 +212,15 @@ fftw_free(result);
 fftw_free(result2);
 
 //Right now we have our FFT'd data with its bounds and axes in a decent structure.
+
+//Next we write it to file to keep/visualise it
+
+//Then we lineout and extract a wave spectrum
+//Lets have a spectrum class then
+//Contains data, axis, sizes, ids (field, time range, space range)
+
+
+//Then we use that and try and calculate the Diffusion coeff.
 
 
 

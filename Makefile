@@ -17,7 +17,7 @@ endif
 #links against ncurses libraries
 
 #list of all header and cpp pairs. Add new files here.....
-INCLS = my_array.h d_coeff.h
+INCLS = my_array.h d_coeff.h spectrum.h
 
 #make lists of source and object files, all headers plus main
 SOURCE := $(INCLS:.h=.cpp)
@@ -53,9 +53,11 @@ $(OBJDIR):
 
 obj/main.o : ./src/main.cpp $(INCLS)
 obj/my_array.o : ./src/my_array.cpp $(INCLS)
+obj/spectrum.o : ./src/spectrum.cpp $(INCLS)
+obj/d_coeff.o : ./src/d_coeff.cpp $(INCLS)
 
 
-obj/%.o:./src/%.cpp
+obj/%.o:./src/%.cpp $(INCLS)
 	$(CC) $(CFLAGS)  $< -o $@
 
 .PHONY : tar tartest clean veryclean

@@ -23,6 +23,8 @@
 
 using namespace std;
 
+deck_constants my_const;
+
 void abs_square( cplx_type * array, double * out, int nx);
 void make_fft_axis(my_type * ax, int N, float res, int offset =0);
 void test_bes();
@@ -89,8 +91,11 @@ if(block->datatype_out != my_sdf_type){
   return 0;
 }
 
-dat.block_id = block->id;
-dat_fft.block_id = block->id;
+//dat.block_id = block->id;
+//dat_fft.block_id = block->id;
+
+strcpy(dat.block_id, block->id);
+strcpy(dat_fft.block_id, block->id);
 //set them to know what field they contain
 
 //cout<<block->datatype_out<<" "<<SDF_DATATYPE_REAL4<<" "<<SDF_DATATYPE_REAL8<<endl;
@@ -292,4 +297,14 @@ cout<<bess-0.7651976865579665514497<<endl;
 
 }
 
+void get_deck_constants(){
+//read deck.status and extract values for omega_ce, pe, vtherm etc
+//TODO write this....
+
+//NOTE any changes to the deck will need this modifying here....
+
+my_const.omega_ce = 17588.200878;
+my_const.omega_pe = 35176.401757;
+
+}
 

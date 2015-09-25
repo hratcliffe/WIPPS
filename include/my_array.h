@@ -67,7 +67,7 @@ public:
 
 my_type *axes;
 //This will be 1-d array in sections, so can be arbitary length and dims
-char* block_id; //the field name id form SDF file
+char block_id[10]; //the field name id form SDF file
 
 data_array(int nx, int ny);
 ~data_array();
@@ -78,6 +78,8 @@ my_type * get_axis(int dim, int & length);
 void make_linear_axis(int dim, float res, int offset=0);
 //Generates a linear axis for dimension dim, with resolution res, starting at value of offset*res
 
+my_type * get_chunk();
+//To get say a set of rows?
 
 };
 

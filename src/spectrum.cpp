@@ -56,7 +56,7 @@ if(parent){
 
 }
 
-void spectrum::set_ids(float time1, float time2, int space1, int space2, int wave_id, char block_id[10]){
+void spectrum::set_ids(float time1, float time2, int space1, int space2, int wave_id, char block_id[10], int function_type){
 //set id params for later...
 //times can be normed however we want. Space is relative to grid...
 //wave id is defined in header and defines the cutout we use
@@ -67,7 +67,7 @@ this->space[0] = space1;
 this->space[1] = space2;
 strcpy(this->block_id, block_id);
 this->wave_id = wave_id;
-
+this->function_type = function_type;
 }
 
 bool spectrum::generate_spectrum(data_array * parent){
@@ -92,13 +92,16 @@ if(parent && angle_is_function){
   for(int i=0; i<this->dims[0]; ++i){
     
     om_disp = get_dispersion(this->axes[i], WAVE_WHISTLER);
-    om_target = om_disp *(1.0-tolerance);
+//    om_target = om_disp *(1.0-tolerance);
     //This is a temporary, slow version. Might change to a binary bisect if needed etc...
-    for(j=0;j<len; j++) if(ax_ptr[j]> om_target) break;
-    low_bnd = j;
-    om_target = om_disp *(1.0+tolerance);
-    for(j=0;j<len; j++) if(ax_ptr[j]> om_target) break;
-    high_bnd = j;
+ //   for(j=0;j<len; j++) if(ax_ptr[j]> om_target) break;
+//    low_bnd = j;
+    low_bnd = where(ax_ptr, len, om_disp *(1.0-tolerance));
+    high_bnd = where(ax_ptr, len, om_disp *(1.0+tolerance));
+    
+  //  om_target = om_disp *(1.0+tolerance);
+    //for(j=0;j<len; j++) if(ax_ptr[j]> om_target) break;
+    //high_bnd = j;
     
     //now total the part of the array between these bnds
     total=0;
@@ -115,18 +118,28 @@ if(parent && angle_is_function){
 //set axis resolution somehow... TODO this
 make_linear_axis(1, res, 0);
 
-//Now generate the function data.
-if(function_type == FUNCTION_DELTA){
+  //Now generate the function data.
+  if(function_type == FUNCTION_DELTA){
   //Approx delta function, round k_ll. I.e. one cell only. And size is 1/d theta
   
-  for(int i=1; i<this->dims[0]; ++i) this->set_element(i,1,0);
-  //zero all other elements
-  
+    for(int i=1; i<this->dims[0]; ++i) this->set_element(i,1,0);
+    //zero all other elements
+    float val;
+    val = 1.0/res;
+    //TODO this is wrong value. Wants to make integral 1...
+    this->set_element(0, 1, val);
+  }else if(function_type == FUNCTION_GAUSS){
+
+
+  }else if(function_type == FUNCTION_DELTA){
+
+
+  }else{
+
+  }
+
 }
 
-
-
-}
 
 }else if(parent){
 
@@ -181,10 +194,33 @@ return ret;
 
 }
 
-my_type * spectrum::get_angle_distrib(){
-//Now if it's a function
+my_type * spectrum::get_angle_distrib(my_type ang, my_type omega){
+//Now if it's a single function we return just a row, and dont need the omega param
+//If it's not, we select row by omega
 
+my_type * ret = NULL;
+
+if(angle_is_function){
+  ret = data + dims[0];
+
+}else{
+
+//select row by omega...
+  int offset = where(axes+ dims[0], n_angs, omega);
+  ret = data + offset*dims[0];
 
 }
 
+return ret;
 
+}
+
+int spectrum::where(my_type * ax_ptr, int len, my_type target){
+//method so we can upgrade easily...
+
+  int j;
+  for(j=0;j<len; j++) if(ax_ptr[j]> target) break;
+  
+  return j;
+
+}

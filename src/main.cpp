@@ -10,6 +10,7 @@
 #include "../include/support.h"
 #include "../include/my_array.h"
 #include "../include/d_coeff.h"
+#include "../include/spectrum.h"
 
 //#include <math>
 #include <boost/math/special_functions.hpp>
@@ -28,6 +29,7 @@ deck_constants my_const;
 void abs_square( cplx_type * array, double * out, int nx);
 void make_fft_axis(my_type * ax, int N, float res, int offset =0);
 void test_bes();
+spectrum * make_test_spectrum();
 
 int main(int argc, char *argv[]){
 
@@ -223,7 +225,14 @@ fftw_free(result2);
 //Then we lineout and extract a wave spectrum
 //Lets have a spectrum class then
 //Contains data, axis, sizes, ids (field, time range, space range)
+///HMMM. how to do angles?
+//Relax seperability assumption so make it 2-d again....
 
+//TODO modify spectrum to hold angle info.
+
+
+spectrum * spect;
+spect = make_test_spectrum();
 
 //Then we use that and try and calculate the Diffusion coeff.
 
@@ -308,3 +317,18 @@ my_const.omega_pe = 35176.401757;
 
 }
 
+
+spectrum * make_test_spectrum(){
+//makes a basic spectrum object with suitable number of points, and twin, symmetric Gaussians centred at fixed x.
+
+spectrum * ret;
+char id[10];
+id[0] = 'e'; id[1]='x';
+
+ret = new spectrum(4096);
+ret->set_ids(0, 100, 0, 4096, 1, id);
+
+return ret;
+
+
+}

@@ -36,6 +36,7 @@ struct deck_constants{
 
 };
 
+const int DEFAULT_N_ANG = 100;
 
 
 #endif

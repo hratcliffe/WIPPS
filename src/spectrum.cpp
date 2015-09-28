@@ -18,8 +18,24 @@ extern deck_constants my_const;
 //or vice versa?
 
 
-spectrum::spectrum(int nx):data_array(nx, 1){
+spectrum::spectrum(int nx):data_array(nx+DEFAULT_N_ANG, 1){
   //Assume by default we''l integrate over second dim...
+
+angle_is_function = true;
+//angle profile will be specified as a function and any val is product spect(omega, theta) = B^2(omega) * g(theta). So we only need 2 one-d arrays
+n_angs = DEFAULT_N_ANG;
+function_type = FUNCTION_DELTA;
+
+}
+
+spectrum::spectrum(int nx, int n_ang):data_array(nx, n_ang+1){
+  //Assume by default we''l integrate over second dim...
+
+angle_is_function = false;
+
+//angle profile is array, spect(omega, theta) = B^2(omega) * g(theta, omega). So we need a full nx by n_ang array for g, and an extra row for B^2
+n_angs = n_ang;
+
 
 }
 
@@ -58,7 +74,7 @@ bool spectrum::generate_spectrum(data_array * parent){
 //windows and integrates over frequency by default
 //windowing is controlled by the wave_id
 
-if(parent){
+if(parent && angle_is_function){
   //First we read axes from parent
   int len;
   my_type * ax_ptr = parent->get_axis(0, len);
@@ -87,8 +103,52 @@ if(parent){
     //now total the part of the array between these bnds
     total=0;
     for(j=low_bnd; j<high_bnd; j++) total += parent->get_element(i,j);
-    this->set_element(i,j,total);
+    this->set_element(i,0,total);
   }
+
+//Now we generate evenly spaced angle axis, and generate required function ...
+//NB What to work in? tan theta, but from 0 to infty. Need a cut off.... and that only covers paralllel, not antiparallel. We'll need to extend to that sooner or later...
+
+
+//void data_array::make_linear_axis(int dim, float res, int offset){
+{int res = 1;
+//set axis resolution somehow... TODO this
+make_linear_axis(1, res, 0);
+
+//Now generate the function data.
+if(function_type == FUNCTION_DELTA){
+  //Approx delta function, round k_ll. I.e. one cell only. And size is 1/d theta
+  
+  for(int i=1; i<this->dims[0]; ++i) this->set_element(i,1,0);
+  //zero all other elements
+  
+}
+
+
+
+}
+
+}else if(parent){
+
+//TODO in this case we have to extract spectrim and angle data somehow......
+
+  //First we read axes from parent
+  int len;
+  my_type * ax_ptr = parent->get_axis(0, len);
+  memcpy ((void *)this->axes, (void *)ax_ptr, len*sizeof(my_type));
+  ax_ptr = parent->get_axis(1, len);
+  //y-axis to work with
+
+  //Generate angle axis to work with
+{int res = 1;
+//set axis resolution somehow... TODO this
+make_linear_axis(1, res, 0);
+}
+
+//and now we extract the data at each angle...
+//tan theta = k_x/k_y
+
+
 
 }else{
   return 1;
@@ -121,5 +181,10 @@ return ret;
 
 }
 
+my_type * spectrum::get_angle_distrib(){
+//Now if it's a function
+
+
+}
 
 

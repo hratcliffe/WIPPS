@@ -73,6 +73,7 @@ my_type my_array::get_element(int nx, int ny){
   }
 
 }
+
 bool my_array::set_element(int nx, int ny, int val){
   //sets elements at nx, ny, and returns 1 if out of range, wrong no args, 0 else
   if(n_dims != 2) return 1;
@@ -116,12 +117,15 @@ return 0;
 bool my_array::write_to_file(std::fstream &file){
 //TODO fill in in logical fashion....
 
-file<<"Produced by "<<VERSION<<std::endl;
+file<<"Produced by Version "<<VERSION<<std::endl;
 //dimension info
 file<<n_dims<<" ";
 for(int i=0;i<n_dims;i++) file<< dims[i]<<" ";
 file<<std::endl;
 
+file.write((char *) data , sizeof(my_type)*dims[0]*dims[1]);
+//This takes the whole data array and writes as a stream. It's not portable to other machines necessarily due to float sizes and endianness. It'll do.
+file<<std::endl;
 
 
 return 0;
@@ -208,6 +212,25 @@ for(int i=0; i<len; i++){
   *(ax_ptr +i) = ((float) (i-offset)) * res;
 
 }
+
+
+}
+
+bool data_array::write_to_file(std::fstream &file){
+
+//file<<block_id<<std::endl;
+
+my_array::write_to_file(file);
+//call base class method to write that data.
+
+//now tag on axes.
+//We'll use the get-axes to give us the number of elements...
+
+file.write((char *) axes , sizeof(my_type)*(dims[0]+dims[1]));
+file<<std::endl;
+
+
+return 0;
 
 
 }

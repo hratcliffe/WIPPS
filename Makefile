@@ -1,22 +1,25 @@
 
 
 CC = mpic++
-INCLUDE = -I /usr/local/include/ -I ./SDF/C/include/ -I ./include/
+SDFPATH = ./SDF
+#Path to the SDF libraries.
+
 SRCDIR = src
 OBJDIR = obj
+INCLUDE = -I /usr/local/include/ -I $(SDFPATH)/C/include/ -I ./include/
+LIB = -L /usr/local/lib/ $(SDFPATH)/C/lib/libsdfc.a -lfftw3 -lm
 CFLAGS = -g -c $(INCLUDE)
 DEBUG = -W -Wall -pedantic -D_GLIBCXX_DEBUG
 #DEBUG+= -Wno-sign-compare
 DEBUG+= -Wno-unused-parameter
 #Comment/uncomment these to hide specific errors...
-LIB = -L /usr/local/lib/ ./SDF/C/lib/libsdfc.a -lfftw3 -lm
+
 
 ifeq ($(strip $(MODE)),debug)
   CFLAGS += $(DEBUG)
 endif
-#links against ncurses libraries
 
-#list of all header and cpp pairs. Add new files here.....
+#list of all header and cpp pairs. 
 INCLS = my_array.h d_coeff.h spectrum.h
 
 #make lists of source and object files, all headers plus main

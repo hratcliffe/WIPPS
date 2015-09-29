@@ -2,7 +2,11 @@
 //  main.cpp
 //  
 //
-//  Created by Heather Ratcliffe on 18/09/2015.
+/** \file main.cpp \brief Main program
+*
+* This should: open a sequence of SDF files using the SDF library and read E and B field data. Fourier transform it. Extract frequency/wavenumber and angular spectra (if possible). Calculate the resulting particle diffusion coefficients using Lyons 1974 a, b, Albert 2005 and such.
+  \author Heather Ratcliffe \date 18/09/2015.
+*/
 //
 //
 
@@ -14,13 +18,16 @@
 
 //#include <math>
 #include <boost/math/special_functions.hpp>
+//Provides Bessel functions, erf, and many more
 #include <fstream>
 #include <iostream>
 #include <stdio.h>
 #include "sdf.h"
+//SDF file libraries
 #include <mpi.h>
 #include <complex.h>
 #include <fftw3.h>
+//FFTW3 Fourier transform libs
 
 using namespace std;
 
@@ -51,7 +58,6 @@ else{
   return 0;
 }
 //TODO do something sensible like stop when the file doesn't exist and probably prompt to continue using data obtained...
-
 
 //handle->stack_handle=stack_init();
 
@@ -221,6 +227,32 @@ fftw_free(result2);
 //Right now we have our FFT'd data with its bounds and axes in a decent structure.
 
 //Next we write it to file to keep/visualise it
+
+//bool my_array::write_to_file(std::fstream &file){
+fstream file;
+file.open("Tmp.txt", ios::out|ios::binary);
+
+dat_fft.write_to_file(file);
+file.close();
+
+//Test code to read back vals and check against originals
+/*file.open("Tmp.txt", ios::in|ios::binary);
+my_type tmp, tmp2;
+
+for(int i=0; i<4096; i++){
+  tmp2 = dat_fft.get_element(i,0);
+  file.read((char *) &tmp, sizeof(my_type));
+  cout<<tmp-tmp2<<" ";
+
+}*/
+
+/*file<<n_dims<<" ";
+for(int i=0;i<n_dims;i++) file<< dims[i]<<" ";
+file<<std::endl;
+
+file.write((char *) data , sizeof(my_type)*dims[0]);
+*/
+
 
 //Then we lineout and extract a wave spectrum
 //Lets have a spectrum class then

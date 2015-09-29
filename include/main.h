@@ -9,7 +9,7 @@
 #ifndef ____main__
 #define ____main__
 
-#include <stdio.h>
+//#include <stdio.h>
 
 
 #endif /* defined(____main__) */

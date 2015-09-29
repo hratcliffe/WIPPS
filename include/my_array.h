@@ -9,7 +9,6 @@
 #ifndef ____my_array__
 #define ____my_array__
 
-#include <stdio.h>
 #include <stdlib.h> //for malloc eeejit
 #include <vector>
 
@@ -49,7 +48,9 @@ bool set_element(int nx, int ny, int val);
 
 bool populate_data(my_type * dat_in, int nx, int ny);
 bool populate_row(void * dat_in, int nx, int y_row);
+/** Populate data
 
+*/
 bool write_to_file(std::fstream &file);
 //we can use [] to wrap get elements and have the args pushed into vector which we then work with to be generic
 
@@ -80,6 +81,8 @@ void make_linear_axis(int dim, float res, int offset=0);
 
 my_type * get_chunk();
 //To get say a set of rows?
+
+bool write_to_file(std::fstream &file);
 
 };
 

@@ -2,6 +2,9 @@
 <Workspace
    version = "1.0">
    <FileRef
+      location = "group:read_data.pro">
+   </FileRef>
+   <FileRef
       location = "group:SDF/C/include/sdf.h">
    </FileRef>
    <FileRef

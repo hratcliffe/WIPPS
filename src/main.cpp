@@ -237,7 +237,7 @@ file.open("Tmp.txt", ios::out|ios::binary);
 dat_fft.write_to_file(file);
 file.close();
 
-file.open("Tmp.txt", ios::in|ios::binary);
+file.open("Tmp_tmp.txt", ios::in|ios::binary);
 
 dat_fft.read_from_file(file);
 

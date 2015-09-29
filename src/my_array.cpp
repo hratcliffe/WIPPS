@@ -10,7 +10,7 @@
 
 #include <fstream>
 #include <iostream>
-
+#include <iomanip>
 #include "support.h"
 #include "my_array.h"
 
@@ -162,6 +162,8 @@ if(verf != io_verify){
   std::cout<<"Bugger, file read error";
   if(tmp_vers !=VERSION) std::cout<<"Incompatible code versions"<<std::endl;
   return 1;
+}else{
+  if(tmp_vers !=VERSION) std::cout<<"WARNING: A different code version was used to write this data. Proceed with caution. Fields may not align correctly."<<std::endl;
 }
 
 
@@ -179,10 +181,13 @@ my_type * data_tmp;
 data_tmp=(my_type*)malloc(dims[0]*dims[1]*sizeof(my_type));
 
 file.read((char *) data_tmp , sizeof(my_type)*dims[0]*dims[1]);
-
+std::cout<<std::setprecision(9);
 std::cout<<data_tmp[0]<<" "<<data[0]<<std::endl;
 std::cout<<data_tmp[10]<<" "<<data[10]<<std::endl;
-std::cout<<data_tmp[dims[0]]<<" "<<data[dims[0]]<<std::endl;
+std::cout<<data_tmp[dims[0]-1]<<" "<<data[dims[0]-1]<<std::endl;
+std::cout<<data_tmp[dims[0]+50]<<" "<<data[dims[0]+50]<<std::endl;
+std::cout<<data_tmp[dims[0]*2+50]<<" "<<data[dims[0]*2+50]<<std::endl;
+
 std::cout<<data_tmp[dims[0]*dims[1]-1]<<" "<<data[dims[0]*dims[1]-1]<<std::endl;
 
 free(data_tmp);

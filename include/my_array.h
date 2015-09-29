@@ -52,6 +52,8 @@ bool populate_row(void * dat_in, int nx, int y_row);
 
 */
 bool write_to_file(std::fstream &file);
+bool read_from_file(std::fstream &file);
+
 //we can use [] to wrap get elements and have the args pushed into vector which we then work with to be generic
 
 std::string array_self_test();
@@ -83,6 +85,7 @@ my_type * get_chunk();
 //To get say a set of rows?
 
 bool write_to_file(std::fstream &file);
+bool read_from_file(std::fstream &file);
 
 };
 

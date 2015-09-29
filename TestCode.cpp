@@ -74,3 +74,22 @@ fftw_free(out);
 #endif
 
 */
+
+
+//Test code to read back vals and check against originals
+/*file.open("Tmp.txt", ios::in|ios::binary);
+my_type tmp, tmp2;
+
+for(int i=0; i<4096; i++){
+  tmp2 = dat_fft.get_element(i,0);
+  file.read((char *) &tmp, sizeof(my_type));
+  cout<<tmp-tmp2<<" ";
+
+}*/
+
+/*file<<n_dims<<" ";
+for(int i=0;i<n_dims;i++) file<< dims[i]<<" ";
+file<<std::endl;
+
+file.write((char *) data , sizeof(my_type)*dims[0]);
+*/

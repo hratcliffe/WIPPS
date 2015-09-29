@@ -4,16 +4,19 @@ CC = mpic++
 SDFPATH = ./SDF
 #Path to the SDF libraries.
 
+
+GIT_VERSION := $(shell git describe --dirty --always --tags)
+# This cleverness encodes the git commit version into the source so we can write version number with data
+
 SRCDIR = src
 OBJDIR = obj
 INCLUDE = -I /usr/local/include/ -I $(SDFPATH)/C/include/ -I ./include/
 LIB = -L /usr/local/lib/ $(SDFPATH)/C/lib/libsdfc.a -lfftw3 -lm
-CFLAGS = -g -c $(INCLUDE)
+CFLAGS = -g -c $(INCLUDE) -DVERSION=\"$(GIT_VERSION)\"
 DEBUG = -W -Wall -pedantic -D_GLIBCXX_DEBUG
 #DEBUG+= -Wno-sign-compare
 DEBUG+= -Wno-unused-parameter
 #Comment/uncomment these to hide specific errors...
-
 
 ifeq ($(strip $(MODE)),debug)
   CFLAGS += $(DEBUG)

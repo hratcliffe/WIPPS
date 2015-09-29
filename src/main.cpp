@@ -41,6 +41,8 @@ spectrum * make_test_spectrum();
 int main(int argc, char *argv[]){
 
 
+cout<<VERSION;
+
 //TODO maybe we write a verify sdf which checks our files have the correct dimensionalities etc etc and contain needed blocks...
 
 int ierr, my_id, num_procs;
@@ -235,23 +237,12 @@ file.open("Tmp.txt", ios::out|ios::binary);
 dat_fft.write_to_file(file);
 file.close();
 
-//Test code to read back vals and check against originals
-/*file.open("Tmp.txt", ios::in|ios::binary);
-my_type tmp, tmp2;
+file.open("Tmp.txt", ios::in|ios::binary);
 
-for(int i=0; i<4096; i++){
-  tmp2 = dat_fft.get_element(i,0);
-  file.read((char *) &tmp, sizeof(my_type));
-  cout<<tmp-tmp2<<" ";
+dat_fft.read_from_file(file);
 
-}*/
+file.close();
 
-/*file<<n_dims<<" ";
-for(int i=0;i<n_dims;i++) file<< dims[i]<<" ";
-file<<std::endl;
-
-file.write((char *) data , sizeof(my_type)*dims[0]);
-*/
 
 
 //Then we lineout and extract a wave spectrum

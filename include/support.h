@@ -11,10 +11,13 @@
 
 
 #define cplx_type fftw_complex
-#define VERSION 1.0
+//#define VERSION 1.0
 
 #define my_type float
 #define my_sdf_type 3
+
+const my_type io_verify = 3.0/32.0;
+//An exactly binary representable my_type to verify we're reading what we're writing...
 
 const float pi = 3.14159;
 const float v0 = 2.997924e8; 

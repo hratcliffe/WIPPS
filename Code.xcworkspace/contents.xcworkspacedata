@@ -23,10 +23,10 @@
          location = "group:main.h">
       </FileRef>
       <FileRef
-         location = "group:spectrum.h">
+         location = "group:support.h">
       </FileRef>
       <FileRef
-         location = "group:support.h">
+         location = "group:spectrum.h">
       </FileRef>
       <FileRef
          location = "group:d_coeff.h">

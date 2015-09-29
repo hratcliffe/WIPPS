@@ -115,23 +115,66 @@ return 0;
 }
 
 bool my_array::write_to_file(std::fstream &file){
-//TODO fill in in logical fashion....
+//none of this will be human readable...
+//Takes the version etc info then the whole data array and writes as a stream. It's not portable to other machines necessarily due to float sizes and endianness. It'll do. We'll start the file with a known float for confirmation.
 
-file<<"Produced by Version "<<VERSION<<std::endl;
+/**IMPORTANT: this VERSION specifier links output files to code. If modifying output or order commit and clean build before using.
+*/
+const char tmp_vers[15] = VERSION;
+char ch = '\0';
+
+file.write((char*) &io_verify, sizeof(my_type));
+file.write((char*) &tmp_vers, sizeof(char)*15);
+//file.write(&ch, sizeof(char));
+
+//Code version...
+
 //dimension info
-file<<n_dims<<" ";
-for(int i=0;i<n_dims;i++) file<< dims[i]<<" ";
-file<<std::endl;
-
+file.write((char*) &n_dims, sizeof(int));
+int dim_tmp;
+for(int i=0;i<n_dims;i++){
+  dim_tmp = dims[i];
+  file.write((char*) &dim_tmp, sizeof(int));
+}
 file.write((char *) data , sizeof(my_type)*dims[0]*dims[1]);
-//This takes the whole data array and writes as a stream. It's not portable to other machines necessarily due to float sizes and endianness. It'll do.
-file<<std::endl;
-
 
 return 0;
 
 
 }
+
+bool my_array::read_from_file(std::fstream &file){
+//For now this just spams to screen tested against what we wrote.
+
+char tmp_vers[15];
+my_type verf=0.0;
+
+int n_dims_in, dim_tmp;
+
+file.read((char*) &verf, sizeof(my_type));
+std::cout<< verf<<" "<<io_verify<<std::endl;
+
+file.read((char*) &tmp_vers, sizeof(char)*15);
+std::cout<<tmp_vers<<" "<<VERSION<<std::endl;
+
+
+/*
+file.read((char*) &vers, sizeof(float));
+
+file.write((char*) &n_dims, sizeof(int));
+
+for(int i=0;i<n_dims;i++){
+  dim_tmp = dims[i];
+  file.write((char*) &dim_tmp, sizeof(int));
+}
+file.write((char *) data , sizeof(my_type)*dims[0]*dims[1]);
+
+*/
+return 0;
+
+
+}
+
 
 std::string my_array::array_self_test(){
 
@@ -218,20 +261,52 @@ for(int i=0; i<len; i++){
 
 bool data_array::write_to_file(std::fstream &file){
 
-//file<<block_id<<std::endl;
+/**IMPORTANT: the VERSION specifier links output files to code. If modifying output or order commit and clean build before using.
+*/
+
+char ch = '\0';
+file.write(block_id, sizeof(char)*10);
+file.write(&ch, sizeof(char));
+//Null terminating character
 
 my_array::write_to_file(file);
 //call base class method to write that data.
 
 //now tag on axes.
-//We'll use the get-axes to give us the number of elements...
 
 file.write((char *) axes , sizeof(my_type)*(dims[0]+dims[1]));
-file<<std::endl;
-
 
 return 0;
 
 
 }
+
+bool data_array::read_from_file(std::fstream &file){
+//For now this just spams to screen tested against what we wrote.
+
+//First read the block ID
+char id_in[11];
+
+file.read(id_in, sizeof(char)*11);
+std::cout<< id_in<<" "<<block_id<<std::endl;
+
+my_array::read_from_file(file);
+
+/*
+file.read((char*) &vers, sizeof(float));
+
+file.write((char*) &n_dims, sizeof(int));
+
+for(int i=0;i<n_dims;i++){
+  dim_tmp = dims[i];
+  file.write((char*) &dim_tmp, sizeof(int));
+}
+file.write((char *) data , sizeof(my_type)*dims[0]*dims[1]);
+
+*/
+return 0;
+
+
+}
+
 

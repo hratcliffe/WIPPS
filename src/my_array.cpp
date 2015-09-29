@@ -157,19 +157,36 @@ std::cout<< verf<<" "<<io_verify<<std::endl;
 file.read((char*) &tmp_vers, sizeof(char)*15);
 std::cout<<tmp_vers<<" "<<VERSION<<std::endl;
 
-
-/*
-file.read((char*) &vers, sizeof(float));
-
-file.write((char*) &n_dims, sizeof(int));
-
-for(int i=0;i<n_dims;i++){
-  dim_tmp = dims[i];
-  file.write((char*) &dim_tmp, sizeof(int));
+if(verf != io_verify){
+//equality even though floats as should be identical
+  std::cout<<"Bugger, file read error";
+  if(tmp_vers !=VERSION) std::cout<<"Incompatible code versions"<<std::endl;
+  return 1;
 }
-file.write((char *) data , sizeof(my_type)*dims[0]*dims[1]);
 
-*/
+
+file.read((char*) &n_dims_in, sizeof(int));
+std::cout<<n_dims_in<<" "<<n_dims<<std::endl;
+
+
+for(int i=0;i<n_dims_in;i++){
+  file.read((char*) &dim_tmp, sizeof(int));
+  std::cout<<dim_tmp<<" "<<dims[i]<<std::endl;
+
+}
+
+my_type * data_tmp;
+data_tmp=(my_type*)malloc(dims[0]*dims[1]*sizeof(my_type));
+
+file.read((char *) data_tmp , sizeof(my_type)*dims[0]*dims[1]);
+
+std::cout<<data_tmp[0]<<" "<<data[0]<<std::endl;
+std::cout<<data_tmp[10]<<" "<<data[10]<<std::endl;
+std::cout<<data_tmp[dims[0]]<<" "<<data[dims[0]]<<std::endl;
+std::cout<<data_tmp[dims[0]*dims[1]-1]<<" "<<data[dims[0]*dims[1]-1]<<std::endl;
+
+free(data_tmp);
+
 return 0;
 
 
@@ -272,12 +289,10 @@ file.write(&ch, sizeof(char));
 my_array::write_to_file(file);
 //call base class method to write that data.
 
-//now tag on axes.
-
 file.write((char *) axes , sizeof(my_type)*(dims[0]+dims[1]));
+//Add axes.
 
 return 0;
-
 
 }
 
@@ -291,19 +306,23 @@ file.read(id_in, sizeof(char)*11);
 std::cout<< id_in<<" "<<block_id<<std::endl;
 
 my_array::read_from_file(file);
+//call parent class to read data
 
-/*
-file.read((char*) &vers, sizeof(float));
+//now read axes
+std::cout<<"Axes :"<<std::endl;
+my_type * data_tmp;
+data_tmp=(my_type*)malloc((dims[0]+dims[1])*sizeof(my_type));
 
-file.write((char*) &n_dims, sizeof(int));
+file.read((char *) data_tmp , sizeof(my_type)*(dims[0]+dims[1]));
 
-for(int i=0;i<n_dims;i++){
-  dim_tmp = dims[i];
-  file.write((char*) &dim_tmp, sizeof(int));
-}
-file.write((char *) data , sizeof(my_type)*dims[0]*dims[1]);
+std::cout<<data_tmp[0]<<" "<<axes[0]<<std::endl;
+std::cout<<data_tmp[10]<<" "<<axes[10]<<std::endl;
+std::cout<<data_tmp[dims[0]]<<" "<<axes[dims[0]]<<std::endl;
+std::cout<<data_tmp[dims[0]+dims[1]-1]<<" "<<axes[dims[0]+dims[1]-1]<<std::endl;
 
-*/
+free(data_tmp);
+
+
 return 0;
 
 

@@ -41,7 +41,7 @@ spectrum * make_test_spectrum();
 int main(int argc, char *argv[]){
 
 
-cout<<VERSION;
+cout<<"Code Version: "<<VERSION<<endl;
 
 //TODO maybe we write a verify sdf which checks our files have the correct dimensionalities etc etc and contain needed blocks...
 

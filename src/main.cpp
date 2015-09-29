@@ -6,18 +6,18 @@
 //
 //
 
-#include "../include/main.h"
-#include "../include/support.h"
-#include "../include/my_array.h"
-#include "../include/d_coeff.h"
-#include "../include/spectrum.h"
+#include "main.h"
+#include "support.h"
+#include "my_array.h"
+#include "d_coeff.h"
+#include "spectrum.h"
 
 //#include <math>
 #include <boost/math/special_functions.hpp>
 #include <fstream>
 #include <iostream>
 #include <stdio.h>
-#include "../SDF/C/include/sdf.h"
+#include "sdf.h"
 #include <mpi.h>
 #include <complex.h>
 #include <fftw3.h>

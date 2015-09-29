@@ -11,8 +11,8 @@
 #include <fstream>
 #include <iostream>
 
-#include "../include/support.h"
-#include "../include/my_array.h"
+#include "support.h"
+#include "my_array.h"
 
 
 

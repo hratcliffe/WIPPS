@@ -1,7 +1,7 @@
 
 
 CC = mpic++
-INCLUDE = -I /usr/local/include/ -I ./SDF/C/include/
+INCLUDE = -I /usr/local/include/ -I ./SDF/C/include/ -I ./include/
 SRCDIR = src
 OBJDIR = obj
 CFLAGS = -g -c $(INCLUDE)

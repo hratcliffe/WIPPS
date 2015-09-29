@@ -60,7 +60,7 @@ bool generate_spectrum(data_array * parent);
 
 float get_dispersion(my_type k, int wave_type);
 
-my_type * get_angle_distrib(my_type ang, my_type omega);
+my_type * get_angle_distrib(my_type ang,int &len, my_type omega);
 
 int where(my_type * ax_ptr, int len, my_type target);
 

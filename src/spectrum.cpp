@@ -7,9 +7,9 @@
 //
 
 #include <stdio.h>
-#include "../include/support.h"
-#include "../include/my_array.h"
-#include "../include/spectrum.h"
+#include "support.h"
+#include "my_array.h"
+#include "spectrum.h"
 
 
 extern deck_constants my_const;
@@ -194,23 +194,24 @@ return ret;
 
 }
 
-my_type * spectrum::get_angle_distrib(my_type ang, my_type omega){
+my_type * spectrum::get_angle_distrib(my_type ang, int &len, my_type omega){
 //Now if it's a single function we return just a row, and dont need the omega param
-//If it's not, we select row by omega
+//If it's not, we select row by omega. The length will always be n_angs, but we return it for clarity
 
 my_type * ret = NULL;
 
 if(angle_is_function){
+
   ret = data + dims[0];
 
 }else{
-
 //select row by omega...
   int offset = where(axes+ dims[0], n_angs, omega);
   ret = data + offset*dims[0];
 
 }
 
+len = n_angs;
 return ret;
 
 }

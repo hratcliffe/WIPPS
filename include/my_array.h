@@ -25,7 +25,8 @@ T getvalue(int ix,int iy);
 class my_array{
 protected:
 int n_dims;
-std::vector<int> dims;
+//std::vector<int> dims;
+int * dims;
 bool defined;
 //flag to check memory allocation sucess
 
@@ -46,7 +47,7 @@ int get_dims(int dim);
 my_type get_element(int nx, int ny);
 bool set_element(int nx, int ny, int val);
 
-bool populate_data(my_type * dat_in, int nx, int ny);
+bool populate_data(my_type * dat_in, int n_tot);
 bool populate_row(void * dat_in, int nx, int y_row);
 /** Populate data
 
@@ -77,6 +78,9 @@ data_array(int nx, int ny);
 
 bool is_good(){return defined && ax_defined;}
 my_type * get_axis(int dim, int & length);
+//bool populate_axis(my_type * dat_in, int n_tot);
+
+float get_res(int i);
 
 void make_linear_axis(int dim, float res, int offset=0);
 //Generates a linear axis for dimension dim, with resolution res, starting at value of offset*res
@@ -86,6 +90,8 @@ my_type * get_chunk();
 
 bool write_to_file(std::fstream &file);
 bool read_from_file(std::fstream &file);
+
+bool fft_me(data_array * data_out);
 
 };
 

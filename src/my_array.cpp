@@ -13,14 +13,19 @@
 #include <iomanip>
 #include "support.h"
 #include "my_array.h"
-
+#include <complex.h>
+#include <fftw3.h>
+#include <cmath>
 
 
 my_array::my_array(int nx, int ny){
   defined = false;
   n_dims = 2;
-  dims.push_back(nx);
-  dims.push_back(ny);
+//  dims.push_back(nx);
+//  dims.push_back(ny);
+  dims = (int*)malloc(n_dims*sizeof(int));
+  dims[0]=nx;
+  dims[1]=ny;
   data = NULL;
 
   data=(my_type*)malloc(nx*ny*sizeof(my_type));
@@ -90,11 +95,20 @@ bool my_array::set_element(int nx, int ny, int val){
 
 }
 
-bool my_array::populate_data(my_type * dat_in, int nx, int ny){
-//needs to check type, check dimensions
-//needs dimensions supplied...
+bool my_array::populate_data(my_type * dat_in, int n_tot){
+//Populates data with the total number of elements specified, as long as n_tot is less than the product of dims
 
-return 1;
+int tot_els=1;
+for(int i=0; i<n_dims;++i) tot_els *=dims[i];
+if(n_tot > tot_els) return 1;
+
+void * tmp = (void *) data;
+
+if(!tmp) return 1;
+memcpy (tmp , dat_in, n_tot*sizeof(my_type));
+
+return 0;
+
 }
 
 bool my_array::populate_row(void * dat_in, int nx, int y_row){
@@ -334,4 +348,103 @@ return 0;
 
 }
 
+bool data_array::fft_me(data_array * data_out){
+/** \brief FFT data_array
+*
+* Data and axes in this object are FFT'd using FFTW and stored into the instance pointed to by data_out. Data_out must be created with correct dimensions first, but we check and return error (1) if it is not so.
+*/
+
+if(!data_out->is_good()){
+  std::cout<<"Output array for FFT undefined"<<std::endl;
+  return 1;
+}
+if(data_out->n_dims != this->n_dims){
+  std::cout<<"Wrong output dimensions for FFT"<<std::endl;
+  return 1;
+}
+for(int i=0; i<n_dims;++i){
+  if(data_out->dims[i] != this->dims[i]){
+    std::cout<<"Wrong output dimensions for FFT"<<std::endl;
+    return 1;
+  }
+}
+
+int total_size=1; /**< Total number of elements in array*/
+for(int i=0; i<n_dims;++i) total_size *= dims[i];
+
+int fft_dim =1;/**< Dimension to FFT over, if required*/
+
+ADD_FFTW(plan) p;
+cplx_type *out;
+my_type * in, *result;
+
+in = (my_type*) ADD_FFTW(malloc)(sizeof(my_type) * total_size);
+//my_type should match the used FFTW library, so no type conversion necessary
+out = (cplx_type *) fftwf_malloc(sizeof(cplx_type) * total_size);
+
+result = (my_type*) ADD_FFTW(malloc)(sizeof(my_type) * total_size);
+
+//Possibly this bit can be genericised?
+if(n_dims == 1){
+  p = ADD_FFTW(plan_dft_r2c_1d)(dims[0], in, out, FFTW_ESTIMATE);
+
+}else if(n_dims == 2){
+  p = ADD_FFTW(plan_dft_r2c_2d)(dims[0], dims[1], in, out, FFTW_ESTIMATE);
+
+}else{
+  return 1;
+}
+
+ADD_FFTW(execute)(p);
+//Execute the plan
+
+cplx_type * addr;
+addr = out;
+//because double indirection is messy and cplx type is currently a 2-element array of floats
+
+for(int i=0; i< total_size; i++){
+  *(result+i) = (my_type)(((*addr)[0])*((*addr)[0]) + ((*addr)[1])*((*addr)[1])) ;
+  addr++;
+}
+//Absolute square of out array to produce final result of type my_type
+
+bool err;
+err = data_out->populate_data(result, total_size);
+//Copy result into out array
+std::cout<<err<<std::endl;
+
+ADD_FFTW(destroy_plan)(p);
+ADD_FFTW(free)(in);
+ADD_FFTW(free)(out);
+ADD_FFTW(free)(result);
+//Destroy stuff we don't need
+
+
+my_type * tmp_axis;
+float N2, res;
+int len;
+
+for(int i=0;i<n_dims;++i){
+//Loop over the dimensions and construct each axis in place. We KNOW now that data_out has correct dimensions. We checked before getting here. We don't need to check len. It is the same as dims[i] each time. We will anyway :)
+  N2 = ((float) dims[i])/2.0;
+  res = this->get_res(i);
+  tmp_axis = data_out->get_axis(i, len);
+  if(len != dims[i]) return 1;
+  for(int j= 0; j< dims[i]; i++) *(tmp_axis + j) = pi * ((float)j - N2)/N2/res;
+}
+
+return 0;
+
+}
+
+
+float data_array::get_res(int i){
+//return resolution of axis on dimension i. Assumes linear etc etc
+int len;
+my_type * axis = this->get_axis(i, len);
+
+return std::abs(axis[0]-axis[1]);
+
+
+}
 

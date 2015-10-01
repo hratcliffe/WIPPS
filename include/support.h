@@ -9,12 +9,13 @@
 #ifndef _support_h
 #define _support_h
 
-
-#define cplx_type fftwf_complex
-//#define VERSION 1.0
-
+//#define FFTWX fftwf
+#define ADD_FFTW(x) fftwf_ ## x
+#define cplx_type ADD_FFTW(complex)
 #define my_type float
 #define my_sdf_type 3
+/** These set up our types so we can easily recompile to work with doubles or floats. First adds correct FFTW library prefix, adjust to float or normal. Next defines suitable complex type. Third s working data type, and the last is set to suitable SDF data type matching my_type. Lets be sane, and assume we want the f libraries to work with float data, and the double to work with doubles. So we don't have extraneous copying and false precision.
+*/
 
 const my_type io_verify = 3.0/32.0;
 //An exactly binary representable my_type to verify we're reading what we're writing...

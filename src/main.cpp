@@ -1,14 +1,8 @@
-//
-//  main.cpp
-//  
-//
 /** \file main.cpp \brief Main program
 *
 * This should: open a sequence of SDF files using the SDF library and read E and B field data. Fourier transform it. Extract frequency/wavenumber and angular spectra (if possible). Calculate the resulting particle diffusion coefficients using Lyons 1974 a, b, Albert 2005 and such.
   \author Heather Ratcliffe \date 18/09/2015.
 */
-//
-//
 
 #include "main.h"
 #include "support.h"
@@ -31,7 +25,8 @@
 
 using namespace std;
 
-deck_constants my_const;
+deck_constants my_const;/*< Physical constants*/
+
 
 void abs_square( cplx_type * array, double * out, int nx);
 void abs_square( cplx_type * array, float * out, int nx);
@@ -62,15 +57,12 @@ else{
 }
 //TODO do something sensible like stop when the file doesn't exist and probably prompt to continue using data obtained...
 
-//handle->stack_handle=stack_init();
-
 err=sdf_read_blocklist(handle);
 if(!err){cout<<"Yay! Blocks read"<<endl;}
 else{cout<<"Bum. Block read failed"<<endl;}
 
 sdf_block_t * block, * next;
 
-//block = sdf_find_block_by_name(handle, "Electric Field/Ex");
 block = sdf_find_block_by_id(handle, "ex");
 
 if(block){cout<<"Success!!! Ex found"<<endl;}
@@ -85,7 +77,7 @@ cout<<"File time "<<handle->time<<endl;
 //cout<<handle->nblocks<<endl;
 
 //now we find the data for ex and make a data array with it, and axes
-//for now, we assume we know it's 1-d so we make a 2-d array with 2 rows
+//for now, we assume we know it's 1-d so we make a 2-d array with duplicated rows
 
 int n_tims = 1;
 
@@ -102,9 +94,6 @@ if(block->datatype_out != my_sdf_type){
   return 0;
 }
 
-//dat.block_id = block->id;
-//dat_fft.block_id = block->id;
-
 strcpy(dat.block_id, block->id);
 strcpy(dat_fft.block_id, block->id);
 //set them to know what field they contain
@@ -112,9 +101,7 @@ strcpy(dat_fft.block_id, block->id);
 //cout<<block->datatype_out<<" "<<SDF_DATATYPE_REAL4<<" "<<SDF_DATATYPE_REAL8<<endl;
 
 handle->current_block = block;
-//stack_alloc(handle->current_block);
 sdf_read_data(handle);
-//sdf_helper_read_data(handle, block);
 
 if(block->data){cout<<"Got data"<<endl;}
 else{
@@ -200,6 +187,12 @@ sdf_close(handle);
 
 //TODO this should all be wrapped away into a function which takes an input and output data_array and performs all this...
 
+
+err = dat.fft_me(&dat_fft);
+
+cout<<err<<endl;
+
+/*
 fftwf_complex  *out;
 float * in, *result;
 my_type *result2;
@@ -222,9 +215,11 @@ cout<< in[50]<<" "<<in[N+50]<<" "<<dat.get_element(50,0)<<" "<<dat.get_element(5
 
 
 //p = fftw_plan_dft_r2c_2d(N, n_tims, in, out, FFTW_ESTIMATE);
-p = fftwf_plan_dft_r2c_1d(N, in, out, FFTW_MEASURE);
+//p = fftwf_plan_dft_r2c_1d(N, in, out, FFTW_MEASURE);
 
-//p = fftwf_plan_dft_r2c(1, dims, in,out, FFTW_MEASURE);
+int n_dim =1;
+//Dimension for FFT
+p = fftwf_plan_dft_r2c(n_dim, dims, in,out, FFTW_MEASURE);
 
 std::copy(dat.data, dat.data+N*n_tims, in);
 
@@ -275,6 +270,7 @@ free(x_axis);
 free(t_axis);
 fftwf_free(result);
 fftwf_free(result2);
+*/
 
 //Right now we have our FFT'd data with its bounds and axes in a decent structure.
 //Next we write it to file to keep/visualise it
@@ -318,11 +314,10 @@ spect = make_test_spectrum();
 void abs_square( cplx_type * array, double * out, int nx){
 
 cplx_type * addr = array;
-//because double indirection is messy and cplx type is currently a 2-element array of doubles
+//because double indirection is messy and cplx type is currently a 2-element array of doubles (maybe floats. So cast explicitly)
 
 for(int i=0; i< nx; i++){
 //  addr = (array + i);
-  *(out+i) = (*addr)[0];
   *(out+i) = (double)(((*addr)[0])*((*addr)[0]) + ((*addr)[1])*((*addr)[1])) ;
 
   addr++;
@@ -337,15 +332,12 @@ cplx_type * addr = array;
 //because double indirection is messy and cplx type is currently a 2-element array of floats
 
 for(int i=0; i< nx; i++){
-//  addr = (array + i);
-//  *(out+i) = (*addr)[1];
   *(out+i) = (float)(((*addr)[0])*((*addr)[0]) + ((*addr)[1])*((*addr)[1])) ;
   addr++;
 
 }
 
 }
-
 
 void make_fft_axis(my_type * ax, int N, float res, int offset){
 //construct an fft'd axis of length N, from the original resolution. Units normed as input res.
@@ -409,7 +401,6 @@ my_const.omega_ce = 17588.200878;
 my_const.omega_pe = 35176.401757;
 
 }
-
 
 spectrum * make_test_spectrum(){
 //makes a basic spectrum object with suitable number of points, and twin, symmetric Gaussians centred at fixed x.

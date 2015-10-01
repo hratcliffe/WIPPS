@@ -11,7 +11,7 @@ GIT_VERSION := $(shell git describe --dirty --always --tags)
 SRCDIR = src
 OBJDIR = obj
 INCLUDE = -I /usr/local/include/ -I $(SDFPATH)/C/include/ -I ./include/
-LIB = -L /usr/local/lib/ $(SDFPATH)/C/lib/libsdfc.a -lfftw3 -lm
+LIB = -L /usr/local/lib/ $(SDFPATH)/C/lib/libsdfc.a -lfftw3f -lm
 CFLAGS = -g -c $(INCLUDE) -DVERSION=\"$(GIT_VERSION)\"
 DEBUG = -W -Wall -pedantic -D_GLIBCXX_DEBUG
 #DEBUG+= -Wno-sign-compare

@@ -322,6 +322,7 @@ file.read((char *) data_tmp , sizeof(my_type)*(dims[0]+dims[1]));
 
 std::cout<<data_tmp[0]<<" "<<axes[0]<<std::endl;
 std::cout<<data_tmp[10]<<" "<<axes[10]<<std::endl;
+std::cout<<data_tmp[dims[0]-1]<<" "<<axes[dims[0]-1]<<std::endl;
 std::cout<<data_tmp[dims[0]]<<" "<<axes[dims[0]]<<std::endl;
 std::cout<<data_tmp[dims[0]+dims[1]-1]<<" "<<axes[dims[0]+dims[1]-1]<<std::endl;
 

@@ -5,6 +5,9 @@
       location = "group:read_data.pro">
    </FileRef>
    <FileRef
+      location = "group:setup_fftw.pro">
+   </FileRef>
+   <FileRef
       location = "group:SDF/C/include/sdf.h">
    </FileRef>
    <FileRef

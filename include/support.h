@@ -10,7 +10,7 @@
 #define _support_h
 
 
-#define cplx_type fftw_complex
+#define cplx_type fftwf_complex
 //#define VERSION 1.0
 
 #define my_type float

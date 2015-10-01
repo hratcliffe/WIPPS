@@ -16,7 +16,7 @@
 #include "d_coeff.h"
 #include "spectrum.h"
 
-//#include <math>
+#include <math.h>
 #include <boost/math/special_functions.hpp>
 //Provides Bessel functions, erf, and many more
 #include <fstream>
@@ -34,6 +34,7 @@ using namespace std;
 deck_constants my_const;
 
 void abs_square( cplx_type * array, double * out, int nx);
+void abs_square( cplx_type * array, float * out, int nx);
 void make_fft_axis(my_type * ax, int N, float res, int offset =0);
 void test_bes();
 spectrum * make_test_spectrum();
@@ -86,7 +87,7 @@ cout<<"File time "<<handle->time<<endl;
 //now we find the data for ex and make a data array with it, and axes
 //for now, we assume we know it's 1-d so we make a 2-d array with 2 rows
 
-int n_tims = 10;
+int n_tims = 1;
 
 data_array dat = data_array(block->dims[0], n_tims);
 data_array dat_fft = data_array(block->dims[0], n_tims);
@@ -126,7 +127,30 @@ float * my_ptr = (float *)block->data;
 
 int N = block->dims[0];
 
-for(int i=0; i< n_tims; i++) dat.populate_row(block->data, block->dims[0], i);
+//TODO this only works if my_type is a float...
+bool err2 =0;
+for(int i=0; i< n_tims; i++){
+
+  err2 = dat.populate_row(block->data, N, i);
+  if(err2) cout<<"Bugger!"<<endl;
+}
+
+//Check data in row matches up...
+cout<<"Chekcing"<<endl;
+cout<< my_ptr[0]<<" "<<dat.get_element(0,0)<<" "<<dat.get_element(0,1)<<endl;
+cout<< my_ptr[50]<<" "<<dat.get_element(50,0)<<" "<<dat.get_element(50,1)<<endl;
+
+float * tmp_dat;
+
+tmp_dat = (float*)malloc(N*sizeof(float));
+for(int i=0; i<N ; i++) *(tmp_dat+i) = sin((float)i /25.0);
+//sin(x/2500.0)
+//Now we generate some sine data instead to test FFT
+
+for(int i=0; i< n_tims; i++) dat.populate_row(tmp_dat, N, i);
+
+cout<<" "<<dat.get_element(0,0)<<" "<<dat.get_element(100,0)<<" "<<dat.get_element(2048,0)<<" "<<dat.get_element(4095,0)<<endl;
+
 
 //now get the grids res.
 //and also grab two consecutive times to check t res?
@@ -155,6 +179,7 @@ my_type * ax_ptr;
 int len;
 
 ax_ptr = dat.get_axis(0, len);
+//TODO this only works right is my_type is float...
 memcpy ((void *)ax_ptr, block->grids[0], len*sizeof(my_type));
 
 dat.make_linear_axis(1, 1.0);
@@ -175,39 +200,64 @@ sdf_close(handle);
 
 //TODO this should all be wrapped away into a function which takes an input and output data_array and performs all this...
 
-fftw_complex  *out;
-double * in, *result;
-float *result2;
-fftw_plan p;
+fftwf_complex  *out;
+float * in, *result;
+my_type *result2;
+fftwf_plan p;
+
+int dims[4];
+
+dims[0] = N;
+dims[1] = n_tims;
+//in = (double*) fftw_malloc(sizeof(double) * N*n_tims);
+in = (float*) fftwf_malloc(sizeof(float) * N*n_tims);
+out = (fftwf_complex*) fftwf_malloc(sizeof(fftwf_complex) * N*n_tims);
+
+//copy because at the moment not a double... At some point we have to cast from the input type to double. May as well here.
+//Check worked OK
+
+cout<<"Checking type promotion"<<endl;
+cout<< in[0]<<" "<<in[N]<<" "<<dat.get_element(0,0)<<" "<<dat.get_element(0,1)<<endl;
+cout<< in[50]<<" "<<in[N+50]<<" "<<dat.get_element(50,0)<<" "<<dat.get_element(50,1)<<endl;
 
 
-in = (double*) fftw_malloc(sizeof(double) * N*n_tims);
-out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * N*n_tims);
+//p = fftw_plan_dft_r2c_2d(N, n_tims, in, out, FFTW_ESTIMATE);
+p = fftwf_plan_dft_r2c_1d(N, in, out, FFTW_MEASURE);
+
+//p = fftwf_plan_dft_r2c(1, dims, in,out, FFTW_MEASURE);
 
 std::copy(dat.data, dat.data+N*n_tims, in);
-//copy because at the moment not a double... At some point we have to cast from the input type to double. May as well here.
 
-p = fftw_plan_dft_r2c_2d(N, n_tims, in, out, FFTW_ESTIMATE);
+//fftwf_execute_dft_r2c(p, in, out);
+fftwf_execute(p);
 
-fftw_execute(p);
-
-result = (double*) fftw_malloc(sizeof(double) * N*n_tims);
-result2 = (float*) fftw_malloc(sizeof(float) * N*n_tims);
-
-abs_square(out, result, N*n_tims);
+//result = (double*) fftw_malloc(sizeof(double) * N*n_tims);
+result2 = (my_type*) fftwf_malloc(sizeof(my_type) * N*n_tims);
+result = (float*) fftwf_malloc(sizeof(float) * N*n_tims);
 
 
-fftw_destroy_plan(p);
-fftw_free(in);
-fftw_free(out);
+abs_square(out, result2, N*n_tims);
+
+fftwf_destroy_plan(p);
+fftwf_free(in);
+fftwf_free(out);
 
 //test_bes();
 
-std::copy(result, result + N*n_tims, result2);
+//std::copy(result, result + N*n_tims, result2);
 //copy back to float. TODO fix this...
+
+cout<<"And demotion"<<endl;
+cout<< result[0]<<" "<<result2[0]<<endl;
+cout<<result[N]<<" "<<result2[N]<<endl;
+cout<< result[50]<<" "<<result2[50]<<endl;
+cout<<result[N+50]<<result2[N+50]<<" "<<endl;
+
 
 //copy into our data array, and add axes also
 for(int i=0; i< n_tims; i++) dat_fft.populate_row(result2 + N*i, N, i);
+
+dat_fft.populate_row(result2, N, 0);
 
 {
 my_type * ax_ptr;
@@ -223,25 +273,25 @@ memcpy ((void *)ax_ptr, t_axis, len*sizeof(my_type));
 
 free(x_axis);
 free(t_axis);
-fftw_free(result);
-fftw_free(result2);
+fftwf_free(result);
+fftwf_free(result2);
 
 //Right now we have our FFT'd data with its bounds and axes in a decent structure.
-
 //Next we write it to file to keep/visualise it
 
-//bool my_array::write_to_file(std::fstream &file){
 fstream file;
 file.open("Tmp.txt", ios::out|ios::binary);
 
 dat_fft.write_to_file(file);
-file.close();
-
-file.open("Tmp_tmp.txt", ios::in|ios::binary);
-
-dat_fft.read_from_file(file);
+//dat.write_to_file(file);
 
 file.close();
+
+//file.open("Tmp_dat.txt", ios::in|ios::binary);
+
+//dat.read_from_file(file);
+
+//file.close();
 
 
 
@@ -267,15 +317,35 @@ spect = make_test_spectrum();
 //elements wise ops so treat as long 1-d arrray. nx should be total length product(dims). Input is pointer, needs to be to pre-defined memory of apporpireate size. We'll move all this inside our arrays later
 void abs_square( cplx_type * array, double * out, int nx){
 
-cplx_type * addr;
+cplx_type * addr = array;
 //because double indirection is messy and cplx type is currently a 2-element array of doubles
 
 for(int i=0; i< nx; i++){
-  addr = (array + i);
-  *(out+i) = (*addr[0])*(*addr[0]) + (*addr[1])*(*addr[1]) ;
+//  addr = (array + i);
+  *(out+i) = (*addr)[0];
+  *(out+i) = (double)(((*addr)[0])*((*addr)[0]) + ((*addr)[1])*((*addr)[1])) ;
+
+  addr++;
+
 }
 
 }
+
+void abs_square( cplx_type * array, float * out, int nx){
+
+cplx_type * addr = array;
+//because double indirection is messy and cplx type is currently a 2-element array of floats
+
+for(int i=0; i< nx; i++){
+//  addr = (array + i);
+//  *(out+i) = (*addr)[1];
+  *(out+i) = (float)(((*addr)[0])*((*addr)[0]) + ((*addr)[1])*((*addr)[1])) ;
+  addr++;
+
+}
+
+}
+
 
 void make_fft_axis(my_type * ax, int N, float res, int offset){
 //construct an fft'd axis of length N, from the original resolution. Units normed as input res.

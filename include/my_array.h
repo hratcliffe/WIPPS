@@ -73,6 +73,11 @@ my_type *axes;
 //This will be 1-d array in sections, so can be arbitary length and dims
 char block_id[10]; //the field name id form SDF file
 
+float time[2];
+//time range over data are taken
+int space[2];
+//space range ditto
+
 data_array(int nx, int ny);
 ~data_array();
 

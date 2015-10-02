@@ -32,6 +32,9 @@
          location = "group:support.h">
       </FileRef>
       <FileRef
+         location = "group:reader.h">
+      </FileRef>
+      <FileRef
          location = "group:spectrum.h">
       </FileRef>
       <FileRef
@@ -46,6 +49,9 @@
       </FileRef>
       <FileRef
          location = "group:main.cpp">
+      </FileRef>
+      <FileRef
+         location = "group:reader.cpp">
       </FileRef>
       <FileRef
          location = "group:spectrum.cpp">

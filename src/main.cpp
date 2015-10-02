@@ -6,6 +6,7 @@
 
 #include "main.h"
 #include "support.h"
+#include "reader.h"
 #include "my_array.h"
 #include "d_coeff.h"
 #include "spectrum.h"
@@ -46,6 +47,13 @@ int err;
 ierr = MPI_Init(&argc, &argv);
 ierr = MPI_Comm_rank(MPI_COMM_WORLD, &my_id);
 ierr = MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
+
+
+char block_id[10] = "ex";
+reader my_reader("", block_id);
+//reader(std::string file_prefix_in,  char * block_id_in){
+
+
 
 sdf_file_t *handle = sdf_open("0001.sdf", MPI_COMM_WORLD, SDF_READ, 0);
 //single threaded test!
@@ -98,10 +106,11 @@ strcpy(dat.block_id, block->id);
 strcpy(dat_fft.block_id, block->id);
 //set them to know what field they contain
 
-//cout<<block->datatype_out<<" "<<SDF_DATATYPE_REAL4<<" "<<SDF_DATATYPE_REAL8<<endl;
-
 handle->current_block = block;
 sdf_read_data(handle);
+
+//sdf_close(handle);
+
 
 if(block->data){cout<<"Got data"<<endl;}
 else{
@@ -150,16 +159,12 @@ if(block->blocktype != SDF_BLOCKTYPE_PLAIN_MESH){cout<< "Uh oh, grids look wrong
 
 handle->current_block = block;
 sdf_read_data(handle);
+
 my_ptr = (float *)block->grids[0];
 if(my_ptr){x_res = my_ptr[1] - my_ptr[0];}
 cout<<"x resolution is "<<x_res<<endl;
 //gets x-axis resolution
 
-
-//construct our FFT axes
-//Hmm, lets put the original axis into our data array and the new data and axis into our result data array.
-
-//Original axes are then copied from block->grids and constructed from the times. New are made by make_axis....
 
 {
 my_type * ax_ptr;
@@ -172,15 +177,6 @@ memcpy ((void *)ax_ptr, block->grids[0], len*sizeof(my_type));
 dat.make_linear_axis(1, 1.0);
 //generate uniform t axis of res 1
 }
-
-my_type * x_axis;
-my_type * t_axis;
-
-x_axis = (my_type*)malloc(N*sizeof(my_type));
-t_axis = (my_type*)malloc(n_tims*sizeof(my_type));
-
-make_fft_axis(x_axis, N, x_res);
-make_fft_axis(t_axis, n_tims, 1.0);
 
 
 sdf_close(handle);

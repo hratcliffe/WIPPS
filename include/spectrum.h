@@ -32,11 +32,6 @@ class spectrum : public data_array{
 
 public:
 
-float time[2];
-//time range over which spectrum was derived
-int space[2];
-//space range ditto
-
 int wave_id;
 //ID for which wave cutout we're going for...
 

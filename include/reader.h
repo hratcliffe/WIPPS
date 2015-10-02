@@ -10,6 +10,7 @@
 #define _reader_h
 
 #include <iostream>
+#include <vector>
 
 
 class data_array;
@@ -30,6 +31,8 @@ char block_id[10];
 
 reader(std::string file_prefix_in,  char * block_id_in);
 ~reader(){;}
+
+bool read_dims(int &n_dims, std::vector<int> &dims);
 
 bool read_data(data_array * my_data_in, int time_range[2], int space_range[2]);
 

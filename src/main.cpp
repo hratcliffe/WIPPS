@@ -59,94 +59,28 @@ tim_in[1]=10;
 space_in[0]=0;
 space_in[1]=-1;
 
+int n_tims = max(tim_in[1]-tim_in[0], 1);
 
+int n_dims;
+std::vector<int> dims;
+my_reader.read_dims(n_dims, dims);
 
-sdf_file_t *handle = sdf_open("0001.sdf", MPI_COMM_WORLD, SDF_READ, 0);
-//single threaded test!
+if(n_dims !=1) return 1;
+//for now abort if data file wrong size...
 
-if(handle){cout<<"Success! File opened"<<endl;}
-else{
-  cout<<"Bleh. File open error. Aborting"<<endl;
-  return 0;
-}
-//TODO do something sensible like stop when the file doesn't exist and probably prompt to continue using data obtained...
-
-err=sdf_read_blocklist(handle);
-if(!err){cout<<"Yay! Blocks read"<<endl;}
-else{cout<<"Bum. Block read failed"<<endl;}
-
-sdf_block_t * block, * next;
-
-block = sdf_find_block_by_id(handle, "ex");
-
-if(block){cout<<"Success!!! Ex found"<<endl;}
-else{
-  cout<<"Bleh. No Ex found. Aborting"<<endl;
-  return 0;
-}
-
-cout<<block->name<<" "<<block->id<<" "<<block->ndims<<" "<<block->dims[0]<<" "<<block->dims[1]<<" "<<block->dims[2]<<endl;
-
-cout<<"File time "<<handle->time<<endl;
-//cout<<handle->nblocks<<endl;
-
-//now we find the data for ex and make a data array with it, and axes
-//for now, we assume we know it's 1-d so we make a 2-d array with duplicated rows
-
-int n_tims = 1;
-
-data_array dat = data_array(block->dims[0], n_tims);
-data_array dat_fft = data_array(block->dims[0], n_tims);
+data_array dat = data_array(dims[0], n_tims);
+data_array dat_fft = data_array(dims[0], n_tims);
 
 if(!dat.data or !dat_fft.data){
   cout<< "Bugger, data array allocation failed. Aborting."<<endl;
   return 0;
 }
-if(block->datatype_out != my_sdf_type){
-  cout<< "Bugger wrong data type, recompile...";
-  sdf_close(handle);
-  return 0;
-}
-
-strcpy(dat.block_id, block->id);
-strcpy(dat_fft.block_id, block->id);
-//set them to know what field they contain
-
+//Make arrays and check success.
 
 my_reader.read_data(&dat, tim_in, space_in);
-//bool read_data(data_array * my_data_in, int time_range[2], int space_range[2]);
+//read raw data and axes
 
-
-handle->current_block = block;
-sdf_read_data(handle);
-
-//sdf_close(handle);
-
-
-if(block->data){cout<<"Got data"<<endl;}
-else{
-  cout<<"uh OH!!! Read failed. Aborting"<<endl;
-  return 0;
-}
-
-
-float * my_ptr = (float *)block->data;
-
-int N = block->dims[0];
-
-//TODO this only works if my_type is a float...
-bool err2 =0;
-for(int i=0; i< n_tims; i++){
-
-  err2 = dat.populate_row(block->data, N, i);
-  if(err2) cout<<"Bugger!"<<endl;
-}
-
-//Check data in row matches up...
-cout<<"Chekcing"<<endl;
-cout<< my_ptr[0]<<" "<<dat.get_element(0,0)<<" "<<dat.get_element(0,1)<<endl;
-cout<< my_ptr[50]<<" "<<dat.get_element(50,0)<<" "<<dat.get_element(50,1)<<endl;
-
+/*
 float * tmp_dat;
 
 tmp_dat = (float*)malloc(N*sizeof(float));
@@ -156,41 +90,7 @@ for(int i=0; i<N ; i++) *(tmp_dat+i) = sin((float)i /25.0);
 
 for(int i=0; i< n_tims; i++) dat.populate_row(tmp_dat, N, i);
 
-cout<<" "<<dat.get_element(0,0)<<" "<<dat.get_element(100,0)<<" "<<dat.get_element(2048,0)<<" "<<dat.get_element(4095,0)<<endl;
-
-
-//now get the grids res.
-//and also grab two consecutive times to check t res?
-float x_res=0;
-
-block = sdf_find_block_by_id(handle, "grid");
-
-//checks type is plain i/e/ even gridded mesh
-if(block->blocktype != SDF_BLOCKTYPE_PLAIN_MESH){cout<< "Uh oh, grids look wrong"<<endl;}
-
-handle->current_block = block;
-sdf_read_data(handle);
-
-my_ptr = (float *)block->grids[0];
-if(my_ptr){x_res = my_ptr[1] - my_ptr[0];}
-cout<<"x resolution is "<<x_res<<endl;
-//gets x-axis resolution
-
-
-{
-my_type * ax_ptr;
-int len;
-
-ax_ptr = dat.get_axis(0, len);
-//TODO this only works right is my_type is float...
-memcpy ((void *)ax_ptr, block->grids[0], len*sizeof(my_type));
-
-dat.make_linear_axis(1, 1.0);
-//generate uniform t axis of res 1
-}
-
-
-sdf_close(handle);
+*/
 
 err = dat.fft_me(&dat_fft);
 
@@ -203,7 +103,7 @@ cout<<"FFT returned err_state "<<err<<endl;
 fstream file;
 file.open("Tmp.txt", ios::out|ios::binary);
 
-dat_fft.write_to_file(file);
+dat.write_to_file(file);
 //dat.write_to_file(file);
 
 file.close();

@@ -9,11 +9,24 @@
 #ifndef _support_h
 #define _support_h
 
-//#define FFTWX fftwf
+#define _USE_FLOAT
+//temporary. This should go to makefile
+
+#ifdef _USE_FLOAT
+
 #define ADD_FFTW(x) fftwf_ ## x
 #define cplx_type ADD_FFTW(complex)
 #define my_type float
 #define my_sdf_type 3
+
+#else
+
+#define ADD_FFTW(x) fftw_ ## x
+#define cplx_type ADD_FFTW(complex)
+#define my_type double
+#define my_sdf_type 4
+
+#endif
 /** These set up our types so we can easily recompile to work with doubles or floats. First adds correct FFTW library prefix, adjust to float or normal. Next defines suitable complex type. Third s working data type, and the last is set to suitable SDF data type matching my_type. Lets be sane, and assume we want the f libraries to work with float data, and the double to work with doubles. So we don't have extraneous copying and false precision.
 */
 

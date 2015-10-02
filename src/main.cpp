@@ -53,6 +53,12 @@ char block_id[10] = "ex";
 reader my_reader("", block_id);
 //reader(std::string file_prefix_in,  char * block_id_in){
 
+int tim_in[2], space_in[2];
+tim_in[0]=0;
+tim_in[1]=10;
+space_in[0]=0;
+space_in[1]=-1;
+
 
 
 sdf_file_t *handle = sdf_open("0001.sdf", MPI_COMM_WORLD, SDF_READ, 0);
@@ -105,6 +111,11 @@ if(block->datatype_out != my_sdf_type){
 strcpy(dat.block_id, block->id);
 strcpy(dat_fft.block_id, block->id);
 //set them to know what field they contain
+
+
+my_reader.read_data(&dat, tim_in, space_in);
+//bool read_data(data_array * my_data_in, int time_range[2], int space_range[2]);
+
 
 handle->current_block = block;
 sdf_read_data(handle);

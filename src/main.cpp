@@ -185,92 +185,10 @@ make_fft_axis(t_axis, n_tims, 1.0);
 
 sdf_close(handle);
 
-//TODO this should all be wrapped away into a function which takes an input and output data_array and performs all this...
-
-
 err = dat.fft_me(&dat_fft);
 
-cout<<err<<endl;
+cout<<"FFT returned err_state "<<err<<endl;
 
-/*
-fftwf_complex  *out;
-float * in, *result;
-my_type *result2;
-fftwf_plan p;
-
-int dims[4];
-
-dims[0] = N;
-dims[1] = n_tims;
-//in = (double*) fftw_malloc(sizeof(double) * N*n_tims);
-in = (float*) fftwf_malloc(sizeof(float) * N*n_tims);
-out = (fftwf_complex*) fftwf_malloc(sizeof(fftwf_complex) * N*n_tims);
-
-//copy because at the moment not a double... At some point we have to cast from the input type to double. May as well here.
-//Check worked OK
-
-cout<<"Checking type promotion"<<endl;
-cout<< in[0]<<" "<<in[N]<<" "<<dat.get_element(0,0)<<" "<<dat.get_element(0,1)<<endl;
-cout<< in[50]<<" "<<in[N+50]<<" "<<dat.get_element(50,0)<<" "<<dat.get_element(50,1)<<endl;
-
-
-//p = fftw_plan_dft_r2c_2d(N, n_tims, in, out, FFTW_ESTIMATE);
-//p = fftwf_plan_dft_r2c_1d(N, in, out, FFTW_MEASURE);
-
-int n_dim =1;
-//Dimension for FFT
-p = fftwf_plan_dft_r2c(n_dim, dims, in,out, FFTW_MEASURE);
-
-std::copy(dat.data, dat.data+N*n_tims, in);
-
-//fftwf_execute_dft_r2c(p, in, out);
-fftwf_execute(p);
-
-//result = (double*) fftw_malloc(sizeof(double) * N*n_tims);
-result2 = (my_type*) fftwf_malloc(sizeof(my_type) * N*n_tims);
-result = (float*) fftwf_malloc(sizeof(float) * N*n_tims);
-
-
-abs_square(out, result2, N*n_tims);
-
-fftwf_destroy_plan(p);
-fftwf_free(in);
-fftwf_free(out);
-
-//test_bes();
-
-//std::copy(result, result + N*n_tims, result2);
-//copy back to float. TODO fix this...
-
-cout<<"And demotion"<<endl;
-cout<< result[0]<<" "<<result2[0]<<endl;
-cout<<result[N]<<" "<<result2[N]<<endl;
-cout<< result[50]<<" "<<result2[50]<<endl;
-cout<<result[N+50]<<result2[N+50]<<" "<<endl;
-
-
-//copy into our data array, and add axes also
-for(int i=0; i< n_tims; i++) dat_fft.populate_row(result2 + N*i, N, i);
-
-dat_fft.populate_row(result2, N, 0);
-
-{
-my_type * ax_ptr;
-int len;
-
-ax_ptr = dat_fft.get_axis(0, len);
-memcpy ((void *)ax_ptr, x_axis, len*sizeof(my_type));
-
-ax_ptr = dat_fft.get_axis(1, len);
-memcpy ((void *)ax_ptr, t_axis, len*sizeof(my_type));
-
-}
-
-free(x_axis);
-free(t_axis);
-fftwf_free(result);
-fftwf_free(result2);
-*/
 
 //Right now we have our FFT'd data with its bounds and axes in a decent structure.
 //Next we write it to file to keep/visualise it

@@ -102,9 +102,10 @@ int tot_els=1;
 for(int i=0; i<n_dims;++i) tot_els *=dims[i];
 if(n_tot > tot_els) return 1;
 
-void * tmp = (void *) data;
+void * tmp = (void *) this->data;
 
 if(!tmp) return 1;
+
 memcpy (tmp , dat_in, n_tot*sizeof(my_type));
 
 return 0;
@@ -211,7 +212,6 @@ return 0;
 
 }
 
-
 std::string my_array::array_self_test(){
 
 bool err;
@@ -246,7 +246,6 @@ return ret;
 
 
 }
-
 
 data_array::data_array(int nx, int ny) : my_array(nx,ny){
 //Constructor calls constructor for my_array and adds its own axes
@@ -392,8 +391,12 @@ if(n_dims == 1){
   p = ADD_FFTW(plan_dft_r2c_2d)(dims[0], dims[1], in, out, FFTW_ESTIMATE);
 
 }else{
+  std::cout<<"FFT of more than 2-d arrays not added yet"<<std::endl;
   return 1;
 }
+
+//copy data into in. Because the plan creation changes in, so we don't want to feed our actual data array in, and it's safer to run the plan with the memory block it was created with
+std::copy(this->data, this->data+total_size, in);
 
 ADD_FFTW(execute)(p);
 //Execute the plan
@@ -401,7 +404,6 @@ ADD_FFTW(execute)(p);
 cplx_type * addr;
 addr = out;
 //because double indirection is messy and cplx type is currently a 2-element array of floats
-
 for(int i=0; i< total_size; i++){
   *(result+i) = (my_type)(((*addr)[0])*((*addr)[0]) + ((*addr)[1])*((*addr)[1])) ;
   addr++;
@@ -411,7 +413,11 @@ for(int i=0; i< total_size; i++){
 bool err;
 err = data_out->populate_data(result, total_size);
 //Copy result into out array
-std::cout<<err<<std::endl;
+
+if(err){
+  std::cout<<"Error populating result array "<<data_out<<std::endl;
+  return 1;
+}
 
 ADD_FFTW(destroy_plan)(p);
 ADD_FFTW(free)(in);
@@ -419,24 +425,23 @@ ADD_FFTW(free)(out);
 ADD_FFTW(free)(result);
 //Destroy stuff we don't need
 
-
 my_type * tmp_axis;
 float N2, res;
 int len;
 
 for(int i=0;i<n_dims;++i){
-//Loop over the dimensions and construct each axis in place. We KNOW now that data_out has correct dimensions. We checked before getting here. We don't need to check len. It is the same as dims[i] each time. We will anyway :)
-  N2 = ((float) dims[i])/2.0;
-  res = this->get_res(i);
+//Loop over the dimensions and construct each axis in place. We KNOW now that data_out has correct dimensions. We checked before getting here. We don't need to check len. It is the same as dims[i] each time. Perhaps we will anyway? :)
   tmp_axis = data_out->get_axis(i, len);
   if(len != dims[i]) return 1;
-  for(int j= 0; j< dims[i]; i++) *(tmp_axis + j) = pi * ((float)j - N2)/N2/res;
+
+  N2 = ((float) dims[i])/2.0;
+  res = this->get_res(i);
+  for(int j= 0; j< dims[i]; j++) *(tmp_axis + j) = pi * ((float)j - N2)/N2/res;
 }
 
 return 0;
 
 }
-
 
 float data_array::get_res(int i){
 //return resolution of axis on dimension i. Assumes linear etc etc
@@ -444,7 +449,6 @@ int len;
 my_type * axis = this->get_axis(i, len);
 
 return std::abs(axis[0]-axis[1]);
-
 
 }
 

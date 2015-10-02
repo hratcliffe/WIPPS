@@ -163,9 +163,8 @@ bool reader::read_data(data_array * my_data_in, int time_range[2], int space_ran
     handle->current_block = block;
     sdf_read_data(handle);
 
-    *(ax_ptr + i) = block->time;
+    *(ax_ptr + i) = handle->time;
     //save time of file
-
     if(!block->data) break;
 
     my_data_in->populate_row(block->data, dim, i-time_range[0]);

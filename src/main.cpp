@@ -111,8 +111,16 @@ int main(int argc, char *argv[]){
     file.close();
   */
 
-  spectrum * spect = new spectrum(4096);
+  int row_lengths[2];
+  row_lengths[0] = 4096;
+  row_lengths[1] = DEFAULT_N_ANG;
+  
+  spectrum * spect = new spectrum(row_lengths, 2);
   spect->make_test_spectrum();
+
+  file.open("Tmp_spectrum.txt", ios::out|ios::binary);
+  spect->write_to_file(file);
+  file.close();
 
   //Then we use that and try and calculate the Diffusion coeff.
 

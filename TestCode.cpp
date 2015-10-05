@@ -271,5 +271,23 @@ return ret;
 
 }
 
+spectrum::spectrum(int nx, data_array* parent):data_array(nx, 1){
+  //Assume by default we''l integrate over second dim...
+  //parent can be NULL. Caller knows if it isn't we assume. Then call can use first argument as parent->nx if valid. Etc
+//if parent not null we borrow the block id and first axis from it. We copy, not refer to same memory as we don't know when parent is destroyed.
+//And we have no need to keep all the parent data around, so we don't make this part of that
+
+if(parent){
+  strcpy(this->block_id, block_id);
+  
+  int len;
+  my_type * ax_ptr = parent->get_axis(0, len);
+  memcpy ((void *)this->axes, (void *)ax_ptr, len*sizeof(my_type));
+
+}
+
+}
+
+
 
 

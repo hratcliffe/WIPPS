@@ -33,6 +33,34 @@ my_array::my_array(int nx, int ny){
   if(data) defined = true;
   //Check allocation suceeded
 }
+
+my_array::my_array(int * row_len, int ny){
+//sets up ragged array with different row lengths
+
+  defined = false;
+  if(ny ==0) return;
+  n_dims = 2;
+  dims = (int*)malloc(n_dims*sizeof(int));
+  dims[0]=0;
+  dims[1]=ny;
+  ragged = true;
+
+  data = NULL;
+  this->row_lengths = (int*) malloc(ny*sizeof(int));
+  this->cumulative_row_lengths = (int*) malloc(ny*sizeof(int));
+
+  memcpy((void *) this->row_lengths, (void *)row_len, ny*sizeof(int));
+
+  cumulative_row_lengths[0] = 0;
+  //row_lengths[0];
+
+  for(int i=1; i<ny;++i) cumulative_row_lengths[i] = cumulative_row_lengths[i-1] + this->row_lengths[i-1];
+  
+  data=(my_type*)malloc((cumulative_row_lengths[ny-1] + row_lengths[ny-1])*sizeof(my_type));
+  if(data) defined = true;
+  //Check allocation suceeded
+}
+
 my_array::~my_array(){
 
   if(data) free(data);
@@ -44,7 +72,7 @@ my_type * my_array::get_ptr(int nx, int ny){
 
   int ind = get_index(nx, ny);
   if(ind  != -1){
-    return data+ ind; //*sizeof(my_type);
+    return data + ind; //*sizeof(my_type);
   }else{
     return NULL;
   }
@@ -54,10 +82,20 @@ my_type * my_array::get_ptr(int nx, int ny){
 int my_array::get_index(int nx, int ny){
   
   if(n_dims != 2) return 1;
-  if(nx < dims[0] && ny<dims[1]){
-    return ny*dims[0] + nx;
+  if(!ragged){
+    if((nx < dims[0]) && (ny<dims[1])){
+      return ny*dims[0] + nx;
+    }else{
+      return -1;
+    }
   }else{
-    return -1;
+    //have to check specific row length...
+    if((ny<dims[1]) && (nx < row_lengths[ny])){
+      return cumulative_row_lengths[ny] + nx;
+    }else{
+      return -1;
+    }
+  
   }
 }
 int my_array::get_dims(){return n_dims;}
@@ -90,18 +128,20 @@ bool my_array::set_element(int nx, int ny, int val){
     return 1;
   }
   
-
-
-
 }
 
 bool my_array::populate_data(my_type * dat_in, int n_tot){
 //Populates data with the total number of elements specified, as long as n_tot is less than the product of dims
 
-int tot_els=1;
-for(int i=0; i<n_dims;++i) tot_els *=dims[i];
-if(n_tot > tot_els) return 1;
+if(!ragged){
+  int tot_els=1;
+  for(int i=0; i<n_dims;++i) tot_els *=dims[i];
+  if(n_tot > tot_els) return 1;
+}else if(n_tot > cumulative_row_lengths[dims[n_dims-1]]+row_lengths[dims[n_dims-1]]){
+  return 1;
 
+  
+}
 void * tmp = (void *) this->data;
 
 if(!tmp) return 1;
@@ -144,14 +184,39 @@ file.write((char*) &tmp_vers, sizeof(char)*15);
 
 //Code version...
 
+int total_size;
 //dimension info
-file.write((char*) &n_dims, sizeof(int));
-int dim_tmp;
-for(int i=0;i<n_dims;i++){
-  dim_tmp = dims[i];
-  file.write((char*) &dim_tmp, sizeof(int));
+if(!ragged){
+  file.write((char*) &n_dims, sizeof(int));
+  int dim_tmp;
+  for(int i=0;i<n_dims;i++){
+    dim_tmp = dims[i];
+    file.write((char*) &dim_tmp, sizeof(int));
+  }
+  total_size = dims[0]*dims[1];
+}else{
+  //do different if we have ragged array...
+  int n_dims_new = -1*n_dims;
+  file.write((char*) &n_dims_new, sizeof(int));
+  int dim_tmp;
+    for(int i=0;i<n_dims;i++){
+    dim_tmp = dims[i];
+    file.write((char*) &dim_tmp, sizeof(int));
+  }
+
+  for(int i=0;i<dims[n_dims-1];i++){
+    dim_tmp = row_lengths[i];
+    file.write((char*) &dim_tmp, sizeof(int));
+  }
+
+  int ny = dims[n_dims-1];
+  total_size = cumulative_row_lengths[ny-1] + row_lengths[ny-1];
+  //std::cout<< ny<<cumulative_row_lengths[ny-1]<<row_lengths[ny-1]<<total_size<<std::endl;
+
 }
-file.write((char *) data , sizeof(my_type)*dims[0]*dims[1]);
+
+std::cout<<"Size is "<<total_size<<std::endl;
+file.write((char *) data , sizeof(my_type)*total_size);
 
 return 0;
 
@@ -253,6 +318,15 @@ data_array::data_array(int nx, int ny) : my_array(nx,ny){
   axes=(my_type*)malloc((nx+ny)*sizeof(my_type));
   if(axes) ax_defined=true;
 }
+
+data_array::data_array(int * row_lengths, int ny): my_array(row_lengths,ny){
+//Constructor calls constructor for my_array and adds its own axes
+//Axes in this case are one per row...
+  ax_defined = false;
+  axes=(my_type*)malloc((cumulative_row_lengths[dims[n_dims-1]]+row_lengths[dims[n_dims-1]])*sizeof(my_type));
+  if(axes) ax_defined=true;
+}
+
 
 data_array::~data_array(){
 //Similarly destructor automatically calls destructor for my_array and frees axes

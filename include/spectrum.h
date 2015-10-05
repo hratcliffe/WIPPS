@@ -42,12 +42,12 @@ int function_type;
 
 int n_angs;
 
-
+my_type * ang_data;
 //We can't hold parent ID, as we don't know when parent might be destroyed...
 
-spectrum(int nx);
+//spectrum(int nx);
 spectrum(int nx, int n_ang);
-spectrum(int nx, data_array* parent);
+spectrum(int * row_lengths, int ny);
 
 void set_ids(float time1, float time2, int space1, int space2, int wave_id, char block_id[10], int function_type=FUNCTION_DELTA);
 
@@ -58,6 +58,8 @@ float get_dispersion(my_type k, int wave_type);
 my_type * get_angle_distrib(my_type ang,int &len, my_type omega);
 
 int where(my_type * ax_ptr, int len, my_type target);
+
+bool write_to_file(std::fstream &file);
 
 void make_test_spectrum();
 };

@@ -30,11 +30,17 @@ int * dims;
 bool defined;
 //flag to check memory allocation sucess
 
+bool ragged;
+//Flag for if array has different lengths on each row...
+int * row_lengths;
+int * cumulative_row_lengths;
+//Offset to start of given row...
 public:
 
 my_type *data;
 
 my_array(int nx, int ny);
+my_array(int * row_lengths, int ny);
 ~my_array();
 
 bool is_good(){return !defined;}
@@ -79,6 +85,7 @@ int space[2];
 //space range ditto
 
 data_array(int nx, int ny);
+data_array(int * row_lengths, int ny);
 ~data_array();
 
 bool is_good(){return defined && ax_defined;}
@@ -94,6 +101,7 @@ my_type * get_chunk();
 //To get say a set of rows?
 
 bool write_to_file(std::fstream &file);
+/** \todo Make mpi safe.. */
 bool read_from_file(std::fstream &file);
 
 bool fft_me(data_array * data_out);

@@ -24,7 +24,8 @@ commit_in = commit_type
 
 int_type = 1
 
-openr, 1, "Tmp.txt"
+openr, 1, filename
+;"Tmp.txt"
 ;open file
 
 readu, 1, id_in
@@ -34,34 +35,28 @@ readu, 1, commit_in
 n_dims = int_type
 readu, 1, n_dims
 
-dims = lonarr(n_dims)
+if(n_dims GT 0) THEN BEGIN
+  dims = lonarr(n_dims)
+  readu, 1, dims
+  IF my_type_code EQ 'f' THEN BEGIN
+    axes_list = {k:fltarr(dims[0]), omega:fltarr(dims[1])}
+    data = {id:id_in,data:fltarr(dims[0], dims[1]), axes:axes_list}
+  ENDIF ELSE BEGIN
+    axes_list = {k:dblarr(dims[0]), omega:dblarr(dims[1])}
+    data = {id:id_in,data:dblarr(dims[0], dims[1]), axes:axes_list}
+  ENDELSE
 
-readu, 1, dims
+  ;Now we do need the right majority...
 
-IF my_type_code EQ 'f' THEN BEGIN
-  axes_list = {k:fltarr(dims[0]), omega:fltarr(dims[1])}
-  data = {id:id_in,data:fltarr(dims[0], dims[1]), axes:axes_list}
+  tmp2=fltarr(dims[0], dims[1])
+  ;Can't read directly into anon structure field, so use tmp
+  readu, 1, tmp2
+  data.data = tmp2
+  tmp2=0
 ENDIF ELSE BEGIN
-  axes_list = {k:dblarr(dims[0]), omega:dblarr(dims[1])}
-  data = {id:id_in,data:dblarr(dims[0], dims[1]), axes:axes_list}
+  print, "Array is ragged. Use read_ragged.pro"
+
 ENDELSE
-;Now we do need the right majority...
-
-tmp2=fltarr(dims[0], dims[1])
-;Can't read directly into anon structure field, so use tmp
-readu, 1, tmp2
-data.data = tmp2
-tmp2=0
-
-;FOR i=0, dims[1] -1 DO BEGIN
-;  FOR j=0, dims[0] -1 DO BEGIN
-;    readu, 1, tmp
-;    data.data[i,j] = tmp
-;  END
-;END
-;file.read((char *) data_tmp , sizeof(my_type)*dims[0]*dims[1]);
-
-;readu, 1, data.data
 
 ;EXPLICTLY 2-D here
 tmpa=fltarr(dims[0])

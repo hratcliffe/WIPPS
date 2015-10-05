@@ -7,6 +7,9 @@
 //
 
 #include <stdio.h>
+#include <fstream>
+#include <iostream>
+#include <iomanip>
 #include "support.h"
 #include "my_array.h"
 #include "spectrum.h"
@@ -18,13 +21,14 @@ extern deck_constants my_const;
 //or vice versa?
 
 
-spectrum::spectrum(int nx):data_array(nx+DEFAULT_N_ANG, 1){
+spectrum::spectrum(int * row_lengths, int ny):data_array(row_lengths, ny){
+//:data_array(nx+ DEFAULT_N_ANG, 1){
   //Assume by default we''l integrate over second dim...
 
-angle_is_function = true;
-//angle profile will be specified as a function and any val is product spect(omega, theta) = B^2(omega) * g(theta). So we only need 2 one-d arrays
-n_angs = DEFAULT_N_ANG;
-function_type = FUNCTION_DELTA;
+  angle_is_function = true;
+  //angle profile will be specified as a function and any val is product spect(omega, theta) = B^2(omega) * g(theta). So we only need 2 one-d arrays The second one is then added here only...
+  n_angs = row_lengths[1];
+  function_type = FUNCTION_DELTA;
 
 }
 
@@ -36,23 +40,6 @@ angle_is_function = false;
 //angle profile is array, spect(omega, theta) = B^2(omega) * g(theta, omega). So we need a full nx by n_ang array for g, and an extra row for B^2
 n_angs = n_ang;
 
-
-}
-
-spectrum::spectrum(int nx, data_array* parent):data_array(nx, 1){
-  //Assume by default we''l integrate over second dim...
-  //parent can be NULL. Caller knows if it isn't we assume. Then call can use first argument as parent->nx if valid. Etc
-//if parent not null we borrow the block id and first axis from it. We copy, not refer to same memory as we don't know when parent is destroyed.
-//And we have no need to keep all the parent data around, so we don't make this part of that
-
-if(parent){
-  strcpy(this->block_id, block_id);
-  
-  int len;
-  my_type * ax_ptr = parent->get_axis(0, len);
-  memcpy ((void *)this->axes, (void *)ax_ptr, len*sizeof(my_type));
-
-}
 
 }
 
@@ -226,14 +213,52 @@ int spectrum::where(my_type * ax_ptr, int len, my_type target){
 
 }
 
+bool spectrum::write_to_file(std::fstream &file){
+
+/**IMPORTANT: the VERSION specifier links output files to code. If modifying output or order commit and clean build before using.
+*/
+data_array::write_to_file(file);
+//call base class method to write that data.
+//Anything else to add?
+//Sepctrum flag is then first, then stuff...
+
+
+//file.write((char *) axes , sizeof(my_type)*(dims[0]+dims[1]));
+//Add axes.
+
+return 0;
+
+}
+
+
 void spectrum::make_test_spectrum(){
 /**Makes a basic spectrum object with suitable number of points, and twin, symmetric Gaussians centred at fixed x.
 */
 
-char id[10] = "ex";
-//id[0] = 'e'; id[1]='x';
+  char id[10] = "ex";
 
-this->set_ids(0, 100, 0, dims[0], WAVE_WHISTLER, id);
+  this->set_ids(0, 100, 0, dims[0], WAVE_WHISTLER, id);
+  
+  //Generate the angle function data.
+  if(function_type == FUNCTION_DELTA){
+  //Approx delta function, round k_ll. I.e. one cell only. And size is 1/d theta
+    int res = 1;
+    for(int i=1; i<this->dims[0]; ++i) this->set_element(i,1,0);
+    //zero all other elements
+    float val;
+    val = 1.0/res;
+    //TODO this is wrong value. Wants to make integral 1...
+    this->set_element(0, 1, val);
+  }else if(function_type == FUNCTION_GAUSS){
+
+
+  }else{
+
+  }
+  //Generate the positive k data
+  
+  
+  //Mirror onto -ve k
 
 
 }

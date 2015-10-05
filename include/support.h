@@ -53,6 +53,12 @@ struct deck_constants{
 
 };
 
+struct mpi_info_struc{
+
+  int rank;
+  int n_procs;
+};
+
 const int DEFAULT_N_ANG = 100;
 
 

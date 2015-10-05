@@ -1,6 +1,7 @@
 /** \file main.cpp \brief Main program
 *
 * This should: open a sequence of SDF files using the SDF library and read E and B field data. Fourier transform it. Extract frequency/wavenumber and angular spectra (if possible). Calculate the resulting particle diffusion coefficients using Lyons 1974 a, b, Albert 2005 and such.
+* Depends on the SDF file libraries, the FFTW library, and boost's math for special functions.
   \author Heather Ratcliffe \date 18/09/2015.
 */
 
@@ -28,156 +29,99 @@ using namespace std;
 
 deck_constants my_const;/*< Physical constants*/
 
+mpi_info_struc mpi_info;
 
-void abs_square( cplx_type * array, double * out, int nx);
-void abs_square( cplx_type * array, float * out, int nx);
-void make_fft_axis(my_type * ax, int N, float res, int offset =0);
+void get_deck_constants();
+
 void test_bes();
-spectrum * make_test_spectrum();
+
+void my_print(std::string text, int rank, int rank_to_write=0);
+
+std::string mk_str(int i);/**<Converts int to string*/
+std::string mk_str(bool b);/**<Converts bool to string*/
+std::string mk_str(size_t i){ return mk_str((int) i);} /**<Converts size_t to string*/
+
 
 int main(int argc, char *argv[]){
-
-
-cout<<"Code Version: "<<VERSION<<endl;
-
-//TODO maybe we write a verify sdf which checks our files have the correct dimensionalities etc etc and contain needed blocks...
-
-int ierr, my_id, num_procs;
-int err;
-ierr = MPI_Init(&argc, &argv);
-ierr = MPI_Comm_rank(MPI_COMM_WORLD, &my_id);
-ierr = MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
-
-
-char block_id[10] = "ex";
-reader my_reader("", block_id);
-//reader(std::string file_prefix_in,  char * block_id_in){
-
-int tim_in[2], space_in[2];
-tim_in[0]=0;
-tim_in[1]=10;
-space_in[0]=0;
-space_in[1]=-1;
-
-int n_tims = max(tim_in[1]-tim_in[0], 1);
-
-int n_dims;
-std::vector<int> dims;
-my_reader.read_dims(n_dims, dims);
-
-if(n_dims !=1) return 1;
-//for now abort if data file wrong size...
-
-data_array dat = data_array(dims[0], n_tims);
-data_array dat_fft = data_array(dims[0], n_tims);
-
-if(!dat.data or !dat_fft.data){
-  cout<< "Bugger, data array allocation failed. Aborting."<<endl;
-  return 0;
-}
-//Make arrays and check success.
-
-my_reader.read_data(&dat, tim_in, space_in);
-//read raw data and axes
-
-/*
-float * tmp_dat;
-
-tmp_dat = (float*)malloc(N*sizeof(float));
-for(int i=0; i<N ; i++) *(tmp_dat+i) = sin((float)i /25.0);
-//sin(x/2500.0)
-//Now we generate some sine data instead to test FFT
-
-for(int i=0; i< n_tims; i++) dat.populate_row(tmp_dat, N, i);
-
+/**
+*In theory, these classes and functions should be named well enough that the function here is largely clear. Remains to be seen, eh?
+*
 */
 
-err = dat.fft_me(&dat_fft);
 
-cout<<"FFT returned err_state "<<err<<endl;
+  int ierr,err;
+  
+{
+  int rank, n_procs;
+  ierr = MPI_Init(&argc, &argv);
+  ierr = MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  ierr = MPI_Comm_size(MPI_COMM_WORLD, &n_procs);
 
-
-//Right now we have our FFT'd data with its bounds and axes in a decent structure.
-//Next we write it to file to keep/visualise it
-
-fstream file;
-file.open("Tmp.txt", ios::out|ios::binary);
-
-dat.write_to_file(file);
-//dat.write_to_file(file);
-
-file.close();
-
-//file.open("Tmp_dat.txt", ios::in|ios::binary);
-
-//dat.read_from_file(file);
-
-//file.close();
-
-
-
-//Then we lineout and extract a wave spectrum
-//Lets have a spectrum class then
-//Contains data, axis, sizes, ids (field, time range, space range)
-///HMMM. how to do angles?
-//Relax seperability assumption so make it 2-d again....
-
-//TODO modify spectrum to hold angle info.
-
-
-spectrum * spect;
-spect = make_test_spectrum();
-
-//Then we use that and try and calculate the Diffusion coeff.
-
-
-
-
+  mpi_info.rank = rank;
+  mpi_info.n_procs = n_procs;
 }
 
-//elements wise ops so treat as long 1-d arrray. nx should be total length product(dims). Input is pointer, needs to be to pre-defined memory of apporpireate size. We'll move all this inside our arrays later
-void abs_square( cplx_type * array, double * out, int nx){
+  my_print(std::string("Code Version: ")+ VERSION, mpi_info.rank);
+  my_print("Code is running on "+mk_str(mpi_info.n_procs)+" processing elements.", mpi_info.rank);
 
-cplx_type * addr = array;
-//because double indirection is messy and cplx type is currently a 2-element array of doubles (maybe floats. So cast explicitly)
+  get_deck_constants();
 
-for(int i=0; i< nx; i++){
-//  addr = (array + i);
-  *(out+i) = (double)(((*addr)[0])*((*addr)[0]) + ((*addr)[1])*((*addr)[1])) ;
+  char block_id[10] = "ex";
+  reader * my_reader = new reader("", block_id);
 
-  addr++;
+  int tim_in[2], space_in[2];
+  tim_in[0]=0;
+  tim_in[1]=10;
+  space_in[0]=0;
+  space_in[1]=-1;
+  /** \todo These should be specifiable via command line args */
 
+  int n_tims = max(tim_in[1]-tim_in[0], 1);
+
+  int n_dims;
+  std::vector<int> dims;
+  my_reader->read_dims(n_dims, dims);
+
+  if(n_dims !=1) return 1;
+  //for now abort if data file wrong size...
+
+  data_array dat = data_array(dims[0], n_tims);
+  data_array dat_fft = data_array(dims[0], n_tims);
+
+  if(!dat.data or !dat_fft.data){
+//    cout<< "Bugger, data array allocation failed. Aborting."<<endl;
+    my_print("Bugger, data array allocation failed. Aborting.", mpi_info.rank);
+    return 0;
+  }
+
+  my_reader->read_data(&dat, tim_in, space_in);
+
+  err = dat.fft_me(&dat_fft);
+//  cout<<"FFT returned err_state "<<err<<endl;
+  my_print("FFT returned err_state " + mk_str(err), mpi_info.rank);
+
+  fstream file;
+  file.open("Tmp.txt", ios::out|ios::binary);
+  dat.write_to_file(file);
+  file.close();
+
+
+  /*  file.open("Tmp_dat.txt", ios::in|ios::binary);
+    dat.read_from_file(file);
+    file.close();
+  */
+
+  spectrum * spect = new spectrum(4096);
+  spect->make_test_spectrum();
+
+  //Then we use that and try and calculate the Diffusion coeff.
+
+
+
+  delete spect;
+  delete my_reader;
 }
 
-}
-
-void abs_square( cplx_type * array, float * out, int nx){
-
-cplx_type * addr = array;
-//because double indirection is messy and cplx type is currently a 2-element array of floats
-
-for(int i=0; i< nx; i++){
-  *(out+i) = (float)(((*addr)[0])*((*addr)[0]) + ((*addr)[1])*((*addr)[1])) ;
-  addr++;
-
-}
-
-}
-
-void make_fft_axis(my_type * ax, int N, float res, int offset){
-//construct an fft'd axis of length N, from the original resolution. Units normed as input res.
-//offset bevcause our axis array is one long consecutive 1-d one. Default is 0
-//n_x2=float(n_pts)/2.
-//ax=!pi*(findgen(n_pts)-n_x2)/n_x2/res
-
-float N2;
-N2 = ((float) N)/2.0;
-
-//for(float i= -1* N2; i< N2; i++) *(ax + (int)i) = pi * i/N2/res;
-for(int i= 0; i< N; i++) *(ax + i + offset) = pi * ((float)i - N2)/N2/res;
-
-
-}
 
 void test_bes(){
 //test code using bessel funtion. Output values should be zeros.
@@ -217,27 +161,41 @@ cout<<bess-0.7651976865579665514497<<endl;
 }
 
 void get_deck_constants(){
-//read deck.status and extract values for omega_ce, pe, vtherm etc
-//TODO write this....
-
-//NOTE any changes to the deck will need this modifying here....
+/** \brief Setup run specific constants
+*
+*This will read deck.status and parse values for user defined constants etc. It will rely on using the specific deck, because it has to look for names. Any changes to deck may need updating here. \todo Write it.
+*/
 
 my_const.omega_ce = 17588.200878;
 my_const.omega_pe = 35176.401757;
 
 }
 
-spectrum * make_test_spectrum(){
-//makes a basic spectrum object with suitable number of points, and twin, symmetric Gaussians centred at fixed x.
-
-spectrum * ret;
-char id[10];
-id[0] = 'e'; id[1]='x';
-
-ret = new spectrum(4096);
-ret->set_ids(0, 100, 0, 4096, 1, id);
-
-return ret;
-
+void my_print(std::string text, int rank, int rank_to_write){
+/** \brief Write output
+*
+* Currently dump to term. Perhaps also to log file. Accomodates MPI also.
+*/
+  if(rank == rank_to_write){
+  
+    std::cout<< text<<std::endl;
+  }
 
 }
+
+std::string mk_str(int i){
+
+  char buffer[25];
+  std::sprintf(buffer, "%i", i);
+  std::string ret = buffer;
+  return ret;
+  
+}
+
+std::string mk_str(bool b){
+
+  if(b) return "1";
+  else return "0";
+
+}
+

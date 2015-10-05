@@ -59,6 +59,7 @@ my_type * get_angle_distrib(my_type ang,int &len, my_type omega);
 
 int where(my_type * ax_ptr, int len, my_type target);
 
+void make_test_spectrum();
 };
 
 

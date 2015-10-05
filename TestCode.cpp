@@ -174,3 +174,102 @@ fftwf_free(result);
 fftwf_free(result2);
 */
 
+/*
+arrayl<float> dat1;
+arrayl<double> dat2;
+
+if(block-> datatype_out == SDF_DATATYPE_REAL4) arrayl<float> dat1;
+else if (block-> datatype_out == SDF_DATATYPE_REAL8) arrayl<double> dat1;
+
+*/
+//sdf_stack_free(handle);
+//stack_free((stack_handle_t * )handle->stack_handle);
+
+  /*
+  float * tmp_dat;
+
+  tmp_dat = (float*)malloc(N*sizeof(float));
+  for(int i=0; i<N ; i++) *(tmp_dat+i) = sin((float)i /25.0);
+  //sin(x/2500.0)
+  //Now we generate some sine data instead to test FFT
+
+  for(int i=0; i< n_tims; i++) dat.populate_row(tmp_dat, N, i);
+
+  */
+
+
+void abs_square( cplx_type * array, double * out, int nx);
+void abs_square( cplx_type * array, float * out, int nx);
+void make_fft_axis(my_type * ax, int N, float res, int offset =0);
+
+//elements wise ops so treat as long 1-d arrray. nx should be total length product(dims). Input is pointer, needs to be to pre-defined memory of apporpireate size. We'll move all this inside our arrays later
+void abs_square( cplx_type * array, double * out, int nx){
+
+cplx_type * addr = array;
+//because double indirection is messy and cplx type is currently a 2-element array of doubles (maybe floats. So cast explicitly)
+
+for(int i=0; i< nx; i++){
+//  addr = (array + i);
+  *(out+i) = (double)(((*addr)[0])*((*addr)[0]) + ((*addr)[1])*((*addr)[1])) ;
+
+  addr++;
+
+}
+
+}
+
+void abs_square( cplx_type * array, float * out, int nx){
+
+cplx_type * addr = array;
+//because double indirection is messy and cplx type is currently a 2-element array of floats
+
+for(int i=0; i< nx; i++){
+  *(out+i) = (float)(((*addr)[0])*((*addr)[0]) + ((*addr)[1])*((*addr)[1])) ;
+  addr++;
+
+}
+
+}
+
+void make_fft_axis(my_type * ax, int N, float res, int offset){
+//construct an fft'd axis of length N, from the original resolution. Units normed as input res.
+//offset bevcause our axis array is one long consecutive 1-d one. Default is 0
+//n_x2=float(n_pts)/2.
+//ax=!pi*(findgen(n_pts)-n_x2)/n_x2/res
+
+float N2;
+N2 = ((float) N)/2.0;
+
+//for(float i= -1* N2; i< N2; i++) *(ax + (int)i) = pi * i/N2/res;
+for(int i= 0; i< N; i++) *(ax + i + offset) = pi * ((float)i - N2)/N2/res;
+
+
+}
+
+void delete_test_spectrum(spectrum *&spect){
+/**Deletes the test spectrum. Pointer passed by refence because we null it. Function because we don't need to know how we made it in main then
+*/
+
+if(spect) delete spect;
+spect = NULL;
+
+}
+
+spectrum * make_test_spectrum(){
+/**Makes a basic spectrum object with suitable number of points, and twin, symmetric Gaussians centred at fixed x.
+*/
+spectrum * ret;
+char id[10];
+id[0] = 'e'; id[1]='x';
+
+ret = new spectrum(4096);
+ret->set_ids(0, 100, 0, 4096, 1, id);
+
+
+return ret;
+
+
+}
+
+
+

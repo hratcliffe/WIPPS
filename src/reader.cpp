@@ -18,11 +18,17 @@
 
 
 
-/** This is going to take care of openeing and reading from SDF. We'll give it a pointer to a storage class instance, and it can then use that to obtain pointer to the bit of memory to fill. We'll also give it a numerical range, a file prefix, and a block name to grab. Perhaps we also have option to restrict on the ranges, so we can easily block in space.
+/** This is going to take care of opening and reading from SDF. We'll give it a pointer to a storage class instance, and it can then use that to obtain pointer to the bit of memory to fill. We'll also give it a numerical range, a file prefix, and a block name to grab. Perhaps we also have option to restrict on the ranges, so we can easily block in space.
 *
-*It will be sort of safe. It wont store the data array to write to, but will need to be fed it. So we can;t overwrite the memory.
+*It will be sort of safe. It wont store the data array to write to, but will need to be fed it. So we can't overwrite the wrong memory. \todo maybe we write a verify sdf which checks our files have the correct dimensionalities etc etc and contain needed blocks...
+
 *
 */
+
+extern mpi_info_struc mpi_info;
+void my_print(std::string text, int rank, int rank_to_write=0);
+std::string mk_str(int i);/**<Converts int to string*/
+
 
 reader::reader(std::string file_prefix_in,  char * block_id_in){
 /**We'll also have to work out how many zeros to use at some point. For nw we'll do it when we make the reader eh, as that's where we assign the prefix. We'll assume a 0th file exists, and default and minimum is 4. We'll also try 5-7.
@@ -45,36 +51,39 @@ reader::reader(std::string file_prefix_in,  char * block_id_in){
 }
 
 bool reader::read_dims(int &n_dims, std::vector<int> &dims){
+/** \brief Gets dimensions of the block specified in reader.
+*
+*Opens 0th file, and gets dimension info. Returns by reference, with 0 for success, 1 for file open or read failure. Note we don't have to read the data, only the block list.
 
-//opens 0th file, gets dimension info so we can construct an array.... Note we don't have to read the data, only the block list.
+*/
   char fmt[5];
   char file_num[10];
   sprintf(fmt,"%s%d%c" , "%0", n_z, 'd');
   snprintf(file_num, 10, fmt, 0);
   std::string file_name = file_prefix + file_num +".sdf";
 
-  std::cout<<"Opening "<<file_name<<std::endl;
-  
+ // std::cout<<"Opening "<<file_name<<std::endl;
+//  std::cout<<"Getting dimensions"<<std::endl;
+  my_print("Getting dimensions", mpi_info.rank);
   sdf_file_t *handle = sdf_open(file_name.c_str(), MPI_COMM_WORLD, SDF_READ, 0);
 
   sdf_block_t * block;
 
-  if(handle){std::cout<<"Success! File opened"<<std::endl;}
+  if(handle){my_print("Success! File opened", mpi_info.rank);}
   else{
-    std::cout<<"Bleh. File open error. Aborting"<<std::endl;
+    my_print("Bleh. File open error. Aborting", mpi_info.rank);
     return 1;
   }
 
   bool err=sdf_read_blocklist(handle);
-  if(!err){std::cout<<"Yay! Blocks read"<<std::endl;}
-  else{std::cout<<"Bum. Block read failed"<<std::endl;}
-
+  if(!err) my_print("Yay! Blocks read", mpi_info.rank);
+  else my_print("Bum. Block read failed", mpi_info.rank);
 
   block = sdf_find_block_by_id(handle, this->block_id);
 
-  if(block){std::cout<<"Success!!! Requested block found"<<std::endl;}
+  if(block) my_print("Success!!! Requested block found", mpi_info.rank);
   else{
-    std::cout<<"Bleh. Requested block not found. Aborting"<<std::endl;
+    my_print("Bleh. Requested block not found. Aborting", mpi_info.rank);
     return 1;
   }
 
@@ -120,7 +129,7 @@ bool reader::read_data(data_array * my_data_in, int time_range[2], int space_ran
   snprintf(file_num, 10, fmt, time_range[0]);
   file_name = file_prefix + file_num +".sdf";
 
-  std::cout<<"Opening "<<file_name<<std::endl;
+  //std::cout<<"Opening "<<file_name<<std::endl;
   
   handle = sdf_open(file_name.c_str(), MPI_COMM_WORLD, SDF_READ, 0);
   if(!handle) return 1;
@@ -132,8 +141,9 @@ bool reader::read_data(data_array * my_data_in, int time_range[2], int space_ran
   handle->current_block = block;
 
   //checks type is plain i/e/ even gridded mesh
-  if(block->blocktype != SDF_BLOCKTYPE_PLAIN_MESH){std::cout<< "Uh oh, grids look wrong"<<std::endl;}
-
+  if(block->blocktype != SDF_BLOCKTYPE_PLAIN_MESH){
+    my_print("Uh oh, grids look wrong", mpi_info.rank);
+  }
   sdf_read_data(handle);
 
   ax_ptr = my_data_in->get_axis(0, len);
@@ -145,13 +155,23 @@ bool reader::read_data(data_array * my_data_in, int time_range[2], int space_ran
   //pointer to last axis, which will be time
 
   int i;
+  int last_report=0;
+  int report_interval = (time_range[1]-time_range[0])/10;
+  if(report_interval > 20) report_interval = 20;
+  if(report_interval < 1) report_interval = 1;
+    //Say we want to report 10 times over the list, or every 20th file if  more than 200.
+
   //now loop over files and get actual data
   for(i=time_range[0]; i<time_range[1];++i){
 
     snprintf(file_num, 10, fmt, i);
     file_name = file_prefix + file_num +".sdf";
 
-    std::cout<<"Opening "<<file_name<<std::endl;
+    if((i-last_report) >= report_interval){
+      my_print("Opening " + file_name, mpi_info.rank);
+
+      last_report = i;
+    }
   
     handle = sdf_open(file_name.c_str(), MPI_COMM_WORLD, SDF_READ, 0);
     if(!handle) break;
@@ -176,7 +196,7 @@ bool reader::read_data(data_array * my_data_in, int time_range[2], int space_ran
 //report if we broke out of loop and print filename
 
   if(i < time_range[1]-1){
-    std::cout<<"Read stopped by error at file "<<file_name<<std::endl;
+    my_print("Read stopped by error at file "+file_name, mpi_info.rank);
     return 1;
   }
 

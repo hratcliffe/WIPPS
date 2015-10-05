@@ -225,3 +225,15 @@ int spectrum::where(my_type * ax_ptr, int len, my_type target){
   return j;
 
 }
+
+void spectrum::make_test_spectrum(){
+/**Makes a basic spectrum object with suitable number of points, and twin, symmetric Gaussians centred at fixed x.
+*/
+
+char id[10] = "ex";
+//id[0] = 'e'; id[1]='x';
+
+this->set_ids(0, 100, 0, dims[0], WAVE_WHISTLER, id);
+
+
+}

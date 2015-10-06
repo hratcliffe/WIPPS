@@ -11,6 +11,7 @@
 #include <fstream>
 #include <iostream>
 #include <iomanip>
+#include <cstdlib>
 #include "support.h"
 #include "my_array.h"
 #include <complex.h>
@@ -28,7 +29,7 @@ my_array::my_array(int nx, int ny){
   dims[1]=ny;
   data = NULL;
 
-  data=(my_type*)malloc(nx*ny*sizeof(my_type));
+  data=(my_type*)calloc(nx*ny,sizeof(my_type));
 
   if(data) defined = true;
   //Check allocation suceeded
@@ -56,7 +57,7 @@ my_array::my_array(int * row_len, int ny){
 
   for(int i=1; i<ny;++i) cumulative_row_lengths[i] = cumulative_row_lengths[i-1] + this->row_lengths[i-1];
   
-  data=(my_type*)malloc((cumulative_row_lengths[ny-1] + row_lengths[ny-1])*sizeof(my_type));
+  data=(my_type*)calloc((cumulative_row_lengths[ny-1] + row_lengths[ny-1]), sizeof(my_type));
   if(data) defined = true;
   //Check allocation suceeded
 }
@@ -315,7 +316,7 @@ return ret;
 data_array::data_array(int nx, int ny) : my_array(nx,ny){
 //Constructor calls constructor for my_array and adds its own axes
   ax_defined = false;
-  axes=(my_type*)malloc((nx+ny)*sizeof(my_type));
+  axes=(my_type*)calloc((nx+ny),sizeof(my_type));
   if(axes) ax_defined=true;
 }
 

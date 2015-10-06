@@ -49,6 +49,7 @@ if(n_dims LT 0) THEN BEGIN
     FOR i=0, dims[1]-1 DO BEGIN
       tmp = fltarr(lengths[i])
       readu, 1, tmp
+      print, minmax(tmp)
       data_list[i] = tmp
     END
     axes_list = {k:fltarr(1), omega:fltarr(dims[1])}
@@ -63,7 +64,6 @@ if(n_dims LT 0) THEN BEGIN
     axes_list = {k:dblarr(dims[0]), omega:dblarr(dims[1])}
   ENDELSE
 
-;Now we read into data list sequenitlally.
   data = {id:id_in,data:data_list, axes:axes_list}
 
 
@@ -74,6 +74,6 @@ ENDIF ELSE BEGIN
 
 ENDELSE
 
-
+close, 1
 
 end

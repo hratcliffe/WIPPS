@@ -55,7 +55,7 @@ int get_dims(int dim);
 
 
 my_type get_element(int nx, int ny);
-bool set_element(int nx, int ny, int val);
+bool set_element(int nx, int ny, my_type val);
 
 bool populate_data(my_type * dat_in, int n_tot);
 bool populate_row(void * dat_in, int nx, int y_row);

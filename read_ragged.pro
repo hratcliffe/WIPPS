@@ -9,7 +9,7 @@ my_type = 0.0
 ;this matches the type of the C code my_type...
 ;Usually float or double. Set code to f for float, d for double...
 
-id_type ='12345678910'
+id_type ='1234567891'
 id_in = id_type
 ;type for block id...
 
@@ -30,6 +30,13 @@ openr, 1, filename
 
 readu, 1, id_in
 readu, 1, io_in
+IF(abs(io_in - io_check) GT 0.001) THEN BEGIN
+  close, 1
+  print, "File read error!"
+  ;return
+  stop
+ENDIF
+
 readu, 1, commit_in
 
 n_dims = int_type

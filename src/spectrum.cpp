@@ -244,7 +244,7 @@ void spectrum::make_test_spectrum(){
   if(function_type == FUNCTION_DELTA){
   //Approx delta function, round k_ll. I.e. one cell only. And size is 1/d theta
     float res = 2.0;
-    for(int i=1; i<this->dims[0]; ++i) this->set_element(i,1,0);
+    for(int i=1; i<this->row_lengths[1]; ++i) this->set_element(i,1,10);
     //zero all other elements
     float val;
     val = 1.0/res;

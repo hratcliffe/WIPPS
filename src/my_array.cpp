@@ -150,14 +150,14 @@ int my_array::get_total_elements(){
 
 }
 
-bool my_array::set_element(int nx, int ny, int val){
+bool my_array::set_element(int nx, int ny, my_type val){
   /** \brief Sets array element
   *
   *Sets elements at nx, ny, and returns 1 if out of range, wrong number of args, 0 else.
   */
 
   int index = get_index(nx, ny);
-  if(index > 0){
+  if(index >= 0){
     data[index] = val;
     return 0;
   }else{

@@ -26,8 +26,8 @@
 */
 
 extern mpi_info_struc mpi_info;
-void my_print(std::string text, int rank, int rank_to_write=0);
-std::string mk_str(int i);/**<Converts int to string*/
+//void my_print(std::string text, int rank, int rank_to_write=0);
+//std::string mk_str(int i);/**<Converts int to string*/
 
 
 reader::reader(std::string file_prefix_in,  char * block_id_in){
@@ -106,7 +106,7 @@ bool reader::read_data(data_array * my_data_in, int time_range[2], int space_ran
   if(space_range[0]==-1) space_range[0] = 0;
   if(space_range[1]==-1) space_range[1] = dim;
   
-  std::cout<<space_range[0]<<" "<<space_range[1]<<std::endl;
+  //std::cout<<space_range[0]<<" "<<space_range[1]<<std::endl;
 
   if(time_range[0] < 0) time_range[0] = 0;
   if(time_range[1] < time_range[0]) time_range[1] = time_range[0];

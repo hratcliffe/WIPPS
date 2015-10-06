@@ -5,12 +5,6 @@
   \author Heather Ratcliffe \date 18/09/2015.
 */
 
-#include "main.h"
-#include "support.h"
-#include "reader.h"
-#include "my_array.h"
-#include "d_coeff.h"
-#include "spectrum.h"
 
 #include <math.h>
 #include <boost/math/special_functions.hpp>
@@ -25,6 +19,14 @@
 #include <fftw3.h>
 //FFTW3 Fourier transform libs
 
+#include "main.h"
+#include "support.h"
+#include "reader.h"
+#include "my_array.h"
+#include "d_coeff.h"
+#include "spectrum.h"
+
+
 using namespace std;
 
 deck_constants my_const;/*< Physical constants*/
@@ -35,11 +37,6 @@ void get_deck_constants();
 
 void test_bes();
 
-void my_print(std::string text, int rank, int rank_to_write=0);
-
-std::string mk_str(int i);/**<Converts int to string*/
-std::string mk_str(bool b);/**<Converts bool to string*/
-std::string mk_str(size_t i){ return mk_str((int) i);} /**<Converts size_t to string*/
 
 
 int main(int argc, char *argv[]){
@@ -66,7 +63,7 @@ int main(int argc, char *argv[]){
 
   get_deck_constants();
 
-  char block_id[10] = "ex";
+  char block_id[10]= "ex";
   reader * my_reader = new reader("", block_id);
 
   int tim_in[2], space_in[2];
@@ -85,24 +82,24 @@ int main(int argc, char *argv[]){
   if(n_dims !=1) return 1;
   //for now abort if data file wrong size...
 
-  data_array dat = data_array(dims[0], n_tims);
-  data_array dat_fft = data_array(dims[0], n_tims);
+  data_array  * dat = new data_array(dims[0], n_tims);
+  data_array * dat_fft = new data_array(dims[0], n_tims);
 
-  if(!dat.data or !dat_fft.data){
+  if(!dat->data or !dat_fft->data){
 //    cout<< "Bugger, data array allocation failed. Aborting."<<endl;
     my_print("Bugger, data array allocation failed. Aborting.", mpi_info.rank);
     return 0;
   }
 
-  my_reader->read_data(&dat, tim_in, space_in);
+  my_reader->read_data(dat, tim_in, space_in);
 
-  err = dat.fft_me(&dat_fft);
+  err = dat->fft_me(dat_fft);
 //  cout<<"FFT returned err_state "<<err<<endl;
   my_print("FFT returned err_state " + mk_str(err), mpi_info.rank);
 
   fstream file;
   file.open("Tmp.txt", ios::out|ios::binary);
-  dat.write_to_file(file);
+  if(file.is_open()) dat->write_to_file(file);
   file.close();
 
 
@@ -119,7 +116,7 @@ int main(int argc, char *argv[]){
   spect->make_test_spectrum();
 
   file.open("Tmp_spectrum.txt", ios::out|ios::binary);
-  spect->write_to_file(file);
+  if(file.is_open()) spect->write_to_file(file);
   file.close();
 
   //Then we use that and try and calculate the Diffusion coeff.
@@ -128,6 +125,12 @@ int main(int argc, char *argv[]){
 
   delete spect;
   delete my_reader;
+  delete dat;
+  delete dat_fft;
+
+  ADD_FFTW(cleanup());
+  MPI_Finalize();
+  //call these last...
 }
 
 

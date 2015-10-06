@@ -46,9 +46,13 @@ my_array(int * row_lengths, int ny);
 bool is_good(){return !defined;}
 my_type * get_ptr(int nx, int ny);
 
-int get_index(int nx, int ny);
+virtual int get_index(int nx, int ny);
+int get_total_elements();
+/** These two account for all details of internal layout in memory */
+
 int get_dims();
 int get_dims(int dim);
+
 
 my_type get_element(int nx, int ny);
 bool set_element(int nx, int ny, int val);
@@ -58,7 +62,7 @@ bool populate_row(void * dat_in, int nx, int y_row);
 /** Populate data
 
 */
-bool write_to_file(std::fstream &file);
+virtual bool write_to_file(std::fstream &file);
 bool read_from_file(std::fstream &file);
 
 //we can use [] to wrap get elements and have the args pushed into vector which we then work with to be generic

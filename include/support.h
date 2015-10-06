@@ -30,6 +30,7 @@
 /** These set up our types so we can easily recompile to work with doubles or floats. First adds correct FFTW library prefix, adjust to float or normal. Next defines suitable complex type. Third s working data type, and the last is set to suitable SDF data type matching my_type. Lets be sane, and assume we want the f libraries to work with float data, and the double to work with doubles. So we don't have extraneous copying and false precision.
 */
 
+const int MAX_SIZE = 10000;
 const my_type io_verify = 3.0/32.0;
 //An exactly binary representable my_type to verify we're reading what we're writing...
 
@@ -60,6 +61,12 @@ struct mpi_info_struc{
 };
 
 const int DEFAULT_N_ANG = 100;
+
+void my_print(std::string text, int rank, int rank_to_write=0);
+
+std::string mk_str(int i);/**<Converts int to string*/
+std::string mk_str(bool b);/**<Converts bool to string*/
+//std::string mk_str(size_t i){ return mk_str((int) i);} /**<Converts size_t to string*/
 
 
 #endif

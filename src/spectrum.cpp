@@ -217,6 +217,8 @@ bool spectrum::write_to_file(std::fstream &file){
 
 /**IMPORTANT: the VERSION specifier links output files to code. If modifying output or order commit and clean build before using.
 */
+  if(!file.is_open()) return 1;
+
 data_array::write_to_file(file);
 //call base class method to write that data.
 //Anything else to add?
@@ -230,7 +232,6 @@ return 0;
 
 }
 
-
 void spectrum::make_test_spectrum(){
 /**Makes a basic spectrum object with suitable number of points, and twin, symmetric Gaussians centred at fixed x.
 */
@@ -242,7 +243,7 @@ void spectrum::make_test_spectrum(){
   //Generate the angle function data.
   if(function_type == FUNCTION_DELTA){
   //Approx delta function, round k_ll. I.e. one cell only. And size is 1/d theta
-    int res = 1;
+    float res = 2.0;
     for(int i=1; i<this->dims[0]; ++i) this->set_element(i,1,0);
     //zero all other elements
     float val;
@@ -256,6 +257,7 @@ void spectrum::make_test_spectrum(){
 
   }
   //Generate the positive k data
+  
   
   
   //Mirror onto -ve k

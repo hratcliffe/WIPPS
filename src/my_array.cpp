@@ -7,31 +7,33 @@
 //
 
 #include <stdio.h>
-
 #include <fstream>
 #include <iostream>
 #include <iomanip>
 #include <cstdlib>
-#include "support.h"
-#include "my_array.h"
 #include <complex.h>
 #include <fftw3.h>
 #include <cmath>
+#include "support.h"
+#include "my_array.h"
 
 
 my_array::my_array(int nx, int ny){
   defined = false;
+  ragged=false;
   n_dims = 2;
 //  dims.push_back(nx);
 //  dims.push_back(ny);
-  dims = (int*)malloc(n_dims*sizeof(int));
+  this->dims = (int*)malloc(n_dims*sizeof(int));
   dims[0]=nx;
   dims[1]=ny;
   data = NULL;
 
   data=(my_type*)calloc(nx*ny,sizeof(my_type));
 
-  if(data) defined = true;
+  if(data){
+    defined = true;
+  }
   //Check allocation suceeded
 }
 
@@ -52,21 +54,33 @@ my_array::my_array(int * row_len, int ny){
 
   memcpy((void *) this->row_lengths, (void *)row_len, ny*sizeof(int));
 
+  //For safety let's test row lengths are all less than MAX_SIZE
+  for(int i=0; i<ny; i++){
+    if(this->row_lengths[i] > MAX_SIZE) this->row_lengths[i] = MAX_SIZE;
+    if(this->row_lengths[i] < 0) this->row_lengths[i] = 0;
+
+  }
+  
   cumulative_row_lengths[0] = 0;
-  //row_lengths[0];
 
   for(int i=1; i<ny;++i) cumulative_row_lengths[i] = cumulative_row_lengths[i-1] + this->row_lengths[i-1];
   
   data=(my_type*)calloc((cumulative_row_lengths[ny-1] + row_lengths[ny-1]), sizeof(my_type));
-  if(data) defined = true;
-  //Check allocation suceeded
+
+  if(data){
+    defined = true;
+  }
 }
 
 my_array::~my_array(){
 
   if(data) free(data);
   data = NULL; // technically unnecessary as desctructor deletes memebers. 
-
+  if(dims) free(dims);
+  if(ragged){
+    if(cumulative_row_lengths) free(cumulative_row_lengths);
+    if(row_lengths) free(row_lengths);
+  }
 }
 
 my_type * my_array::get_ptr(int nx, int ny){
@@ -81,8 +95,12 @@ my_type * my_array::get_ptr(int nx, int ny){
 }
 
 int my_array::get_index(int nx, int ny){
-  
-  if(n_dims != 2) return 1;
+/** \brief Get index for location
+*
+*Takes care of all bounds checking and disposition in memory. Returns -1 if out of range of any sort, otherwise, suitable index. NB. Let this function do all bounds checks. Just call it plain.
+*/
+
+  if(n_dims != 2) return -1;
   if(!ragged){
     if((nx < dims[0]) && (ny<dims[1])){
       return ny*dims[0] + nx;
@@ -118,12 +136,29 @@ my_type my_array::get_element(int nx, int ny){
 
 }
 
-bool my_array::set_element(int nx, int ny, int val){
-  //sets elements at nx, ny, and returns 1 if out of range, wrong no args, 0 else
-  if(n_dims != 2) return 1;
+int my_array::get_total_elements(){
 
-  if(nx < dims[0] && ny<dims[1]){
-    data[get_index(nx, ny)] = val;
+  int tot_els=1;
+
+  if(!ragged){
+    for(int i=0; i<n_dims;++i) tot_els *=dims[i];
+  }else{
+    tot_els = cumulative_row_lengths[dims[n_dims-1]-1]+row_lengths[dims[n_dims-1]-1];
+  }
+
+  return tot_els;
+
+}
+
+bool my_array::set_element(int nx, int ny, int val){
+  /** \brief Sets array element
+  *
+  *Sets elements at nx, ny, and returns 1 if out of range, wrong number of args, 0 else.
+  */
+
+  int index = get_index(nx, ny);
+  if(index > 0){
+    data[index] = val;
     return 0;
   }else{
     return 1;
@@ -134,22 +169,15 @@ bool my_array::set_element(int nx, int ny, int val){
 bool my_array::populate_data(my_type * dat_in, int n_tot){
 //Populates data with the total number of elements specified, as long as n_tot is less than the product of dims
 
-if(!ragged){
-  int tot_els=1;
-  for(int i=0; i<n_dims;++i) tot_els *=dims[i];
+  int tot_els = get_total_elements();
   if(n_tot > tot_els) return 1;
-}else if(n_tot > cumulative_row_lengths[dims[n_dims-1]]+row_lengths[dims[n_dims-1]]){
-  return 1;
 
-  
-}
-void * tmp = (void *) this->data;
+  void * tmp = (void *) this->data;
+  if(!tmp) return 1;
 
-if(!tmp) return 1;
+  memcpy (tmp , dat_in, n_tot*sizeof(my_type));
 
-memcpy (tmp , dat_in, n_tot*sizeof(my_type));
-
-return 0;
+  return 0;
 
 }
 
@@ -157,69 +185,68 @@ bool my_array::populate_row(void * dat_in, int nx, int y_row){
 //needs to check type, check dimensions
 //needs dimensions supplied...
 
-if(nx != dims[0]) return 1;
-if(y_row > dims[1] || y_row < 0) return 1;
+  if(nx != dims[0]) return 1;
+  if(y_row > dims[1] || y_row < 0) return 1;
 
-void * tmp = (void *)  get_ptr(0, y_row);
+  void * tmp = (void *)  get_ptr(0, y_row);
 
-if(!tmp) return 1;
-memcpy (tmp , dat_in, nx*sizeof(my_type));
+  if(!tmp) return 1;
+  memcpy (tmp , dat_in, nx*sizeof(my_type));
 
-return 0;
+  return 0;
 
 
 }
 
 bool my_array::write_to_file(std::fstream &file){
-//none of this will be human readable...
-//Takes the version etc info then the whole data array and writes as a stream. It's not portable to other machines necessarily due to float sizes and endianness. It'll do. We'll start the file with a known float for confirmation.
-
-/**IMPORTANT: this VERSION specifier links output files to code. If modifying output or order commit and clean build before using.
+/**Takes the version etc info then the whole data array and writes as a stream. It's not portable to other machines necessarily due to float sizes and endianness. It'll do. We'll start the file with a known float for confirmation.
+  *
+  *IMPORTANT: this VERSION specifier links output files to code. If modifying output or order commit and clean build before using.
 */
-const char tmp_vers[15] = VERSION;
-char ch = '\0';
+  if(!file.is_open()) return 1;
+  const char tmp_vers[15] = VERSION;
+  char ch = '\0';
 
-file.write((char*) &io_verify, sizeof(my_type));
-file.write((char*) &tmp_vers, sizeof(char)*15);
-//file.write(&ch, sizeof(char));
+  file.write((char*) &io_verify, sizeof(my_type));
+  file.write((char*) &tmp_vers, sizeof(char)*15);
+  //file.write(&ch, sizeof(char));
 
-//Code version...
+  //Code version...
 
-int total_size;
-//dimension info
-if(!ragged){
-  file.write((char*) &n_dims, sizeof(int));
-  int dim_tmp;
-  for(int i=0;i<n_dims;i++){
-    dim_tmp = dims[i];
-    file.write((char*) &dim_tmp, sizeof(int));
-  }
-  total_size = dims[0]*dims[1];
-}else{
-  //do different if we have ragged array...
-  int n_dims_new = -1*n_dims;
-  file.write((char*) &n_dims_new, sizeof(int));
-  int dim_tmp;
+  int total_size = get_total_elements();
+  //dimension info
+  if(!ragged){
+    file.write((char*) &n_dims, sizeof(int));
+    int dim_tmp;
     for(int i=0;i<n_dims;i++){
-    dim_tmp = dims[i];
-    file.write((char*) &dim_tmp, sizeof(int));
+      dim_tmp = dims[i];
+      file.write((char*) &dim_tmp, sizeof(int));
+    }
+  }else{
+    //do different if we have ragged array...
+    int n_dims_new = -1*n_dims;
+    file.write((char*) &n_dims_new, sizeof(int));
+    int dim_tmp;
+      for(int i=0;i<n_dims;i++){
+      dim_tmp = dims[i];
+      file.write((char*) &dim_tmp, sizeof(int));
+    }
+
+    for(int i=0;i<dims[n_dims-1];i++){
+      dim_tmp = row_lengths[i];
+      file.write((char*) &dim_tmp, sizeof(int));
+    }
+
+    int ny = dims[n_dims-1];
+    //std::cout<< ny<<cumulative_row_lengths[ny-1]<<row_lengths[ny-1]<<total_size<<std::endl;
+
   }
 
-  for(int i=0;i<dims[n_dims-1];i++){
-    dim_tmp = row_lengths[i];
-    file.write((char*) &dim_tmp, sizeof(int));
-  }
+//  std::cout<<"Size is "<<total_size<<std::endl;
+ // std::cout<<data<<std::endl;
+  file.write((char *) data , sizeof(my_type)*total_size);
 
-  int ny = dims[n_dims-1];
-  total_size = cumulative_row_lengths[ny-1] + row_lengths[ny-1];
-  //std::cout<< ny<<cumulative_row_lengths[ny-1]<<row_lengths[ny-1]<<total_size<<std::endl;
-
-}
-
-std::cout<<"Size is "<<total_size<<std::endl;
-file.write((char *) data , sizeof(my_type)*total_size);
-
-return 0;
+  return 0;
 
 
 }
@@ -318,22 +345,29 @@ data_array::data_array(int nx, int ny) : my_array(nx,ny){
   ax_defined = false;
   axes=(my_type*)calloc((nx+ny),sizeof(my_type));
   if(axes) ax_defined=true;
+  memset((void *) block_id, 0, 10*sizeof(char));
+
 }
 
 data_array::data_array(int * row_lengths, int ny): my_array(row_lengths,ny){
 //Constructor calls constructor for my_array and adds its own axes
 //Axes in this case are one per row...
   ax_defined = false;
-  axes=(my_type*)malloc((cumulative_row_lengths[dims[n_dims-1]]+row_lengths[dims[n_dims-1]])*sizeof(my_type));
-  if(axes) ax_defined=true;
-}
+  int tot_els = cumulative_row_lengths[dims[n_dims-1]-1]+row_lengths[dims[n_dims-1]-1];
 
+  axes=(my_type*)calloc(tot_els, sizeof(my_type));
+  if(axes) ax_defined=true;
+  //Here one axis per row...
+  memset((void *) block_id, 0, 10*sizeof(char));
+  //initilaise to zero
+}
 
 data_array::~data_array(){
 //Similarly destructor automatically calls destructor for my_array and frees axes
 
   if(axes) free(axes);
   axes = NULL; // technically unnecessary as desctructor deletes memebers.
+  
 
 }
 
@@ -374,10 +408,9 @@ bool data_array::write_to_file(std::fstream &file){
 /**IMPORTANT: the VERSION specifier links output files to code. If modifying output or order commit and clean build before using.
 */
 
-char ch = '\0';
+if(!file.is_open()) return 1;
+
 file.write(block_id, sizeof(char)*10);
-file.write(&ch, sizeof(char));
-//Null terminating character
 
 my_array::write_to_file(file);
 //call base class method to write that data.
@@ -454,7 +487,7 @@ my_type * in, *result;
 
 in = (my_type*) ADD_FFTW(malloc)(sizeof(my_type) * total_size);
 //my_type should match the used FFTW library, so no type conversion necessary
-out = (cplx_type *) fftwf_malloc(sizeof(cplx_type) * total_size);
+out = (cplx_type *) ADD_FFTW(malloc)(sizeof(cplx_type) * total_size);
 
 result = (my_type*) ADD_FFTW(malloc)(sizeof(my_type) * total_size);
 

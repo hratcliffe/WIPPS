@@ -218,17 +218,8 @@ bool spectrum::write_to_file(std::fstream &file){
 /**IMPORTANT: the VERSION specifier links output files to code. If modifying output or order commit and clean build before using.
 */
   if(!file.is_open()) return 1;
-
-data_array::write_to_file(file);
-//call base class method to write that data.
-//Anything else to add?
-//Sepctrum flag is then first, then stuff...
-
-
-//file.write((char *) axes , sizeof(my_type)*(dims[0]+dims[1]));
-//Add axes.
-
-return 0;
+  data_array::write_to_file(file);
+  return 0;
 
 }
 
@@ -240,15 +231,23 @@ void spectrum::make_test_spectrum(){
 
   this->set_ids(0, 100, 0, dims[0], WAVE_WHISTLER, id);
   
+  
+  //setup axes
+  int len;
+  my_type * ax_ptr = get_axis(0, len);
+  for(int i=0; i<len; i++) *(ax_ptr+i) = (float)i - (float)len/2.0;
+
+  ax_ptr = get_axis(1, len);
+  for(int i=0; i<len; i++) *(ax_ptr+i) = (float)i;
+  
   //Generate the angle function data.
   if(function_type == FUNCTION_DELTA){
   //Approx delta function, round k_ll. I.e. one cell only. And size is 1/d theta
     float res = 2.0;
     for(int i=1; i<this->row_lengths[1]; ++i) this->set_element(i,1,10);
     //zero all other elements
-    float val;
-    val = 1.0/res;
-    //TODO this is wrong value. Wants to make integral 1...
+    float val = 1.0/res;
+    /** \todo this is wrong value. Wants to make integral 1...*/
     this->set_element(0, 1, val);
   }else if(function_type == FUNCTION_GAUSS){
 
@@ -257,6 +256,7 @@ void spectrum::make_test_spectrum(){
 
   }
   //Generate the positive k data
+  
   
   
   

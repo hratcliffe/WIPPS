@@ -26,17 +26,13 @@
 #include "d_coeff.h"
 #include "spectrum.h"
 
-
 using namespace std;
 
 deck_constants my_const;/*< Physical constants*/
-
 mpi_info_struc mpi_info;
-
 void get_deck_constants();
 
 void test_bes();
-
 
 
 int main(int argc, char *argv[]){
@@ -45,12 +41,12 @@ int main(int argc, char *argv[]){
 *
 */
 
-
   int ierr,err;
   
 {
   int rank, n_procs;
   ierr = MPI_Init(&argc, &argv);
+  //Note any other command line arg processing should account for this...
   ierr = MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   ierr = MPI_Comm_size(MPI_COMM_WORLD, &n_procs);
 
@@ -71,7 +67,8 @@ int main(int argc, char *argv[]){
   tim_in[1]=10;
   space_in[0]=0;
   space_in[1]=-1;
-  /** \todo These should be specifiable via command line args */
+  /** \todo These should be specifiable via command line args. Or in parallle we want to subdivide into them
+*/
 
   int n_tims = max(tim_in[1]-tim_in[0], 1);
 
@@ -86,7 +83,6 @@ int main(int argc, char *argv[]){
   data_array * dat_fft = new data_array(dims[0], n_tims);
 
   if(!dat->data or !dat_fft->data){
-//    cout<< "Bugger, data array allocation failed. Aborting."<<endl;
     my_print("Bugger, data array allocation failed. Aborting.", mpi_info.rank);
     return 0;
   }
@@ -94,7 +90,6 @@ int main(int argc, char *argv[]){
   my_reader->read_data(dat, tim_in, space_in);
 
   err = dat->fft_me(dat_fft);
-//  cout<<"FFT returned err_state "<<err<<endl;
   my_print("FFT returned err_state " + mk_str(err), mpi_info.rank);
 
   fstream file;
@@ -123,6 +118,8 @@ int main(int argc, char *argv[]){
 
 
 
+
+  //Cleanup objects etc
   delete spect;
   delete my_reader;
   delete dat;

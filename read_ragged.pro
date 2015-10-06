@@ -1,8 +1,11 @@
-;pro read_ragged
-;Written for commit ID from b8b80f3 to ... FILL IN IF IO CHNAGES....
+function read_ragged, filename
+
+;Written for commit ID from 801d57e to ... FILL IN IF IO CHNAGES....
 
 COMPILE_OPT IDL2
 ;force long ints and proper brackets
+
+IF((N_ELEMENTS(filename) EQ 0)) THEN return, !NULL
 
 my_type_code = 'f'
 my_type = 0.0
@@ -52,29 +55,36 @@ if(n_dims LT 0) THEN BEGIN
   readu, 1, lengths
   IF my_type_code EQ 'f' THEN BEGIN
     data_list = LIST(length = dims[1])
-
+    axes_list = LIST(length = dims[1])
     FOR i=0, dims[1]-1 DO BEGIN
       tmp = fltarr(lengths[i])
       readu, 1, tmp
       print, minmax(tmp)
       data_list[i] = tmp
     END
-    axes_list = {k:fltarr(1), omega:fltarr(dims[1])}
+    FOR i=0, dims[1]-1 DO BEGIN
+      tmp = fltarr(lengths[i])
+      readu, 1, tmp
+      print, minmax(tmp)
+      axes_list[i] = tmp
+    END
+
   ENDIF ELSE BEGIN
     data_list = LIST(length = dims[1])
+    axes_list = LIST(length = dims[1])
     FOR i=0, dims[1]-1 DO BEGIN
       tmp = dblarr(lengths[i])
       readu, 1, tmp
       data_list[i] = tmp
     END
-
-    axes_list = {k:dblarr(dims[0]), omega:dblarr(dims[1])}
+    FOR i=0, dims[1]-1 DO BEGIN
+      tmp = dblarr(lengths[i])
+      readu, 1, tmp
+      axes_list[i] = tmp
+    END
   ENDELSE
 
   data = {id:id_in,data:data_list, axes:axes_list}
-
-
-  ;Now we do need the right majority...
 
 ENDIF ELSE BEGIN
   print, "Array is normal. Use read_data.pro"
@@ -82,5 +92,7 @@ ENDIF ELSE BEGIN
 ENDELSE
 
 close, 1
+
+return, data
 
 end

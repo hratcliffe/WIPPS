@@ -150,6 +150,20 @@ int my_array::get_total_elements(){
 
 }
 
+int my_array::get_total_axis_elements(){
+
+  int tot_els=0;
+
+  if(!ragged){
+    for(int i=0; i<n_dims;++i) tot_els +=dims[i];
+  }else{
+    tot_els = cumulative_row_lengths[dims[n_dims-1]-1]+row_lengths[dims[n_dims-1]-1];
+  }
+
+  return tot_els;
+
+}
+
 bool my_array::set_element(int nx, int ny, my_type val){
   /** \brief Sets array element
   *
@@ -373,21 +387,37 @@ data_array::~data_array(){
 
 my_type * data_array::get_axis(int dim, int & length){
 
-  if(dim == 0){
-    length = dims[dim];
-    return axes;
-  
-  }else if(dim < n_dims){
-    int offset=0;
-    for(int i=0; i< dim; i++) offset +=dims[i];
-    length = dims[dim];
-    return axes + offset;
-  
+  if(!ragged){
+    if(dim == 0){
+      length = dims[dim];
+      return axes;
+    
+    }else if(dim < n_dims){
+      int offset=0;
+      for(int i=0; i< dim; i++) offset +=dims[i];
+      length = dims[dim];
+      return axes + offset;
+    
+    }else{
+      length = 0;
+      return NULL;
+    }
   }else{
-    length = 0;
-    return NULL;
+    if(dim == 0){
+      length = row_lengths[dim];
+      return axes;
+    
+    }else if(dim < n_dims){
+      int offset = cumulative_row_lengths[dim];
+      length = row_lengths[dim];
+      return axes + offset;
+    
+    }else{
+      length = 0;
+      return NULL;
+    }
+  
   }
-
 }
 
 void data_array::make_linear_axis(int dim, float res, int offset){
@@ -408,17 +438,17 @@ bool data_array::write_to_file(std::fstream &file){
 /**IMPORTANT: the VERSION specifier links output files to code. If modifying output or order commit and clean build before using.
 */
 
-if(!file.is_open()) return 1;
+  if(!file.is_open()) return 1;
 
-file.write(block_id, sizeof(char)*10);
+  file.write(block_id, sizeof(char)*10);
 
-my_array::write_to_file(file);
-//call base class method to write that data.
+  my_array::write_to_file(file);
+  //call base class method to write that data.
 
-file.write((char *) axes , sizeof(my_type)*(dims[0]+dims[1]));
-//Add axes.
+  file.write((char *) axes , sizeof(my_type)*(get_total_axis_elements()));
+  //Add axes.
 
-return 0;
+  return 0;
 
 }
 

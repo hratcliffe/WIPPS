@@ -48,7 +48,8 @@ my_type * get_ptr(int nx, int ny);
 
 virtual int get_index(int nx, int ny);
 int get_total_elements();
-/** These two account for all details of internal layout in memory */
+int get_total_axis_elements();
+/** These three account for all details of internal layout in memory */
 
 int get_dims();
 int get_dims(int dim);

@@ -114,10 +114,10 @@ int main(int argc, char *argv[]){
   if(file.is_open()) spect->write_to_file(file);
   file.close();
 
-  //Then we use that and try and calculate the Diffusion coeff.
+  //Now we have some test spectral data we can work with...
 
-
-
+// if(sizeof(input_type) != sizeof(calc_type)). Hmm, now we need the data in a higher precision format...
+ 
 
   //Cleanup objects etc
   delete spect;

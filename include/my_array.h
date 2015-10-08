@@ -39,6 +39,8 @@ public:
 
 my_type *data;
 
+my_array();
+virtual void construct();
 my_array(int nx, int ny);
 my_array(int * row_lengths, int ny);
 ~my_array();
@@ -53,7 +55,6 @@ int get_total_axis_elements();
 
 int get_dims();
 int get_dims(int dim);
-
 
 my_type get_element(int nx, int ny);
 bool set_element(int nx, int ny, my_type val);
@@ -89,6 +90,7 @@ float time[2];
 int space[2];
 //space range ditto
 
+void construct();
 data_array(int nx, int ny);
 data_array(int * row_lengths, int ny);
 ~data_array();

@@ -18,12 +18,23 @@
 #include "my_array.h"
 
 
-my_array::my_array(int nx, int ny){
+my_array::my_array(){
+
+  construct();
+}
+
+void my_array::construct(){
+//Common constructor bits. So we can never have anything uninitialised.
   defined = false;
   ragged=false;
+  n_dims = 0;
+
+}
+
+my_array::my_array(int nx, int ny){
+
+  construct();
   n_dims = 2;
-//  dims.push_back(nx);
-//  dims.push_back(ny);
   this->dims = (int*)malloc(n_dims*sizeof(int));
   dims[0]=nx;
   dims[1]=ny;
@@ -40,7 +51,7 @@ my_array::my_array(int nx, int ny){
 my_array::my_array(int * row_len, int ny){
 //sets up ragged array with different row lengths
 
-  defined = false;
+  construct();
   if(ny ==0) return;
   n_dims = 2;
   dims = (int*)malloc(n_dims*sizeof(int));
@@ -354,26 +365,32 @@ return ret;
 
 }
 
-data_array::data_array(int nx, int ny) : my_array(nx,ny){
-//Constructor calls constructor for my_array and adds its own axes
+void data_array::construct(){
+//Common constructor bits. So we can never have anything uninitialised.
   ax_defined = false;
-  axes=(my_type*)calloc((nx+ny),sizeof(my_type));
-  if(axes) ax_defined=true;
+  time[0]=0; time[1]=1;
+  space[0]=0; space[1]=1;
   memset((void *) block_id, 0, 10*sizeof(char));
 
+/*[06/10/2015 17:39:06] Christopher Brady: float t_temp[2]={0,1};
+[06/10/2015 17:39:20] Christopher Brady: memcpy(&t_temp,&time,2*sizeof(float));*/
+}
+
+data_array::data_array(int nx, int ny) : my_array(nx,ny){
+//Constructor calls constructor for my_array and adds its own axes
+  construct();
+  axes=(my_type*)calloc((nx+ny),sizeof(my_type));
+  if(axes) ax_defined=true;
 }
 
 data_array::data_array(int * row_lengths, int ny): my_array(row_lengths,ny){
 //Constructor calls constructor for my_array and adds its own axes
 //Axes in this case are one per row...
-  ax_defined = false;
   int tot_els = cumulative_row_lengths[dims[n_dims-1]-1]+row_lengths[dims[n_dims-1]-1];
 
   axes=(my_type*)calloc(tot_els, sizeof(my_type));
   if(axes) ax_defined=true;
   //Here one axis per row...
-  memset((void *) block_id, 0, 10*sizeof(char));
-  //initilaise to zero
 }
 
 data_array::~data_array(){

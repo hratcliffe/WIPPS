@@ -23,7 +23,7 @@ ifeq ($(strip $(MODE)),debug)
 endif
 
 #list of all header and cpp pairs. 
-INCLS = my_array.h d_coeff.h spectrum.h reader.h
+INCLS = my_array.h d_coeff.h spectrum.h reader.h plasma.h
 
 #make lists of source and object files, all headers plus main
 SOURCE := $(INCLS:.h=.cpp)

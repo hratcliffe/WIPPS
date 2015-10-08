@@ -10,6 +10,7 @@
 #include <fstream>
 #include <iostream>
 #include <iomanip>
+#include <cmath>
 #include "support.h"
 #include "my_array.h"
 #include "spectrum.h"
@@ -20,25 +21,32 @@ extern deck_constants my_const;
 //OK now it makes fine sense for spectrum to know about parent class as it's already descended from it. So we can happily have it take one of those and self generate from it so to speak
 //or vice versa?
 
+void spectrum::construct(){
+
+  function_type = 0;
+  wave_id = 0;
+  
+  
+}
 
 spectrum::spectrum(int * row_lengths, int ny):data_array(row_lengths, ny){
-//:data_array(nx+ DEFAULT_N_ANG, 1){
   //Assume by default we''l integrate over second dim...
+  construct();
 
   angle_is_function = true;
   //angle profile will be specified as a function and any val is product spect(omega, theta) = B^2(omega) * g(theta). So we only need 2 one-d arrays The second one is then added here only...
   n_angs = row_lengths[1];
   function_type = FUNCTION_DELTA;
-
 }
 
 spectrum::spectrum(int nx, int n_ang):data_array(nx, n_ang+1){
   //Assume by default we''l integrate over second dim...
 
-angle_is_function = false;
+  construct();
+  angle_is_function = false;
 
-//angle profile is array, spect(omega, theta) = B^2(omega) * g(theta, omega). So we need a full nx by n_ang array for g, and an extra row for B^2
-n_angs = n_ang;
+  //angle profile is array, spect(omega, theta) = B^2(omega) * g(theta, omega). So we need a full nx by n_ang array for g, and an extra row for B^2
+  n_angs = n_ang;
 
 
 }
@@ -79,16 +87,9 @@ if(parent && angle_is_function){
   for(int i=0; i<this->dims[0]; ++i){
     
     om_disp = get_dispersion(this->axes[i], WAVE_WHISTLER);
-//    om_target = om_disp *(1.0-tolerance);
-    //This is a temporary, slow version. Might change to a binary bisect if needed etc...
- //   for(j=0;j<len; j++) if(ax_ptr[j]> om_target) break;
-//    low_bnd = j;
+
     low_bnd = where(ax_ptr, len, om_disp *(1.0-tolerance));
     high_bnd = where(ax_ptr, len, om_disp *(1.0+tolerance));
-    
-  //  om_target = om_disp *(1.0+tolerance);
-    //for(j=0;j<len; j++) if(ax_ptr[j]> om_target) break;
-    //high_bnd = j;
     
     //now total the part of the array between these bnds
     total=0;
@@ -233,17 +234,22 @@ void spectrum::make_test_spectrum(){
   
   
   //setup axes
-  int len;
-  my_type * ax_ptr = get_axis(0, len);
-  for(int i=0; i<len; i++) *(ax_ptr+i) = (float)i - (float)len/2.0;
+  int len0, len1;
+  my_type * ax_ptr;
 
-  ax_ptr = get_axis(1, len);
-  for(int i=0; i<len; i++) *(ax_ptr+i) = (float)i;
+  ax_ptr = get_axis(1, len1);
+  for(int i=0; i<len1; i++) *(ax_ptr+i) = (float)i;
+
+  ax_ptr = get_axis(0, len0);
+  float res = 1.0/(float)len0;
+
+  for(int i=0; i<len0; i++) *(ax_ptr+i) = res*((float)i - (float)len0/2.0);
+
   
   //Generate the angle function data.
   if(function_type == FUNCTION_DELTA){
   //Approx delta function, round k_ll. I.e. one cell only. And size is 1/d theta
-    float res = 2.0;
+    float res = 1.0;
     for(int i=1; i<this->row_lengths[1]; ++i) this->set_element(i,1,10);
     //zero all other elements
     float val = 1.0/res;
@@ -255,12 +261,19 @@ void spectrum::make_test_spectrum(){
   }else{
 
   }
-  //Generate the positive k data
+  //Generate the negative k data
   
+  float centre = 0.2, width=0.005, background = 0.5;
+  my_type * data_ptr = get_ptr(0, 0);
   
-  
-  
-  //Mirror onto -ve k
-
+  my_type * data_tmp, *ax_tmp;
+  data_tmp = data_ptr;
+  ax_tmp = ax_ptr;
+  for(int i=0; i<=len0/2; i++, ax_tmp++, data_tmp++) *(data_tmp) = exp(-pow((*(ax_tmp) + centre), 2)/width) + background;
+  data_tmp--;
+  //we've gone one past our termination condition...
+  for(int i=1; i<len0/2; i++) *(data_tmp + i) = *(data_tmp - i);
+  //reflect onto +ve k
+//+ 0.25*exp(-pow((*(ax_tmp) + centre), 2)/width*50.0)
 
 }

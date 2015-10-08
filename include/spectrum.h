@@ -9,13 +9,6 @@
 #ifndef _spectrum_h
 #define _spectrum_h
 
-const int WAVE_WHISTLER = 1;
-const int WAVE_PLASMA = 2;
-const int WAVE_O = 3;
-
-const int FUNCTION_DELTA = 1;
-const int FUNCTION_GAUSS = 2;
-const int FUNCTION_ISO = 3;
 
 //Lets have a spectrum class then
 //Contains data, axis, sizes, ids (field, time range, space range)
@@ -42,10 +35,10 @@ int function_type;
 
 int n_angs;
 
-my_type * ang_data;
 //We can't hold parent ID, as we don't know when parent might be destroyed...
 
 //spectrum(int nx);
+void construct();
 spectrum(int nx, int n_ang);
 spectrum(int * row_lengths, int ny);
 

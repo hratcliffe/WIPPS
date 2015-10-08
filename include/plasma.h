@@ -49,6 +49,7 @@ calc_type * dB0dth;
 calc_type pmass[ncomps];
 calc_type pcharge[ncomps];
 
+mu my_mu;
 
 public:
 
@@ -62,6 +63,8 @@ void get_B0(){;}
 //We'll want an averaged thing over the spatial block we're working with, because we're assuming waves from whole block are identical.
 //But one call per ptich angle and frequency might turn out to be time consuming. Profiling necessary...
 mu get_root(calc_type th, calc_type w, calc_type psi);
+calc_type get_phi( calc_type th, calc_type w, calc_type psi, int n);
+
 /*probably want some parameter "which_thing" is some way of specifying what we want, probably via enum or named constants PROBABLY a mask is best, i.e. bitmask with named contants and we get each thing we want. But how to return? Rturn invalid number for those we on't request. Make it optional so by default we get all? Or we return all of: real(DP),intent(out)::mu,mug                   !< refractive index, group
  real(DP),intent(out)::dmudr,dmudth             !< derivs
  real(DP),intent(out)::alpha                    !< angle between k and prop

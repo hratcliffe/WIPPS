@@ -35,7 +35,7 @@ plasma::plasma()
 mu plasma::get_root(calc_type th, calc_type w, calc_type psi){
 /** Duplicated from mufunctions by CEJ Watt
 *
-*@param th Polar coordinate @param w Wave frequency @param psi Wave pitch angle k to B0 \todo Check constant types OK
+*@param th Polar coordinate @param w Wave frequency @param psi Wave pitch angle k to B0 \todo Check constant types OK \todo Better root selection
 */
   mu mu_ret;
   
@@ -173,6 +173,41 @@ mu plasma::get_root(calc_type th, calc_type w, calc_type psi){
     mu_ret.err = 0;
   
   }
+
+//  this->my_mu = mu_ret;
+//  mu_set = true;
   return mu_ret;
+}
+
+calc_type plasma::get_phi(calc_type th, calc_type w, calc_type psi, int n){
+//Get's the Phi defined by Lyons 1974.
+// Will be clumsy for now, because each call recalls mu, and we need to sum over n in the end. And it duplicates the STIX params calcs
+ 
+  calc_type wp[ncomps], wp2[ncomps], wc[ncomps];
+  calc_type R, L, P, S, D, ret, term1, term2, term3, denom;
+
+  for(int i=0; i<ncomps; ++i){
+    wp[i] = my_const.omega_pe;
+    wp2[i] = wp[i]*wp[i];
+    wc[i] = my_const.omega_ce;
+  }
+  for(int i=0; i<ncomps; i++){
+    R = R - wp2[i]/(w*(w + wc[i]));
+    L = L - wp2[i]/(w*(w - wc[i]));
+    P = P - wp2[i]/(w*w);
+  }
+
+  S = 0.5*(R + L);
+  D = 0.5*(R - L);
+
+  mu my_mu = this->get_root(th, w, psi);
+
+  denom = 1.0;
+  term1 =0;
+  term2 =0;
+  term3 =0;
+  ret = denom * pow((term1 + term2 + term3), 2);
+  return ret;
+
 }
 

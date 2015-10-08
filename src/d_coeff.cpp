@@ -12,6 +12,7 @@
 #include "support.h"
 #include "my_array.h"
 #include "spectrum.h"
+#include "plasma.h"
 #include "d_coeff.h"
 
 extern mpi_info_struc mpi_info;
@@ -22,5 +23,47 @@ extern mpi_info_struc mpi_info;
 
 
 */
+
+diffusion_coeff::diffusion_coeff(int nx, int n_ang):data_array(nx, n_ang){
+
+
+}
+
+
+void diffusion_coeff::set_ids(float time1, float time2, int space1, int space2, int wave_id, char block_id[10], int function_type){
+
+}
+
+
+bool diffusion_coeff::write_to_file(std::fstream &file){
+
+
+  return 0;
+
+}
+
+void diffusion_coeff::calculate(spectrum * spect, plasma * my_mu){
+//takes spectrum and plasma, and calls whatever auxilliarlies it needs to calc D. This is local as fn of n, x
+
+//Which one? eneergy or angle. They're related trivially though. Pick one.
+//When to sum over resonances?
+
+
+/*Subsections:
+To solve Eq 2 in Albert:
+Get G1
+
+
+Get phi, mu, dmu/domega which are used to:
+  get G2 - needs mu, dmu/domega
+  get denominator | 1 - (d omega / d kparallel)_x | from 6 - needs mu, dmu/domega
+  get Eq 7 factor - needs mu, dmu/domega, dmu/dx
+
+*/
+
+
+
+
+}
 
 

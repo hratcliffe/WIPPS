@@ -47,6 +47,7 @@ const calc_type v0 = 2.997924e8; //m/s^2
 const calc_type me = 9.10938291e-31; //kg
 const calc_type mp = me*1036.0; //kg
 const calc_type q0 = 1.602176565e-19; // C
+const calc_type eps0 =8.85418782e-12; //F/m
 
 //kb = 1.3806488d-23   ; J/K
 //mu0 = 4.0d-7 * !dpi  ; N/A^2

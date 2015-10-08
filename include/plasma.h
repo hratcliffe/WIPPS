@@ -23,6 +23,8 @@ struct mu{
 
 class plasma{
 
+static const int ncomps=1; //if we expand to multi component plasma
+
 int wave_type;
 
 calc_type * position;
@@ -30,6 +32,12 @@ calc_type * ne;
 calc_type * B0;
 calc_type * om_pe;
 calc_type * om_ce;
+
+/*calc_type * dndr[ncomps];
+calc_type * dndth[ncomps];
+calc_type * dB0dr;
+calc_type * dB0dth;
+*/
 //Might not need both options. Note also the deck constants versions...
 
 //Depending on calls, might want to store the derivs and stuff
@@ -38,16 +46,16 @@ calc_type * om_ce;
 //Needs to hold density profile, background B field profile.
 
 //Other Plasma params, such as species massm charge
-calc_type pmass;
-calc_type pcharge;
+calc_type pmass[ncomps];
+calc_type pcharge[ncomps];
 
-int ncomps; //if we expand to multi component plasma
 
 public:
 
 plasma();
 void get_density(){;}
 void get_B0(){;}
+
 //obtain these profiles somehow, either from deck or otherwise. ne might be constant... B can get from file 0
 
 //If we copy mufunctions we have something like

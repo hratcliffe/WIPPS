@@ -46,7 +46,8 @@ mu plasma::get_root(calc_type th, calc_type w, calc_type psi){
   calc_type dB0dr, dB0dth;
   
   /** \todo get or calc these...*/
-  std::cout<<"These numbers are wrong, remember"<<std::endl;
+  //std::cout<<"These numbers are wrong, remember"<<std::endl;
+  // FAKENUMBERS
   for(int i=0;i<ncomps; i++){
     dndr[i] = 1;
     dndth[i] = 1;
@@ -104,6 +105,7 @@ mu plasma::get_root(calc_type th, calc_type w, calc_type psi){
   mu_ret.mug = 0.0;
   mu_ret.dmudr = 0.0;
   mu_ret.dmudth = 0.0;
+  mu_ret.dmudom = 0.0;
   mu_ret.alpha = 0.0;
   mu_ret.err = 1;
   
@@ -162,7 +164,6 @@ mu plasma::get_root(calc_type th, calc_type w, calc_type psi){
     mu_ret.dmudr = 0.0;
     dmudw = 0.0;
     mu_ret.dmudth = dmudpsi*dpsidth;
-    
     //even if this one can be folded into above, keep it out as not vectorisable
     for(int i=0; i<ncomps; i++){
        mu_ret.dmudr = mu_ret.dmudr + dmudX[i]*dXdr[i] + dmudY[i]*dYdr[i];
@@ -171,6 +172,7 @@ mu plasma::get_root(calc_type th, calc_type w, calc_type psi){
     }
     mu_ret.mug = mu_ret.mu + w*dmudw;
     mu_ret.alpha = -dmudpsi/mu_ret.mu;
+    mu_ret.dmudom = dmudw;
 
     mu_ret.err = 0;
   
@@ -178,16 +180,23 @@ mu plasma::get_root(calc_type th, calc_type w, calc_type psi){
 
 //  this->my_mu = mu_ret;
 //  mu_set = true;
+//store away mu for furture use, along with key params used. 
+  last_mu = mu_ret;
+  last_th = th;
+  last_w = w;
+  last_psi = psi;
+  
   return mu_ret;
 }
 
-calc_type plasma::get_phi(calc_type th, calc_type w, calc_type psi, calc_type alpha, int n){
-//Get's the Phi defined by Lyons 1974.
-// Will be clumsy for now, because each call recalls mu, and we need to sum over n in the end. And it duplicates the STIX params calcs
-//Also needs particle pitch angle alpha
+calc_type plasma::get_phi(calc_type th, calc_type w, calc_type psi, calc_type alpha, int n, calc_type omega_n){
+/**Get's the Phi defined by Lyons 1974.
+*Will be clumsy for now, because each call recalls mu, and we need to sum over n in the end. And it duplicates the STIX params calcs
+*Also needs particle pitch angle alpha \todo Fix relativistic gamma...
+ */
  
   calc_type wp[ncomps], wp2[ncomps], wc[ncomps];
-  calc_type R, L, P, S, D, ret, term1, term2, term3, denom, tmp_bes, bessel_arg, sin2psi, D_mu2S;
+  calc_type R, L, P, S, D, ret, term1, term2, term3, denom, tmp_bes, bessel_arg, sin2psi, D_mu2S, gamma;
 
   for(int i=0; i<ncomps; ++i){
     wp[i] = my_const.omega_pe;
@@ -203,18 +212,26 @@ calc_type plasma::get_phi(calc_type th, calc_type w, calc_type psi, calc_type al
   S = 0.5*(R + L);
   D = 0.5*(R - L);
 
-  mu my_mu = this->get_root(th, w, psi);
+  mu my_mu;
+
+  if((last_th != th) || (last_w != w) || (last_psi != psi)){
+    std::cout<<"Regetting"<<std::endl;
+    my_mu = this->get_root(th, w, psi);}
+  else{my_mu = last_mu;}
+  
   calc_type mu2 = pow(my_mu.mu, 2);
 
   sin2psi = pow(sin(psi), 2);
   D_mu2S = D / (mu2 - S);
+  gamma = 1;
+  omega_n = -1.0 * n * my_const.omega_ce/gamma;
   //temporaries for simplicity
 
   term1 = (mu2* sin2psi - P)/(mu2);
   
   denom = pow(D_mu2S*term1, 2) + pow((P*cos(psi)/mu2), 2);
   
-  bessel_arg = 0.0;// n x tan alpha (om - om_n)/om_n
+  bessel_arg = n* tan(psi)*tan(alpha) * (w - omega_n)/omega_n;// n x tan alpha (om - om_n)/om_n
   
   tmp_bes = boost::math::cyl_bessel_j(n+1, bessel_arg);
   term2 = (1 + D_mu2S)*tmp_bes;

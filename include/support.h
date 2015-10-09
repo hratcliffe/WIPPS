@@ -74,6 +74,8 @@ std::string mk_str(int i);/**<Converts int to string*/
 std::string mk_str(bool b);/**<Converts bool to string*/
 //std::string mk_str(size_t i){ return mk_str((int) i);} /**<Converts size_t to string*/
 
+calc_type integrator(calc_type * start, int len, calc_type * increment);
+
 
 const int WAVE_WHISTLER = 1;
 const int WAVE_PLASMA = 2;

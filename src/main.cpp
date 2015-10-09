@@ -22,6 +22,7 @@
 #include "main.h"
 #include "support.h"
 #include "reader.h"
+#include "plasma.h"
 #include "my_array.h"
 #include "d_coeff.h"
 #include "spectrum.h"
@@ -117,13 +118,23 @@ int main(int argc, char *argv[]){
   //Now we have some test spectral data we can work with...
 
 // if(sizeof(input_type) != sizeof(calc_type)). Hmm, now we need the data in a higher precision format...
- 
+  
+  diffusion_coeff * D;
+  D = new diffusion_coeff(100, 100);
+  plasma * plasm;
+  plasm = new plasma();
+
+  D->calculate(spect, plasm);
 
   //Cleanup objects etc
   delete spect;
   delete my_reader;
   delete dat;
   delete dat_fft;
+  delete plasm;
+  delete D;
+
+  cout<<"Grep for FAKENUMBERS !!!!"<<endl;
 
   ADD_FFTW(cleanup());
   MPI_Finalize();
@@ -208,3 +219,20 @@ std::string mk_str(bool b){
 
 }
 
+calc_type integrator(calc_type * start, int len, calc_type * increment){
+/** \brief Basic numerical integrator
+*
+*Uses trapezium rule. WARNING this is working with contiguous memory. Not very C++ but faster.
+*/
+
+  calc_type value=0.0;
+  
+  for(int i=0; i<len-1; i++){
+  
+    value += 0.5*(start[i] + start[i+1]) * increment[i];
+    
+  }
+
+ return value;
+
+}

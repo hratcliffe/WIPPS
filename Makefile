@@ -11,12 +11,20 @@ GIT_VERSION := $(shell git describe --dirty --always --tags)
 SRCDIR = src
 OBJDIR = obj
 INCLUDE = -I /usr/local/include/ -I $(SDFPATH)/C/include/ -I ./include/
-LIB = -L /usr/local/lib/ $(SDFPATH)/C/lib/libsdfc.a -lfftw3f -lm
+LIB = -L /usr/local/lib/ $(SDFPATH)/C/lib/libsdfc.a
+
 CFLAGS = -g -c $(INCLUDE) -DVERSION=\"$(GIT_VERSION)\"
 DEBUG = -W -Wall -pedantic -D_GLIBCXX_DEBUG
 #DEBUG+= -Wno-sign-compare
-DEBUG+= -Wno-unused-parameter
+#DEBUG+= -Wno-unused-parameter
 #Comment/uncomment these to hide specific errors...
+
+ifeq ($(strip $(TYPE)),double)
+  LIB += -lfftw3 -lm
+else
+  LIB += -lfftw3f -lm
+  CFLAGS += -D_USE_FLOAT
+endif
 
 ifeq ($(strip $(MODE)),debug)
   CFLAGS += $(DEBUG)
@@ -31,7 +39,7 @@ SOURCE += main.cpp
 OBJS := $(SOURCE:.cpp=.o)
 
 #header files only (no .cpp)
-#INCLS += support.h
+INCLS += support.h
 
 #add directory prefixes
 SOURCE := $(addprefix $(SRCDIR)/, $(SOURCE))
@@ -48,7 +56,10 @@ debug :
 	@echo $(OBJS)
 	@echo " "
 	@echo $(INCLS)
-
+	@echo " "
+	@echo $(CFLAGS)
+	@echo " "
+	@echo $(LIB)
 
 #Create the object directory before it is used, no error if not exists (order-only prereqs, will not rebuild objects if directory timestamp changes)
 $(OBJS): | $(OBJDIR)

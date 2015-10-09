@@ -14,9 +14,6 @@
 #include <iostream>
 #include <stdio.h>
 
-#define _USE_FLOAT
-//temporary. This should go to makefile
-
 #ifdef _USE_FLOAT
 
 #define ADD_FFTW(x) fftwf_ ## x
@@ -35,7 +32,7 @@
 /** These set up our types so we can easily recompile to work with doubles or floats. First adds correct FFTW library prefix, adjust to float or normal. Next defines suitable complex type. Third s working data type, and the last is set to suitable SDF data type matching my_type. Lets be sane, and assume we want the f libraries to work with float data, and the double to work with doubles. So we don't have extraneous copying and false precision.
 */
 
-#define calc_type float
+#define calc_type double
 
 
 const int MAX_SIZE = 10000;

@@ -11,6 +11,8 @@
 
 #include <stdio.h>
 #include <cmath>
+#include <boost/math/special_functions.hpp>
+//Provides Bessel functions, erf, and many more
 
 #include "support.h"
 #include "plasma.h"
@@ -179,12 +181,13 @@ mu plasma::get_root(calc_type th, calc_type w, calc_type psi){
   return mu_ret;
 }
 
-calc_type plasma::get_phi(calc_type th, calc_type w, calc_type psi, int n){
+calc_type plasma::get_phi(calc_type th, calc_type w, calc_type psi, calc_type alpha, int n){
 //Get's the Phi defined by Lyons 1974.
 // Will be clumsy for now, because each call recalls mu, and we need to sum over n in the end. And it duplicates the STIX params calcs
+//Also needs particle pitch angle alpha
  
   calc_type wp[ncomps], wp2[ncomps], wc[ncomps];
-  calc_type R, L, P, S, D, ret, term1, term2, term3, denom;
+  calc_type R, L, P, S, D, ret, term1, term2, term3, denom, tmp_bes, bessel_arg, sin2psi, D_mu2S;
 
   for(int i=0; i<ncomps; ++i){
     wp[i] = my_const.omega_pe;
@@ -201,12 +204,28 @@ calc_type plasma::get_phi(calc_type th, calc_type w, calc_type psi, int n){
   D = 0.5*(R - L);
 
   mu my_mu = this->get_root(th, w, psi);
+  calc_type mu2 = pow(my_mu.mu, 2);
 
-  denom = 1.0;
-  term1 =0;
-  term2 =0;
-  term3 =0;
-  ret = denom * pow((term1 + term2 + term3), 2);
+  sin2psi = pow(sin(psi), 2);
+  D_mu2S = D / (mu2 - S);
+  //temporaries for simplicity
+
+  term1 = (mu2* sin2psi - P)/(mu2);
+  
+  denom = pow(D_mu2S*term1, 2) + pow((P*cos(psi)/mu2), 2);
+  
+  bessel_arg = 0.0;// n x tan alpha (om - om_n)/om_n
+  
+  tmp_bes = boost::math::cyl_bessel_j(n+1, bessel_arg);
+  term2 = (1 + D_mu2S)*tmp_bes;
+  
+  tmp_bes = boost::math::cyl_bessel_j(n-1, bessel_arg);
+  term2 += (1 - D_mu2S)*tmp_bes;
+
+  tmp_bes = boost::math::cyl_bessel_j(n, bessel_arg);
+  term3 = sin(psi)*cos(psi)*tmp_bes/tan(alpha);
+
+  ret = pow((0.5*term1*term2 + term3), 2)/denom;
   return ret;
 
 }

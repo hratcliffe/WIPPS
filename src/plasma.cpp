@@ -55,7 +55,7 @@ plasma::plasma()
   
   B0 = my_const.omega_ce * me/std::abs(q0);
 
-  (this->om_ce) = std::abs(pcharge[0]) * this->B0 / pmass[0];
+  this->om_ce = (pcharge[0]) * this->B0 / pmass[0];
   //reference electron cyclotron freq
 }
 
@@ -435,7 +435,27 @@ calc_type plasma::get_omega(calc_type x, calc_type v_par, calc_type n){
 * We have to solve a cubic. \todo check root correctness etc Uses Num Recp. version, optimised to minimise roundoff errors. Note for slowly changing v_par, suggests Newtons method might be more efficient. Although much of this could be precomputed for given grids.
 */
 
-  calc_type wc = (this->om_ce);
+  if(v_par < tiny_calc_type){
+    //special case...
+    calc_type ret = 0.0;
+    if( std::abs(n)-1.0 < tiny_calc_type ) ret = (this->om_ce)* n;
+  
+    return  ret;
+  }
+  if(std::abs(n) < tiny_calc_type){
+  //also special...
+  //coeff d in cubic is 0 and we reduce to quadratic assuming omega != 0
+
+    calc_type ret = 0.0;
+    
+    //if omega_pe > omega_ce no solution...???
+  
+  
+  }
+
+
+
+  calc_type wc = std::abs(this->om_ce);
   calc_type a, b, c, d;
   calc_type Q, R, an, bn, cn, bigA, bigB, Q3, R2;
   calc_type cos_th = cos(atan(x));
@@ -456,7 +476,7 @@ calc_type plasma::get_omega(calc_type x, calc_type v_par, calc_type n){
   d = vel_cos * n * wc * wc*cos_th;
 
   
-  std::cout<<a<<" "<<b<<" "<<c<<" "<<d<<" "<<std::endl;
+  //std::cout<<a<<" "<<b<<" "<<c<<" "<<d<<" "<<std::endl;
 
   an = b/a;
   bn = c/a;
@@ -467,7 +487,7 @@ calc_type plasma::get_omega(calc_type x, calc_type v_par, calc_type n){
   R2 = pow(R, 2);
   Q3 = pow(Q, 3);
   
-  std::cout<<"Q, R, R^2/Q^3 "<< Q<<" "<<R<<" "<< R2/Q3<<std::endl;
+  //std::cout<<"Q, R, R^2/Q^3 "<< Q<<" "<<R<<" "<< R2/Q3<<std::endl;
   
   if( R2/Q3 < 1.0){
     std::cout<<"R^2/Q^3 < 1, you got 3 real roots..."<<std::endl;

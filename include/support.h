@@ -34,6 +34,8 @@
 
 #define calc_type double
 
+#define tiny_calc_type 1e-12
+
 
 const int MAX_SIZE = 10000;
 const my_type io_verify = 3.0/32.0;

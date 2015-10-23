@@ -30,7 +30,7 @@ extern deck_constants my_const;
 diffusion_coeff::diffusion_coeff(int nx, int n_angs):data_array(nx, n_angs){
 
   n_thetas = 10;
-  n_n = 0;
+  n_n = 4;
   // FAKENUMBERS
 }
 
@@ -85,8 +85,9 @@ Get mu, dmu/domega which are used to:
   alpha = 0.0;
   alpha_inc =  2.0*pi/dims[1]/4.0;
   //do one quadrant...
-  
-  x_inc = 0.02/n_thetas; //To cover range from 0 to 2...
+  x_inc = 5.0/n_thetas; //To cover range from 0 to 2...
+  x=- n_thetas/ 2.0 * x_inc;
+
   lat = 0.0;
   // FAKENUMBERS
   //Allocate and construct a dx from theta.
@@ -112,7 +113,7 @@ Get mu, dmu/domega which are used to:
   for(int i =0; i< ((1< dims[0]) ? 1:dims[0]); ++i){
     //particle parallel velocity
     v_par = v_axis[i];
-    v_par = 0.15 * v0;
+    v_par = 0.00 * v0;
     // FAKENUMBERS
     for(int k =0; k< ((1 <dims[1]) ? 1: dims[1]); k++){
       //particle pitch angle
@@ -120,29 +121,25 @@ Get mu, dmu/domega which are used to:
 
       for(int j=0;j<n_thetas; ++j){
       //theta loop for wave angle or x=tan theta
-        x = x + dx[j];
-        theta = atan(x) + pi;
-//        omega = plas->get_omega(x); // FIX!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        //calc_type th, calc_type w, calc_type psi)
-//        mu my_mu = plas->get_root(lat, omega, theta);
-        D_tmp = 0.0;
-        //for(int n=-n_n; n<n_n; ++n)
-        {int n = 1;
-          // n is resonant number
-          //calc_type th, calc_type w, calc_type psi, calc_type alpha, int n
-          omega = plas->get_omega(x, v_par, (calc_type) n);
-          std::cout<<omega<<std::endl;
-//          calc_type x, calc_type v_par, calc_type wc, calc_type n
-          my_mu = plas->get_phi_mu_om(lat, omega, theta, alpha, n, omega_n);
-          std::cout<< "mu "<<my_mu.mu<<" "<< my_mu.dmudom<<std::endl;
-         // std::cout<< n<<" "<<my_mu.err<<std::endl;
-//          if(my_mu.err) std::cout<<"Halp! Dispersion went wrong!..."<<std::endl;
-          mu_dom_mu = my_mu.mu + omega * my_mu.dmudom;
-//          dmudx = my_mu.dmudtheta * pow(cos(theta), 2); ; //transform theta to tan theta.
-        // FAKENUMBERS
+        x+= dx[j];
+        theta = atan(x);
+        //theta = pi;
+        //x = tan(theta);
+        std::cout<<j<<" "<<theta/pi<<"+++++++++++++++++++++++++"<<std::endl;
 
-          
-//          calc_type phi = plas->get_phi(lat, omega, theta, alpha, n, omega_n);
+        D_tmp = 0.0;
+        for(int n=-n_n; n<n_n; ++n)
+        { //std::cout<<n<<"-----------------"<<std::endl;
+          // n is resonant number
+          omega = plas->get_omega(x, v_par, (calc_type) n);
+          std::cout<<"Freq is "<<omega/my_const.omega_ce<<std::endl;
+          if(std::abs(omega/my_const.omega_ce) > 1.0) continue;
+
+          my_mu = plas->get_phi_mu_om(lat, omega, theta, alpha, n, omega_n);
+
+//          if(my_mu.err) std::cout<<"Halp! Dispersion went wrong!..."<<std::endl;
+          if(!my_mu.err) std::cout<<"YAY!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! "<<n<<" "<<j<<std::endl;
+          mu_dom_mu = my_mu.mu + omega * my_mu.dmudom;
 
           Eq6 = omega/(omega - omega_n)* my_mu.mu/mu_dom_mu;
           Eq7 = -1.0* (my_mu.mu*omega_n/(omega*(omega-omega_n)) - my_mu.dmudom)/(my_mu.mu *sin(theta)*cos(theta) - dmudx);

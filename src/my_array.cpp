@@ -11,6 +11,7 @@
 #include <iostream>
 #include <iomanip>
 #include <cstdlib>
+#include <algorithm>
 #include <complex.h>
 #include <fftw3.h>
 #include <cmath>
@@ -605,5 +606,15 @@ my_type * axis = this->get_axis(i, len);
 
 return std::abs(axis[0]-axis[1]);
 
+}
+
+void data_array::copy_ids( data_array * src){
+//parent_class::copy_id(parent_class * one){ strcpy(one->id, this->id);}
+/** Copies ID fields from one array to this */
+
+  strcpy(src->block_id, this->block_id);
+  
+  std::copy(src->time, src->time + 1, this->time);
+  for(int i=0; i < 2; ++i) this->space[i] = src->space[i];
 }
 

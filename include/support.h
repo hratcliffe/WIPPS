@@ -42,7 +42,7 @@ const my_type io_verify = 3.0/32.0;
 const calc_type pi = 3.14159;
 const calc_type v0 = 2.997924e8; //m/s^2
 const calc_type me = 9.10938291e-31; //kg
-const calc_type mp = me*1036.0; //kg
+const calc_type mp = me*1836.15267; //kg
 const calc_type q0 = 1.602176565e-19; // C
 const calc_type eps0 =8.85418782e-12; //F/m
 
@@ -55,6 +55,7 @@ struct deck_constants{
   float v_t;
   float omega_pe;
   float omega_ce;
+  float omega_ci;
   int ppc;
   
 
@@ -65,6 +66,27 @@ struct mpi_info_struc{
   int rank;
   int n_procs;
 };
+
+struct mu{
+  calc_type mu;
+  calc_type mug;
+  calc_type dmudr;
+  calc_type dmudlat;
+  calc_type dmudtheta;
+  calc_type dmudom;
+  calc_type alpha;
+  int err;
+
+};
+
+struct mu_dmudom{
+  calc_type mu;
+  calc_type dmudom;
+  calc_type phi;
+  int err;
+
+};
+
 
 const int DEFAULT_N_ANG = 100;
 

@@ -183,10 +183,13 @@ cout<<bess-0.7651976865579665514497<<endl;
 void get_deck_constants(){
 /** \brief Setup run specific constants
 *
-*This will read deck.status and parse values for user defined constants etc. It will rely on using the specific deck, because it has to look for names. Any changes to deck may need updating here. \todo Write it.
+*This will read deck.status and parse values for user defined constants etc. It will rely on using the specific deck, because it has to look for names. Any changes to deck may need updating here. \todo Write it. \todo Document H assumption...
 */
 
 my_const.omega_ce = 17588.200878;
+my_const.omega_ci = my_const.omega_ce * me/mp;
+//assumes same charge magnitude, I.e. H plasma
+
 my_const.omega_pe = 35176.401757;
 
 }

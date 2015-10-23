@@ -68,13 +68,13 @@ $(OBJDIR):
 
 #Dependencies
 
-obj/main.o : ./src/main.cpp $(INCLS)
 obj/my_array.o : ./src/my_array.cpp $(INCLS)
 obj/spectrum.o : ./src/spectrum.cpp $(INCLS)
 obj/d_coeff.o : ./src/d_coeff.cpp $(INCLS)
+obj/plasma.o : ./src/plasma.cpp $(INCLS)
 
 
-obj/%.o:./src/%.cpp $(INCLS)
+obj/%.o:./src/%.cpp
 	$(CC) $(CFLAGS)  $< -o $@
 
 .PHONY : tar tartest clean veryclean

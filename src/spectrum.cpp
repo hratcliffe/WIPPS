@@ -277,3 +277,15 @@ void spectrum::make_test_spectrum(){
 //+ 0.25*exp(-pow((*(ax_tmp) + centre), 2)/width*50.0)
 
 }
+
+calc_type spectrum::get_G1(){
+//returns G1 calculated as in Albert 2005.
+
+  return 0.0;
+}
+
+calc_type spectrum::get_G2(mu my_mu){
+/**returns G2 calculated as in Albert 2005. */
+
+  return 0.0;
+}

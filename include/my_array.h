@@ -112,6 +112,7 @@ bool write_to_file(std::fstream &file);
 bool read_from_file(std::fstream &file);
 
 bool fft_me(data_array * data_out);
+void copy_ids( data_array * src);
 
 };
 

@@ -55,6 +55,10 @@ int where(my_type * ax_ptr, int len, my_type target);
 bool write_to_file(std::fstream &file);
 
 void make_test_spectrum();
+
+calc_type get_G1();
+calc_type get_G2(mu my_mu);
+
 };
 
 

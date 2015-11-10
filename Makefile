@@ -11,7 +11,8 @@ GIT_VERSION := $(shell git describe --dirty --always --tags)
 SRCDIR = src
 OBJDIR = obj
 INCLUDE = -I /usr/local/include/ -I $(SDFPATH)/C/include/ -I ./include/
-LIB = -L /usr/local/lib/ $(SDFPATH)/C/lib/libsdfc.a
+LIBSDF = -L /usr/local/lib/ $(SDFPATH)/C/lib/libsdfc.a
+LIB := $(LIBSDF)
 
 CFLAGS = -g -c $(INCLUDE) -DVERSION=\"$(GIT_VERSION)\"
 DEBUG = -W -Wall -pedantic -D_GLIBCXX_DEBUG
@@ -31,7 +32,7 @@ ifeq ($(strip $(MODE)),debug)
 endif
 
 #list of all header and cpp pairs. 
-INCLS = my_array.h d_coeff.h spectrum.h reader.h plasma.h
+INCLS = my_array.h d_coeff.h spectrum.h reader.h plasma.h tests.h
 
 #make lists of source and object files, all headers plus main
 SOURCE := $(INCLS:.h=.cpp)
@@ -48,6 +49,9 @@ INCLS := $(addprefix include/, $(INCLS))
 
 main : $(OBJS)
 	$(CC) $(INCLUDE) $(OBJS) $(LIB) -o main
+
+read_test : $(OBJDIR)/read_test.o
+	$(CC) $(INCLUDE) $(SRCDIR)/read_test.cpp $(LIBSDF) -o read_test
 
 #testing makefile commands ;)
 debug :
@@ -68,14 +72,18 @@ $(OBJDIR):
 
 #Dependencies
 
-obj/my_array.o : ./src/my_array.cpp $(INCLS)
-obj/spectrum.o : ./src/spectrum.cpp $(INCLS)
-obj/d_coeff.o : ./src/d_coeff.cpp $(INCLS)
-obj/plasma.o : ./src/plasma.cpp $(INCLS)
+$(OBJDIR)/my_array.o : ./$(SRCDIR)/my_array.cpp $(INCLS)
+$(OBJDIR)/spectrum.o : ./$(SRCDIR)/spectrum.cpp $(INCLS)
+$(OBJDIR)/d_coeff.o : ./$(SRCDIR)/d_coeff.cpp $(INCLS)
+$(OBJDIR)/plasma.o : ./$(SRCDIR)/plasma.cpp $(INCLS)
 
 
-obj/%.o:./src/%.cpp
+$(OBJDIR)/%.o:./$(SRCDIR)/%.cpp
 	$(CC) $(CFLAGS)  $< -o $@
+
+$(OBJDIR)/read_test.o:./$(SRCDIR)/read_test.cpp
+	$(CC) $(CFLAGS)  $< -o $@
+
 
 .PHONY : tar tartest clean veryclean
 

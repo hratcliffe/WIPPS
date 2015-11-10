@@ -64,7 +64,7 @@ mu_dmudom get_phi_mu_om( calc_type th, calc_type w, calc_type psi, calc_type alp
  integer(I4B),intent(out)::merror               !< testing for mu
 */
 
-calc_type get_omega(calc_type x, calc_type v_par, calc_type n);
+std::vector<calc_type> get_omega(calc_type x, calc_type v_par, calc_type n);
 
 
 };

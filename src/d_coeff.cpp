@@ -82,11 +82,13 @@ Get mu, dmu/domega which are used to:
   calc_type theta, omega,lat, alpha, omega_n, inc, x, x_inc, D_tmp;
   calc_type Eq6, mu_dom_mu, Eq7, dmudx, v_par, alpha_inc;
 
+  std::vector<calc_type> omega_calc;
+
   alpha = 0.0;
   alpha_inc =  2.0*pi/dims[1]/4.0;
   //do one quadrant...
-  x_inc = 5.0/n_thetas; //To cover range from 0 to 2...
-  x=- n_thetas/ 2.0 * x_inc;
+  x_inc = 4.0/n_thetas; //To cover range from 0 to 2...
+  x= - n_thetas/ 2.0 * x_inc;
 
   lat = 0.0;
   // FAKENUMBERS
@@ -103,7 +105,9 @@ Get mu, dmu/domega which are used to:
   
   mu_dmudom my_mu;
 
-  for(int i=0; i<n_thetas; ++i) dx[i] = i*x_inc;
+  for(int i=0; i<n_thetas; ++i) dx[i] = x_inc;
+  //linear grid for now
+  
   
   //innermost loop should be n. Next theta, as we need mu at each theta. Omega and x are interchangeable...
   //Alpha remains, as does particle v.
@@ -113,7 +117,7 @@ Get mu, dmu/domega which are used to:
   for(int i =0; i< ((1< dims[0]) ? 1:dims[0]); ++i){
     //particle parallel velocity
     v_par = v_axis[i];
-    v_par = 0.00 * v0;
+    v_par = 0.15 * v0;
     // FAKENUMBERS
     for(int k =0; k< ((1 <dims[1]) ? 1: dims[1]); k++){
       //particle pitch angle
@@ -121,36 +125,38 @@ Get mu, dmu/domega which are used to:
 
       for(int j=0;j<n_thetas; ++j){
       //theta loop for wave angle or x=tan theta
-        x+= dx[j];
         theta = atan(x);
         //theta = pi;
         //x = tan(theta);
         std::cout<<j<<" "<<theta/pi<<"+++++++++++++++++++++++++"<<std::endl;
 
         D_tmp = 0.0;
-        for(int n=-n_n; n<n_n; ++n)
-        { //std::cout<<n<<"-----------------"<<std::endl;
+        for(int n=-n_n; n<n_n; ++n){
+//        { int n=-1;//std::cout<<n<<"-----------------"<<std::endl;
           // n is resonant number
-          omega = plas->get_omega(x, v_par, (calc_type) n);
-          std::cout<<"Freq is "<<omega/my_const.omega_ce<<std::endl;
-          if(std::abs(omega/my_const.omega_ce) > 1.0) continue;
+          omega_calc = plas->get_omega(x, v_par, (calc_type) n);
+          //if(std::abs(omega/my_const.omega_ce) > 1.0) continue;
+          if(omega_calc.size()==0) continue; //redundant?
+          for(int ii =0; ii< omega_calc.size(); ++ii){
+            omega = omega_calc[ii];
+            std::cout<<"Freq is "<<omega/my_const.omega_ce<<std::endl;
+            my_mu = plas->get_phi_mu_om(lat, omega, theta, alpha, n, omega_n);
 
-          my_mu = plas->get_phi_mu_om(lat, omega, theta, alpha, n, omega_n);
+            if(!my_mu.err) std::cout<<"YAY!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! "<<n<<" "<<j<<std::endl;
+            mu_dom_mu = my_mu.mu + omega * my_mu.dmudom;
 
-//          if(my_mu.err) std::cout<<"Halp! Dispersion went wrong!..."<<std::endl;
-          if(!my_mu.err) std::cout<<"YAY!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! "<<n<<" "<<j<<std::endl;
-          mu_dom_mu = my_mu.mu + omega * my_mu.dmudom;
-
-          Eq6 = omega/(omega - omega_n)* my_mu.mu/mu_dom_mu;
-          Eq7 = -1.0* (my_mu.mu*omega_n/(omega*(omega-omega_n)) - my_mu.dmudom)/(my_mu.mu *sin(theta)*cos(theta) - dmudx);
-          //Need this iff we use second expression in Eq 5
-          
-          D_tmp += my_mu.phi; // FAKENUMBERS This will be the n summed D so add onto it each n iteration
-        
+            Eq6 = omega/(omega - omega_n)* my_mu.mu/mu_dom_mu;
+            Eq7 = -1.0* (my_mu.mu*omega_n/(omega*(omega-omega_n)) - my_mu.dmudom)/(my_mu.mu *sin(theta)*cos(theta) - dmudx);
+            //Need this iff we use second expression in Eq 5
+            
+            D_tmp += my_mu.phi; // FAKENUMBERS This will be the n summed D so add onto it each n iteration
+          }
         }
         //Store into theta array. Might not need tmp in the end
         //Except that it saves us one multiplication per iteration without acting on element in place after.
         D_theta[j] = D_tmp*pow(cos(theta), 2);
+        x+= dx[j];
+
       }
       //now integrate in x = tan theta
       D_tmp = integrator(D_theta, dims[1], dx);

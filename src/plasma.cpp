@@ -428,19 +428,24 @@ mu_dmudom plasma::get_phi_mu_om(calc_type th, calc_type w, calc_type psi, calc_t
   return my_mu;
 }
 
-calc_type plasma::get_omega(calc_type x, calc_type v_par, calc_type n){
+std::vector<calc_type> plasma::get_omega(calc_type x, calc_type v_par, calc_type n){
 /**Get resonant frequency for particular x...
 *
 *Solve high density approx to get omega. for pure electron proton plasma.... \todo report what this is assuming or check it or something...
 * We have to solve a cubic. \todo check root correctness etc Uses Num Recp. version, optimised to minimise roundoff errors. Note for slowly changing v_par, suggests Newtons method might be more efficient. Although much of this could be precomputed for given grids.
+Return empty vector if no valid solutions
 */
+
+  std::vector<calc_type> ret_vec;
+
 
   if(v_par < tiny_calc_type){
     //special case...
     calc_type ret = 0.0;
     if( std::abs(n)-1.0 < tiny_calc_type ) ret = (this->om_ce)* n;
-  
-    return  ret;
+    ret_vec.push_back(ret);
+    return ret_vec;
+    /** \todo FIX! Empty vec if invalid*/
   }
   if(std::abs(n) < tiny_calc_type){
   //also special...
@@ -449,7 +454,8 @@ calc_type plasma::get_omega(calc_type x, calc_type v_par, calc_type n){
     calc_type ret = 0.0;
     
     //if omega_pe > omega_ce no solution...???
-  
+  /** \todo add case */
+    /** \todo FIX! Empty vec if invalid*/
   
   }
 
@@ -457,12 +463,15 @@ calc_type plasma::get_omega(calc_type x, calc_type v_par, calc_type n){
 
   calc_type wc = std::abs(this->om_ce);
   calc_type a, b, c, d;
-  calc_type Q, R, an, bn, cn, bigA, bigB, Q3, R2;
+  calc_type Q, R, an, bn, cn, bigA, bigB, Q3, R2, bigTheta;
   calc_type cos_th = cos(atan(x));
   calc_type vel = v_par / v0;
   calc_type disc_0, disc_1, disc;
   calc_type vel_cos = 1.0/ pow(vel * cos_th, 2) ;
-
+  calc_type roots[3];
+  bool is_good[3];
+  int good_roots;
+  calc_type ret_root;
 /* -ve sign  a = vel_cos - 1.0;
   b = (-vel_cos * wc*cos_th + 2* vel_cos * n * wc + wc * cos_th);
   c = (-2.0 * n *vel_cos *wc* wc*cos_th + vel_cos * pow(n * wc, 2) + my_const.omega_pe);
@@ -490,16 +499,46 @@ calc_type plasma::get_omega(calc_type x, calc_type v_par, calc_type n){
   //std::cout<<"Q, R, R^2/Q^3 "<< Q<<" "<<R<<" "<< R2/Q3<<std::endl;
   
   if( R2/Q3 < 1.0){
-    std::cout<<"R^2/Q^3 < 1, you got 3 real roots..."<<std::endl;
-    return 0.0;
+    
+    bigTheta = acos(R/sqrt(Q3));
+    calc_type minus2sqrtQ = -2.0*sqrt(Q);
+    
+    //get all 3 roots. Hopefully only one is in range...
+    roots[0] = minus2sqrtQ*cos(bigTheta/3.0) - a/3.0;
+    roots[1] = minus2sqrtQ*cos((bigTheta + 2.0*pi)/3.0) - a/3.0;
+    roots[2] = minus2sqrtQ*cos((bigTheta - 2.0*pi)/3.0) - a/3.0;
+
+    good_roots = 0;
+    ret_root = 0.0;
+    for(int i=0; i<3; ++i){
+      is_good[i] = false;
+      if(std::abs(roots[i]) < my_const.omega_ce && std::abs(roots[i]) != ret_root){
+        is_good[i] = true;
+        good_roots ++;
+        ret_root = roots[i];
+        ret_vec.push_back(roots[i]);
+        /** \todo Fix this if we stick with vector. Lots of junk... */
+        /** fix multiple root check*/
+      }
+    }
+/*    if(good_roots == 0) return roots[0];
+    else if(good_roots == 1) return ret_root;
+    else{
+      std::cout<<"Multiple roots...."<<good_roots<<std::endl;
+      return ret_root;
+    }*/
+  }else{
+  
+  
+    bigA = - boost::math::sign(R)*pow((std::abs(R) + sqrt(R2 - Q3)), 1.0/3.0 );
+    bigA != 0.0 ? bigB = Q / bigA : 0.0;
+    ret_root = (bigA + bigB) - a/3.0;
+    if(std::abs(ret_root) < my_const.omega_ce) ret_vec.push_back(ret_root);
   }
-  
-  
-  bigA = - boost::math::sign(R)*pow((std::abs(R) + sqrt(R2 - Q3)), 1.0/3.0 );
-  bigA != 0.0 ? bigB = Q / bigA : 0.0;
-  
-  return (bigA + bigB) - a/3.0;
-  
+
+  return ret_vec;
+
+
 /*  disc_0 = pow(b, 2) - 3.0*a*c;
   disc_1 = 2.0* pow(b, 3) - 9.0*a*b*c + 27 * pow(a, 2)*d;
   disc = (-pow(disc_1, 2) + 4.0 *pow(disc_0, 3))/(27.0 * pow(a, 2));

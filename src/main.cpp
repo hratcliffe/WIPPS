@@ -26,6 +26,7 @@
 #include "my_array.h"
 #include "d_coeff.h"
 #include "spectrum.h"
+#include "tests.h"
 
 using namespace std;
 
@@ -34,6 +35,7 @@ mpi_info_struc mpi_info;
 void get_deck_constants();
 
 void test_bes();
+tests* test_bed;
 
 
 int main(int argc, char *argv[]){
@@ -58,6 +60,16 @@ int main(int argc, char *argv[]){
   my_print(std::string("Code Version: ")+ VERSION, mpi_info.rank);
   my_print("Code is running on "+mk_str(mpi_info.n_procs)+" processing elements.", mpi_info.rank);
 
+#ifdef RUN_TESTS_AND_EXIT
+  cout<<"Running basic tests"<<endl;
+  test_bed = new tests();
+  test_bed->run_tests();
+  delete test_bed;
+
+  return 0;
+#else
+
+  //Actually do the code...
   get_deck_constants();
 
   char block_id[10]= "ex";
@@ -139,7 +151,7 @@ int main(int argc, char *argv[]){
   ADD_FFTW(cleanup());
   MPI_Finalize();
   //call these last...
-
+#endif
 }
 
 
@@ -205,6 +217,17 @@ void my_print(std::string text, int rank, int rank_to_write){
   }
 
 }
+void my_print(fstream * handle, std::string text, int rank, int rank_to_write){
+/** \brief Write output
+*
+* Currently dump to term. Perhaps also to log file. Accomodates MPI also.
+*/
+  if(rank == rank_to_write){
+    *handle<<text<<std::endl;
+  }
+
+}
+
 
 std::string mk_str(int i){
 

@@ -33,6 +33,10 @@ ifeq ($(strip $(MODE)),debug)
   CFLAGS += $(DEBUG)
 endif
 
+ifeq ($(strip $(MODE)),test)
+  CFLAGS += -DRUN_TESTS_AND_EXIT
+endif
+
 #list of all header and cpp pairs. 
 INCLS = my_array.h d_coeff.h spectrum.h  plasma.h tests.h reader.h
 
@@ -67,7 +71,7 @@ debug :
 	@echo " "
 	@echo $(LIB)
 
-$(OBJS): dependencies.log
+#$(OBJS): dependencies.log
 dependencies.log: echo_deps
 -include dependencies.log
 
@@ -92,14 +96,6 @@ echo_deps :
 $(OBJS): | $(OBJDIR)
 $(OBJDIR):
 	@mkdir -p $(OBJDIR)
-
-
-
-#$(OBJDIR)/my_array.o : ./$(SRCDIR)/my_array.cpp $(INCLS)
-#$(OBJDIR)/spectrum.o : ./$(SRCDIR)/spectrum.cpp $(INCLS)
-#$(OBJDIR)/d_coeff.o : ./$(SRCDIR)/d_coeff.cpp $(INCLS)
-#$(OBJDIR)/plasma.o : ./$(SRCDIR)/plasma.cpp $(INCLS)
-#$(OBJDIR)/tests.o : ./$(SRCDIR)/tests.cpp $(INCLS)
 
 $(OBJDIR)/%.o:./$(SRCDIR)/%.cpp
 	$(CC) $(CFLAGS)  $< -o $@

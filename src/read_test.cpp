@@ -38,7 +38,8 @@ int main(int argc, char *argv[]){
 }
 
 
-  sdf_file_t *handle = sdf_open("/Users/heatherratcliffe/epoch_HR/epoch1d/Data/0000.sdf", MPI_COMM_WORLD, SDF_READ, 0);
+//  sdf_file_t *handle = sdf_open("/Users/heatherratcliffe/epoch_HR/epoch1d/Data/0000.sdf", MPI_COMM_WORLD, SDF_READ, 0);
+  sdf_file_t *handle = sdf_open("./test0000.sdf", MPI_COMM_WORLD, SDF_READ, 0);
 
   sdf_block_t * block, * next;
 

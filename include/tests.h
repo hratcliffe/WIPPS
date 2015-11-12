@@ -9,6 +9,11 @@
 #ifndef _tests_h
 #define _tests_h
 
+#include <stdio.h>
+#include <fstream>
+#include <iostream>
+#include <vector>
+
 //OK this will contain all our basic code testing, interfacing with libraries etc etc
 //Maths tests can be seperate
 /** 
@@ -32,36 +37,60 @@ quasi-particle treatment of whistlers
 */
 
 class reader;
-
-const int TEST_PASSED = 0;
-const int TEST_WRONG_RESULT = 1;
-const int TEST_NULL_RESULT = 2;
-const char * filename = "tests.log";
-
-class tests{
-private:
-  int test_reader();
-  int test_template();
-  reader * test_rd;
-  void report_err(int err);
-
+class test_entity{
+//Consists of at least a constructor doing any setup required, a name string for output id, a function run taking no parameters which performs the necessary test and a destructor doing cleanup.
 public:
-
-void setup_tests();
-
-void cleanup_tests();
-void run_tests();
-
-
-
-
-
-
-
-
+  std::string name;
+  
+  test_entity(){;}
+  virtual ~test_entity(){;}
+  virtual int run()=0;
+  //Pure virtual because we don't want an instances of this template
 
 };
 
+class tests{
+private:
+  int test_template();
+
+  std::string get_printable_error(int err, int test_id);
+  std::fstream * outfile;
+  int current_test_id;
+  std::vector<test_entity*> test_list;
+
+public:
+  void report_err(int err, int test_id=-1);
+
+  tests();
+  ~tests();
+  void setup_tests();
+  void add_test(test_entity* test);
+  void cleanup_tests();
+  void run_tests();
+
+};
+
+class test_entity_reader : public test_entity{
+  private:
+  reader * test_rdr;
+  const static int size = 49367784;
+  //Size of my test file...
+
+  public:
+  test_entity_reader();
+  virtual ~test_entity_reader();
+  virtual int run();
+
+};
+class test_entity_data_array : public test_entity{
+  private:
+
+  public:
+  test_entity_data_array();
+  virtual ~test_entity_data_array();
+  virtual int run();
+
+};
 
 
 #endif

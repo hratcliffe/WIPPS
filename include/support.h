@@ -93,6 +93,7 @@ struct mu_dmudom{
 const int DEFAULT_N_ANG = 100;
 
 void my_print(std::string text, int rank, int rank_to_write=0);
+void my_print(std::fstream * handle, std::string text, int rank, int rank_to_write=0);
 
 std::string mk_str(int i);/**<Converts int to string*/
 std::string mk_str(bool b);/**<Converts bool to string*/

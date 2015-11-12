@@ -116,20 +116,13 @@ bool reader::read_data(data_array * my_data_in, int time_range[2], int space_ran
 
   //Now we start from time_range[0] and run through files to time_range[1], or until file not found. We construct with sprintf and the known n_z
 
-  char fmt[5];
-  char file_num[10];
-  sprintf(fmt,"%s%d%c" , "%0", n_z, 'd');
-  std::string file_name;
   sdf_file_t *handle;
   sdf_block_t * block;
   bool err;
   my_type * ax_ptr;
   int len;
 
-  snprintf(file_num, 10, fmt, time_range[0]);
-  file_name = file_prefix + file_num +".sdf";
-
-  //std::cout<<"Opening "<<file_name<<std::endl;
+  std::string file_name = get_full_name(time_range[0]);
   
   handle = sdf_open(file_name.c_str(), MPI_COMM_WORLD, SDF_READ, 0);
   if(!handle) return 1;
@@ -163,9 +156,9 @@ bool reader::read_data(data_array * my_data_in, int time_range[2], int space_ran
 
   //now loop over files and get actual data
   for(i=time_range[0]; i<time_range[1];++i){
-
-    snprintf(file_num, 10, fmt, i);
-    file_name = file_prefix + file_num +".sdf";
+    file_name = get_full_name(i);
+//    snprintf(file_num, 10, fmt, i);
+  //  file_name = file_prefix + file_num +".sdf";
 
     if((i-last_report) >= report_interval){
       my_print("Opening " + file_name, mpi_info.rank);
@@ -203,3 +196,32 @@ bool reader::read_data(data_array * my_data_in, int time_range[2], int space_ran
 return 0;
 }
 
+std::string reader::get_full_name(int num){
+
+  char fmt[5];
+  char file_num[10];
+  sprintf(fmt,"%s%d%c" , "%0", n_z, 'd');
+  std::string file_name;
+
+  snprintf(file_num, 10, fmt, 0);
+  file_name = file_prefix + file_num +".sdf";
+  return file_name;
+
+}
+
+int reader::get_file_size(){
+
+  sdf_file_t *handle;
+  sdf_block_t * block;
+
+  std::string file_name = get_full_name(0);
+  handle = sdf_open(file_name.c_str(), MPI_COMM_WORLD, SDF_READ, 0);
+  if(!handle) return 1;
+
+  sdf_read_blocklist(handle);
+
+  block = handle->last_block_in_file;
+  return block->next_block_location;
+
+
+}

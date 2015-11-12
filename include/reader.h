@@ -35,6 +35,8 @@ reader(std::string file_prefix_in,  char * block_id_in);
 bool read_dims(int &n_dims, std::vector<int> &dims);
 
 bool read_data(data_array * my_data_in, int time_range[2], int space_range[2]);
+int get_file_size();
+std::string get_full_name(int num);
 
 };
 

@@ -21,7 +21,8 @@ obj/plasma.o: src/plasma.cpp \
 
 obj/tests.o: src/tests.cpp \
  include/tests.h \
- include/reader.h
+ include/reader.h \
+ include/support.h
 
 obj/reader.o: src/reader.cpp \
  include/support.h \
@@ -34,4 +35,5 @@ obj/main.o: src/main.cpp \
  include/plasma.h \
  include/my_array.h \
  include/d_coeff.h \
-  include/spectrum.h
+  include/spectrum.h \
+ include/tests.h

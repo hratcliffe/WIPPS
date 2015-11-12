@@ -111,3 +111,22 @@ Document!! w. Doxygen
 Grep for TODO and NB for notes etc
 
 
+#	sed -e '/s'
+#  sed -e $$'s,.h /,.h \\\\\\n /,g;s,.cpp /,.cpp \\\\\\n /,g;s,.h i,.h \\\ \\\n i,g;s,.cpp i,.cpp \\\\\\n i,g' out.txt &>out2.txt; \
+#  sed -e $$'s:[ ]\{1,\}:\\\ \\\n:g' out.txt &>out2.txt; \
+#  sed -e $$'s,.h /,.h \\\ \\\n /,g;s,.cpp /,.cpp \\\ \\\n /,g;s,.h $(I),.h \\\ \\\n $(I),g;s,.cpp $(I),.cpp \\\ \\\n $(I),g' depout00001.txt &>depout00002.txt; \
+
+#	@for var in $(SOURCE); do $(CC) $(INCLUDE) -M $$var; sed -e $'s,.h /,\\\n,g' out.txt &> out2.txt; \
+ #   done
+
+  #sed -e '/Xcode.app/d;/boost/d;/SDF/d;/mpio/d;/mpicxx/d;/fftw3/d' out.txt >>dependencies.log 2>&1; \
+  #  done
+  #echo "a,b" | sed -e $'s/,/\\\n/g'
+#	@for var in $(SOURCE); do $(CC) $(INCLUDE) -M $$var &> out.txt; sed -e $'s,.h /,\\\n,g' out.txt &>out2.txt; \
+  #done
+#echo_deps :
+#	@for var in $(SOURCE); do $(CC) $(INCLUDE) -M $$var &> out.txt; \
+ # sed -e '/Xcode.app/d;/boost/d;/SDF/d' out.txt >>dependencies.txt 2>&1; \
+  #  done
+
+

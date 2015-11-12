@@ -18,7 +18,12 @@ void tests::setup_tests(){
 */
 
   char block_id[10]="ex";
-  test_reader = new reader("test", block_id);
+  test_rd = new reader("test", block_id);
+
+
+}
+
+void tests::report_err(int err){
 
 
 }
@@ -29,7 +34,7 @@ void tests::cleanup_tests(){
 *
 */
 
-  delete test_reader;
+  delete test_rd;
 
 }
 
@@ -46,6 +51,16 @@ void tests::run_tests(){
 }
 
 int tests::test_reader(){
+  int err = TEST_PASSED;
+
+/* do testing */
+
+  report_err(err);
+  return err;
+
+}
+
+int tests::test_template(){
   int err = TEST_PASSED;
 
 /* do testing */

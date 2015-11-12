@@ -23,6 +23,12 @@
 [10/11/2015 15:27:10] Heather Ratcliffe: Basic tests of numerical integrals and the like
 [10/11/2015 15:27:33] Christopher Brady: Yep, good approach.
 [10/11/2015 15:27:52] Heather Ratcliffe: And some evil evil tests of the dispersion solvers and the like and of the overall coefficient production
+
+check 2011 paper for whistler mode tests
+Bortnik, 
+test particle particle whistler 
+quasi-particle treatment of whistlers
+
 */
 
 class reader;
@@ -30,19 +36,21 @@ class reader;
 const int TEST_PASSED = 0;
 const int TEST_WRONG_RESULT = 1;
 const int TEST_NULL_RESULT = 2;
-
+const char * filename = "tests.log";
 
 class tests{
 private:
   int test_reader();
+  int test_template();
+  reader * test_rd;
+  void report_err(int err);
 
 public:
-  reader * test_reader;
 
 void setup_tests();
+
 void cleanup_tests();
 void run_tests();
-
 
 
 

@@ -21,12 +21,7 @@
 [10/11/2015 15:25:01] Christopher Brady: Yep. Probably just generating the file from EPOCH or LARE is the easiest solution.
 [10/11/2015 15:25:22] Heather Ratcliffe: Similarly generate 1-d and 2-d arrays with sine waves, and axes, and check the FFTs give the right result and frequency
 [10/11/2015 15:25:52] Christopher Brady: Yep. Could combine the two and just adjust the arrays in EPOCH or LARE just before writing the file.
-[10/11/2015 15:26:07] Heather Ratcliffe: Yeah I thought about that
-[10/11/2015 15:26:55] Heather Ratcliffe: Couple of quick more traditional tests that the data_array class is storing the data properly, and it’s methods to extract and populate elements work
-[10/11/2015 15:26:59] Christopher Brady: It's a bit tricky to write SDF files otherwise.
-[10/11/2015 15:27:08] Christopher Brady: Yep. Makes sense.
 [10/11/2015 15:27:10] Heather Ratcliffe: Basic tests of numerical integrals and the like
-[10/11/2015 15:27:33] Christopher Brady: Yep, good approach.
 [10/11/2015 15:27:52] Heather Ratcliffe: And some evil evil tests of the dispersion solvers and the like and of the overall coefficient production
 
 check 2011 paper for whistler mode tests
@@ -37,6 +32,8 @@ quasi-particle treatment of whistlers
 */
 
 class reader;
+class data_array;
+
 class test_entity{
 //Consists of at least a constructor doing any setup required, a name string for output id, a function run taking no parameters which performs the necessary test and a destructor doing cleanup.
 public:
@@ -84,12 +81,23 @@ class test_entity_reader : public test_entity{
 };
 class test_entity_data_array : public test_entity{
   private:
-
+  data_array * test_array;
   public:
   test_entity_data_array();
   virtual ~test_entity_data_array();
   virtual int run();
 
+};
+class test_entity_get_and_fft : public test_entity{
+  private:
+  data_array * test_dat;
+  reader * test_rdr;
+  public:
+  test_entity_get_and_fft();
+  virtual ~test_entity_get_and_fft();
+  virtual int run();
+
+//A chunky test. It should read some test data which will be a sine curve from an "ex" block in a test sdf file, into a data array, and then fft it. We then check that the resulting major frequency is as expected
 };
 
 

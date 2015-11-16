@@ -405,6 +405,8 @@ data_array::~data_array(){
 
 my_type * data_array::get_axis(int dim, int & length){
 
+  if(!this->axes) return nullptr;
+
   if(!ragged){
     if(dim == 0){
       length = dims[dim];
@@ -509,102 +511,103 @@ bool data_array::fft_me(data_array * data_out){
 * Data and axes in this object are FFT'd using FFTW and stored into the instance pointed to by data_out. Data_out must be created with correct dimensions first, but we check and return error (1) if it is not so.
 */
 
-if(!data_out->is_good()){
-  std::cout<<"Output array for FFT undefined"<<std::endl;
-  return 1;
-}
-if(data_out->n_dims != this->n_dims){
-  std::cout<<"Wrong output dimensions for FFT"<<std::endl;
-  return 1;
-}
-for(int i=0; i<n_dims;++i){
-  if(data_out->dims[i] != this->dims[i]){
+  if(!data_out->is_good()){
+    std::cout<<"Output array for FFT undefined"<<std::endl;
+    return 1;
+  }
+  if(data_out->n_dims != this->n_dims){
     std::cout<<"Wrong output dimensions for FFT"<<std::endl;
     return 1;
   }
-}
+  for(int i=0; i<n_dims;++i){
+    if(data_out->dims[i] != this->dims[i]){
+      std::cout<<"Wrong output dimensions for FFT"<<std::endl;
+      return 1;
+    }
+  }
 
-int total_size=1; /**< Total number of elements in array*/
-for(int i=0; i<n_dims;++i) total_size *= dims[i];
+  int total_size=1; /**< Total number of elements in array*/
+  for(int i=0; i<n_dims;++i) total_size *= dims[i];
 
-int fft_dim =1;/**< Dimension to FFT over, if required*/
+  int fft_dim =1;/**< Dimension to FFT over, if required*/
 
-ADD_FFTW(plan) p;
-cplx_type *out;
-my_type * in, *result;
+  ADD_FFTW(plan) p;
+  cplx_type *out;
+  my_type * in, *result;
 
-in = (my_type*) ADD_FFTW(malloc)(sizeof(my_type) * total_size);
-//my_type should match the used FFTW library, so no type conversion necessary
-out = (cplx_type *) ADD_FFTW(malloc)(sizeof(cplx_type) * total_size);
+  in = (my_type*) ADD_FFTW(malloc)(sizeof(my_type) * total_size);
+  //my_type should match the used FFTW library, so no type conversion necessary
+  out = (cplx_type *) ADD_FFTW(malloc)(sizeof(cplx_type) * total_size);
 
-result = (my_type*) ADD_FFTW(malloc)(sizeof(my_type) * total_size);
+  result = (my_type*) ADD_FFTW(malloc)(sizeof(my_type) * total_size);
 
-//Possibly this bit can be genericised?
-if(n_dims == 1){
-  p = ADD_FFTW(plan_dft_r2c_1d)(dims[0], in, out, FFTW_ESTIMATE);
+  //Possibly this bit can be genericised?
+  if(n_dims == 1){
+    p = ADD_FFTW(plan_dft_r2c_1d)(dims[0], in, out, FFTW_ESTIMATE);
 
-}else if(n_dims == 2){
-  p = ADD_FFTW(plan_dft_r2c_2d)(dims[0], dims[1], in, out, FFTW_ESTIMATE);
+  }else if(n_dims == 2){
+    p = ADD_FFTW(plan_dft_r2c_2d)(dims[0], dims[1], in, out, FFTW_ESTIMATE);
 
-}else{
-  std::cout<<"FFT of more than 2-d arrays not added yet"<<std::endl;
-  return 1;
-}
+  }else{
+    std::cout<<"FFT of more than 2-d arrays not added yet"<<std::endl;
+    return 1;
+  }
 
-//copy data into in. Because the plan creation changes in, so we don't want to feed our actual data array in, and it's safer to run the plan with the memory block it was created with
-std::copy(this->data, this->data+total_size, in);
+  //copy data into in. Because the plan creation changes in, so we don't want to feed our actual data array in, and it's safer to run the plan with the memory block it was created with
+  std::copy(this->data, this->data+total_size, in);
 
-ADD_FFTW(execute)(p);
-//Execute the plan
+  ADD_FFTW(execute)(p);
+  //Execute the plan
 
-cplx_type * addr;
-addr = out;
-//because double indirection is messy and cplx type is currently a 2-element array of floats
-for(int i=0; i< total_size; i++){
-  *(result+i) = (my_type)(((*addr)[0])*((*addr)[0]) + ((*addr)[1])*((*addr)[1])) ;
-  addr++;
-}
-//Absolute square of out array to produce final result of type my_type
+  cplx_type * addr;
+  addr = out;
+  //because double indirection is messy and cplx type is currently a 2-element array of floats
+  for(int i=0; i< total_size; i++){
+    *(result+i) = (my_type)(((*addr)[0])*((*addr)[0]) + ((*addr)[1])*((*addr)[1])) ;
+    addr++;
+  }
+  //Absolute square of out array to produce final result of type my_type
 
-bool err;
-err = data_out->populate_data(result, total_size);
-//Copy result into out array
+  bool err;
+  err = data_out->populate_data(result, total_size);
+  //Copy result into out array
 
-if(err){
-  std::cout<<"Error populating result array "<<data_out<<std::endl;
-  return 1;
-}
+  if(err){
+    std::cout<<"Error populating result array "<<data_out<<std::endl;
+    return 1;
+  }
 
-ADD_FFTW(destroy_plan)(p);
-ADD_FFTW(free)(in);
-ADD_FFTW(free)(out);
-ADD_FFTW(free)(result);
-//Destroy stuff we don't need
+  ADD_FFTW(destroy_plan)(p);
+  ADD_FFTW(free)(in);
+  ADD_FFTW(free)(out);
+  ADD_FFTW(free)(result);
+  //Destroy stuff we don't need
 
-my_type * tmp_axis;
-float N2, res;
-int len;
+  my_type * tmp_axis;
+  float N2, res;
+  int len;
 
-for(int i=0;i<n_dims;++i){
-//Loop over the dimensions and construct each axis in place. We KNOW now that data_out has correct dimensions. We checked before getting here. We don't need to check len. It is the same as dims[i] each time. Perhaps we will anyway? :)
-  tmp_axis = data_out->get_axis(i, len);
-  if(len != dims[i]) return 1;
+  for(int i=0;i<n_dims;++i){
+  //Loop over the dimensions and construct each axis in place. We KNOW now that data_out has correct dimensions. We checked before getting here. We don't need to check len. It is the same as dims[i] each time. Perhaps we will anyway? :)
+    tmp_axis = data_out->get_axis(i, len);
+    if(len != dims[i]) return 1;
 
-  N2 = ((float) dims[i])/2.0;
-  res = this->get_res(i);
-  for(int j= 0; j< dims[i]; j++) *(tmp_axis + j) = pi * ((float)j - N2)/N2/res;
-}
+    N2 = ((float) dims[i])/2.0;
+    res = this->get_res(i);
+    for(int j= 0; j< dims[i]; j++) *(tmp_axis + j) = pi * ((float)j - N2)/N2/res;
+  }
 
-return 0;
+  return 0;
 
 }
 
 float data_array::get_res(int i){
-//return resolution of axis on dimension i. Assumes linear etc etc
-int len;
-my_type * axis = this->get_axis(i, len);
+//return resolution of axis on dimension i. Assumes linear etc etc. If axis is undefined or zero or one in length, return 1.0
+  int len;
+  my_type * axis = this->get_axis(i, len);
 
-return std::abs(axis[0]-axis[1]);
+  if(axis && len >1) return std::abs(axis[0]-axis[1]);
+  else return 1.0;
 
 }
 

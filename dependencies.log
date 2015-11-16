@@ -1,40 +1,48 @@
 
-obj/my_array.o: src/my_array.cpp \
- include/support.h \
-  include/my_array.h
+obj/my_array.o:\
+src/my_array.cpp\
+include/support.h\
+  include/my_array.h\
 
-obj/d_coeff.o: src/d_coeff.cpp \
-  include/support.h \
- include/my_array.h \
- include/spectrum.h \
-  include/plasma.h \
- include/d_coeff.h
+obj/d_coeff.o:\
+src/d_coeff.cpp\
+  include/support.h\
+  include/my_array.h\
+  include/spectrum.h\
+  include/plasma.h\
+  include/d_coeff.h\
 
-obj/spectrum.o: src/spectrum.cpp \
- include/support.h \
- include/my_array.h \
-  include/spectrum.h
+obj/spectrum.o:\
+src/spectrum.cpp\
+include/support.h\
+include/my_array.h\
+  include/spectrum.h\
 
-obj/plasma.o: src/plasma.cpp \
-  include/support.h \
- include/plasma.h
+obj/plasma.o:\
+src/plasma.cpp\
+  include/support.h\
+  include/plasma.h\
 
-obj/tests.o: src/tests.cpp \
- include/tests.h \
- include/reader.h \
- include/support.h \
-  include/my_array.h
+obj/tests.o:\
+src/tests.cpp\
+include/tests.h\
+include/support.h\
+include/reader.h\
+  include/my_array.h\
 
-obj/reader.o: src/reader.cpp \
- include/support.h \
- include/reader.h \
+obj/reader.o:\
+src/reader.cpp\
+include/support.h\
+include/reader.h\
+  include/my_array.h\
 
-obj/main.o: src/main.cpp \
- include/main.h \
- include/support.h \
-  include/reader.h \
- include/plasma.h \
- include/my_array.h \
- include/d_coeff.h \
-  include/spectrum.h \
- include/tests.h
+obj/main.o:\
+src/main.cpp\
+  include/main.h\
+  include/support.h\
+  include/reader.h\
+  include/plasma.h\
+  include/my_array.h\
+  include/d_coeff.h\
+  include/spectrum.h\
+  include/tests.h\

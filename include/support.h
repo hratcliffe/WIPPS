@@ -100,6 +100,7 @@ std::string mk_str(bool b);/**<Converts bool to string*/
 //std::string mk_str(size_t i){ return mk_str((int) i);} /**<Converts size_t to string*/
 
 calc_type integrator(calc_type * start, int len, calc_type * increment);
+void inplace_boxcar_smooth(calc_type * start, int len, int width, bool periodic = 0);
 
 
 const int WAVE_WHISTLER = 1;

@@ -13,6 +13,7 @@
 #include <fstream>
 #include <iostream>
 #include <vector>
+#include "support.h"
 
 //OK this will contain all our basic code testing, interfacing with libraries etc etc
 //Maths tests can be seperate
@@ -30,6 +31,18 @@ test particle particle whistler
 quasi-particle treatment of whistlers
 
 */
+
+const int TEST_PASSED = 0;
+const int TEST_WRONG_RESULT = 1;
+const int TEST_NULL_RESULT = 2;
+const int TEST_ASSERT_FAIL = 4;
+const int TEST_USERDEF_ERR1 = 8;
+const int TEST_USERDEF_ERR2 = 16;
+const int TEST_USERDEF_ERR3 = 32;
+const int TEST_USERDEF_ERR4 = 64;
+const int err_tot = 8;
+
+const std::string filename = "tests.log";
 
 class reader;
 class data_array;
@@ -91,6 +104,7 @@ class test_entity_data_array : public test_entity{
 class test_entity_get_and_fft : public test_entity{
   private:
   data_array * test_dat;
+  data_array * test_dat_fft;
   reader * test_rdr;
   public:
   test_entity_get_and_fft();
@@ -98,6 +112,21 @@ class test_entity_get_and_fft : public test_entity{
   virtual int run();
 
 //A chunky test. It should read some test data which will be a sine curve from an "ex" block in a test sdf file, into a data array, and then fft it. We then check that the resulting major frequency is as expected
+};
+class test_entity_basic_maths : public test_entity{
+  private:
+    calc_type * data_square;
+    calc_type * data_positive;
+    calc_type * data_tmp;
+    calc_type * axis;
+    calc_type * d_axis;
+    int size;
+  public:
+  test_entity_basic_maths();
+  virtual ~test_entity_basic_maths();
+  virtual int run();
+
+//Verify the basic maths functions after any changes. E.g. integrator, boxcar smooth etc
 };
 
 

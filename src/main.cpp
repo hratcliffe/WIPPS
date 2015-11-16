@@ -258,7 +258,58 @@ calc_type integrator(calc_type * start, int len, calc_type * increment){
     value += 0.5*(start[i] + start[i+1]) * increment[i];
     
   }
+  value += start[len-1]*increment[len-1];
+  //top bnd we assume flat
 
  return value;
+
+}
+
+void inplace_boxcar_smooth(calc_type * start, int len, int width, bool periodic){
+/** \brief Boxcar smoothing of specified width
+*
+*Smooths the array given by start and len using specified width. If periodic is set the ends wrap around. Otherwise they one-side
+*/
+
+  if(width > len) my_print("Really? How am I meant to smooth that?", mpi_info.rank);
+  calc_type result = 0.0;
+  int edge = width/2;
+  for(int i=0; i<width; ++i) result += start[i];
+  for(int i=edge+1; i<len-edge; ++i){
+    result -= start[i-edge-1];
+    result += start[i+edge];
+    //remove behind and add in front. Faster for width>2
+    start[i] = result / (calc_type) width;
+  }
+
+  //Handle ends
+  if(periodic){
+    result = 0.0;
+    for(int i=0; i<width-1; ++i) result += start[i];
+    //first width-1
+    int wrap = len -1;
+    //and one wrapped back
+    result +=start[wrap];
+    for(int i=0; i<edge; ++i){
+      result -= start[width-2 - i];
+      result += start[wrap - i - 1];
+      start[edge-i] = result / (calc_type) width;
+    }
+    for(int i=0; i<edge; ++i){
+      result -= start[width-2 - i];
+      result += start[wrap - edge - i - 1];
+      start[len-i] = result / (calc_type) width;
+    }
+
+
+  }else{
+    //we just truncate at the bottom
+    
+  
+  
+  }
+
+
+
 
 }

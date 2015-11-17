@@ -439,7 +439,7 @@ Return empty vector if no valid solutions
   std::vector<calc_type> ret_vec;
 
 
-  if(v_par < tiny_calc_type){
+  if(std::abs(v_par) < tiny_calc_type){
     //special case...
     calc_type ret = 0.0;
     if( std::abs(n)-1.0 < tiny_calc_type ) ret = (this->om_ce)* n;

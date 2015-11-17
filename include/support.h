@@ -98,6 +98,8 @@ void my_print(std::fstream * handle, std::string text, int rank, int rank_to_wri
 std::string mk_str(int i);/**<Converts int to string*/
 std::string mk_str(bool b);/**<Converts bool to string*/
 //std::string mk_str(size_t i){ return mk_str((int) i);} /**<Converts size_t to string*/
+std::string mk_str(double i);
+std::string mk_str(float i);
 
 calc_type integrator(calc_type * start, int len, calc_type * increment);
 void inplace_boxcar_smooth(calc_type * start, int len, int width, bool periodic = 0);

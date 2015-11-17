@@ -60,10 +60,13 @@ int main(int argc, char *argv[]){
   my_print(std::string("Code Version: ")+ VERSION, mpi_info.rank);
   my_print("Code is running on "+mk_str(mpi_info.n_procs)+" processing elements.", mpi_info.rank);
 
+  get_deck_constants();
+
 
 #ifdef RUN_TESTS_AND_EXIT
   cout<<"Running basic tests"<<endl;
   test_bed = new tests();
+  test_bed->set_verbosity(2);
   test_bed->run_tests();
   delete test_bed;
 
@@ -71,7 +74,6 @@ int main(int argc, char *argv[]){
 #else
 
   //Actually do the code...
-  get_deck_constants();
 
   char block_id[10]= "ex";
   reader * my_reader = new reader("", block_id);
@@ -206,12 +208,30 @@ std::string mk_str(int i){
   
 }
 
+std::string mk_str(double i){
+
+  char buffer[25];
+  std::snprintf(buffer, 25, "%e", i);
+  std::string ret = buffer;
+  return ret;
+  
+}
+std::string mk_str(float i){
+
+  char buffer[25];
+  std::snprintf(buffer, 25, "%e", i);
+  std::string ret = buffer;
+  return ret;
+  
+}
+
 std::string mk_str(bool b){
 
   if(b) return "1";
   else return "0";
 
 }
+
 
 calc_type integrator(calc_type * start, int len, calc_type * increment){
 /** \brief Basic numerical integrator
@@ -266,7 +286,7 @@ void inplace_boxcar_smooth(calc_type * start, int len, int width, bool periodic)
     for(int i=0; i<edge; ++i){
       result -= start[width-2 - i];
       result += start[wrap - edge - i - 1];
-      start[len-i] = result / (calc_type) width;
+      start[len-i-1] = result / (calc_type) width;
     }
 
 

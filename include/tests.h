@@ -42,11 +42,12 @@ const int TEST_USERDEF_ERR3 = 32;
 const int TEST_USERDEF_ERR4 = 64;
 const int err_tot = 8;
 const calc_type PRECISION = 1e-6;
-const int max_verbos = 1;
+const int max_verbos = 4;
 const std::string filename = "tests.log";
 
 class reader;
 class data_array;
+class plasma;
 
 class test_entity{
 //Consists of at least a constructor doing any setup required, a name string for output id, a function run taking no parameters which performs the necessary test and a destructor doing cleanup.
@@ -140,6 +141,17 @@ class test_entity_extern_maths : public test_entity{
   virtual int run();
 
 //check use and interpretation of external maths, such as boost Bessel fns etc
+};
+
+class test_entity_plasma : public test_entity{
+  private:
+  plasma * plas;
+  public:
+  test_entity_plasma();
+  virtual ~test_entity_plasma();
+  virtual int run();
+
+//Check plasma functions, get_omega and dispersion relation
 };
 
 

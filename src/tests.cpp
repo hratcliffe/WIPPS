@@ -22,6 +22,7 @@
 #include "tests.h"
 #include "reader.h"
 #include "support.h"
+#include "plasma.h"
 #include "my_array.h"
 #include <math.h>
 #include <boost/math/special_functions.hpp>
@@ -30,6 +31,7 @@
 
 extern mpi_info_struc mpi_info;
 extern tests * test_bed;
+extern deck_constants my_const;
 class reader;
 
 const int err_codes[err_tot] ={TEST_PASSED, TEST_WRONG_RESULT, TEST_NULL_RESULT, TEST_ASSERT_FAIL, TEST_USERDEF_ERR1, TEST_USERDEF_ERR2, TEST_USERDEF_ERR3, TEST_USERDEF_ERR4};
@@ -73,6 +75,8 @@ void tests::setup_tests(){
   test_obj = new test_entity_basic_maths();
   add_test(test_obj);
   test_obj = new test_entity_extern_maths();
+  add_test(test_obj);
+  test_obj = new test_entity_plasma();
   add_test(test_obj);
 
 }
@@ -226,6 +230,9 @@ test_entity_get_and_fft::test_entity_get_and_fft(){
 }
 test_entity_get_and_fft::~test_entity_get_and_fft(){
   delete test_rdr;
+  delete test_dat;
+  delete test_dat_fft;
+  
 
 }
 
@@ -244,7 +251,7 @@ int test_entity_get_and_fft::run(){
   int n_dims;
   std::vector<int> dims;
   test_rdr->read_dims(n_dims, dims);
-  std::cout<<dims[0]<<std::endl;
+//  std::cout<<dims[0]<<std::endl;
   if(n_dims !=1){
     err |= TEST_WRONG_RESULT;
     if(err == TEST_PASSED) test_bed->report_info("Array dims wrong", 1);
@@ -397,4 +404,46 @@ int test_entity_extern_maths::run(){
   return err;
 
 }
+
+test_entity_plasma::test_entity_plasma(){
+  name = "plasma";
+  plas = new plasma();
+
+}
+test_entity_plasma::~test_entity_plasma(){
+
+  delete plas;
+}
+int test_entity_plasma::run(){
+
+  int err=TEST_PASSED;
+
+  std::vector<calc_type> results;
+  calc_type x=1.0, v_par, n=1;
+  v_par = 0.15 * v0;
+  calc_type tmp, tmp_om, cos_theta, mu_tmp1, mu_tmp2;
+  cos_theta = cos(atan(x));
+  
+  results = plas->get_omega(x, v_par, n);
+  //Now check each element of this satisfies Stix 2.45 and the resonance condition together
+  test_bed->report_info(mk_str((int)results.size())+" solutions found", 1);
+  for(int i=0; i<results.size(); ++i){
+    //tmp_om = n * my_const.omega_ce +
+//    k_par = (results[i] - n*my_const.omega_ce)/v_par;
+    // FAKENUMBERS what is gamma??
+  //  k = k_par/cos_theta;
+    test_bed->report_info("Freq is "+mk_str(results[i]), 2);
+    mu_tmp1 = v0 * (results[i] - n*my_const.omega_ce)/(results[i] * v_par *cos_theta);
+    mu_tmp2 = ( 1.0 - (pow(my_const.omega_pe,2)/(results[i]*(results[i] - my_const.omega_ce*cos_theta))));
+    test_bed->report_info(mk_str(mu_tmp1) + " "+ mk_str(mu_tmp2), 2);
+  
+  }
+  
+
+  test_bed->report_err(err);
+
+  return err;
+
+}
+
 

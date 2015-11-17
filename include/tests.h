@@ -41,7 +41,8 @@ const int TEST_USERDEF_ERR2 = 16;
 const int TEST_USERDEF_ERR3 = 32;
 const int TEST_USERDEF_ERR4 = 64;
 const int err_tot = 8;
-
+const calc_type PRECISION = 1e-6;
+const int max_verbos = 1;
 const std::string filename = "tests.log";
 
 class reader;
@@ -67,17 +68,18 @@ private:
   std::fstream * outfile;
   int current_test_id;
   std::vector<test_entity*> test_list;
-
+  int verbosity;
 public:
   void report_err(int err, int test_id=-1);
-
+  void report_info(std::string info, int verb_to_print = 1, int test_id=-1);
   tests();
   ~tests();
   void setup_tests();
   void add_test(test_entity* test);
   void cleanup_tests();
   void run_tests();
-
+  void set_verbosity(int verb);
+  
 };
 
 class test_entity_reader : public test_entity{
@@ -127,6 +129,17 @@ class test_entity_basic_maths : public test_entity{
   virtual int run();
 
 //Verify the basic maths functions after any changes. E.g. integrator, boxcar smooth etc
+};
+
+class test_entity_extern_maths : public test_entity{
+  private:
+
+  public:
+  test_entity_extern_maths();
+  virtual ~test_entity_extern_maths();
+  virtual int run();
+
+//check use and interpretation of external maths, such as boost Bessel fns etc
 };
 
 

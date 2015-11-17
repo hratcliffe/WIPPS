@@ -7,15 +7,14 @@ SDFPATH = ./SDF
 
 GIT_VERSION := $(shell git describe --dirty --always --tags)
 # This cleverness encodes the git commit version into the source so we can write version number with data
-
+#-I ./matplotpp/
 SRCDIR = src
 OBJDIR = obj
 INCLUDE = -I /usr/local/include/ -I $(SDFPATH)/C/include/ -I ./include/
-I = i
-#first letter of include dir. don't ask...
 LIBSDF = -L /usr/local/lib/ $(SDFPATH)/C/lib/libsdfc.a
 LIB := $(LIBSDF)
-
+#LIB += ./matplotpp/matplotpp.a -lglut
+#Add the libraries for glut (openGL) and the matplot library
 CFLAGS = -g -c $(INCLUDE) -DVERSION=\"$(GIT_VERSION)\"
 DEBUG = -W -Wall -pedantic -D_GLIBCXX_DEBUG
 #DEBUG+= -Wno-sign-compare

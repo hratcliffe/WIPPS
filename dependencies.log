@@ -46,3 +46,7 @@ src/main.cpp\
   include/d_coeff.h\
   include/spectrum.h\
   include/tests.h\
+  matplotpp/matplotpp.h\
+  /usr/local/include/GL/glut.h\
+  /usr/local/include/GL/freeglut_std.h\
+  matplotpp/gl2ps.h\

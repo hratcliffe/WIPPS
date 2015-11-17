@@ -60,6 +60,7 @@ int main(int argc, char *argv[]){
   my_print(std::string("Code Version: ")+ VERSION, mpi_info.rank);
   my_print("Code is running on "+mk_str(mpi_info.n_procs)+" processing elements.", mpi_info.rank);
 
+
 #ifdef RUN_TESTS_AND_EXIT
   cout<<"Running basic tests"<<endl;
   test_bed = new tests();
@@ -155,42 +156,6 @@ int main(int argc, char *argv[]){
 }
 
 
-void test_bes(){
-//test code using bessel funtion. Output values should be zeros.
-//TODO expnd these things so we can test what we use before trying to proceed....
-
-
-//cyl_bessel_j(v, x) = Jv(x)
-//cyl_neumann(v, x) = Yv(x) = Nv(x)
-cout<<"Bessel test: "<<endl;
-double bess, arg;
-int index;
-
-index = 0;
-arg = 2.40482555769577;
-bess = boost::math::cyl_bessel_j(index, arg);
-
-cout<<bess<<endl;
-
-index = 1;
-arg=7.01558666981561;
-bess = boost::math::cyl_bessel_j(index, arg);
-
-cout<<bess<<endl;
-
-index=5;
-arg=12.3386041974669;
-bess = boost::math::cyl_bessel_j(index, arg);
-
-cout<<bess<<endl;
-
-index =0;
-arg =1.0;
-bess = boost::math::cyl_bessel_j(index, arg);
-
-cout<<bess-0.7651976865579665514497<<endl;
-
-}
 
 void get_deck_constants(){
 /** \brief Setup run specific constants
@@ -222,8 +187,11 @@ void my_print(fstream * handle, std::string text, int rank, int rank_to_write){
 *
 * Currently dump to term. Perhaps also to log file. Accomodates MPI also.
 */
-  if(rank == rank_to_write){
+  if(rank == rank_to_write && handle!=nullptr){
     *handle<<text<<std::endl;
+  }else if(rank == rank_to_write){
+    std::cout<<text<<std::endl;
+
   }
 
 }
@@ -258,7 +226,7 @@ calc_type integrator(calc_type * start, int len, calc_type * increment){
     value += 0.5*(start[i] + start[i+1]) * increment[i];
     
   }
-  value += start[len-1]*increment[len-1];
+//  value += start[len-1]*increment[len-1];
   //top bnd we assume flat
 
  return value;

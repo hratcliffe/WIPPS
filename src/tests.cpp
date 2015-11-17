@@ -11,15 +11,22 @@
 *To add a test, do the following:
 *Descend an object from test_entity which has at least a constructor doing any setup required, a name string for output id, a function run taking no parameters which performs the necessary test and a destructor doing cleanup. Add any other member variables or functions required. In tests::setup_tests create an instance of your class as test_obj = new your_class() and then add your test to the remit using add_test(test_obj); Alternately make the instance and use the global test_bed using test_bed->add(your pntr) from anywhere.
 *To add errors, add the message into the blank spaces in the list below, err_names, and declare a const int of desired name aliased to TEST_USERDEF_ERR* where * = 1-4
+*To report the errors by code, call test_bed->report_err(err); To report other salient information use test_bed->report_info(info, verbosity) where the second parameter is an integer describing the verbosity setting at which to print this info (0=always, the larger int means more and more detail).
+
 
 */
 
 #include <stdio.h>
 #include <math.h>
+#include <cmath>
 #include "tests.h"
 #include "reader.h"
 #include "support.h"
 #include "my_array.h"
+#include <math.h>
+#include <boost/math/special_functions.hpp>
+//Provides Bessel functions, erf, and many more
+
 
 extern mpi_info_struc mpi_info;
 extern tests * test_bed;
@@ -34,6 +41,11 @@ tests::tests(){
 }
 tests::~tests(){
   cleanup_tests();
+}
+
+void tests::set_verbosity(int verb){
+  if((verb > 0)) this->verbosity = std::max(verb, max_verbos);
+
 }
 
 void tests::setup_tests(){
@@ -60,6 +72,8 @@ void tests::setup_tests(){
   add_test(test_obj);
   test_obj = new test_entity_basic_maths();
   add_test(test_obj);
+  test_obj = new test_entity_extern_maths();
+  add_test(test_obj);
 
 }
 void tests::add_test(test_entity * test){
@@ -71,6 +85,21 @@ void tests::report_err(int err, int test_id){
   if(test_id == -1) test_id = current_test_id;
 
   my_print(outfile, get_printable_error(err, test_id), mpi_info.rank);
+  my_print(nullptr, get_printable_error(err, test_id), mpi_info.rank);
+
+}
+
+void tests::report_info(std::string info, int verb_to_print, int test_id){
+/** \brief Other test info
+*
+*Records string info to the tests.log file and to screen according to requested verbosity.
+*/
+  if(test_id == -1) test_id = current_test_id;
+  if(verb_to_print <= this->verbosity){
+    my_print(outfile, info, mpi_info.rank);
+    my_print(nullptr, info, mpi_info.rank);
+  
+  }
 
 }
 
@@ -218,6 +247,9 @@ int test_entity_get_and_fft::run(){
   std::cout<<dims[0]<<std::endl;
   if(n_dims !=1){
     err |= TEST_WRONG_RESULT;
+    if(err == TEST_PASSED) test_bed->report_info("Array dims wrong", 1);
+    test_bed->report_err(err);
+
     return err;
     //nothing more worth doing right now...
   }
@@ -233,7 +265,8 @@ int test_entity_get_and_fft::run(){
 
   bool tmp_err = test_dat->fft_me(test_dat_fft);
   if(tmp_err) err|=TEST_ASSERT_FAIL;
-  
+  if(err == TEST_PASSED) test_bed->report_info("Data read and FFT reports no error", 1);
+
   /** Now test the resulting frequency is right.... Also tests our axes...*/
   
   //Get primary frequency
@@ -281,25 +314,87 @@ test_entity_basic_maths::~test_entity_basic_maths(){
 int test_entity_basic_maths::run(){
   int err=TEST_PASSED;
 
-  int res = integrator(data_square, size, d_axis);
-  if(res!= data_square[size-1]) err |= TEST_WRONG_RESULT;
+  calc_type res = integrator(data_square, size, d_axis);
+  if(res!= 0.0) err |= TEST_WRONG_RESULT;
   res = integrator(data_positive, size, d_axis);
-  if(res!= ((calc_type)(size*(size))/20.0 -1.0)) err |= TEST_WRONG_RESULT;
-  //These slightly odd expression is because we're using basic trapezium numerical integral. We assume the top bnd can be projected on flat....
+  if(std::abs(res - (pow((calc_type)(size-1), 2)/20.0)) > res*PRECISION) err |= TEST_WRONG_RESULT;
+  //test it's correct to within some finite precision, defined in header
+  if(err == TEST_PASSED) test_bed->report_info("Integrator OK", 1);
 
   memcpy((void*)data_square, (void*)data_tmp, sizeof(calc_type)*size);
 
   inplace_boxcar_smooth(data_tmp, size, 2, 1);
-  int total=0;
+  calc_type total=0;
   for(int i=0;i<size; ++i){
     total += data_tmp[i];
   }
-  std::cout<<total<<std::endl;
-  if(total != 0.0) err |=TEST_WRONG_RESULT;
+  if(std::abs(total) > PRECISION) err |=TEST_WRONG_RESULT;
+  //Smooth of 2 on square wave should give 0
+
+  memcpy((void*)data_positive, (void*)data_tmp, sizeof(calc_type)*size);
+  
+  inplace_boxcar_smooth(data_tmp, size, 4, 0);
+  total=0;
+  for(int i=4;i<size-4; ++i){
+    total += std::abs(data_positive[i] - data_tmp[i]);
+  }
+  //Smooth on straight line should do nothing except at ends...
+  if(std::abs(total) > PRECISION) err |=TEST_WRONG_RESULT;
+  if(err == TEST_PASSED) test_bed->report_info("Boxcar smooth OK", 1);
+
 
   test_bed->report_err(err);
   return err;
 
 }
 
+test_entity_extern_maths::test_entity_extern_maths(){
+
+  name = "external maths routines";
+
+}
+test_entity_extern_maths::~test_entity_extern_maths(){
+
+}
+
+
+int test_entity_extern_maths::run(){
+//test code using bessel funtion. Output values should be zeros.
+//TODO expnd these things so we can test what we use before trying to proceed....
+
+
+  //cyl_bessel_j(v, x) = Jv(x)
+  //cyl_neumann(v, x) = Yv(x) = Nv(x)
+  double bess, arg;
+  int index, err=TEST_PASSED;
+
+  index = 0;
+  arg = 2.40482555769577;
+  bess = boost::math::cyl_bessel_j(index, arg);
+
+  if(std::abs(bess - 0.0) >PRECISION) err|= TEST_WRONG_RESULT;
+  index = 1;
+  arg=7.01558666981561;
+  bess = boost::math::cyl_bessel_j(index, arg);
+  if(std::abs(bess - 0.0) >PRECISION) err|= TEST_WRONG_RESULT;
+
+
+  index=5;
+  arg=12.3386041974669;
+  bess = boost::math::cyl_bessel_j(index, arg);
+
+  if(std::abs(bess - 0.0) >PRECISION) err|= TEST_WRONG_RESULT;
+
+  index =0;
+  arg =1.0;
+  bess = boost::math::cyl_bessel_j(index, arg);
+
+  if(std::abs(bess - 0.7651976865579665514497) >PRECISION) err|= TEST_WRONG_RESULT;
+  if(err == TEST_PASSED) test_bed->report_info("Bessel functions OK", 1);
+
+  test_bed->report_err(err);
+
+  return err;
+
+}
 

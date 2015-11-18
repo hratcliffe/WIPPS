@@ -419,10 +419,18 @@ int test_entity_plasma::run(){
   int err=TEST_PASSED;
 
   std::vector<calc_type> results;
-  calc_type x=1.0, v_par, n=1;
-  v_par = 0.15 * v0;
+  calc_type x=0.1, v_par, n=-1, om_ce_local, om_pe_local;
+  om_ce_local = plas->get_omega_ref("ce");
+  om_pe_local = plas->get_omega_ref("pe");
+  //std::cout<< om_ce_local<<" "<<om_pe_local<<std::endl;
+  
+  v_par = 0.1 * v0;
   calc_type tmp, tmp_om, cos_theta, mu_tmp1, mu_tmp2;
   cos_theta = cos(atan(x));
+  calc_type gamma, gamma2;
+  gamma2 = 1.0/( 1.0 - pow(v_par/v0, 2));
+  gamma = sqrt(gamma2);
+
   
   results = plas->get_omega(x, v_par, n);
   //Now check each element of this satisfies Stix 2.45 and the resonance condition together
@@ -432,9 +440,10 @@ int test_entity_plasma::run(){
 //    k_par = (results[i] - n*my_const.omega_ce)/v_par;
     // FAKENUMBERS what is gamma??
   //  k = k_par/cos_theta;
-    test_bed->report_info("Freq is "+mk_str(results[i]), 2);
-    mu_tmp1 = v0 * (results[i] - n*my_const.omega_ce)/(results[i] * v_par *cos_theta);
-    mu_tmp2 = ( 1.0 - (pow(my_const.omega_pe,2)/(results[i]*(results[i] - my_const.omega_ce*cos_theta))));
+    test_bed->report_info("Freq is "+mk_str(results[i])+" = "+mk_str(results[i]/my_const.omega_ce)+" om_ce", 2);
+    
+    mu_tmp1 = pow(v0 * (gamma*results[i] - n*om_ce_local)/(gamma*results[i] * v_par *cos_theta), 2);
+    mu_tmp2 = (1.0 - (pow(om_pe_local,2)/(results[i]*(results[i] + om_ce_local*cos_theta))));
     test_bed->report_info(mk_str(mu_tmp1) + " "+ mk_str(mu_tmp2), 2);
   
   }

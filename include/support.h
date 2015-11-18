@@ -13,6 +13,7 @@
 #include <fstream>
 #include <iostream>
 #include <stdio.h>
+#include <vector>
 
 #ifdef _USE_FLOAT
 
@@ -104,6 +105,7 @@ std::string mk_str(float i);
 calc_type integrator(calc_type * start, int len, calc_type * increment);
 void inplace_boxcar_smooth(calc_type * start, int len, int width, bool periodic = 0);
 
+std::vector<calc_type> cubic_solve(calc_type a, calc_type b, calc_type c);
 
 const int WAVE_WHISTLER = 1;
 const int WAVE_PLASMA = 2;

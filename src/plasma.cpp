@@ -438,126 +438,66 @@ Return empty vector if no valid solutions
 
   std::vector<calc_type> ret_vec;
 
+  calc_type wc = this->get_omega_ref("ce");
 
   if(std::abs(v_par) < tiny_calc_type){
     //special case...
     calc_type ret = 0.0;
-    if( std::abs(n)-1.0 < tiny_calc_type ) ret = (this->om_ce)* n;
+    if( std::abs(n)-1.0 < tiny_calc_type ) ret = wc* n;
     ret_vec.push_back(ret);
     return ret_vec;
     /** \todo FIX! Empty vec if invalid*/
   }
+
   if(std::abs(n) < tiny_calc_type){
   //also special...
   //coeff d in cubic is 0 and we reduce to quadratic assuming omega != 0
-
-    calc_type ret = 0.0;
     
+    return ret_vec;
     //if omega_pe > omega_ce no solution...???
   /** \todo add case */
     /** \todo FIX! Empty vec if invalid*/
   
   }
 
-
-
-  calc_type wc = std::abs(this->om_ce);
   calc_type a, b, c, d;
-  calc_type Q, R, an, bn, cn, bigA, bigB, Q3, R2, bigTheta;
+  calc_type an, bn, cn;
   calc_type cos_th = cos(atan(x));
   calc_type vel = v_par / v0;
-  calc_type disc_0, disc_1, disc;
-  calc_type vel_cos = 1.0/ pow(vel * cos_th, 2) ;
-  calc_type roots[3];
-  bool is_good[3];
-  int good_roots;
-  calc_type ret_root;
-/* -ve sign  a = vel_cos - 1.0;
-  b = (-vel_cos * wc*cos_th + 2* vel_cos * n * wc + wc * cos_th);
-  c = (-2.0 * n *vel_cos *wc* wc*cos_th + vel_cos * pow(n * wc, 2) + my_const.omega_pe);
-  d = -vel_cos * n * wc * wc*cos_th;
-*/
-  //+ve sign
-  // FAKENUMBERS which sign do we watn???
-  a = vel_cos - 1.0;
-  b = (vel_cos * wc*cos_th + 2.0* vel_cos * n * wc + wc * cos_th);
-  c = (2.0 * n *vel_cos *wc* wc*cos_th + vel_cos * pow(n * wc, 2) + my_const.omega_pe);
-  d = vel_cos * n * wc * wc*cos_th;
+  calc_type vel_cos = pow(vel * cos_th, 2) ;
 
+  calc_type gamma, gamma2;
+  gamma2 = 1.0/( 1.0 - pow(vel, 2));
+  gamma = sqrt(gamma2);
+
+  a = (vel_cos - 1.0) * gamma2;
+  b = vel_cos *gamma2*cos_th*wc + 2.0 *gamma*n*wc - gamma2*wc*cos_th;
+  c = 2.0*gamma*n*wc*wc*cos_th - pow(my_const.omega_pe, 2)*vel_cos*gamma2 - n*n *wc*wc;
+  d = n*n*pow(wc, 3)*cos_th;
   
-  //std::cout<<a<<" "<<b<<" "<<c<<" "<<d<<" "<<std::endl;
+  std::cout<<a<<" "<<b<<" "<<c<<" "<<d<<" "<<std::endl;
+  std::cout<<"Comparision of term OOM "<<a * pow(wc, 3)<<" "<<b*pow(wc, 2)<<" "<<c*wc<<" "<<d<<" "<<std::endl;
 
   an = b/a;
   bn = c/a;
   cn = d/a;
-  Q = (pow(an, 2) - 3.0 * bn)/9.0;
-  R = (2.0* pow(an, 3) - 9.0 * an *bn + 27.0*cn)/54.0;
   
-  R2 = pow(R, 2);
-  Q3 = pow(Q, 3);
-  
-  //std::cout<<"Q, R, R^2/Q^3 "<< Q<<" "<<R<<" "<< R2/Q3<<std::endl;
-  
-  if( R2/Q3 < 1.0){
-    
-    bigTheta = acos(R/sqrt(Q3));
-    calc_type minus2sqrtQ = -2.0*sqrt(Q);
-    
-    //get all 3 roots. Hopefully only one is in range...
-    roots[0] = minus2sqrtQ*cos(bigTheta/3.0) - a/3.0;
-    roots[1] = minus2sqrtQ*cos((bigTheta + 2.0*pi)/3.0) - a/3.0;
-    roots[2] = minus2sqrtQ*cos((bigTheta - 2.0*pi)/3.0) - a/3.0;
+  an= -17.0;
+  bn = 92.0;
+  cn = -150.0;
 
-    good_roots = 0;
-    ret_root = 0.0;
-    for(int i=0; i<3; ++i){
-      is_good[i] = false;
-      if(std::abs(roots[i]) < my_const.omega_ce && std::abs(roots[i]) != ret_root){
-        is_good[i] = true;
-        good_roots ++;
-        ret_root = roots[i];
-        ret_vec.push_back(roots[i]);
-        /** \todo Fix this if we stick with vector. Lots of junk... */
-        /** fix multiple root check*/
-      }
-    }
-/*    if(good_roots == 0) return roots[0];
-    else if(good_roots == 1) return ret_root;
-    else{
-      std::cout<<"Multiple roots...."<<good_roots<<std::endl;
-      return ret_root;
-    }*/
-  }else{
-  
-  
-    bigA = - boost::math::sign(R)*pow((std::abs(R) + sqrt(R2 - Q3)), 1.0/3.0 );
-    bigA != 0.0 ? bigB = Q / bigA : 0.0;
-    ret_root = (bigA + bigB) - a/3.0;
-    if(std::abs(ret_root) < my_const.omega_ce) ret_vec.push_back(ret_root);
-  }
+  ret_vec = cubic_solve(an, bn, cn);
 
   return ret_vec;
 
-
-/*  disc_0 = pow(b, 2) - 3.0*a*c;
-  disc_1 = 2.0* pow(b, 3) - 9.0*a*b*c + 27 * pow(a, 2)*d;
-  disc = (-pow(disc_1, 2) + 4.0 *pow(disc_0, 3))/(27.0 * pow(a, 2));
-  disc = 18.0 * a*b*c*d - 4 *pow(b, 3)*d + pow(b*c, 2) - 4.0*a*pow(c, 3) -27.0 * pow(a*d, 2);
-  
-  std::cout<< "discs "<<disc_0<<" "<<disc<<" "<<sqrt(pow(disc_1, 2) - 4.0 *pow(disc_0, 3))<<std::endl;
-*/
-//  return my_const.omega_ce * 0.8;
-// FAKENUMBERS
-
 }
 
-/*  calc_type M = me/mp;
-  calc_type A, B, C;
-  calc_type d, f, g;
-  // d w^4 + f w^2 + g = 0;
-  calc_type w;
-  
-  A = pow(my_const.omega_pe/my_const.omega_ce/v0, 2) * ( 1.0 + M)/M;
-  B = 1.0 / ( my_const.omega_ce * my_const.omega_ci);
-*/
+calc_type plasma::get_omega_ref(std::string code){
+
+  if(code == "ce") return this->om_ce;
+  if(code == "pe") return my_const.omega_pe;
+  else return 0.0;
+
+
+}
 

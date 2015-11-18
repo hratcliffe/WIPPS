@@ -439,6 +439,8 @@ Return empty vector if no valid solutions
   std::vector<calc_type> ret_vec;
 
   calc_type wc = this->get_omega_ref("ce");
+  calc_type omega_pe_loc = this->get_omega_ref("pe");
+  calc_type om_ref_ce = my_const.omega_ce;
 
   if(std::abs(v_par) < tiny_calc_type){
     //special case...
@@ -462,27 +464,22 @@ Return empty vector if no valid solutions
 
   calc_type a, b, c, d;
   calc_type an, bn, cn;
-  calc_type cos_th = cos(atan(x));
+  calc_type cos_th = std::cos(std::atan(x));
   calc_type vel = v_par / v0;
-  calc_type vel_cos = pow(vel * cos_th, 2) ;
+  calc_type vel_cos = std::pow(vel * cos_th, 2) ;
 
-  calc_type gamma, gamma2, om_ref_ce;
-  gamma2 = 1.0/( 1.0 - pow(vel, 2));
-  gamma = sqrt(gamma2);
+  calc_type gamma, gamma2;
+  gamma2 = 1.0/( 1.0 - std::pow(vel, 2));
+  gamma = std::sqrt(gamma2);
 
-  om_ref_ce = my_const.omega_ce;
 
   a = (vel_cos - 1.0) * gamma2;
-  b = (vel_cos*cos_th + 2.0*gamma*n - gamma2*cos_th)*wc/om_ref_ce;
-  c = ((2.0*gamma*n*cos_th - n*n)* pow(wc/om_ref_ce, 2) - pow(my_const.omega_pe/om_ref_ce, 2)*vel_cos*gamma2);
-  d = n*n*pow(wc/om_ref_ce, 3)*cos_th;
+  b = (vel_cos*cos_th*gamma2 + 2.0*gamma*n - gamma2*cos_th)*wc/om_ref_ce;
+  c = ((2.0*gamma*n*cos_th - n*n)* std::pow(wc/om_ref_ce, 2) - std::pow(omega_pe_loc/om_ref_ce, 2)*vel_cos*gamma2);
+  d = -n*n*std::pow(wc/om_ref_ce, 3)*cos_th;
   
-  std::cout<<a<<" "<<b<<" "<<c<<" "<<d<<" "<<std::endl;
-  std::cout<<"Comparision of term OOM "<<a * pow(wc, 3)<<" "<<b*pow(wc, 2)<<" "<<c*wc<<" "<<d<<" "<<std::endl;
-
   //To maintain best precision we solve for omega/ reference omega_ce
-  
-  
+    
   an = b/a;
   bn = c/a;
   cn = d/a;
@@ -491,6 +488,13 @@ Return empty vector if no valid solutions
 
   for(int i=0; i<ret_vec.size(); ++i) ret_vec[i] *= om_ref_ce;
   //restore factor
+  for(int i=0; i<ret_vec.size(); ++i){
+    if(std::abs(ret_vec[i]) > std::abs(wc)){
+      ret_vec.erase(ret_vec.begin() + i);
+      --i;
+    }
+  }
+  
   return ret_vec;
 
 }

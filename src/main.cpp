@@ -7,6 +7,7 @@
 
 
 #include <math.h>
+#include <cmath>
 #include <boost/math/special_functions.hpp>
 //Provides Bessel functions, erf, and many more
 #include <fstream>
@@ -232,6 +233,8 @@ std::string mk_str(bool b){
 
 }
 
+std::string mk_str(long double i){return mk_str((double) i);};
+
 
 calc_type integrator(calc_type * start, int len, calc_type * increment){
 /** \brief Basic numerical integrator
@@ -310,52 +313,41 @@ std::vector<calc_type> cubic_solve(calc_type an, calc_type bn, calc_type cn){
 
   calc_type Q, R, bigA, bigB, Q3, R2, bigTheta;
   std::vector<calc_type> ret_vec;
-  calc_type roots[3];
 
-
-  Q = (pow(an, 2) - 3.0 * bn)/9.0;
-  R = (2.0* pow(an, 3) - 9.0 * an *bn + 27.0*cn)/54.0;
+  Q = (std::pow(an, 2) - 3.0 * bn)/9.0;
+  R = (2.0* std::pow(an, 3) - 9.0 * an *bn + 27.0*cn)/54.0;
   
-  R2 = pow(R, 2);
-  Q3 = pow(Q, 3);
-  
- // std::cout<<"Q, R, R^2/Q^3 "<< Q<<" "<<R<<" "<< R2/Q3<<std::endl;
+  R2 = std::pow(R, 2);
+  Q3 = std::pow(Q, 3);
   
   if( R2 < Q3){
     
-    bigTheta = acos(R/sqrt(Q3));
-    calc_type minus2sqrtQ = -2.0*sqrt(Q);
+    bigTheta = std::acos(R/sqrt(Q3));
+    calc_type minus2sqrtQ = -2.0*std::sqrt(Q);
     
-    //get all 3 roots. Hopefully only one is in range...
-    roots[0] = minus2sqrtQ*cos(bigTheta/3.0) - an/3.0;
-    roots[1] = minus2sqrtQ*cos((bigTheta + 2.0*pi)/3.0) - an/3.0;
-    roots[2] = minus2sqrtQ*cos((bigTheta - 2.0*pi)/3.0) - an/3.0;
+    ret_vec.push_back(minus2sqrtQ*std::cos(bigTheta/3.0) - an/3.0);
+    ret_vec.push_back(minus2sqrtQ*std::cos((bigTheta + 2.0*pi)/3.0) - an/3.0);
+    ret_vec.push_back(minus2sqrtQ*std::cos((bigTheta - 2.0*pi)/3.0) - an/3.0);
 
-    for(int i=0; i<3; ++i){
-      if(std::abs(roots[i]) < my_const.omega_ce){
-        ret_vec.push_back(roots[i]);
-      }
-    }
   }else{
     calc_type ret_root;
-    bigA = - boost::math::sign(R)*pow((std::abs(R) + sqrt(R2 - Q3)), 1.0/3.0 );
-    //std::cout<<bigA<<std::endl;
-    bigA != 0.0 ? bigB = Q / bigA : 0.0;
-    //std::cout<<bigB<<std::endl;
+    bigA = - boost::math::sign(R)*std::pow((std::abs(R) + std::sqrt(R2 - Q3)), 1.0/3.0 );
+//    bigA = - std::abs(R)/R*std::pow((std::abs(R) + std::sqrt(R2 - Q3)), 1.0/3.0 );
 
+    (bigA != 0.0) ? (bigB = Q / bigA) : (bigB = 0.0);
     ret_root = (bigA + bigB) - an/3.0;
-    //std::cout<< ret_root/my_const.omega_ce<<std::endl;
-    if(std::abs(ret_root) < my_const.omega_ce) ret_vec.push_back(ret_root);
+
+    ret_vec.push_back(ret_root);
   }
-/*
+
   calc_type tmp;
   for(int i=0; i<ret_vec.size(); ++i){
     
-    tmp = pow(ret_vec[i], 3) + an*pow(ret_vec[i], 2) + bn*ret_vec[i] + cn;
-    //std::cout<<"solution gives "<<tmp<<std::endl;
+    tmp = std::pow(ret_vec[i], 3) + an*std::pow(ret_vec[i], 2) + bn*ret_vec[i] + cn;
+    std::cout<<"solution gives "<<tmp<<std::endl;
   
   }
-*/
+
   return ret_vec;
 
 }

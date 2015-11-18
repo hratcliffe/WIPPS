@@ -41,8 +41,8 @@
 const int MAX_SIZE = 10000;
 const my_type io_verify = 3.0/32.0;
 //An exactly binary representable my_type to verify we're reading what we're writing...
-
-const calc_type pi = 3.14159;
+const calc_type pi = 3.14159265359;
+//const calc_type pi = 3.14159;
 const calc_type v0 = 2.997924e8; //m/s^2
 const calc_type me = 9.10938291e-31; //kg
 const calc_type mp = me*1836.15267; //kg
@@ -101,6 +101,7 @@ std::string mk_str(bool b);/**<Converts bool to string*/
 //std::string mk_str(size_t i){ return mk_str((int) i);} /**<Converts size_t to string*/
 std::string mk_str(double i);
 std::string mk_str(float i);
+std::string mk_str(long double i);
 
 calc_type integrator(calc_type * start, int len, calc_type * increment);
 void inplace_boxcar_smooth(calc_type * start, int len, int width, bool periodic = 0);

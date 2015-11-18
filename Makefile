@@ -15,7 +15,7 @@ LIBSDF = -L /usr/local/lib/ $(SDFPATH)/C/lib/libsdfc.a
 LIB := $(LIBSDF)
 #LIB += ./matplotpp/matplotpp.a -lglut
 #Add the libraries for glut (openGL) and the matplot library
-CFLAGS = -g -c $(INCLUDE) -DVERSION=\"$(GIT_VERSION)\"
+CFLAGS = -g -c $(INCLUDE) -DVERSION=\"$(GIT_VERSION)\" -std=c++11
 DEBUG = -W -Wall -pedantic -D_GLIBCXX_DEBUG
 #DEBUG+= -Wno-sign-compare
 #DEBUG+= -Wno-unused-parameter

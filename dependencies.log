@@ -28,6 +28,7 @@ src/tests.cpp\
 include/tests.h\
 include/support.h\
 include/reader.h\
+  include/plasma.h\
   include/my_array.h\
 
 obj/reader.o:\

@@ -349,10 +349,36 @@ int test_entity_basic_maths::run(){
   if(std::abs(total) > PRECISION) err |=TEST_WRONG_RESULT;
   if(err == TEST_PASSED) test_bed->report_info("Boxcar smooth OK", 1);
 
-//  x^3 - 17x^2 + 92x - 150.
-  std::vector<calc_type> result = cubic_solve(17.0, 92.0, 150.0);
+  //  x^3 - 17x^2 + 92x - 150.
+  std::vector<calc_type> result = cubic_solve(-17.0, 92.0, -150.0);
   if((result.size() != 1) || std::abs(result[0] - 3.0) > PRECISION) err|=TEST_WRONG_RESULT;
+  //Test with polynomial of known integer coefficients and roots
 
+std::cout<<std::setprecision(8);
+
+  result = cubic_solve(-20.5, 100.0, -112.76);
+  //test with random polynomial which happens to have 3 real roots
+  calc_type res_el, tot;
+  for(int i=0; i< result.size(); ++i){
+    res_el = result[i];
+    std::cout<<res_el<<std::endl;
+    tot = pow(res_el, 3) -20.5*pow(res_el, 2) +100.0*res_el - 112.76;
+    if(std::abs(tot) > PRECISION){
+      err|=TEST_WRONG_RESULT;
+      test_bed->report_info("Cubic root does not solve polynomial, mismatch "+mk_str(tot)+" for root "+mk_str(res_el), 2);
+      std::cout<<res_el<<std::endl;
+    }
+  }
+ 	
+  /**I think you should be able to recognize them using Vieta's formula for cubic equations, which states that if a cubic equation x3+ax2+bx+c=0x3+ax2+bx+c=0 has three different roots x1,x2,x3x1,x2,x3, then:
+  −a=x1+x2+x3 b = x1x2+x1x3+x2x3 and -c = x1x2x3
+**/
+
+  std::cout<<"Vieta a) "<< result[0]+result[1]+result[2] - 20.5<<std::endl;
+ std::cout<<"Vieta b) "<< result[0]*result[1]+result[0]*result[2]+result[2]*result[1] - 100.0<<std::endl;
+ std::cout<<"Vieta c) "<< result[0]*result[1]*result[2]-112.76<<std::endl;
+
+ 
   test_bed->report_err(err);
   return err;
 
@@ -422,36 +448,35 @@ int test_entity_plasma::run(){
   int err=TEST_PASSED;
 
   std::vector<calc_type> results;
-  calc_type x=0.1, v_par, n=-1, om_ce_local, om_pe_local;
+  calc_type x=1.0, v_par, n=-1, om_ce_local, om_pe_local;
   om_ce_local = plas->get_omega_ref("ce");
   om_pe_local = plas->get_omega_ref("pe");
   //std::cout<< om_ce_local<<" "<<om_pe_local<<std::endl;
   
-  v_par = 0.1 * v0;
+  v_par = 0.1* v0;
   calc_type tmp, tmp_om, cos_theta, mu_tmp1, mu_tmp2;
-  cos_theta = cos(atan(x));
+  cos_theta = std::cos(std::atan(x));
   calc_type gamma, gamma2;
-  gamma2 = 1.0/( 1.0 - pow(v_par/v0, 2));
-  gamma = sqrt(gamma2);
-
+  gamma2 = 1.0/( 1.0 - std::pow(v_par/v0, 2));
+  
+  gamma = std::sqrt(gamma2);
+  std::cout<<cos_theta<<" "<<gamma<<std::endl;
   
   results = plas->get_omega(x, v_par, n);
   //Now check each element of this satisfies Stix 2.45 and the resonance condition together
-  test_bed->report_info(mk_str((int)results.size())+" solutions found", 1);
+  test_bed->report_info(mk_str((int)results.size())+" solutions found", 2);
+  
   for(int i=0; i<results.size(); ++i){
-    //tmp_om = n * my_const.omega_ce +
-//    k_par = (results[i] - n*my_const.omega_ce)/v_par;
-    // FAKENUMBERS what is gamma??
-  //  k = k_par/cos_theta;
     test_bed->report_info("Freq is "+mk_str(results[i])+" = "+mk_str(results[i]/my_const.omega_ce)+" om_ce", 2);
     
-    mu_tmp1 = pow(v0 * (gamma*results[i] - n*om_ce_local)/(gamma*results[i] * v_par *cos_theta), 2);
-    mu_tmp2 = (1.0 - (pow(om_pe_local,2)/(results[i]*(results[i] + om_ce_local*cos_theta))));
-    test_bed->report_info(mk_str(mu_tmp1) + " "+ mk_str(mu_tmp2), 2);
-  
+    mu_tmp1 = std::pow(v0 * (gamma*results[i] - n*om_ce_local)/(gamma*results[i] * v_par *cos_theta), 2);
+    mu_tmp2 = (1.0 - (std::pow(om_pe_local,2)/(results[i]*(results[i] + om_ce_local*cos_theta))));
+    if(std::abs(mu_tmp1 - mu_tmp2) > PRECISION){
+      err|=TEST_WRONG_RESULT;
+      test_bed->report_info("refractive index mismatch of "+mk_str(mu_tmp1-mu_tmp2), 2);
+    }
   }
   
-
   test_bed->report_err(err);
 
   return err;

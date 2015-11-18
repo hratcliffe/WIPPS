@@ -1,0 +1,75 @@
+\documentclass[]{article}
+\usepackage[lmargin = 2cm, rmargin = 2cm]{geometry}
+\usepackage{amsmath}
+\title{Derivation of resonant frequencies}
+
+\begin{document}
+
+Start from Stix Equation 2.45 for the Right hand mode, noting that $\Omega_c$ contains the \emph{sign} of the particle charge:
+\begin{equation}\label{A}
+\mu^2 =  1 - \frac {\omega_{pe}^2}{\omega(\omega + \Omega_e \cos\theta)}
+\end{equation}
+along with the resonance condition
+\begin{equation}
+\omega -k_\parallel v_\parallel = \frac{n \Omega_e}{\gamma}
+\end{equation}
+The latter is rewritten as
+\begin{equation}
+k_\parallel = k \cos\theta = \frac{1}{v_\parallel} \left(\omega - \frac{n \Omega_e}{\gamma} \right) \end{equation}
+
+and so as $ \mu = c k /\omega = (c k_\parallel)/( \omega \cos\theta)$ we get
+\begin{equation}\label{B}
+\mu = \frac{c ( \gamma \omega - n \Omega_e)}{\gamma\omega v_\parallel \cos\theta}.
+\end{equation}
+
+Now we equate \ref{A} and \ref{B}:
+\begin{equation}
+\frac{\omega(\omega + \Omega_e \cos\theta) - \omega_{pe}^2}{\omega(\omega + \Omega_e \cos\theta)} = \frac{c^2}{\gamma^2 \omega^2 v_\parallel^2 \cos^2\theta} (\gamma \omega - n \Omega_e)^2 \end{equation}
+which rearranges to
+\begin{equation}
+(\gamma^2 \omega^2 v_\parallel^2 \cos^2\theta) (\omega(\omega + \Omega_e \cos\theta) - \omega_{pe}^2) = c^2 \omega(\omega + \Omega_e \cos\theta)(\gamma \omega - n \Omega_e)^2. \end{equation}
+Cancel one $\omega$ from each side:
+\begin{equation}
+(\gamma^2 \omega v_\parallel^2 \cos^2\theta) (\omega(\omega + \Omega_e \cos\theta) - \omega_{pe}^2) = c^2 (\omega + \Omega_e \cos\theta)(\gamma \omega - n \Omega_e)^2 \end{equation}
+and multiply out:
+\begin{equation}
+(\gamma^2 \omega v_\parallel^2 \cos^2\theta) (\omega(\omega + \Omega_e \cos\theta) - \omega_{pe}^2) = c^2 (\omega + \Omega_e \cos\theta)(\gamma^2 \omega^2 -2 n \Omega_e \gamma \omega + n^2 \Omega_e^2) \end{equation}
+and again
+\begin{align}
+\gamma^2\omega^3 v_\parallel^2 \cos^2 \theta + \gamma^2 \omega^2 v_\parallel^2 \cos^3\theta\Omega_e - \gamma^2\omega v_\parallel^2\cos^2\theta\omega_{pe}^2 &=\notag\\ c^2\gamma^2 \omega^3 + c^2 \Omega_e\cos\theta \gamma^2\omega^2 - 2 c^2 \omega^2 n\Omega_e\gamma - 2 c^2 n \Omega_e^2 \gamma\omega\cos\theta + c^2 \omega n^2\Omega_e^2 + c^2 n^2\Omega_e^3\cos\theta &
+\end{align}
+
+Write $v_\parallel / c = \tilde{v}$ and divide through by $c$:
+\begin{align}
+\gamma^2\omega^3 \tilde{v}^2 \cos^2 \theta + \gamma^2 \omega^2 \tilde{v}^2 \cos^3\theta\Omega_e - \gamma^2\omega \tilde{v}^2\cos^2\theta\omega_{pe}^2 &=\notag\\ \gamma^2 \omega^3 +  \Omega_e\cos\theta \gamma^2\omega^2 - 2  \omega^2 n\Omega_e\gamma - 2  n \Omega_e^2 \gamma\omega\cos\theta +  \omega n^2\Omega_e^2 +  n^2\Omega_e^3\cos\theta&
+\end{align}
+
+Now collect up coefficients of each power:
+\begin{align}
+\left(\gamma^2 \tilde{v}^2 \cos^2 \theta - \gamma^2   \right)&\omega^3  \notag\\
++\left(\gamma^2 \tilde{v}^2 \cos^3\theta\Omega_e  -\Omega_e\cos\theta \gamma^2  + 2 n\Omega_e\gamma  \right)&\omega^2  \notag\\
++\left(- \gamma^2 \tilde{v}^2\cos^2\theta\omega_{pe}^2  +2  n \Omega_e^2 \gamma\cos\theta  - n^2\Omega_e^2   \right)&\omega \notag\\
++\left(  -n^2\Omega_e^3\cos\theta   \right)&
+\end{align}
+
+Or as $\omega , \omega_{pe}, |\Omega_e| \gg 1$ we can make the substitution $ \omega_0 = \omega/\omega_{ref}$ to minimise the differences in size between the coefficients, giving:
+\begin{align}
+\left(\gamma^2 \tilde{v}^2 \cos^2 \theta - \gamma^2   \right)&(\omega_{ref}\omega_0)^3 \notag \\
++\left(\gamma^2 \tilde{v}^2 \cos^3\theta\Omega_e  -\Omega_e\cos\theta \gamma^2  + 2 n\Omega_e\gamma  \right)&(\omega_{ref}\omega_0)^2  \notag\\
++\left(- \gamma^2 \tilde{v}^2\cos^2\theta\omega_{pe}^2  +2  n \Omega_e^2 \gamma\cos\theta  - n^2\Omega_e^2   \right)&\phantom{(}\omega_{ref}\omega_0\phantom{)^2}  \notag\\
++\left(  -n^2\Omega_e^3\cos\theta   \right)&\phantom{(\omega_ref\omega_0)^2} 
+\end{align}
+or dividing through by $(\omega_{ref})^3$:
+\begin{align}
+\left(\gamma^2 \tilde{v}^2 \cos^2 \theta - \gamma^2   \right)&(\omega_0)^3 \notag \\
++\left(\gamma^2 \tilde{v}^2 \cos^3\theta(\Omega_e/\omega_{ref})  -(\Omega_e/\omega_{ref})\cos\theta \gamma^2  + 2 n(\Omega_e/\omega_{ref})\gamma  \right)&(\omega_0)^2  \notag\\
++\left(- \gamma^2 \tilde{v}^2\cos^2\theta(\omega_{pe}/\omega_{ref})^2  +2  n (\Omega_e/\omega_{ref})^2 \gamma\cos\theta  - n^2(\Omega_e/\omega_{ref})^2   \right)&\phantom{(}\omega_0\phantom{)^2}  \notag\\
++\left(  -n^2(\Omega_e/\omega_{ref})^3\cos\theta   \right)&\phantom{(\omega_ref\omega_0)^2} 
+\end{align}
+which are expected to be order 1 for $n \sim 1$ and $\tilde{v}, \cos\theta \sim 1$.
+
+
+
+
+
+\end{document}

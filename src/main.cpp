@@ -332,7 +332,6 @@ std::vector<calc_type> cubic_solve(calc_type an, calc_type bn, calc_type cn){
   }else{
     calc_type ret_root;
     bigA = - boost::math::sign(R)*std::pow((std::abs(R) + std::sqrt(R2 - Q3)), 1.0/3.0 );
-//    bigA = - std::abs(R)/R*std::pow((std::abs(R) + std::sqrt(R2 - Q3)), 1.0/3.0 );
 
     (bigA != 0.0) ? (bigB = Q / bigA) : (bigB = 0.0);
     ret_root = (bigA + bigB) - an/3.0;
@@ -340,6 +339,7 @@ std::vector<calc_type> cubic_solve(calc_type an, calc_type bn, calc_type cn){
     ret_vec.push_back(ret_root);
   }
 
+/** Used to test when writing
   calc_type tmp;
   for(int i=0; i<ret_vec.size(); ++i){
     
@@ -347,7 +347,7 @@ std::vector<calc_type> cubic_solve(calc_type an, calc_type bn, calc_type cn){
     std::cout<<"solution gives "<<tmp<<std::endl;
   
   }
-
+*/
   return ret_vec;
 
 }

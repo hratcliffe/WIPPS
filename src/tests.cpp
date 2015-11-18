@@ -361,12 +361,15 @@ std::cout<<std::setprecision(8);
   calc_type res_el, tot;
   for(int i=0; i< result.size(); ++i){
     res_el = result[i];
-    std::cout<<res_el<<std::endl;
-    tot = pow(res_el, 3) -20.5*pow(res_el, 2) +100.0*res_el - 112.76;
+    tot = std::pow(res_el, 3) -20.5*std::pow(res_el, 2) +100.0*res_el - 112.76;
     if(std::abs(tot) > PRECISION){
       err|=TEST_WRONG_RESULT;
       test_bed->report_info("Cubic root does not solve polynomial, mismatch "+mk_str(tot)+" for root "+mk_str(res_el), 2);
-      std::cout<<res_el<<std::endl;
+      
+      test_bed->report_info("Vieta a) "+ mk_str(result[0]+result[1]+result[2] - 20.5), 2);
+      test_bed->report_info("Vieta b) "+mk_str( result[0]*result[1]+result[0]*result[2]+result[2]*result[1] - 100.0), 2);
+      test_bed->report_info("Vieta c) "+mk_str(result[0]*result[1]*result[2]-112.76), 2);
+
     }
   }
  	
@@ -374,9 +377,6 @@ std::cout<<std::setprecision(8);
   −a=x1+x2+x3 b = x1x2+x1x3+x2x3 and -c = x1x2x3
 **/
 
-  std::cout<<"Vieta a) "<< result[0]+result[1]+result[2] - 20.5<<std::endl;
- std::cout<<"Vieta b) "<< result[0]*result[1]+result[0]*result[2]+result[2]*result[1] - 100.0<<std::endl;
- std::cout<<"Vieta c) "<< result[0]*result[1]*result[2]-112.76<<std::endl;
 
  
   test_bed->report_err(err);
@@ -460,14 +460,13 @@ int test_entity_plasma::run(){
   gamma2 = 1.0/( 1.0 - std::pow(v_par/v0, 2));
   
   gamma = std::sqrt(gamma2);
-  std::cout<<cos_theta<<" "<<gamma<<std::endl;
   
   results = plas->get_omega(x, v_par, n);
   //Now check each element of this satisfies Stix 2.45 and the resonance condition together
-  test_bed->report_info(mk_str((int)results.size())+" solutions found", 2);
+  test_bed->report_info(mk_str((int)results.size())+" frequency solutions found", 2);
   
   for(int i=0; i<results.size(); ++i){
-    test_bed->report_info("Freq is "+mk_str(results[i])+" = "+mk_str(results[i]/my_const.omega_ce)+" om_ce", 2);
+//    test_bed->report_info("Freq is "+mk_str(results[i])+" = "+mk_str(results[i]/my_const.omega_ce)+" om_ce", 2);
     
     mu_tmp1 = std::pow(v0 * (gamma*results[i] - n*om_ce_local)/(gamma*results[i] * v_par *cos_theta), 2);
     mu_tmp2 = (1.0 - (std::pow(om_pe_local,2)/(results[i]*(results[i] + om_ce_local*cos_theta))));

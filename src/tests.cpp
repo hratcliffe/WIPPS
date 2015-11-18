@@ -349,6 +349,9 @@ int test_entity_basic_maths::run(){
   if(std::abs(total) > PRECISION) err |=TEST_WRONG_RESULT;
   if(err == TEST_PASSED) test_bed->report_info("Boxcar smooth OK", 1);
 
+//  x^3 - 17x^2 + 92x - 150.
+  std::vector<calc_type> result = cubic_solve(17.0, 92.0, 150.0);
+  if((result.size() != 1) || std::abs(result[0] - 3.0) > PRECISION) err|=TEST_WRONG_RESULT;
 
   test_bed->report_err(err);
   return err;

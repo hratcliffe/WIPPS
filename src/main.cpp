@@ -319,7 +319,7 @@ std::vector<calc_type> cubic_solve(calc_type an, calc_type bn, calc_type cn){
   R2 = pow(R, 2);
   Q3 = pow(Q, 3);
   
-  std::cout<<"Q, R, R^2/Q^3 "<< Q<<" "<<R<<" "<< R2/Q3<<std::endl;
+ // std::cout<<"Q, R, R^2/Q^3 "<< Q<<" "<<R<<" "<< R2/Q3<<std::endl;
   
   if( R2 < Q3){
     
@@ -339,23 +339,23 @@ std::vector<calc_type> cubic_solve(calc_type an, calc_type bn, calc_type cn){
   }else{
     calc_type ret_root;
     bigA = - boost::math::sign(R)*pow((std::abs(R) + sqrt(R2 - Q3)), 1.0/3.0 );
-    std::cout<<bigA<<std::endl;
+    //std::cout<<bigA<<std::endl;
     bigA != 0.0 ? bigB = Q / bigA : 0.0;
-    std::cout<<bigB<<std::endl;
+    //std::cout<<bigB<<std::endl;
 
     ret_root = (bigA + bigB) - an/3.0;
-    std::cout<< ret_root/my_const.omega_ce<<std::endl;
+    //std::cout<< ret_root/my_const.omega_ce<<std::endl;
     if(std::abs(ret_root) < my_const.omega_ce) ret_vec.push_back(ret_root);
   }
-
+/*
   calc_type tmp;
   for(int i=0; i<ret_vec.size(); ++i){
     
     tmp = pow(ret_vec[i], 3) + an*pow(ret_vec[i], 2) + bn*ret_vec[i] + cn;
-    std::cout<<"solution gives "<<tmp<<std::endl;
+    //std::cout<<"solution gives "<<tmp<<std::endl;
   
   }
-
+*/
   return ret_vec;
 
 }

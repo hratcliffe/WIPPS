@@ -466,28 +466,31 @@ Return empty vector if no valid solutions
   calc_type vel = v_par / v0;
   calc_type vel_cos = pow(vel * cos_th, 2) ;
 
-  calc_type gamma, gamma2;
+  calc_type gamma, gamma2, om_ref_ce;
   gamma2 = 1.0/( 1.0 - pow(vel, 2));
   gamma = sqrt(gamma2);
 
+  om_ref_ce = my_const.omega_ce;
+
   a = (vel_cos - 1.0) * gamma2;
-  b = vel_cos *gamma2*cos_th*wc + 2.0 *gamma*n*wc - gamma2*wc*cos_th;
-  c = 2.0*gamma*n*wc*wc*cos_th - pow(my_const.omega_pe, 2)*vel_cos*gamma2 - n*n *wc*wc;
-  d = n*n*pow(wc, 3)*cos_th;
+  b = (vel_cos*cos_th + 2.0*gamma*n - gamma2*cos_th)*wc/om_ref_ce;
+  c = ((2.0*gamma*n*cos_th - n*n)* pow(wc/om_ref_ce, 2) - pow(my_const.omega_pe/om_ref_ce, 2)*vel_cos*gamma2);
+  d = n*n*pow(wc/om_ref_ce, 3)*cos_th;
   
   std::cout<<a<<" "<<b<<" "<<c<<" "<<d<<" "<<std::endl;
   std::cout<<"Comparision of term OOM "<<a * pow(wc, 3)<<" "<<b*pow(wc, 2)<<" "<<c*wc<<" "<<d<<" "<<std::endl;
 
+  //To maintain best precision we solve for omega/ reference omega_ce
+  
+  
   an = b/a;
   bn = c/a;
   cn = d/a;
   
-  an= -17.0;
-  bn = 92.0;
-  cn = -150.0;
-
   ret_vec = cubic_solve(an, bn, cn);
 
+  for(int i=0; i<ret_vec.size(); ++i) ret_vec[i] *= om_ref_ce;
+  //restore factor
   return ret_vec;
 
 }

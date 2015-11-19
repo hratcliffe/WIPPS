@@ -12,16 +12,6 @@
 #include <stdlib.h> //for malloc eeejit
 #include <vector>
 
-//Shortcut so we can change array internal type later if needed. And matching SDF type
-
-template<class T> class arrayl{
-
-T* array_values;
-T getvalue(int ix,int iy);
-
-};
-
-//using namespace std;
 class my_array{
 protected:
 int n_dims;
@@ -43,7 +33,7 @@ my_array();
 virtual void construct();
 my_array(int nx, int ny);
 my_array(int * row_lengths, int ny);
-~my_array();
+virtual ~my_array();
 
 bool is_good(){return !defined;}
 my_type * get_ptr(int nx, int ny);
@@ -93,7 +83,7 @@ int space[2];
 void construct();
 data_array(int nx, int ny);
 data_array(int * row_lengths, int ny);
-~data_array();
+virtual ~data_array();
 
 bool is_good(){return defined && ax_defined;}
 my_type * get_axis(int dim, int & length);

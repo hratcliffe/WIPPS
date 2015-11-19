@@ -31,8 +31,9 @@ int wave_id;
 calc_type * D_bounceav;
 
 diffusion_coeff(int nx, int n_ang);
+virtual ~diffusion_coeff(){;}
 
-void set_ids(float time1, float time2, int space1, int space2, int wave_id, char block_id[10], int function_type=FUNCTION_DELTA);
+void set_ids(float time1, float time2, int space1, int space2, int wave_id, char block_id[10]);
 
 bool write_to_file(std::fstream &file);
 

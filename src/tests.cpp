@@ -137,7 +137,7 @@ void tests::cleanup_tests(){
     std::cout<<"No log generated"<<std::endl;
   }
   delete outfile;
-  for(current_test_id=0; current_test_id<test_list.size(); current_test_id++){
+  for(current_test_id=0; current_test_id< (int)test_list.size(); current_test_id++){
     delete test_list[current_test_id];
   
   }
@@ -150,8 +150,8 @@ void tests::run_tests(){
 *
 *
 */
-  int err = TEST_PASSED;
-  for(current_test_id=0; current_test_id<test_list.size(); current_test_id++){
+//  int err = TEST_PASSED;
+  for(current_test_id=0; current_test_id< (int)test_list.size(); current_test_id++){
     test_list[current_test_id]->run();
     
   }
@@ -354,12 +354,10 @@ int test_entity_basic_maths::run(){
   if((result.size() != 1) || std::abs(result[0] - 3.0) > PRECISION) err|=TEST_WRONG_RESULT;
   //Test with polynomial of known integer coefficients and roots
 
-std::cout<<std::setprecision(8);
-
   result = cubic_solve(-20.5, 100.0, -112.76);
   //test with random polynomial which happens to have 3 real roots
   calc_type res_el, tot;
-  for(int i=0; i< result.size(); ++i){
+  for(size_t i=0; i<result.size(); ++i){
     res_el = result[i];
     tot = std::pow(res_el, 3) -20.5*std::pow(res_el, 2) +100.0*res_el - 112.76;
     if(std::abs(tot) > PRECISION){
@@ -392,7 +390,6 @@ test_entity_extern_maths::test_entity_extern_maths(){
 test_entity_extern_maths::~test_entity_extern_maths(){
 
 }
-
 
 int test_entity_extern_maths::run(){
 //test code using bessel funtion. Output values should be zeros.
@@ -443,6 +440,7 @@ test_entity_plasma::~test_entity_plasma(){
 
   delete plas;
 }
+
 int test_entity_plasma::run(){
 
   int err=TEST_PASSED;
@@ -454,7 +452,7 @@ int test_entity_plasma::run(){
   //std::cout<< om_ce_local<<" "<<om_pe_local<<std::endl;
   
   v_par = 0.1* v0;
-  calc_type tmp, tmp_om, cos_theta, mu_tmp1, mu_tmp2;
+  calc_type cos_theta, mu_tmp1, mu_tmp2;
   cos_theta = std::cos(std::atan(x));
   calc_type gamma, gamma2;
   gamma2 = 1.0/( 1.0 - std::pow(v_par/v0, 2));
@@ -465,7 +463,7 @@ int test_entity_plasma::run(){
   //Now check each element of this satisfies Stix 2.45 and the resonance condition together
   test_bed->report_info(mk_str((int)results.size())+" frequency solutions found", 2);
   
-  for(int i=0; i<results.size(); ++i){
+  for(int i=0; i<(int)results.size(); ++i){
 //    test_bed->report_info("Freq is "+mk_str(results[i])+" = "+mk_str(results[i]/my_const.omega_ce)+" om_ce", 2);
     
     mu_tmp1 = std::pow(v0 * (gamma*results[i] - n*om_ce_local)/(gamma*results[i] * v_par *cos_theta), 2);

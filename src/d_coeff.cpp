@@ -35,14 +35,22 @@ diffusion_coeff::diffusion_coeff(int nx, int n_angs):data_array(nx, n_angs){
 }
 
 
-void diffusion_coeff::set_ids(float time1, float time2, int space1, int space2, int wave_id, char block_id[10], int function_type){
+void diffusion_coeff::set_ids(float time1, float time2, int space1, int space2, int wave_id, char block_id[10]){
+
+  this->time[0] = time1;
+  this->time[1] = time2;
+  this->space[0] = space1;
+  this->space[1] = space2;
+  strcpy(this->block_id, block_id);
+  this->wave_id = wave_id;
+
 
 }
 
 
 bool diffusion_coeff::write_to_file(std::fstream &file){
 
-
+  file<<"";
   return 0;
 
 }
@@ -79,7 +87,7 @@ Get mu, dmu/domega which are used to:
   this->copy_ids(spect);
   //copy block id, ranges etc from spect.
 
-  calc_type theta, omega,lat, alpha, omega_n, inc, x, x_inc, D_tmp;
+  calc_type theta, omega,lat, alpha, omega_n=0.0, x, x_inc, D_tmp;
   calc_type Eq6, mu_dom_mu, Eq7, dmudx, v_par, alpha_inc;
 
   std::vector<calc_type> omega_calc;
@@ -137,14 +145,15 @@ Get mu, dmu/domega which are used to:
           omega_calc = plas->get_omega(x, v_par, (calc_type) n);
           //if(std::abs(omega/my_const.omega_ce) > 1.0) continue;
           if(omega_calc.size()==0) continue; //redundant?
-          for(int ii =0; ii< omega_calc.size(); ++ii){
+          for(size_t ii =0; ii< omega_calc.size(); ++ii){
             omega = omega_calc[ii];
             std::cout<<"Freq is "<<omega/my_const.omega_ce<<std::endl;
-            my_mu = plas->get_phi_mu_om(lat, omega, theta, alpha, n, omega_n);
+            my_mu = plas->get_phi_mu_om(omega, theta, alpha, n, omega_n);
 
             if(!my_mu.err) std::cout<<"YAY!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! "<<n<<" "<<j<<std::endl;
             mu_dom_mu = my_mu.mu + omega * my_mu.dmudom;
-
+            dmudx = 0.0;
+            // FAKENUMBERS
             Eq6 = omega/(omega - omega_n)* my_mu.mu/mu_dom_mu;
             Eq7 = -1.0* (my_mu.mu*omega_n/(omega*(omega-omega_n)) - my_mu.dmudom)/(my_mu.mu *sin(theta)*cos(theta) - dmudx);
             //Need this iff we use second expression in Eq 5

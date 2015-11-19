@@ -118,7 +118,6 @@ bool reader::read_data(data_array * my_data_in, int time_range[2], int space_ran
 
   sdf_file_t *handle;
   sdf_block_t * block;
-  bool err;
   my_type * ax_ptr;
   int len;
 
@@ -203,7 +202,7 @@ std::string reader::get_full_name(int num){
   sprintf(fmt,"%s%d%c" , "%0", n_z, 'd');
   std::string file_name;
 
-  snprintf(file_num, 10, fmt, 0);
+  snprintf(file_num, 10, fmt, num);
   file_name = file_prefix + file_num +".sdf";
   return file_name;
 

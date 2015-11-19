@@ -52,8 +52,16 @@ SOURCE := $(addprefix $(SRCDIR)/, $(SOURCE))
 OBJS := $(addprefix $(OBJDIR)/, $(OBJS))
 INCLS := $(addprefix include/, $(INCLS))
 
-main : $(OBJS)
+WARN_STR = "**************Run make clean before changing MODE or TYPE. Run echo_deps if \#include's change or new files added***********"
+#reminder about -D options
+
+main : echo_warning $(OBJS)
 	$(CC) $(INCLUDE) $(OBJS) $(LIB) -o main
+	@echo $(WARN_STR)
+
+echo_warning:
+	@echo $(WARN_STR)
+
 
 read_test : $(OBJDIR)/read_test.o
 	$(CC) $(INCLUDE) $(SRCDIR)/read_test.cpp $(LIBSDF) -o read_test
@@ -111,8 +119,8 @@ $(OBJDIR)/read_test.o:./$(SRCDIR)/read_test.cpp
 tar:
 	tar -cvzf Source.tgz $(SOURCE) $(INCLS) ./files/* Makefile input.deck
 
-clean:echo_deps
-	@rm main $(OBJS) dependencies.log.bak
+clean:
+	@rm main $(OBJS)
 
 veryclean:
 	@rm main dependencies.log*

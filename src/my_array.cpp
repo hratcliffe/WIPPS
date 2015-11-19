@@ -231,11 +231,9 @@ bool my_array::write_to_file(std::fstream &file){
 */
   if(!file.is_open()) return 1;
   const char tmp_vers[15] = VERSION;
-  char ch = '\0';
 
   file.write((char*) &io_verify, sizeof(my_type));
   file.write((char*) &tmp_vers, sizeof(char)*15);
-  //file.write(&ch, sizeof(char));
 
   //Code version...
 
@@ -263,13 +261,8 @@ bool my_array::write_to_file(std::fstream &file){
       file.write((char*) &dim_tmp, sizeof(int));
     }
 
-    int ny = dims[n_dims-1];
-    //std::cout<< ny<<cumulative_row_lengths[ny-1]<<row_lengths[ny-1]<<total_size<<std::endl;
-
   }
 
-//  std::cout<<"Size is "<<total_size<<std::endl;
- // std::cout<<data<<std::endl;
   file.write((char *) data , sizeof(my_type)*total_size);
 
   return 0;
@@ -529,7 +522,8 @@ bool data_array::fft_me(data_array * data_out){
   int total_size=1; /**< Total number of elements in array*/
   for(int i=0; i<n_dims;++i) total_size *= dims[i];
 
-  int fft_dim =1;/**< Dimension to FFT over, if required*/
+  int fft_dim ;
+  fft_dim = 1;/**< Dimension to FFT over, if required*/
 
   ADD_FFTW(plan) p;
   cplx_type *out;

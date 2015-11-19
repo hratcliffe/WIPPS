@@ -81,7 +81,7 @@ if(parent && angle_is_function){
 
   int j;
   int low_bnd, high_bnd;
-  float om_disp, om_target;
+  float om_disp;
   float tolerance = 0.05;
   float total;
   for(int i=0; i<this->dims[0]; ++i){
@@ -162,45 +162,43 @@ return 0;
 
 float spectrum::get_dispersion(my_type k, int wave_type){
 
-float ret=0;
-float tmp;
-switch(wave_type){
+  float ret=0;
+  switch(wave_type){
 
-  case WAVE_WHISTLER :
-//    om_whis = v0^2*k_ax^2*om_ce/(v0^2*k_ax^2+om_pe^2)/om_ce
-    ret = v0*v0*k*k*my_const.omega_ce/(v0*v0 + my_const.omega_pe*my_const.omega_pe)/my_const.omega_ce;
-    
-    //here goes dispersion in suitable normed units.
-    break;
+    case WAVE_WHISTLER :
+      ret = v0*v0*k*k*my_const.omega_ce/(v0*v0 + my_const.omega_pe*my_const.omega_pe)/my_const.omega_ce;
+      
+      //here goes dispersion in suitable normed units.
+      break;
 
-  case WAVE_PLASMA :
-    ret =1 ;
-    break;
-}
+    case WAVE_PLASMA :
+      ret =1 ;
+      break;
+  }
 
-return ret;
+  return ret;
 
 }
 
-my_type * spectrum::get_angle_distrib(my_type ang, int &len, my_type omega){
+my_type * spectrum::get_angle_distrib(int &len, my_type omega){
 //Now if it's a single function we return just a row, and dont need the omega param
 //If it's not, we select row by omega. The length will always be n_angs, but we return it for clarity
 
-my_type * ret = NULL;
+  my_type * ret = NULL;
 
-if(angle_is_function){
+  if(angle_is_function){
 
-  ret = data + dims[0];
+    ret = data + dims[0];
 
-}else{
-//select row by omega...
-  int offset = where(axes+ dims[0], n_angs, omega);
-  ret = data + offset*dims[0];
+  }else{
+  //select row by omega...
+    int offset = where(axes+ dims[0], n_angs, omega);
+    ret = data + offset*dims[0];
 
-}
+  }
 
-len = n_angs;
-return ret;
+  len = n_angs;
+  return ret;
 
 }
 
@@ -287,5 +285,8 @@ calc_type spectrum::get_G1(){
 calc_type spectrum::get_G2(mu my_mu){
 /**returns G2 calculated as in Albert 2005. */
 
+  calc_type a;
+  a = my_mu.mu;
+  //to silence unused warning temporarily
   return 0.0;
 }

@@ -85,7 +85,7 @@ mu plasma::get_root(calc_type th, calc_type w, calc_type psi){
   
   calc_type R=1.0, L=1.0, P=1.0, S, D, A, B, C, J, s2psi, c2psi, mua2, mub2, mu2;
   calc_type F, G, smu;
-  calc_type dHdF, dHdG, dmudw, dmudpsi,dAdpsi,dBdpsi,dFdpsi,dGdpsi,dpsidth;
+  calc_type dHdF, dHdG, dmudw,dAdpsi,dBdpsi,dFdpsi,dGdpsi,dpsidth;
   calc_type wp[ncomps], wp2[ncomps], wc[ncomps], X[ncomps], Y[ncomps];
   
   calc_type dmudX[ncomps], dXdr[ncomps], dXdth[ncomps], dmudY[ncomps], dYdr[ncomps], dYdth[ncomps];
@@ -191,7 +191,8 @@ mu plasma::get_root(calc_type th, calc_type w, calc_type psi){
 
     dpsidth = -2.0/(1.0 + 3.0*pow(cos(th), 2));
     dmudw = 0.0;
-    mu_ret.dmudlat = dmudpsi*dpsidth;
+    
+    mu_ret.dmudlat = mu_ret.dmudtheta*dpsidth;
     //even if this one can be folded into above, keep it out as not vectorisable
     for(int i=0; i<ncomps; i++){
        mu_ret.dmudr = mu_ret.dmudr + dmudX[i]*dXdr[i] + dmudY[i]*dYdr[i];
@@ -199,7 +200,7 @@ mu plasma::get_root(calc_type th, calc_type w, calc_type psi){
        dmudw = dmudw + dmudX[i]*dXdw[i] + dmudY[i]*dYdw[i];
     }
     mu_ret.mug = mu_ret.mu + w*dmudw;
-    mu_ret.alpha = -dmudpsi/mu_ret.mu;
+    mu_ret.alpha = -mu_ret.dmudtheta/mu_ret.mu;
     mu_ret.dmudom = dmudw;
 
     mu_ret.err = 0;
@@ -275,7 +276,7 @@ calc_type plasma::get_phi(calc_type th, calc_type w, calc_type psi, calc_type al
 
 }
 
-mu_dmudom plasma::get_phi_mu_om(calc_type th, calc_type w, calc_type psi, calc_type alpha, int n, calc_type omega_n){
+mu_dmudom plasma::get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int n, calc_type omega_n){
 /**Get's the Phi defined by Lyons 1974, and mu, dmu/dom i.e. the set needed for D.
 *Also needs particle pitch angle alpha \todo Fix relativistic gamma... WATCH for Clares version which uses a different alpha entirely...
 
@@ -300,10 +301,10 @@ mu_dmudom plasma::get_phi_mu_om(calc_type th, calc_type w, calc_type psi, calc_t
   
   calc_type R=1.0, L=1.0, P=1.0, J, S, D, A, B, C, s2psi, c2psi, mua2, mub2, mu2;
   calc_type F, G, smu;
-  calc_type dHdF, dHdG, dmudw, dmudpsi,dAdpsi,dBdpsi,dFdpsi,dGdpsi,dpsidth;
+  calc_type dHdF, dHdG, dmudw;
   calc_type wp[ncomps], wp2[ncomps], wc[ncomps], X[ncomps], Y[ncomps];
   
-  calc_type dmudX[ncomps], dXdr[ncomps], dXdth[ncomps], dmudY[ncomps], dYdr[ncomps], dYdth[ncomps];
+  calc_type dmudX[ncomps], dmudY[ncomps];
   calc_type dPdX[ncomps], dLdX[ncomps], dRdX[ncomps], dSdX[ncomps], dDdX[ncomps];
   calc_type dAdX[ncomps], dBdX[ncomps], dCdX[ncomps], dFdX[ncomps], dGdX[ncomps];
   calc_type dLdY[ncomps], dRdY[ncomps], dSdY[ncomps], dDdY[ncomps];
@@ -400,30 +401,31 @@ mu_dmudom plasma::get_phi_mu_om(calc_type th, calc_type w, calc_type psi, calc_t
     my_mu.dmudom = dmudw;
     my_mu.err = 0;
   
+    sin2psi = pow(sin(psi), 2);
+    D_mu2S = D / (mu2 - S);
+    gamma = 1;
+    omega_n = -1.0 * n * my_const.omega_ce/gamma;
+    //temporaries for simplicity
+
+    term1 = (mu2* sin2psi - P)/(mu2);
+    
+    denom = pow(D_mu2S*term1, 2) + pow((P*cos(psi)/mu2), 2);
+    
+    bessel_arg = n* tan(psi)*tan(alpha) * (w - omega_n)/omega_n;// n x tan alpha (om - om_n)/om_n
+    
+    tmp_bes = boost::math::cyl_bessel_j(abs(n)+1, bessel_arg);
+    term2 = (1 + D_mu2S)*tmp_bes;
+    
+    tmp_bes = boost::math::cyl_bessel_j(abs(n)-1, bessel_arg);
+    term2 += (1 - D_mu2S)*tmp_bes;
+
+    tmp_bes = boost::math::cyl_bessel_j(abs(n), bessel_arg);
+    term3 = sin(psi)*cos(psi)*tmp_bes/tan(alpha);
+
+    my_mu.phi = pow((0.5*term1*term2 + term3), 2)/denom;
+
   }
 
-  sin2psi = pow(sin(psi), 2);
-  D_mu2S = D / (mu2 - S);
-  gamma = 1;
-  omega_n = -1.0 * n * my_const.omega_ce/gamma;
-  //temporaries for simplicity
-
-  term1 = (mu2* sin2psi - P)/(mu2);
-  
-  denom = pow(D_mu2S*term1, 2) + pow((P*cos(psi)/mu2), 2);
-  
-  bessel_arg = n* tan(psi)*tan(alpha) * (w - omega_n)/omega_n;// n x tan alpha (om - om_n)/om_n
-  
-  tmp_bes = boost::math::cyl_bessel_j(abs(n)+1, bessel_arg);
-  term2 = (1 + D_mu2S)*tmp_bes;
-  
-  tmp_bes = boost::math::cyl_bessel_j(abs(n)-1, bessel_arg);
-  term2 += (1 - D_mu2S)*tmp_bes;
-
-  tmp_bes = boost::math::cyl_bessel_j(abs(n), bessel_arg);
-  term3 = sin(psi)*cos(psi)*tmp_bes/tan(alpha);
-
-  my_mu.phi = pow((0.5*term1*term2 + term3), 2)/denom;
   
   return my_mu;
 }
@@ -486,9 +488,9 @@ Return empty vector if no valid solutions
   
   ret_vec = cubic_solve(an, bn, cn);
 
-  for(int i=0; i<ret_vec.size(); ++i) ret_vec[i] *= om_ref_ce;
+  for(size_t i=0; i<ret_vec.size(); ++i) ret_vec[i] *= om_ref_ce;
   //restore factor
-  for(int i=0; i<ret_vec.size(); ++i){
+  for(size_t i=0; i<ret_vec.size(); ++i){
     if(std::abs(ret_vec[i]) > std::abs(wc)){
       ret_vec.erase(ret_vec.begin() + i);
       --i;

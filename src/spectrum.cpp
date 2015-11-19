@@ -13,8 +13,9 @@
 #include <cmath>
 #include "support.h"
 #include "my_array.h"
+#include "controller.h"
+#include "plasma.h"
 #include "spectrum.h"
-
 
 extern deck_constants my_const;
 
@@ -25,7 +26,7 @@ void spectrum::construct(){
 
   function_type = 0;
   wave_id = 0;
-  
+  my_controller = nullptr;
   
 }
 
@@ -51,18 +52,23 @@ spectrum::spectrum(int nx, int n_ang):data_array(nx, n_ang+1){
 
 }
 
-void spectrum::set_ids(float time1, float time2, int space1, int space2, int wave_id, char block_id[10], int function_type){
+void spectrum::set_ids(float time1, float time2, int space1, int space2, int wave_id, char block_id[10], int function_type, controller * my_controller){
 //set id params for later...
 //times can be normed however we want. Space is relative to grid...
 //wave id is defined in header and defines the cutout we use
 
-this->time[0] = time1;
-this->time[1] = time2;
-this->space[0] = space1;
-this->space[1] = space2;
-strcpy(this->block_id, block_id);
-this->wave_id = wave_id;
-this->function_type = function_type;
+  this->time[0] = time1;
+  this->time[1] = time2;
+  this->space[0] = space1;
+  this->space[1] = space2;
+  strcpy(this->block_id, block_id);
+  this->wave_id = wave_id;
+  this->function_type = function_type;
+}
+
+spectrum::~spectrum(){
+
+
 }
 
 bool spectrum::generate_spectrum(data_array * parent){
@@ -97,87 +103,76 @@ if(parent && angle_is_function){
     this->set_element(i,0,total);
   }
 
-//Now we generate evenly spaced angle axis, and generate required function ...
-//NB What to work in? tan theta, but from 0 to infty. Need a cut off.... and that only covers paralllel, not antiparallel. We'll need to extend to that sooner or later...
+  //Now we generate evenly spaced angle axis, and generate required function ...
+  //NB What to work in? tan theta, but from 0 to infty. Need a cut off.... and that only covers paralllel, not antiparallel. We'll need to extend to that sooner or later...
 
 
-//void data_array::make_linear_axis(int dim, float res, int offset){
-{int res = 1;
-//set axis resolution somehow... TODO this
-make_linear_axis(1, res, 0);
+  //void data_array::make_linear_axis(int dim, float res, int offset){
+  {int res = 1;
+  //set axis resolution somehow... TODO this
+  make_linear_axis(1, res, 0);
 
-  //Now generate the function data.
-  if(function_type == FUNCTION_DELTA){
-  //Approx delta function, round k_ll. I.e. one cell only. And size is 1/d theta
-  
-    for(int i=1; i<this->dims[0]; ++i) this->set_element(i,1,0);
-    //zero all other elements
-    float val;
-    val = 1.0/res;
-    //TODO this is wrong value. Wants to make integral 1...
-    this->set_element(0, 1, val);
-  }else if(function_type == FUNCTION_GAUSS){
+    //Now generate the function data.
+    if(function_type == FUNCTION_DELTA){
+    //Approx delta function, round k_ll. I.e. one cell only. And size is 1/d theta
+    
+      for(int i=1; i<this->dims[0]; ++i) this->set_element(i,1,0);
+      //zero all other elements
+      float val;
+      val = 1.0/res;
+      //TODO this is wrong value. Wants to make integral 1...
+      this->set_element(0, 1, val);
+    }else if(function_type == FUNCTION_GAUSS){
 
 
-  }else if(function_type == FUNCTION_DELTA){
+    }else if(function_type == FUNCTION_DELTA){
+
+
+    }else{
+
+    }
+
+  }
+
+
+  }else if(parent){
+
+  //TODO in this case we have to extract spectrim and angle data somehow......
+
+    //First we read axes from parent
+    int len;
+    my_type * ax_ptr = parent->get_axis(0, len);
+    memcpy ((void *)this->axes, (void *)ax_ptr, len*sizeof(my_type));
+    ax_ptr = parent->get_axis(1, len);
+    //y-axis to work with
+
+    //Generate angle axis to work with
+  {int res = 1;
+  //set axis resolution somehow... TODO this
+  make_linear_axis(1, res, 0);
+  }
+
+  //and now we extract the data at each angle...
+  //tan theta = k_x/k_y
+
 
 
   }else{
+    return 1;
 
   }
 
-}
-
-
-}else if(parent){
-
-//TODO in this case we have to extract spectrim and angle data somehow......
-
-  //First we read axes from parent
-  int len;
-  my_type * ax_ptr = parent->get_axis(0, len);
-  memcpy ((void *)this->axes, (void *)ax_ptr, len*sizeof(my_type));
-  ax_ptr = parent->get_axis(1, len);
-  //y-axis to work with
-
-  //Generate angle axis to work with
-{int res = 1;
-//set axis resolution somehow... TODO this
-make_linear_axis(1, res, 0);
-}
-
-//and now we extract the data at each angle...
-//tan theta = k_x/k_y
-
-
-
-}else{
-  return 1;
+  return 0;
 
 }
 
-return 0;
-
-}
-
-float spectrum::get_dispersion(my_type k, int wave_type){
-
-  float ret=0;
-  switch(wave_type){
-
-    case WAVE_WHISTLER :
-      ret = v0*v0*k*k*my_const.omega_ce/(v0*v0 + my_const.omega_pe*my_const.omega_pe)/my_const.omega_ce;
-      
-      //here goes dispersion in suitable normed units.
-      break;
-
-    case WAVE_PLASMA :
-      ret =1 ;
-      break;
-  }
-
-  return ret;
-
+my_type spectrum::get_dispersion(my_type k, int wave_type){
+/** \brief Gets omega for given k
+*
+* Calls to plasma because approximations for density etc etc should be made there. 
+*/
+  if(my_controller && (my_controller->my_plas)) return (my_type) my_controller->my_plas->get_dispersion(k, wave_type);
+  else return 0.0;
 }
 
 my_type * spectrum::get_angle_distrib(int &len, my_type omega){

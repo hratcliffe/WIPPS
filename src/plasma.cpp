@@ -19,23 +19,9 @@
 
 extern deck_constants my_const;
 
-/*  print*, "params", th, w, ncomps, psi, dndr, dndth, dB0dr, dB0dth, wp, wc, pcharge, pmass, alpha
-*/
-/* params   1.7007876594089641        1068.1415010000001                4   5.8656624044061418      dndr  -4.0805077256740575E-002  -4.0804720442176402E-002  -3.5681456417382727E-007  -1.0356112259117425E-023 dndth  -8.6887980136982882E-010  -8.6887485298549854E-010  -4.9483843304058076E-015  -5.9970915939124774E-032 dB0dr  -2.3427955453299444E-015 dB0dth   1.6343783802502034E-008 wp   49974.921169983536        1166.2629727466274        1.3916165640554752        2.4223016398731474E-009 wc  -7830.6899653997925        4.2647270686720846        1.0661817671680212       0.26654544179200529      particles  -1.6021764600000001E-019   1.6021764600000001E-019   1.6021764600000001E-019   1.6021764600000001E-019   9.1093818800000006E-031   1.6726215800000000E-027   6.6904863199999999E-027   2.6761945280000000E-026   0.0000000000000000
- results   19.589056192159191        11.576465718147290      dmudr   9.8313541324709702E-008 dmudth   5.4939673094430379       0.26066557457880191
-*/
-
 plasma::plasma()
-//:ncomps(1)
 {
-//sets the const ncomps for number of plasma components at compile time
-//allocate position, density, B axes
-//set other parameters
-/*  for(int i=0;i<ncomps; i++){
-    pmass[i] = 1.0 * mp;
-    // H plasma
-    pcharge[i] = 1.0 * q0;
-  }*/
+
   pmass[0] = me;
   pmass[1] = mp;
   pmass[2] = mp*4.0;
@@ -57,6 +43,10 @@ plasma::plasma()
 
   this->om_ce = (pcharge[0]) * this->B0 / pmass[0];
   //reference electron cyclotron freq
+}
+plasma::~plasma(){
+
+
 }
 
 //std::vector<calc_type>
@@ -433,8 +423,8 @@ mu_dmudom plasma::get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int
 std::vector<calc_type> plasma::get_omega(calc_type x, calc_type v_par, calc_type n){
 /**Get resonant frequency for particular x...
 *
-*Solve high density approx to get omega. for pure electron proton plasma.... \todo report what this is assuming or check it or something...
-* We have to solve a cubic. \todo check root correctness etc Uses Num Recp. version, optimised to minimise roundoff errors. Note for slowly changing v_par, suggests Newtons method might be more efficient. Although much of this could be precomputed for given grids.
+*Solve high density approx to get omega. for pure electron proton plasma....
+* Calls cubic_solve Note for slowly changing v_par, suggests Newtons method might be more efficient. Although much of this could be precomputed for given grids.
 Return empty vector if no valid solutions
 */
 
@@ -445,15 +435,10 @@ Return empty vector if no valid solutions
   calc_type om_ref_ce = my_const.omega_ce;
 
   if(std::abs(v_par) < tiny_calc_type){
-    //special case...
-    calc_type ret = 0.0;
-    if( std::abs(n)-1.0 < tiny_calc_type ) ret = wc* n;
-    ret_vec.push_back(ret);
+    if( std::abs(n)-1.0 < tiny_calc_type ) ret_vec.push_back(wc* n);
     return ret_vec;
-    /** \todo FIX! Empty vec if invalid*/
   }
-
-  if(std::abs(n) < tiny_calc_type){
+  else if(std::abs(n) < tiny_calc_type){
   //also special...
   //coeff d in cubic is 0 and we reduce to quadratic assuming omega != 0
     
@@ -509,4 +494,33 @@ calc_type plasma::get_omega_ref(std::string code){
 
 
 }
+
+calc_type plasma::get_dispersion(my_type k, int wave_type){
+/** \brief Gets omega for given k
+*
+* Uses local refernce cyclotron and plasma frequencies and works with UNNORMALISED quantitites
+*/
+  calc_type ret = 0.0;
+  calc_type om_ce_loc, om_pe_loc;
+  
+  om_ce_loc = this->get_omega_ref("ce");
+  om_pe_loc = this->get_omega_ref("pe");
+  
+  switch(wave_type){
+
+    case WAVE_WHISTLER :
+      ret = v0*v0*k*k*om_ce_loc/(v0*v0 + om_pe_loc*om_pe_loc)/om_ce_loc;
+      
+      //here goes dispersion in suitable normed units.
+      break;
+
+    case WAVE_PLASMA :
+      ret =1 ;
+      break;
+  }
+
+  return ret;
+
+}
+
 

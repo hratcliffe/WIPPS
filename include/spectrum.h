@@ -19,9 +19,15 @@
 //But if the angle profile is say a function, we don't need to...
 
 class data_array;
+class plasma;
+class controller;
 
 class spectrum : public data_array{
 //specialised data array with extra ID fields to hold additional data
+
+  friend void controller::add_spectrum(int nx, int n_ang);
+  friend void controller::add_spectrum(int * row_lengths, int ny);
+  controller * my_controller;
 
 public:
 
@@ -41,8 +47,8 @@ int n_angs;
 void construct();
 spectrum(int nx, int n_ang);
 spectrum(int * row_lengths, int ny);
-virtual ~spectrum(){;}
-void set_ids(float time1, float time2, int space1, int space2, int wave_id, char block_id[10], int function_type=FUNCTION_DELTA);
+virtual ~spectrum();
+void set_ids(float time1, float time2, int space1, int space2, int wave_id, char block_id[10], int function_type=FUNCTION_DELTA, controller * my_controller=nullptr);
 
 bool generate_spectrum(data_array * parent);
 

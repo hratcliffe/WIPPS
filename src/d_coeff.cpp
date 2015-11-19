@@ -12,6 +12,7 @@
 #include <boost/math/special_functions.hpp>
 #include "support.h"
 #include "my_array.h"
+#include "controller.h"
 #include "spectrum.h"
 #include "plasma.h"
 #include "d_coeff.h"
@@ -29,11 +30,18 @@ extern deck_constants my_const;
 
 diffusion_coeff::diffusion_coeff(int nx, int n_angs):data_array(nx, n_angs){
 
+  my_controller = nullptr;
+
   n_thetas = 10;
   n_n = 4;
   // FAKENUMBERS
 }
 
+diffusion_coeff::~diffusion_coeff(){
+/** Delete interconnections */
+
+
+}
 
 void diffusion_coeff::set_ids(float time1, float time2, int space1, int space2, int wave_id, char block_id[10]){
 
@@ -43,8 +51,6 @@ void diffusion_coeff::set_ids(float time1, float time2, int space1, int space2, 
   this->space[1] = space2;
   strcpy(this->block_id, block_id);
   this->wave_id = wave_id;
-
-
 }
 
 
@@ -55,8 +61,8 @@ bool diffusion_coeff::write_to_file(std::fstream &file){
 
 }
 
-void diffusion_coeff::calculate(spectrum * spect, plasma * plas){
-//takes spectrum and plasma, and calls whatever auxilliarlies it needs to calc D. This is local as fn of n, x
+void diffusion_coeff::calculate(){
+// calls whatever auxilliarlies it needs to calc D. This is local as fn of n, x
 
 //Which one? eneergy or angle. They're related trivially though. Pick one.
 //When to sum over resonances?
@@ -84,6 +90,17 @@ Get mu, dmu/domega which are used to:
 
   //Setup v_par, alpha ranges in axes
 
+  plasma * plas;
+  spectrum * spect;
+  if(my_controller){
+    plas = my_controller->my_plas;
+    spect = my_controller->my_spect;
+  }
+  else{
+    std::cout<<"No controller"<<std::endl;
+    return;
+  }
+  
   this->copy_ids(spect);
   //copy block id, ranges etc from spect.
 

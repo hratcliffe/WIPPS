@@ -23,6 +23,7 @@
 #include "main.h"
 #include "support.h"
 #include "reader.h"
+#include "controller.h"
 #include "plasma.h"
 #include "my_array.h"
 #include "d_coeff.h"
@@ -120,35 +121,30 @@ int main(int argc, char *argv[]){
     file.close();
   */
 
+  controller * contr;
+  contr = new controller();
+
   int row_lengths[2];
   row_lengths[0] = 4096;
   row_lengths[1] = DEFAULT_N_ANG;
   
-  spectrum * spect = new spectrum(row_lengths, 2);
-  spect->make_test_spectrum();
+  contr->add_spectrum(row_lengths, 2);
+  contr->my_spect->make_test_spectrum();
 
   file.open("Tmp_spectrum.txt", ios::out|ios::binary);
-  if(file.is_open()) spect->write_to_file(file);
+  if(file.is_open()) contr->my_spect->write_to_file(file);
   file.close();
 
   //Now we have some test spectral data we can work with...
 
-// if(sizeof(input_type) != sizeof(calc_type)). Hmm, now we need the data in a higher precision format...
-  
-  diffusion_coeff * D;
-  D = new diffusion_coeff(100, 100);
-  plasma * plasm;
-  plasm = new plasma();
-
-  D->calculate(spect, plasm);
+  contr->add_d(100, 100);
+  contr->my_d->calculate();
 
   //Cleanup objects etc
-  delete spect;
   delete my_reader;
   delete dat;
   delete dat_fft;
-  delete plasm;
-  delete D;
+  delete contr;
 
   cout<<"Grep for FAKENUMBERS !!!!"<<endl;
 
@@ -308,7 +304,7 @@ void inplace_boxcar_smooth(calc_type * start, int len, int width, bool periodic)
 std::vector<calc_type> cubic_solve(calc_type an, calc_type bn, calc_type cn){
 /** \brief Finds roots of cubic x^3 + an x^2 + bn x + cn = 0
 *
-* Uses Num. Rec. equations. Note that if x >>1 precision errors may result. 
+* Uses Num. Rec. equations, which are optimised for precision. Note that if x >>1 precision errors may result. Returns real solutions only
 */
 
   calc_type Q, R, bigA, bigB, Q3, R2, bigTheta;

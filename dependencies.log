@@ -8,6 +8,7 @@ obj/d_coeff.o:\
 src/d_coeff.cpp\
   include/support.h\
   include/my_array.h\
+  include/controller.h\
   include/spectrum.h\
   include/plasma.h\
   include/d_coeff.h\
@@ -16,6 +17,8 @@ obj/spectrum.o:\
 src/spectrum.cpp\
 include/support.h\
 include/my_array.h\
+  include/controller.h\
+  include/plasma.h\
   include/spectrum.h\
 
 obj/plasma.o:\
@@ -37,11 +40,21 @@ include/support.h\
 include/reader.h\
   include/my_array.h\
 
+obj/controller.o:\
+src/controller.cpp\
+include/support.h\
+include/controller.h\
+  include/plasma.h\
+  include/my_array.h\
+  include/d_coeff.h\
+  include/spectrum.h\
+
 obj/main.o:\
 src/main.cpp\
   include/main.h\
   include/support.h\
   include/reader.h\
+  include/controller.h\
   include/plasma.h\
   include/my_array.h\
   include/d_coeff.h\

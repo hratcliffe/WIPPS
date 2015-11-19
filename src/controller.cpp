@@ -5,6 +5,11 @@
 //  Created by Heather Ratcliffe on 19/11/2015.
 //
 //
+/** \file controller.cpp This is the public facing class controlling plasma, spectrum and d_coeff objects. It makes sure there is a plasma to provide needed functions for the latters
+*
+* @author Heather Ratcliffe @date 19/11/2015.
+*/
+
 
 #include <stdio.h>
 #include "support.h"

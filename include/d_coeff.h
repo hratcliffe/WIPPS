@@ -24,6 +24,10 @@ private:
   int n_n;
   controller * my_controller;
   friend void controller::add_d(int nx, int n_angs);
+  friend controller::~controller();
+
+  diffusion_coeff(int nx, int n_ang);
+  virtual ~diffusion_coeff();
 
 public:
 
@@ -32,9 +36,6 @@ public:
 
   //calc_type * D_raw;
   calc_type * D_bounceav;
-
-  diffusion_coeff(int nx, int n_ang);
-  virtual ~diffusion_coeff();
 
   void set_ids(float time1, float time2, int space1, int space2, int wave_id, char block_id[10]);
 

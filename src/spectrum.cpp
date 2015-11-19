@@ -52,7 +52,7 @@ spectrum::spectrum(int nx, int n_ang):data_array(nx, n_ang+1){
 
 }
 
-void spectrum::set_ids(float time1, float time2, int space1, int space2, int wave_id, char block_id[10], int function_type, controller * my_controller){
+void spectrum::set_ids(float time1, float time2, int space1, int space2, int wave_id, char block_id[10], int function_type){
 //set id params for later...
 //times can be normed however we want. Space is relative to grid...
 //wave id is defined in header and defines the cutout we use

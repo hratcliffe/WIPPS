@@ -19,8 +19,7 @@
 
 extern deck_constants my_const;
 
-plasma::plasma()
-{
+plasma::plasma(){
 
   pmass[0] = me;
   pmass[1] = mp;
@@ -42,15 +41,13 @@ plasma::plasma()
   B0 = my_const.omega_ce * me/std::abs(q0);
 
   this->om_ce = (pcharge[0]) * this->B0 / pmass[0];
-  //reference electron cyclotron freq
+  /**reference electron cyclotron freq \todo FIX! FAKENUMBERS */
 }
 plasma::~plasma(){
 
 
 }
 
-//std::vector<calc_type>
-//Note regardless of ncomps we only return one collective value...
 mu plasma::get_root(calc_type th, calc_type w, calc_type psi){
 /** Duplicated from mufunctions by CEJ Watt
 *
@@ -60,6 +57,8 @@ mu plasma::get_root(calc_type th, calc_type w, calc_type psi){
 */
   mu mu_ret;
   
+  std::cout<<"THIS DOES NOT WORK>>>>>>>>>>>>>>>"<<std::endl;
+  //REWRITE THIS against get_phi_mu_om. THIS IS WRONG!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   calc_type dndr[ncomps], dndth[ncomps];
   calc_type dB0dr, dB0dth;
   
@@ -86,9 +85,9 @@ mu plasma::get_root(calc_type th, calc_type w, calc_type psi){
   
   //These will hold suitably calc'd plasma frequency, square and cyclotron freq. If we have to derive from position, we do...
   for(int i=0; i<ncomps; ++i){
-    wp[i] = my_const.omega_pe;
+    wp[i] = this->get_omega_ref("pe");
     wp2[i] = wp[i]*wp[i];
-    wc[i] = my_const.omega_ce;
+    wc[i] = this->get_omega_ref("ce");
     
     X[i] = wp2[i]/(w*w);
     Y[i] = wc[i]/w;
@@ -312,8 +311,8 @@ mu_dmudom plasma::get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int
   
 //We loop over components and trust compiler to unroll for us :) most of these will trivially vectorise anyway.
 
-  s2psi = pow(sin(psi), 2);
-  c2psi = pow(cos(psi), 2);
+  s2psi = std::pow(sin(psi), 2);
+  c2psi = std::pow(cos(psi), 2);
  /** \todo Check these are correct interpretation... */
 
   for(int i=0; i<ncomps; ++i){
@@ -321,7 +320,6 @@ mu_dmudom plasma::get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int
     L = L - wp2[i]/(w*(w - wc[i]));
     P = P - wp2[i]/(w*w);
   }
-
 
   S = 0.5*(R + L);
   D = 0.5*(R - L);
@@ -339,7 +337,6 @@ mu_dmudom plasma::get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int
   my_mu.dmudom = 0.0;
   my_mu.err = 1;
 
-  std::cout<< "mua/b "<<mua2<<" "<<mub2<<std::endl;
   if( (mua2 > 0.0) || (mub2 > 0.0) ){
     if(D < 0.0 ){ smu = 1.0; mu2 = mua2;} //see Albert [2005]
     else{smu = -1.0; mu2 = mub2;}
@@ -391,7 +388,7 @@ mu_dmudom plasma::get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int
     my_mu.dmudom = dmudw;
     my_mu.err = 0;
   
-    sin2psi = pow(sin(psi), 2);
+    sin2psi = std::pow(sin(psi), 2);
     D_mu2S = D / (mu2 - S);
     gamma = 1;
     omega_n = -1.0 * n * my_const.omega_ce/gamma;
@@ -425,7 +422,7 @@ std::vector<calc_type> plasma::get_omega(calc_type x, calc_type v_par, calc_type
 *
 *Solve high density approx to get omega. for pure electron proton plasma....
 * Calls cubic_solve Note for slowly changing v_par, suggests Newtons method might be more efficient. Although much of this could be precomputed for given grids.
-Return empty vector if no valid solutions
+Return empty vector if no valid solutions \todo Extend to general case?
 */
 
   std::vector<calc_type> ret_vec;
@@ -445,7 +442,6 @@ Return empty vector if no valid solutions
     return ret_vec;
     //if omega_pe > omega_ce no solution...???
   /** \todo add case */
-    /** \todo FIX! Empty vec if invalid*/
   
   }
 

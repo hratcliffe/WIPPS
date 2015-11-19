@@ -29,6 +29,9 @@ public:
   void add_spectrum(int nx, int n_ang);
   void add_spectrum(int * row_lengths, int ny);
   void add_d(int nx, int n_angs);
+  spectrum * get_current_spectrum(){return my_spect;};
+  diffusion_coeff * get_current_d(){return my_d;};
+  /** For Future expansion*/
 };
 
 

@@ -131,10 +131,11 @@ void tests::cleanup_tests(){
 *
 */
   if(outfile->is_open()){
-    std::cout<<"Testing complete and logged in "<<filename<<std::endl;
+    this->report_info("Testing complete and logged in " +filename, 0);
     outfile->close();
   }else{
-    std::cout<<"No log generated"<<std::endl;
+    this->report_info("No logfile generated", 0);
+
   }
   delete outfile;
   for(current_test_id=0; current_test_id< (int)test_list.size(); current_test_id++){
@@ -146,11 +147,10 @@ void tests::cleanup_tests(){
 }
 
 void tests::run_tests(){
-/** \brief Delete test objects
+/** \brief Run scheduled tests
 *
 *
 */
-//  int err = TEST_PASSED;
   for(current_test_id=0; current_test_id< (int)test_list.size(); current_test_id++){
     test_list[current_test_id]->run();
     
@@ -449,7 +449,6 @@ int test_entity_plasma::run(){
   calc_type x=1.0, v_par, n=-1, om_ce_local, om_pe_local;
   om_ce_local = plas->get_omega_ref("ce");
   om_pe_local = plas->get_omega_ref("pe");
-  //std::cout<< om_ce_local<<" "<<om_pe_local<<std::endl;
   
   v_par = 0.1* v0;
   calc_type cos_theta, mu_tmp1, mu_tmp2;
@@ -460,11 +459,11 @@ int test_entity_plasma::run(){
   gamma = std::sqrt(gamma2);
   
   results = plas->get_omega(x, v_par, n);
-  //Now check each element of this satisfies Stix 2.45 and the resonance condition together
+  /**Now check each element of this satisfies Stix 2.45 and the resonance condition together*/
   test_bed->report_info(mk_str((int)results.size())+" frequency solutions found", 2);
   
   for(int i=0; i<(int)results.size(); ++i){
-//    test_bed->report_info("Freq is "+mk_str(results[i])+" = "+mk_str(results[i]/my_const.omega_ce)+" om_ce", 2);
+    test_bed->report_info("Freq is "+mk_str(results[i])+" = "+mk_str(results[i]/my_const.omega_ce)+" om_ce", 2);
     
     mu_tmp1 = std::pow(v0 * (gamma*results[i] - n*om_ce_local)/(gamma*results[i] * v_par *cos_theta), 2);
     mu_tmp2 = (1.0 - (std::pow(om_pe_local,2)/(results[i]*(results[i] + om_ce_local*cos_theta))));
@@ -474,10 +473,57 @@ int test_entity_plasma::run(){
     }
   }
   
+
+  /** Now test if the returned mu matches the high density whistler in high dens regime */
+
+  size_t n_tests = 10;
+  calc_type tmp_omega=0.0, tmp_theta=pi/(calc_type)(n_tests), tmp_omega_n;
+  mu_dmudom my_mu;
+  int err_cnt=0;
+  
+  for(size_t i =0; i<n_tests; i++){
+    tmp_omega += std::abs(om_ce_local)/(calc_type)(n_tests + 1);
+    my_mu = plas->get_phi_mu_om(tmp_omega, tmp_theta, 0.0, 0.0, tmp_omega_n);
+
+    /** my_mu.mu should roughly equal Stix 2.45*/
+    mu_tmp2 = sqrt(1.0 - (std::pow(om_pe_local,2)/(tmp_omega*(tmp_omega + om_ce_local*std::cos(tmp_theta)))));
+    if((my_mu.mu-mu_tmp2)/my_mu.mu > LOW_PRECISION){
+      err_cnt++;
+      test_bed->report_info("Error in high density approx or dispersion solver at "+mk_str(tmp_omega/std::abs(om_ce_local))+" "+mk_str(tmp_theta), 1);
+      test_bed->report_info("Mu "+mk_str(my_mu.mu)+" difference "+mk_str(my_mu.mu - mu_tmp2)+" relative error "+mk_str((my_mu.mu-mu_tmp2)/my_mu.mu), 2);
+    }
+  }
+  tmp_omega = 0.6*std::abs(om_ce_local);
+  for(size_t i =0; i<n_tests; i++){
+    tmp_theta += pi/(calc_type)(n_tests);
+    my_mu = plas->get_phi_mu_om(tmp_omega, tmp_theta, 0.0, 0.0, tmp_omega_n);
+
+    /** my_mu.mu should roughly equal Stix 2.45*/
+    mu_tmp2 = sqrt(1.0 - (std::pow(om_pe_local,2)/(tmp_omega*(tmp_omega + om_ce_local*std::cos(tmp_theta)))));
+    if((my_mu.mu-mu_tmp2)/my_mu.mu > LOW_PRECISION){
+      err_cnt++;
+    
+      test_bed->report_info("Error in high density approx or dispersion solver at "+mk_str(tmp_omega/std::abs(om_ce_local))+" "+mk_str(tmp_theta), 1);
+      test_bed->report_info("Mu "+mk_str(my_mu.mu)+" difference "+mk_str(my_mu.mu - mu_tmp2)+" relative error "+mk_str((my_mu.mu-mu_tmp2)/my_mu.mu), 2);
+    }
+ 
+  }
+  if(err_cnt> 0){
+    test_bed->report_info("Total "+mk_str(err_cnt)+" out of "+mk_str(2*(int)n_tests)+" errors in high density approx or dispersion solver at precision: "+mk_str(LOW_PRECISION), 1);
+    err|=TEST_WRONG_RESULT;
+  }
+
   test_bed->report_err(err);
 
   return err;
 
 }
+
+/**
+For getting the resonant frequency to consider errors will matter, but the noise in spectra can be expected to be a similar sort of error
+*
+The reason for using the better dispersion solver is a) to avoid any numerical derivatives in general and b) because some of the calculation depends on derivs of the refractive index
+
+*So basically I am using the easy approx where a) it’s a genuine nightmare to do better (10-14th order polynomial) and b) I expect other errors to be similar or more important and c) I really hope it’s linear or polynomial in error*/
 
 

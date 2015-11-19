@@ -42,6 +42,7 @@ const int TEST_USERDEF_ERR3 = 32;
 const int TEST_USERDEF_ERR4 = 64;
 const int err_tot = 8;
 const calc_type PRECISION = 1e-6;
+const calc_type LOW_PRECISION = 5e-3;
 const int max_verbos = 4;
 const std::string filename = "tests.log";
 

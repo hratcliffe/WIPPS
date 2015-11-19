@@ -63,10 +63,10 @@ int main(int argc, char *argv[]){
   my_print("Code is running on "+mk_str(mpi_info.n_procs)+" processing elements.", mpi_info.rank);
 
   get_deck_constants();
-
+  /** Get constants from deck*/
 
 #ifdef RUN_TESTS_AND_EXIT
-  cout<<"Running basic tests"<<endl;
+  my_print("Running basic tests", mpi_info.rank);
   test_bed = new tests();
   test_bed->set_verbosity(2);
   test_bed->run_tests();
@@ -85,7 +85,7 @@ int main(int argc, char *argv[]){
   tim_in[1]=10;
   space_in[0]=0;
   space_in[1]=-1;
-  /** \todo These should be specifiable via command line args. Or in parallle we want to subdivide into them
+  /** \todo These should be specifiable via command line args. Or an input file. Or in parallle we want to subdivide into them
 */
 
   int n_tims = max(tim_in[1]-tim_in[0], 1);
@@ -95,7 +95,7 @@ int main(int argc, char *argv[]){
   my_reader->read_dims(n_dims, dims);
 
   if(n_dims !=1) return 1;
-  //for now abort if data file wrong size...
+  /**for now abort if data file wrong size... \todo FIX*/
 
   data_array  * dat = new data_array(dims[0], n_tims);
   data_array * dat_fft = new data_array(dims[0], n_tims);
@@ -115,12 +115,6 @@ int main(int argc, char *argv[]){
   if(file.is_open()) dat->write_to_file(file);
   file.close();
 
-
-  /*  file.open("Tmp_dat.txt", ios::in|ios::binary);
-    dat.read_from_file(file);
-    file.close();
-  */
-
   controller * contr;
   contr = new controller();
 
@@ -129,7 +123,7 @@ int main(int argc, char *argv[]){
   row_lengths[1] = DEFAULT_N_ANG;
   
   contr->add_spectrum(row_lengths, 2);
-  contr->my_spect->make_test_spectrum();
+  contr->get_current_spectrum()->make_test_spectrum();
 
   file.open("Tmp_spectrum.txt", ios::out|ios::binary);
   if(file.is_open()) contr->my_spect->write_to_file(file);
@@ -138,7 +132,7 @@ int main(int argc, char *argv[]){
   //Now we have some test spectral data we can work with...
 
   contr->add_d(100, 100);
-  contr->my_d->calculate();
+  contr->get_current_d()->calculate();
 
   //Cleanup objects etc
   delete my_reader;
@@ -166,7 +160,7 @@ my_const.omega_ce = 17588.200878;
 my_const.omega_ci = my_const.omega_ce * me/mp;
 //assumes same charge magnitude, I.e. H plasma
 
-my_const.omega_pe = 35176.401757;
+my_const.omega_pe = 5.0*35176.401757;
 
 }
 

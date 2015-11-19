@@ -94,10 +94,10 @@ Get mu, dmu/domega which are used to:
   spectrum * spect;
   if(my_controller){
     plas = my_controller->my_plas;
-    spect = my_controller->my_spect;
+    spect = my_controller->get_current_spectrum();
   }
   else{
-    std::cout<<"No controller"<<std::endl;
+    my_print("No controller", mpi_info.rank);
     return;
   }
   
@@ -157,11 +157,8 @@ Get mu, dmu/domega which are used to:
 
         D_tmp = 0.0;
         for(int n=-n_n; n<n_n; ++n){
-//        { int n=-1;//std::cout<<n<<"-----------------"<<std::endl;
           // n is resonant number
           omega_calc = plas->get_omega(x, v_par, (calc_type) n);
-          //if(std::abs(omega/my_const.omega_ce) > 1.0) continue;
-          if(omega_calc.size()==0) continue; //redundant?
           for(size_t ii =0; ii< omega_calc.size(); ++ii){
             omega = omega_calc[ii];
             std::cout<<"Freq is "<<omega/my_const.omega_ce<<std::endl;

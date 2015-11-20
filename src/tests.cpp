@@ -479,11 +479,13 @@ int test_entity_plasma::run(){
   size_t n_tests = 10;
   calc_type tmp_omega=0.0, tmp_theta=pi/(calc_type)(n_tests), tmp_omega_n;
   mu_dmudom my_mu;
+  mu my_mu_all;
   int err_cnt=0;
   
   for(size_t i =0; i<n_tests; i++){
     tmp_omega += std::abs(om_ce_local)/(calc_type)(n_tests + 1);
     my_mu = plas->get_phi_mu_om(tmp_omega, tmp_theta, 0.0, 0.0, tmp_omega_n);
+    my_mu_all = plas->get_root(0.0, tmp_omega, tmp_theta);
 
     /** my_mu.mu should roughly equal Stix 2.45*/
     mu_tmp2 = sqrt(1.0 - (std::pow(om_pe_local,2)/(tmp_omega*(tmp_omega + om_ce_local*std::cos(tmp_theta)))));
@@ -492,11 +494,19 @@ int test_entity_plasma::run(){
       test_bed->report_info("Error in high density approx or dispersion solver at "+mk_str(tmp_omega/std::abs(om_ce_local))+" "+mk_str(tmp_theta), 1);
       test_bed->report_info("Mu "+mk_str(my_mu.mu)+" difference "+mk_str(my_mu.mu - mu_tmp2)+" relative error "+mk_str((my_mu.mu-mu_tmp2)/my_mu.mu), 2);
     }
+    //my_mu_all.mu and my_mu.mu should be exactly equal:
+    if(std::abs(my_mu_all.mu-my_mu.mu) > PRECISION){
+      test_bed->report_info("Inconsistent root between get_root and get_phi_mu_om", 2);
+      err|=TEST_WRONG_RESULT;
+    }
+    
+    
   }
   tmp_omega = 0.6*std::abs(om_ce_local);
   for(size_t i =0; i<n_tests; i++){
     tmp_theta += pi/(calc_type)(n_tests);
     my_mu = plas->get_phi_mu_om(tmp_omega, tmp_theta, 0.0, 0.0, tmp_omega_n);
+    my_mu_all = plas->get_root(0.0, tmp_omega, tmp_theta);
 
     /** my_mu.mu should roughly equal Stix 2.45*/
     mu_tmp2 = sqrt(1.0 - (std::pow(om_pe_local,2)/(tmp_omega*(tmp_omega + om_ce_local*std::cos(tmp_theta)))));
@@ -506,6 +516,12 @@ int test_entity_plasma::run(){
       test_bed->report_info("Error in high density approx or dispersion solver at "+mk_str(tmp_omega/std::abs(om_ce_local))+" "+mk_str(tmp_theta), 1);
       test_bed->report_info("Mu "+mk_str(my_mu.mu)+" difference "+mk_str(my_mu.mu - mu_tmp2)+" relative error "+mk_str((my_mu.mu-mu_tmp2)/my_mu.mu), 2);
     }
+     //my_mu_all.mu and my_mu.mu should be exactly equal:
+    if(std::abs(my_mu_all.mu-my_mu.mu) > PRECISION){
+      test_bed->report_info("Inconsistent root between get_root and get_phi_mu_om", 2);
+      err|=TEST_WRONG_RESULT;
+    }
+
  
   }
   if(err_cnt> 0){

@@ -56,9 +56,6 @@ mu plasma::get_root(calc_type th, calc_type w, calc_type psi){
 *On notation: within this routine and plasma::get_phi we use notation as from mufunctions3.f90. In the return values as defined in support.h we match with Lyons and Albert. Thus in my_mu, we have lat, r, theta, omega for polar coordinate, r, wave normal angle and wave frequency
 */
   mu mu_ret;
-  
-  std::cout<<"THIS DOES NOT WORK>>>>>>>>>>>>>>>"<<std::endl;
-  //REWRITE THIS against get_phi_mu_om. THIS IS WRONG!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   calc_type dndr[ncomps], dndth[ncomps];
   calc_type dB0dr, dB0dth;
   
@@ -85,18 +82,18 @@ mu plasma::get_root(calc_type th, calc_type w, calc_type psi){
   
   //These will hold suitably calc'd plasma frequency, square and cyclotron freq. If we have to derive from position, we do...
   for(int i=0; i<ncomps; ++i){
-    wp[i] = this->get_omega_ref("pe");
+    wp[i] = sqrt(pdens[i] * pcharge[i]*pcharge[i]/(eps0 * pmass[i]));
     wp2[i] = wp[i]*wp[i];
-    wc[i] = this->get_omega_ref("ce");
-    
+    wc[i] =  (pcharge[i]) * this->B0 / pmass[i];
+
     X[i] = wp2[i]/(w*w);
     Y[i] = wc[i]/w;
 
   }
 //We loop over components and trust compiler to unroll for us :) most of these will trivially vectorise anyway.
 
-  s2psi = pow(sin(psi), 2);
-  c2psi = pow(cos(psi), 2);
+  s2psi = std::pow(sin(psi), 2);
+  c2psi = std::pow(cos(psi), 2);
  /** \todo Check these are correct interpretation... */
 
   for(int i=0; i<ncomps; ++i){
@@ -127,7 +124,7 @@ mu plasma::get_root(calc_type th, calc_type w, calc_type psi){
   mu_ret.alpha = 0.0;
   mu_ret.err = 1;
   
-  if( (mua2 > 0.0) && (mub2 > 0.0) ){
+  if( (mua2 > 0.0) || (mub2 > 0.0) ){
   
     if(D < 0.0 ){ smu = 1.0; mu2 = mua2;} //see Albert [2005]
     else{smu = -1.0; mu2 = mub2;}
@@ -167,8 +164,8 @@ mu plasma::get_root(calc_type th, calc_type w, calc_type psi){
       dYdr[i] = pcharge[i]*dB0dr/(w*pmass[i]);
       dXdth[i] = q0*q0*dndth[i]/(w*w*eps0*pmass[i]);
       dYdth[i] = pcharge[i]*dB0dth/(w*pmass[i]);
-      dXdw[i] = -2.0*wp2[i]/(pow(w, 3));
-      dYdw[i] = -wc[i]/(pow(w, 2));
+      dXdw[i] = -2.0*wp2[i]/(std::pow(w, 3));
+      dYdw[i] = -wc[i]/(std::pow(w, 2));
 
     }
     
@@ -178,7 +175,7 @@ mu plasma::get_root(calc_type th, calc_type w, calc_type psi){
     dGdpsi = 2.0*dAdpsi - dBdpsi + (smu/J)*(B*dBdpsi - 2.0*C*dAdpsi);
     mu_ret.dmudtheta = (0.5/mu_ret.mu)*(dHdF*dFdpsi + dHdG*dGdpsi);
 
-    dpsidth = -2.0/(1.0 + 3.0*pow(cos(th), 2));
+    dpsidth = -2.0/(1.0 + 3.0*std::pow(cos(th), 2));
     dmudw = 0.0;
     
     mu_ret.dmudlat = mu_ret.dmudtheta*dpsidth;

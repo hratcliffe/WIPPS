@@ -112,6 +112,7 @@ const int WAVE_WHISTLER = 1;
 const int WAVE_PLASMA = 2;
 const int WAVE_O = 3;
 
+const int FUNCTION_NULL = 0;
 const int FUNCTION_DELTA = 1;
 const int FUNCTION_GAUSS = 2;
 const int FUNCTION_ISO = 3;

@@ -48,15 +48,16 @@ public:
 
   int n_angs;
 
-  void set_ids(float time1, float time2, int space1, int space2, int wave_id, char block_id[10], int function_type=FUNCTION_DELTA);
+  void set_ids(float time1, float time2, int space1, int space2, int wave_id, char block_id[10], int function_type=FUNCTION_NULL);
 
   bool generate_spectrum(data_array * parent);
 
   float get_dispersion(my_type k, int wave_type);
 
-  my_type * get_angle_distrib(int &len, my_type omega);
+  my_type * get_angle_distrib(int &len, my_type omega=0.0);
 
-  int where(my_type * ax_ptr, int len, my_type target);
+  int where(my_type * ax_ptr, int len, my_type target, std::function<bool(my_type,my_type)> func = std::greater<my_type>());
+  std::vector<int> all_where(my_type * ax_ptr, int len, my_type target, std::function<bool(my_type,my_type)> func = std::greater<my_type>());
 
   bool write_to_file(std::fstream &file);
 

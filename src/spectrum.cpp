@@ -22,8 +22,12 @@ extern deck_constants my_const;
 //OK now it makes fine sense for spectrum to know about parent class as it's already descended from it. So we can happily have it take one of those and self generate from it so to speak
 //or vice versa?
 
-void spectrum::construct(){
 
+void spectrum::construct(){
+/** \brief Generic specturm contruction actions
+*
+*These are performed regardless of dimensions
+*/
   function_type = 0;
   wave_id = 0;
   my_controller = nullptr;
@@ -31,31 +35,35 @@ void spectrum::construct(){
 }
 
 spectrum::spectrum(int * row_lengths, int ny):data_array(row_lengths, ny){
-  //Assume by default we''l integrate over second dim...
+/** \brief Construct ragged spectrum
+*
+*Constructs a spectrum as a ragged array, for e.g. two independent functions of omega and angle. Spectra are always in the form B^2(omega) g(theta, omega). Here g(theta, omega) = g(theta). Normally the first row is then the number of omega points, the second the number of angles.
+*/
   construct();
 
   angle_is_function = true;
-  //angle profile will be specified as a function and any val is product spect(omega, theta) = B^2(omega) * g(theta). So we only need 2 one-d arrays The second one is then added here only...
   n_angs = row_lengths[1];
   function_type = FUNCTION_DELTA;
 }
 
 spectrum::spectrum(int nx, int n_ang):data_array(nx, n_ang+1){
-  //Assume by default we''l integrate over second dim...
+/** \brief Construct rectangular spectrum
+*
+*Constructs a spectrum as a rectangle when for instance the angle dependence varies with k. Spectra are always in the form B^2(omega) g(theta, omega). Here we require to hold both an n_omega x 1 array for B plus the n_omega*n_angs array for g.
+*/
 
   construct();
   angle_is_function = false;
-
-  //angle profile is array, spect(omega, theta) = B^2(omega) * g(theta, omega). So we need a full nx by n_ang array for g, and an extra row for B^2
   n_angs = n_ang;
 
 
 }
 
 void spectrum::set_ids(float time1, float time2, int space1, int space2, int wave_id, char block_id[10], int function_type){
-//set id params for later...
-//times can be normed however we want. Space is relative to grid...
-//wave id is defined in header and defines the cutout we use
+/**\brief Set parameters
+*
+*Sets the time and space ranges, wave type etc attached to the spectrum. Times should be in terms of file output time. Space in terms of grid points.
+*/
 
   this->time[0] = time1;
   this->time[1] = time2;
@@ -72,8 +80,10 @@ spectrum::~spectrum(){
 }
 
 bool spectrum::generate_spectrum(data_array * parent){
-//windows and integrates over frequency by default
-//windowing is controlled by the wave_id
+/**\brief Generate spectrum from data
+*
+*Takes a parent data array and uses the specified ids to generate a spectrum. Windows using the specified wave dispersion and integrates over frequency. Also adopts axes from parent.
+*/
 
 if(parent && angle_is_function){
   //First we read axes from parent
@@ -136,7 +146,7 @@ if(parent && angle_is_function){
 
 
   }else if(parent){
-
+ /** \todo general spectrum extracttion routine */
   //TODO in this case we have to extract spectrim and angle data somehow......
 
     //First we read axes from parent
@@ -185,7 +195,7 @@ my_type * spectrum::get_angle_distrib(int &len, my_type omega){
 
     ret = data + dims[0];
 
-  }else{
+  }else if(omega !=0.0){
   //select row by omega...
     int offset = where(axes+ dims[0], n_angs, omega);
     ret = data + offset*dims[0];
@@ -197,15 +207,33 @@ my_type * spectrum::get_angle_distrib(int &len, my_type omega){
 
 }
 
-int spectrum::where(my_type * ax_ptr, int len, my_type target){
-//method so we can upgrade easily...
 
+int spectrum::where(my_type * ax_ptr, int len, my_type target,std::function<bool(my_type,my_type)> func){
+/**\brief Finds first index where ax_ptr[i] vs target value satisfies the function given (e.g. std::greater)
+*
+*
+*/
   int j;
-  for(j=0;j<len; j++) if(ax_ptr[j]> target) break;
-  
+//  for(j=0;j<len; j++) if(ax_ptr[j]> target) break;
+  for(j=0;j<len; j++) if(func(ax_ptr[j],  target)) break;
+
   return j;
 
 }
+
+std::vector<int> spectrum::all_where(my_type * ax_ptr, int len, my_type target,std::function<bool(my_type,my_type)> func){
+/**\brief Finds all indices where ax_ptr[i] vs target value satisfies the function given (e.g. std::greater)
+*
+*
+*/
+  std::vector<int> ret;
+
+  for(int j=0;j<len; j++) if(func(ax_ptr[j],  target)) ret.push_back(j);
+
+  return ret;
+
+}
+
 
 bool spectrum::write_to_file(std::fstream &file){
 

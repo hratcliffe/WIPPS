@@ -54,12 +54,8 @@ int main(int argc, char *argv[]){
 {
   int rank, n_procs;
 
-  for(size_t i =0; i<argc; ++i) cout<<argv[i]<<std::endl;
-
   ierr = MPI_Init(&argc, &argv);
   //Note any other command line arg processing should account for this...
-
-  for(size_t i =0; i<argc; ++i) cout<<argv[i]<<std::endl;
 
   ierr = MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   ierr = MPI_Comm_size(MPI_COMM_WORLD, &n_procs);

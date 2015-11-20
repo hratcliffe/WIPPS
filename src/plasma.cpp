@@ -415,7 +415,7 @@ mu_dmudom plasma::get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int
 }
 
 std::vector<calc_type> plasma::get_omega(calc_type x, calc_type v_par, calc_type n){
-/**Get resonant frequency for particular x...
+/**Get resonant frequency for particular x, v_parallel, n
 *
 *Solve high density approx to get omega. for pure electron proton plasma....
 * Calls cubic_solve Note for slowly changing v_par, suggests Newtons method might be more efficient. Although much of this could be precomputed for given grids.
@@ -480,6 +480,10 @@ Return empty vector if no valid solutions \todo Extend to general case?
 }
 
 calc_type plasma::get_omega_ref(std::string code){
+/** \brief Reference plasma and cyclotron frequencies
+*
+*Takes a two char code string and returns the specified frequency at local position.
+*/
 
   if(code == "ce") return this->om_ce;
   if(code == "pe") return my_const.omega_pe;
@@ -491,7 +495,7 @@ calc_type plasma::get_omega_ref(std::string code){
 calc_type plasma::get_dispersion(my_type k, int wave_type){
 /** \brief Gets omega for given k
 *
-* Uses local refernce cyclotron and plasma frequencies and works with UNNORMALISED quantitites
+* Uses local refernce cyclotron and plasma frequencies and works with UNNORMALISED quantitites. Assumes parallel prop, and Em in unmagentised \todo Fix to take angle also
 */
   calc_type ret = 0.0;
   calc_type om_ce_loc, om_pe_loc;
@@ -508,7 +512,7 @@ calc_type plasma::get_dispersion(my_type k, int wave_type){
       break;
 
     case WAVE_PLASMA :
-      ret =1 ;
+      ret = std::sqrt(om_pe_loc*om_pe_loc + v0*v0 * k*k) ;
       break;
   }
 

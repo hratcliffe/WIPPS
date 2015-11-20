@@ -489,7 +489,7 @@ int test_entity_plasma::run(){
 
     /** my_mu.mu should roughly equal Stix 2.45*/
     mu_tmp2 = sqrt(1.0 - (std::pow(om_pe_local,2)/(tmp_omega*(tmp_omega + om_ce_local*std::cos(tmp_theta)))));
-    if((my_mu.mu-mu_tmp2)/my_mu.mu > LOW_PRECISION){
+    if(std::abs(my_mu.mu-mu_tmp2)/my_mu.mu > LOW_PRECISION){
       err_cnt++;
       test_bed->report_info("Error in high density approx or dispersion solver at "+mk_str(tmp_omega/std::abs(om_ce_local))+" "+mk_str(tmp_theta), 1);
       test_bed->report_info("Mu "+mk_str(my_mu.mu)+" difference "+mk_str(my_mu.mu - mu_tmp2)+" relative error "+mk_str((my_mu.mu-mu_tmp2)/my_mu.mu), 2);
@@ -500,8 +500,8 @@ int test_entity_plasma::run(){
       err|=TEST_WRONG_RESULT;
     }
     
-    
   }
+  
   tmp_omega = 0.6*std::abs(om_ce_local);
   for(size_t i =0; i<n_tests; i++){
     tmp_theta += pi/(calc_type)(n_tests);
@@ -510,7 +510,7 @@ int test_entity_plasma::run(){
 
     /** my_mu.mu should roughly equal Stix 2.45*/
     mu_tmp2 = sqrt(1.0 - (std::pow(om_pe_local,2)/(tmp_omega*(tmp_omega + om_ce_local*std::cos(tmp_theta)))));
-    if((my_mu.mu-mu_tmp2)/my_mu.mu > LOW_PRECISION){
+    if(std::abs(my_mu.mu-mu_tmp2)/my_mu.mu > LOW_PRECISION){
       err_cnt++;
     
       test_bed->report_info("Error in high density approx or dispersion solver at "+mk_str(tmp_omega/std::abs(om_ce_local))+" "+mk_str(tmp_theta), 1);
@@ -528,6 +528,26 @@ int test_entity_plasma::run(){
     test_bed->report_info("Total "+mk_str(err_cnt)+" out of "+mk_str(2*(int)n_tests)+" errors in high density approx or dispersion solver at precision: "+mk_str(LOW_PRECISION), 1);
     err|=TEST_WRONG_RESULT;
   }
+
+  //Try plasma wave modes in solver, perpendicular propagation
+  tmp_omega = om_pe_local;
+  tmp_theta = pi/2.0;
+  for(size_t i =0; i<n_tests; i++){
+    tmp_omega += std::abs(om_pe_local)/(calc_type)(n_tests + 1);
+    my_mu_all = plas->get_root(0.0, tmp_omega, tmp_theta);
+    
+    mu_tmp2 = std::sqrt(std::pow(tmp_omega, 2) - std::pow(om_pe_local, 2))/tmp_omega;
+    
+    if(std::abs(my_mu_all.mu-mu_tmp2)/my_mu_all.mu > LOW_PRECISION){
+      
+      test_bed->report_info("Error in high density approx or dispersion solver for plasma wave at "+mk_str(tmp_omega/std::abs(om_pe_local))+" "+mk_str(tmp_theta), 1);
+      
+      test_bed->report_info("Mu "+mk_str(my_mu_all.mu)+" difference "+mk_str(my_mu_all.mu - mu_tmp2)+" relative error "+mk_str((my_mu_all.mu-mu_tmp2)/my_mu_all.mu), 2);
+    }
+    
+  }
+
+
 
   test_bed->report_err(err);
 

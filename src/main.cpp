@@ -32,13 +32,12 @@
 
 using namespace std;
 
-deck_constants my_const;/*< Physical constants*/
-mpi_info_struc mpi_info;
+deck_constants my_const;/**< Physical constants*/
+mpi_info_struc mpi_info;/**< MPI data */
+
+tests* test_bed;/**Test bed for testing */
+
 void get_deck_constants();
-
-void test_bes();
-tests* test_bed;
-
 
 int main(int argc, char *argv[]){
 /**

@@ -286,10 +286,11 @@ void spectrum::make_test_spectrum(){
   
   float centre = 0.2, width=0.005, background = 0.5;
   my_type * data_ptr = get_ptr(0, 0);
-  
   my_type * data_tmp, *ax_tmp;
   data_tmp = data_ptr;
   ax_tmp = ax_ptr;
+  std::cout<< data_tmp<<" "<<ax_tmp<<std::endl;
+
   for(int i=0; i<=len0/2; i++, ax_tmp++, data_tmp++) *(data_tmp) = exp(-pow((*(ax_tmp) + centre), 2)/width) + background;
   data_tmp--;
   //we've gone one past our termination condition...

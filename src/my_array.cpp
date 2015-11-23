@@ -408,7 +408,7 @@ int data_array::get_axis_index(int dim, int pt){
 *Takes care of all bounds checking and disposition in memory. Returns -1 if out of range of any sort, otherwise, suitable index. Let this function do all bounds checks.
 */
 
-  if(dim < 0 || dim >=n_dims || pt >=dims[dim]) return -1;
+  if(dim < 0 || dim >=n_dims || (!ragged && pt >=dims[dim])) return -1;
   //Out of range error
   
   int offset = 0;

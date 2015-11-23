@@ -21,13 +21,6 @@ extern mpi_info_struc mpi_info;
 
 extern deck_constants my_const;
 
-/**First we want to generate a particle velocity axis, and a pitch angle axis. Possibly the latter matches the one from spectrum?
-*We need the refractive index. 
-*Probably numerical integration/differentiation routines
-
-
-*/
-
 diffusion_coeff::diffusion_coeff(int nx, int n_angs):data_array(nx, n_angs){
 
   my_controller = nullptr;
@@ -38,7 +31,6 @@ diffusion_coeff::diffusion_coeff(int nx, int n_angs):data_array(nx, n_angs){
 }
 
 diffusion_coeff::~diffusion_coeff(){
-/** Delete interconnections */
 
 
 }
@@ -55,18 +47,28 @@ void diffusion_coeff::set_ids(float time1, float time2, int space1, int space2, 
 
 
 bool diffusion_coeff::write_to_file(std::fstream &file){
-
+/** \todo WRITE */
   file<<"";
   return 0;
 
 }
 
+void diffusion_coeff::make_velocity_axis(){
+/**\Set velocity axis
+*
+*Makes suitably binned velocity axis and copies into axes for dim [0]
+*/
+
+  calc_type res = v0 * 0.01;
+  make_linear_axis(0, res, 0);
+
+}
+
 void diffusion_coeff::calculate(){
-// calls whatever auxilliarlies it needs to calc D. This is local as fn of n, x
-
-//Which one? eneergy or angle. They're related trivially though. Pick one.
-//When to sum over resonances?
-
+/** \brief Calculate D from wave spectrum and plasma
+*
+*Uses the data available via my_controller to calculate D, the raw diffusion coefficient as function of particle velocity.
+*/
 
 /*Subsections:
 To solve Eq 2 in Albert:

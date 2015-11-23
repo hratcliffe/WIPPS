@@ -17,26 +17,26 @@ class data_array;
 
 class reader{
 
-int n_z;
-//Number of characters in filenames
+  int n_z;
+  //Number of characters in filenames
 public:
 
-std::string file_prefix;
+  std::string file_prefix;
 
-int space_range[2];
-//This will work in x only, because my stuff only needs blocking in x...
-int time_range[2];
+  int space_range[2];
+  //This will work in x only, because my stuff only needs blocking in x...
+  int time_range[2];
 
-char block_id[10];
+  char block_id[10];
 
-reader(std::string file_prefix_in,  char * block_id_in);
-~reader(){;}
+  reader(std::string file_prefix_in,  char * block_id_in);
+  ~reader(){;}
 
-bool read_dims(int &n_dims, std::vector<int> &dims);
+  bool read_dims(int &n_dims, std::vector<int> &dims);
 
-bool read_data(data_array * my_data_in, int time_range[2], int space_range[2]);
-int get_file_size();
-std::string get_full_name(int num);
+  bool read_data(data_array * my_data_in, int time_range[2], int space_range[2]);
+  int get_file_size();
+  std::string get_full_name(int num);
 
 };
 

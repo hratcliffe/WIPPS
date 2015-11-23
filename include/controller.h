@@ -13,7 +13,7 @@ class spectrum;
 class plasma;
 class diffusion_coeff;
 
-/** Ties together plasma objects with resulting spectra and diffusion coefficients */
+/** Ties together plasma objects with resulting spectra and diffusion coefficients Will also be responislbe for forming bounce averaged coefficients from a stack of ds?*/
 class controller{
 /** */
   plasma * my_plas;

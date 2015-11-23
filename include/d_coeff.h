@@ -29,22 +29,20 @@ private:
   diffusion_coeff(int nx, int n_ang);
   virtual ~diffusion_coeff();
 
+
 public:
 
+  int latitude;
   int wave_id;
   //ID for which wave cutout we're going for...
-
-  //calc_type * D_raw;
-  calc_type * D_bounceav;
 
   void set_ids(float time1, float time2, int space1, int space2, int wave_id, char block_id[10]);
 
   bool write_to_file(std::fstream &file);
 
   void calculate();
-
-  void bounce_averag(){;}
-
+  void make_velocity_axis();
+  
 };
 
 

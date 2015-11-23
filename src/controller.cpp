@@ -55,3 +55,11 @@ void controller::add_d(int nx, int n_angs){
   my_d->my_controller = this;
 
 }
+/*
+A bounce average function here would: assemble ordered stack of d's and spectrums.
+Run calculate on each, matching proerply
+*** If required, supply v_par axes to them so they line up as wanted
+Bounce average into global D interpolating v as necessary etc
+
+*/
+

@@ -48,7 +48,7 @@ plasma::~plasma(){
 
 }
 
-mu plasma::get_root(calc_type th, calc_type w, calc_type psi){
+mu plasma::get_root(calc_type th, calc_type w, calc_type psi, bool Righthand){
 /** Duplicated from mufunctions by CEJ Watt
 *
 *@param th Polar coordinate, or latitude @param w Wave frequency @param psi Wave pitch angle k to B0 \todo Check constant types OK \todo Better root selection
@@ -126,9 +126,13 @@ mu plasma::get_root(calc_type th, calc_type w, calc_type psi){
   
   if( (mua2 > 0.0) || (mub2 > 0.0) ){
   
-    if(D < 0.0 ){ smu = 1.0; mu2 = mua2;} //see Albert [2005]
-    else{smu = -1.0; mu2 = mub2;}
-    
+    if(Righthand){//Select Mode
+      if(D < 0.0 ){ smu = 1.0; mu2 = mua2;} //see Albert [2005]
+      else{smu = -1.0; mu2 = mub2;}
+    }else{
+      if(D < 0.0 ){ smu = -1.0; mu2 = mub2;}
+      else{smu = 1.0; mu2 = mua2;}
+    }
     mu_ret.mu = sqrt(mu2);
     
     F = 2.0*(A - B + C);

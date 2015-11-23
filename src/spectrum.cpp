@@ -181,7 +181,7 @@ my_type spectrum::get_dispersion(my_type k, int wave_type){
 *
 * Calls to plasma because approximations for density etc etc should be made there. 
 */
-  if(my_controller && (my_controller->my_plas)) return (my_type) my_controller->my_plas->get_dispersion(k, wave_type);
+  if(my_controller && (my_controller->get_plasma())) return (my_type) my_controller->get_plasma()->get_dispersion(k, wave_type);
   else return 0.0;
 }
 

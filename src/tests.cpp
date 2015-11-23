@@ -460,6 +460,7 @@ int test_entity_plasma::run(){
   
   results = plas->get_omega(x, v_par, n);
   /**Now check each element of this satisfies Stix 2.45 and the resonance condition together*/
+  test_bed->report_info("Testing resonant frequency solver", 1);
   test_bed->report_info(mk_str((int)results.size())+" frequency solutions found", 2);
   
   for(int i=0; i<(int)results.size(); ++i){
@@ -481,7 +482,8 @@ int test_entity_plasma::run(){
   mu_dmudom my_mu;
   mu my_mu_all;
   int err_cnt=0;
-  
+  test_bed->report_info("Testing whistler high density approx.", 1);
+
   for(size_t i =0; i<n_tests; i++){
     tmp_omega += std::abs(om_ce_local)/(calc_type)(n_tests + 1);
     my_mu = plas->get_phi_mu_om(tmp_omega, tmp_theta, 0.0, 0.0, tmp_omega_n);
@@ -529,20 +531,51 @@ int test_entity_plasma::run(){
     err|=TEST_WRONG_RESULT;
   }
 
-  //Try plasma wave modes in solver, perpendicular propagation
+  test_bed->report_info("Testing dispersion solver for plasma O mode", 1);
+
+  //Try plasma wave modes in solvers, perpendicular propagation
   tmp_omega = om_pe_local;
   tmp_theta = pi/2.0;
   for(size_t i =0; i<n_tests; i++){
     tmp_omega += std::abs(om_pe_local)/(calc_type)(n_tests + 1);
     my_mu_all = plas->get_root(0.0, tmp_omega, tmp_theta);
-    
+    my_mu = plas->get_phi_mu_om(tmp_omega, tmp_theta, 0.0, 0.0, tmp_omega_n);
+
     mu_tmp2 = std::sqrt(std::pow(tmp_omega, 2) - std::pow(om_pe_local, 2))/tmp_omega;
     
     if(std::abs(my_mu_all.mu-mu_tmp2)/my_mu_all.mu > LOW_PRECISION){
       
-      test_bed->report_info("Error in high density approx or dispersion solver for plasma wave at "+mk_str(tmp_omega/std::abs(om_pe_local))+" "+mk_str(tmp_theta), 1);
+      test_bed->report_info("Error in approx or dispersion solver for plasma wave at "+mk_str(tmp_omega/std::abs(om_pe_local))+" "+mk_str(tmp_theta), 1);
       
       test_bed->report_info("Mu "+mk_str(my_mu_all.mu)+" difference "+mk_str(my_mu_all.mu - mu_tmp2)+" relative error "+mk_str((my_mu_all.mu-mu_tmp2)/my_mu_all.mu), 2);
+    }
+    if(std::abs(my_mu_all.mu-my_mu.mu) > PRECISION){
+      test_bed->report_info("Inconsistent root between get_root and get_phi_mu_om", 2);
+      err|=TEST_WRONG_RESULT;
+
+    }
+    
+  }
+  //Try left hand X mode too
+  test_bed->report_info("Testing dispersion solver for plasma X mode", 1);
+
+  calc_type omega_UH = std::sqrt(om_pe_local*om_pe_local + om_ce_local*om_ce_local);
+  for(size_t i =0; i<n_tests; i++){
+    tmp_omega += std::abs(om_pe_local)/(calc_type)(n_tests + 1);
+    my_mu_all = plas->get_root(0.0, tmp_omega, tmp_theta, false);
+    //my_mu = plas->get_phi_mu_om(tmp_omega, tmp_theta, 0.0, 0.0, tmp_omega_n);
+    
+    mu_tmp2 = std::sqrt(1.0 - std::pow(om_pe_local/tmp_omega, 2)*(std::pow(tmp_omega, 2) - std::pow(om_pe_local, 2))/(std::pow(tmp_omega, 2) - std::pow(omega_UH, 2)));
+    if(std::abs(my_mu_all.mu-mu_tmp2)/my_mu_all.mu > LOW_PRECISION){
+      
+      test_bed->report_info("Error in approx or dispersion solver for plasma wave at "+mk_str(tmp_omega/std::abs(om_pe_local))+" "+mk_str(tmp_theta), 1);
+      
+      test_bed->report_info("Mu "+mk_str(my_mu_all.mu)+" difference "+mk_str(my_mu_all.mu - mu_tmp2)+" relative error "+mk_str((my_mu_all.mu-mu_tmp2)/my_mu_all.mu), 2);
+    }
+    if(std::abs(my_mu_all.mu-my_mu.mu) > PRECISION){
+    //  test_bed->report_info("Inconsistent root between get_root and get_phi_mu_om", 2);
+     // err|=TEST_WRONG_RESULT;
+
     }
     
   }

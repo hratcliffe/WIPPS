@@ -134,7 +134,7 @@ int main(int argc, char *argv[]){
   contr->get_current_spectrum()->make_test_spectrum();
 
   file.open("Tmp_spectrum.txt", ios::out|ios::binary);
-  if(file.is_open()) contr->my_spect->write_to_file(file);
+  if(file.is_open()) contr->get_current_spectrum()->write_to_file(file);
   file.close();
 
   //Now we have some test spectral data we can work with...

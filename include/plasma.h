@@ -60,7 +60,7 @@ private:
   //If we copy mufunctions we have something like
   //We'll want an averaged thing over the spatial block we're working with, because we're assuming waves from whole block are identical.
   //But one call per ptich angle and frequency might turn out to be time consuming. Profiling necessary...
-  mu get_root(calc_type th, calc_type w, calc_type psi);
+  mu get_root(calc_type th, calc_type w, calc_type psi, bool Righthand=true);
   calc_type get_phi( calc_type th, calc_type w, calc_type psi, calc_type alpha, int n, calc_type omega_n=0);
   mu_dmudom get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int n, calc_type omega_n=0);
 

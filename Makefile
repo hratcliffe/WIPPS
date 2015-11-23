@@ -16,7 +16,7 @@ LIB := $(LIBSDF)
 #LIB += ./matplotpp/matplotpp.a -lglut
 #Add the libraries for glut (openGL) and the matplot library
 CFLAGS = -g -c $(INCLUDE) -DVERSION=\"$(GIT_VERSION)\" -std=c++11
-DEBUG = -W -Wall -pedantic -D_GLIBCXX_DEBUG
+DEBUG = -W -Wall -pedantic -D_GLIBCXX_DEBUG -Wextra
 #DEBUG+= -Wno-sign-compare
 #DEBUG+= -Wno-unused-parameter
 #Comment/uncomment these to hide specific errors...

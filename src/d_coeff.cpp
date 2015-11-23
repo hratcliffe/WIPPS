@@ -93,7 +93,7 @@ Get mu, dmu/domega which are used to:
   plasma * plas;
   spectrum * spect;
   if(my_controller){
-    plas = my_controller->my_plas;
+    plas = my_controller->get_plasma();
     spect = my_controller->get_current_spectrum();
   }
   else{

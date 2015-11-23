@@ -13,16 +13,17 @@ class spectrum;
 class plasma;
 class diffusion_coeff;
 
+/** Ties together plasma objects with resulting spectra and diffusion coefficients */
 class controller{
-
-public:
-// Ties togther the sets of plasma, spectrum etc objects.
-//If we only ever make and delete via this, we're golden.
+/** */
   plasma * my_plas;
 
   //These might become vectors
   spectrum * my_spect;
   diffusion_coeff * my_d;
+
+public:
+
 
   controller();
   ~controller();
@@ -31,7 +32,8 @@ public:
   void add_d(int nx, int n_angs);
   spectrum * get_current_spectrum(){return my_spect;};
   diffusion_coeff * get_current_d(){return my_d;};
-  /** For Future expansion*/
+  /** For Future expansion and to prevent public access*/
+  plasma * get_plasma(){return my_plas;};
 };
 
 

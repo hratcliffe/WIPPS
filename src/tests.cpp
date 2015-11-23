@@ -563,7 +563,7 @@ int test_entity_plasma::run(){
   for(size_t i =0; i<n_tests; i++){
     tmp_omega += std::abs(om_pe_local)/(calc_type)(n_tests + 1);
     my_mu_all = plas->get_root(0.0, tmp_omega, tmp_theta, false);
-    //my_mu = plas->get_phi_mu_om(tmp_omega, tmp_theta, 0.0, 0.0, tmp_omega_n);
+    my_mu = plas->get_phi_mu_om(tmp_omega, tmp_theta, 0.0, 0.0, tmp_omega_n, false);
     
     mu_tmp2 = std::sqrt(1.0 - std::pow(om_pe_local/tmp_omega, 2)*(std::pow(tmp_omega, 2) - std::pow(om_pe_local, 2))/(std::pow(tmp_omega, 2) - std::pow(omega_UH, 2)));
     if(std::abs(my_mu_all.mu-mu_tmp2)/my_mu_all.mu > LOW_PRECISION){
@@ -573,14 +573,12 @@ int test_entity_plasma::run(){
       test_bed->report_info("Mu "+mk_str(my_mu_all.mu)+" difference "+mk_str(my_mu_all.mu - mu_tmp2)+" relative error "+mk_str((my_mu_all.mu-mu_tmp2)/my_mu_all.mu), 2);
     }
     if(std::abs(my_mu_all.mu-my_mu.mu) > PRECISION){
-    //  test_bed->report_info("Inconsistent root between get_root and get_phi_mu_om", 2);
-     // err|=TEST_WRONG_RESULT;
+      test_bed->report_info("Inconsistent root between get_root and get_phi_mu_om", 2);
+      err|=TEST_WRONG_RESULT;
 
     }
     
   }
-
-
 
   test_bed->report_err(err);
 

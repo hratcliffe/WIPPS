@@ -62,7 +62,7 @@ private:
   //But one call per ptich angle and frequency might turn out to be time consuming. Profiling necessary...
   mu get_root(calc_type th, calc_type w, calc_type psi, bool Righthand=true);
   calc_type get_phi( calc_type th, calc_type w, calc_type psi, calc_type alpha, int n, calc_type omega_n=0);
-  mu_dmudom get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int n, calc_type omega_n=0);
+  mu_dmudom get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int n, calc_type omega_n=0, bool Righthand=true);
 
   /*probably want some parameter "which_thing" is some way of specifying what we want, probably via enum or named constants PROBABLY a mask is best, i.e. bitmask with named contants and we get each thing we want. But how to return? Rturn invalid number for those we on't request. Make it optional so by default we get all? Or we return all of: real(DP),intent(out)::mu,mug                   !< refractive index, group
    real(DP),intent(out)::dmudr,dmudth             !< derivs

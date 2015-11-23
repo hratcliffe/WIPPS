@@ -266,7 +266,7 @@ calc_type plasma::get_phi(calc_type th, calc_type w, calc_type psi, calc_type al
 
 }
 
-mu_dmudom plasma::get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int n, calc_type omega_n){
+mu_dmudom plasma::get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int n, calc_type omega_n, bool Righthand){
 /**Get's the Phi defined by Lyons 1974, and mu, dmu/dom i.e. the set needed for D.
 *Also needs particle pitch angle alpha \todo Fix relativistic gamma... WATCH for Clares version which uses a different alpha entirely...
 
@@ -339,9 +339,14 @@ mu_dmudom plasma::get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int
   my_mu.err = 1;
 
   if( (mua2 > 0.0) || (mub2 > 0.0) ){
-    if(D < 0.0 ){ smu = 1.0; mu2 = mua2;} //see Albert [2005]
-    else{smu = -1.0; mu2 = mub2;}
-    
+    if(Righthand){//Select Mode
+      if(D < 0.0 ){ smu = 1.0; mu2 = mua2;} //see Albert [2005]
+      else{smu = -1.0; mu2 = mub2;}
+    }else{
+      if(D < 0.0 ){ smu = -1.0; mu2 = mub2;}
+      else{smu = 1.0; mu2 = mua2;}
+    }
+
     my_mu.mu = sqrt(mu2);
     
     F = 2.0*(A - B + C);

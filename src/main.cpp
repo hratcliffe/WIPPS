@@ -48,6 +48,7 @@ int main(int argc, char *argv[]){
 
   
 
+//  for(int i=0; i< 1; ++i) std::cout<<"WOOOOO"<<std::endl;
 
   int ierr,err;
   
@@ -108,7 +109,7 @@ int main(int argc, char *argv[]){
   data_array  * dat = new data_array(dims[0], n_tims);
   data_array * dat_fft = new data_array(dims[0], n_tims);
 
-  if(!dat->data or !dat_fft->data){
+  if(!dat->is_good() or !dat_fft->is_good()){
     my_print("Bugger, data array allocation failed. Aborting.", mpi_info.rank);
     return 0;
   }

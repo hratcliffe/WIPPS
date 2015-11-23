@@ -263,7 +263,7 @@ int test_entity_get_and_fft::run(){
 
   test_dat = new data_array(dims[0], n_tims);
   test_dat_fft = new data_array(dims[0], n_tims);
-  if(!test_dat->data||!test_dat_fft->data){
+  if(!test_dat->is_good()||!test_dat_fft->is_good()){
     err|=TEST_ASSERT_FAIL;
     return err;
   }

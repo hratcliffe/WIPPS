@@ -15,9 +15,7 @@
 #include <vector>
 #include "support.h"
 
-//OK this will contain all our basic code testing, interfacing with libraries etc etc
-//Maths tests can be seperate
-/** 
+/**
 [10/11/2015 15:24:26] Heather Ratcliffe: Hmm, OK so for my code what I mainly want is to have a test .sdf file with a couple of blocks in, and to read from it say a 1-d and 2-d array and check they match what I put in them
 [10/11/2015 15:25:01] Christopher Brady: Yep. Probably just generating the file from EPOCH or LARE is the easiest solution.
 [10/11/2015 15:25:22] Heather Ratcliffe: Similarly generate 1-d and 2-d arrays with sine waves, and axes, and check the FFTs give the right result and frequency

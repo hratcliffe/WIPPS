@@ -138,18 +138,18 @@ int my_array::get_dims(int dim){
 }
 
 my_type my_array::get_element(int nx, int ny){
-
+/** Return element at nx, ny. Out of range etc will return 0.0*/
   int ind = get_index(nx, ny);
   if(ind  != -1){
     return data[get_index(nx, ny)];
   }else{
-    return 0;
+    return 0.0;
   }
 
 }
 
 int my_array::get_total_elements(){
-
+/** Return total size of array */
   int tot_els=1;
 
   if(!ragged){
@@ -162,25 +162,11 @@ int my_array::get_total_elements(){
 
 }
 
-int my_array::get_total_axis_elements(){
-
-  int tot_els=0;
-
-  if(!ragged){
-    for(int i=0; i<n_dims;++i) tot_els +=dims[i];
-  }else{
-    tot_els = cumulative_row_lengths[dims[n_dims-1]-1]+row_lengths[dims[n_dims-1]-1];
-  }
-
-  return tot_els;
-
-}
-
 bool my_array::set_element(int nx, int ny, my_type val){
-  /** \brief Sets array element
-  *
-  *Sets elements at nx, ny, and returns 1 if out of range, wrong number of args, 0 else.
-  */
+/** \brief Sets array element
+*
+*Sets elements at nx, ny, @return 1 if out of range, wrong number of args, 0 else.
+*/
 
   int index = get_index(nx, ny);
   if(index >= 0){
@@ -193,23 +179,30 @@ bool my_array::set_element(int nx, int ny, my_type val){
 }
 
 bool my_array::populate_data(my_type * dat_in, int n_tot){
-//Populates data with the total number of elements specified, as long as n_tot is less than the product of dims
+/** \brief Fill array
+*
+*Populates data with the total number of elements specified, as long as n_tot is less than the product of dims. Parameter needed so we can't overflow dat_int. Assumes same row-column order etc etc @return 0 (sucess) 1 (error)
+*/
 
   int tot_els = get_total_elements();
-  if(n_tot > tot_els) return 1;
+//  if(n_tot > tot_els) return 1;
+  if(n_tot < tot_els) tot_els = n_tot;
+  //Use min of n_tot, tot_els
 
   void * tmp = (void *) this->data;
   if(!tmp) return 1;
 
-  memcpy (tmp , dat_in, n_tot*sizeof(my_type));
+  memcpy (tmp , dat_in, tot_els*sizeof(my_type));
 
   return 0;
 
 }
 
 bool my_array::populate_row(void * dat_in, int nx, int y_row){
-//needs to check type, check dimensions
-//needs dimensions supplied...
+/** /brief Fill row
+*
+* Fills the row y_row of array from dat_in to length of nx. Nx is param for sanity so we can't overflow dat_in. @return 0 (sucess) 1 (error)
+*/
 
   if(nx != dims[0]) return 1;
   if(y_row > dims[1] || y_row < 0) return 1;
@@ -227,7 +220,7 @@ bool my_array::populate_row(void * dat_in, int nx, int y_row){
 bool my_array::write_to_file(std::fstream &file){
 /**Takes the version etc info then the whole data array and writes as a stream. It's not portable to other machines necessarily due to float sizes and endianness. It'll do. We'll start the file with a known float for confirmation.
   *
-  *IMPORTANT: this VERSION specifier links output files to code. If modifying output or order commit and clean build before using.
+  *IMPORTANT: this VERSION specifier links output files to code. If modifying output or order commit and clean build before using. @return 0 (sucess) 1 (error)
 */
   if(!file.is_open()) return 1;
   const char tmp_vers[15] = VERSION;
@@ -266,7 +259,6 @@ bool my_array::write_to_file(std::fstream &file){
   file.write((char *) data , sizeof(my_type)*total_size);
 
   return 0;
-
 
 }
 
@@ -326,41 +318,40 @@ return 0;
 
 std::string my_array::array_self_test(){
 
-bool err;
-std::string ret;
-int val;
-//FOR 2-D only...
-if(n_dims != 2) return "Only 2-D version exists";
-//assign each element to unique val
+  bool err;
+  std::string ret;
+  int val;
+  //FOR 2-D only...
+  if(n_dims != 2) return "Only 2-D version exists";
+  //assign each element to unique val
 
-for(int i=0; i<dims[0]; i++){
-  for(int j =0; j<dims[1]; j++){
-    err=set_element(i, j, (i+1)*(2*j+1));
-    if(err) ret = "Cannot set element";
+  for(int i=0; i<dims[0]; i++){
+    for(int j =0; j<dims[1]; j++){
+      err=set_element(i, j, (i+1)*(2*j+1));
+      if(err) ret = "Cannot set element";
+    }
   }
-}
 
-//test assignments worked
+  //test assignments worked
 
-for(int i=0; i<dims[0]; i++){
-  for(int j =0; j<dims[1]; j++){
-    val = get_element(i,j);
-    if(val != (i+1)*(2*j+1)) ret += " Wrong element read";
-    std::cout<<val<<" ";
+  for(int i=0; i<dims[0]; i++){
+    for(int j =0; j<dims[1]; j++){
+      val = get_element(i,j);
+      if(val != (i+1)*(2*j+1)) ret += " Wrong element read";
+      std::cout<<val<<" ";
+    }
+    std::cout<<std::endl;
   }
-  std::cout<<std::endl;
-}
 
-if(ret == "") ret = "Array OK";
+  if(ret == "") ret = "Array OK";
 
-return ret;
-
-
+  return ret;
 
 }
 
 void data_array::construct(){
-//Common constructor bits. So we can never have anything uninitialised.
+/** Common constructor bits. So we can never have anything uninitialised.*/
+
   ax_defined = false;
   time[0]=0; time[1]=1;
   space[0]=0; space[1]=1;
@@ -371,24 +362,26 @@ void data_array::construct(){
 }
 
 data_array::data_array(int nx, int ny) : my_array(nx,ny){
-//Constructor calls constructor for my_array and adds its own axes
+/**Adds axes to a normal rectangular my array*/
+
   construct();
   axes=(my_type*)calloc((nx+ny),sizeof(my_type));
   if(axes) ax_defined=true;
+
 }
 
 data_array::data_array(int * row_lengths, int ny): my_array(row_lengths,ny){
-//Constructor calls constructor for my_array and adds its own axes
-//Axes in this case are one per row...
+/** Adds axes to a ragged my_array One per row in this case...*/
+
   int tot_els = cumulative_row_lengths[dims[n_dims-1]-1]+row_lengths[dims[n_dims-1]-1];
 
   axes=(my_type*)calloc(tot_els, sizeof(my_type));
   if(axes) ax_defined=true;
-  //Here one axis per row...
+
 }
 
 data_array::~data_array(){
-//Similarly destructor automatically calls destructor for my_array and frees axes
+/**Similarly destructor automatically calls destructor for my_array and frees axes*/
 
   if(axes) free(axes);
   axes = NULL; // technically unnecessary as desctructor deletes memebers.
@@ -397,52 +390,125 @@ data_array::~data_array(){
 }
 
 my_type * data_array::get_axis(int dim, int & length){
+/** Returns pointer to given axis and its length. If axes don't exist or dimension is out of range, returns nullptr*/
 
-  if(!this->axes) return nullptr;
+  if(!ax_defined || (dim >= n_dims)) return nullptr;
+
+  int index = get_axis_index(dim, 0);
+  //Get index of 0th element
+  length = dims[dim];
+  if(index != -1) return axes + index;
+  else return nullptr;
+
+}
+
+int data_array::get_axis_index(int dim, int pt){
+/** \brief Get index for location
+*
+*Takes care of all bounds checking and disposition in memory. Returns -1 if out of range of any sort, otherwise, suitable index. Let this function do all bounds checks.
+*/
+
+  if(dim < 0 || dim >=n_dims || pt >=dims[dim]) return -1;
+  //Out of range error
+  
+  int offset = 0;
+  if(!ragged){
+  // Rectangular, skip over other dims
+    for(int i=0; i< dim; i++) offset +=dims[i];
+  
+  }else{
+  // Ragged, skip axes for other rows
+    offset = cumulative_row_lengths[dim];
+  }
+  
+  return offset + pt;
+
+}
+
+my_type data_array::get_axis_element(int nx, int ny){
+/** Return axis element at nx, ny. Out of range etc will return 0.0*/
+
+  int ind = get_axis_index(nx, ny);
+  if(ind  != -1){
+    return data[get_axis_index(nx, ny)];
+  }else{
+    return 0.0;
+  }
+
+}
+
+bool data_array::set_axis_element(int dim, int pt, my_type val){
+/** \brief Sets array element
+*
+*Sets elements at pt on dimension dim, @return 1 if out of range, wrong number of args, 0 else.
+*/
+
+  int index = get_axis_index(dim, pt);
+  if(index >= 0){
+    axes[index] = val;
+    return 0;
+  }else{
+    return 1;
+  }
+
+}
+
+bool data_array::populate_axis(int dim, my_type * dat_in, int n_tot){
+/** \brief Fill axis
+*
+*Populates axis with the total number of elements specified, as long as n_tot is less than the specified dim. Parameter needed so we can't overflow dat_in. @return 0 (sucess) 1 (error)
+*/
+
+  if(dim < 0 || dim >=n_dims) return -1;
+  //Out of range error
+
+  int tot_els = dims[dim];
+  if(n_tot < tot_els) tot_els = n_tot;
+  //Min of n_tot and tot_els
+
+  void * tmp = (void *) this->axes;
+  if(!tmp) return 1;
+
+  memcpy (tmp , dat_in, tot_els*sizeof(my_type));
+
+  return 0;
+
+}
+
+float data_array::get_res(int i){
+/**Return resolution of axis on dimension i. Assumes linear etc etc. If axis is undefined or zero or one in length, return 1.0 */
+  int len;
+  my_type * axis = this->get_axis(i, len);
+
+  if(axis && len >1) return std::abs(axis[0]-axis[1]);
+  else return 1.0;
+
+}
+
+int data_array::get_total_axis_elements(){
+
+  int tot_els=0;
 
   if(!ragged){
-    if(dim == 0){
-      length = dims[dim];
-      return axes;
-    
-    }else if(dim < n_dims){
-      int offset=0;
-      for(int i=0; i< dim; i++) offset +=dims[i];
-      length = dims[dim];
-      return axes + offset;
-    
-    }else{
-      length = 0;
-      return NULL;
-    }
+    for(int i=0; i<n_dims;++i) tot_els +=dims[i];
   }else{
-    if(dim == 0){
-      length = row_lengths[dim];
-      return axes;
-    
-    }else if(dim < n_dims){
-      int offset = cumulative_row_lengths[dim];
-      length = row_lengths[dim];
-      return axes + offset;
-    
-    }else{
-      length = 0;
-      return NULL;
-    }
-  
+    tot_els = cumulative_row_lengths[dims[n_dims-1]-1]+row_lengths[dims[n_dims-1]-1];
   }
+
+  return tot_els;
+
 }
 
 void data_array::make_linear_axis(int dim, float res, int offset){
+/**\brief Make an axis
+*
+*Generates a linear axis for dimension dim, with resolution res, starting at value of offset*res
+*/
 
-int len;
-my_type * ax_ptr = get_axis(dim, len);
+  int len;
+  my_type * ax_ptr = get_axis(dim, len);
 
-for(int i=0; i<len; i++){
-  *(ax_ptr +i) = ((float) (i-offset)) * res;
-
-}
-
+  for(int i=0; i<len; i++) *(ax_ptr +i) = ((float) (i-offset)) * res;
 
 }
 
@@ -595,19 +661,9 @@ bool data_array::fft_me(data_array * data_out){
 
 }
 
-float data_array::get_res(int i){
-//return resolution of axis on dimension i. Assumes linear etc etc. If axis is undefined or zero or one in length, return 1.0
-  int len;
-  my_type * axis = this->get_axis(i, len);
-
-  if(axis && len >1) return std::abs(axis[0]-axis[1]);
-  else return 1.0;
-
-}
-
 void data_array::copy_ids( data_array * src){
 //parent_class::copy_id(parent_class * one){ strcpy(one->id, this->id);}
-/** Copies ID fields from one array to this */
+/** Copies ID fields from src array to this */
 
   strcpy(src->block_id, this->block_id);
   

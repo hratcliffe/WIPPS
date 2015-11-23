@@ -85,6 +85,7 @@ struct mu{
 struct mu_dmudom{
   calc_type mu;
   calc_type dmudom;
+  calc_type dmudtheta;
   calc_type phi;
   int err;
 

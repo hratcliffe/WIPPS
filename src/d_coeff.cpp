@@ -60,8 +60,20 @@ void diffusion_coeff::make_velocity_axis(){
 */
 
   calc_type res = v0 * 0.01;
-  make_linear_axis(0, res, 0);
+  make_linear_axis(0, res, -2);
+  //-2 is for testing so 0th element is non zero...
+  // FAKENUMBERS
+}
 
+void diffusion_coeff::make_pitch_axis(){
+/**\Set pitch angle axis (tan theta)
+*
+*Makes suitably binned axis and copies into axes for dim [1]
+*/
+
+  calc_type res = 4.0/dims[1]; //To cover range from 0 to 2...
+  make_linear_axis(1, res, dims[1]/2.0);
+  // FAKENUMBERS
 }
 
 void diffusion_coeff::calculate(){
@@ -87,10 +99,8 @@ Get mu, dmu/domega which are used to:
 
   //To DO!
   //get n ranges... and add in
-  //resonant freq relation to x
-  //We probably want to set the n and theta ranges in another routine... or using UI data
 
-  //Setup v_par, alpha ranges in axes
+  //We probably want to set the n and theta ranges in another routine... or using UI data
 
   plasma * plas;
   spectrum * spect;
@@ -106,35 +116,31 @@ Get mu, dmu/domega which are used to:
   this->copy_ids(spect);
   //copy block id, ranges etc from spect.
 
-  calc_type theta, omega,lat, alpha, omega_n=0.0, x, x_inc, D_tmp;
-  calc_type Eq6, mu_dom_mu, Eq7, dmudx, v_par, alpha_inc;
+  calc_type theta, lat, omega_n=0.0, D_tmp;
+  calc_type alpha, v_par; /** temporaries for clarity*/
+  calc_type Eq6, mu_dom_mu, Eq7, dmudx;
 
+  int n_min, n_max;
   std::vector<calc_type> omega_calc;
-
-  alpha = 0.0;
-  alpha_inc =  2.0*pi/dims[1]/4.0;
-  //do one quadrant...
-  x_inc = 4.0/n_thetas; //To cover range from 0 to 2...
-  x= - n_thetas/ 2.0 * x_inc;
-
-  lat = 0.0;
-  // FAKENUMBERS
-  //Allocate and construct a dx from theta.
-  calc_type * dx, * D_theta, * v_axis;
-  calc_type om_res = 10;
-  // FAKENUMBERS for om_res..
-  calc_type D_consts = 0.5* pi*my_const.omega_ce *pow(v0, 3)/om_res;
-
-  dx = (calc_type *) calloc(dims[1], sizeof(calc_type));
-  D_theta = (calc_type *) calloc(dims[1], sizeof(calc_type));
-  //Want theta res to match alpha??
-  v_axis = (calc_type *) calloc(dims[0], sizeof(calc_type));
-  
   mu_dmudom my_mu;
-
-  for(int i=0; i<n_thetas; ++i) dx[i] = x_inc;
-  //linear grid for now
   
+  calc_type D_consts = 0.5* pi*plas->get_omega_ref("ce")*pow(v0, 3);
+  //Time saving constant
+
+  //Temporaries for wave normal angle***********************************
+  calc_type *D_theta = (calc_type *) calloc(n_thetas, sizeof(calc_type));
+  calc_type *x = (calc_type *) calloc(n_thetas, sizeof(calc_type));
+
+  for(int i=0; i<n_thetas; ++i){
+    x[i] = i* 4.0/n_thetas;
+  }
+
+  calc_type *dx = (calc_type *) calloc(n_thetas, sizeof(calc_type));
+  for(int i=0; i<n_thetas -1; ++i){
+    dx[i] = x[i+1] - x[i];
+  }
+  //*******************************************************************
+
   
   //innermost loop should be n. Next theta, as we need mu at each theta. Omega and x are interchangeable...
   //Alpha remains, as does particle v.
@@ -143,35 +149,38 @@ Get mu, dmu/domega which are used to:
 
   for(int i =0; i< ((1< dims[0]) ? 1:dims[0]); ++i){
     //particle parallel velocity
-    v_par = v_axis[i];
-    v_par = 0.15 * v0;
-    // FAKENUMBERS
+    v_par = get_axis_element(0, i);
+    n_min = get_min_n(v_par);
+    n_max = get_max_n(v_par);
+
     for(int k =0; k< ((1 <dims[1]) ? 1: dims[1]); k++){
       //particle pitch angle
-      alpha += alpha_inc;
+      alpha = get_axis_element(1, k);
 
       for(int j=0;j<n_thetas; ++j){
       //theta loop for wave angle or x=tan theta
-        theta = atan(x);
-        //theta = pi;
-        //x = tan(theta);
+        theta = atan(x[j]);
         std::cout<<j<<" "<<theta/pi<<"+++++++++++++++++++++++++"<<std::endl;
+        std::cout<< v_par<<std::endl;
 
         D_tmp = 0.0;
-        for(int n=-n_n; n<n_n; ++n){
+        for(int n=n_min; n<n_max; ++n){
           // n is resonant number
-          omega_calc = plas->get_omega(x, v_par, (calc_type) n);
+          omega_calc = plas->get_omega(x[j], v_par, (calc_type) n);
+
           for(size_t ii =0; ii< omega_calc.size(); ++ii){
-            omega = omega_calc[ii];
-            std::cout<<"Freq is "<<omega/my_const.omega_ce<<std::endl;
-            my_mu = plas->get_phi_mu_om(omega, theta, alpha, n, omega_n);
+          //each solution
+            std::cout<<"Freq is "<<omega_calc[ii]/my_const.omega_ce<<std::endl;
+
+            my_mu = plas->get_phi_mu_om(omega_calc[ii], theta, alpha, n, omega_n);
 
             if(!my_mu.err) std::cout<<"YAY!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! "<<n<<" "<<j<<std::endl;
-            mu_dom_mu = my_mu.mu + omega * my_mu.dmudom;
+            mu_dom_mu = my_mu.mu + omega_calc[ii] * my_mu.dmudom;
             dmudx = 0.0;
             // FAKENUMBERS
-            Eq6 = omega/(omega - omega_n)* my_mu.mu/mu_dom_mu;
-            Eq7 = -1.0* (my_mu.mu*omega_n/(omega*(omega-omega_n)) - my_mu.dmudom)/(my_mu.mu *sin(theta)*cos(theta) - dmudx);
+            Eq6 = omega_calc[ii]/(omega_calc[ii] - omega_n)* my_mu.mu/mu_dom_mu;
+
+            Eq7 = -1.0* (my_mu.mu*omega_n/(omega_calc[ii]*(omega_calc[ii]-omega_n)) - my_mu.dmudom)/(my_mu.mu *std::sin(theta)*std::cos(theta) - dmudx);
             //Need this iff we use second expression in Eq 5
             
             D_tmp += my_mu.phi; // FAKENUMBERS This will be the n summed D so add onto it each n iteration
@@ -180,7 +189,6 @@ Get mu, dmu/domega which are used to:
         //Store into theta array. Might not need tmp in the end
         //Except that it saves us one multiplication per iteration without acting on element in place after.
         D_theta[j] = D_tmp*pow(cos(theta), 2);
-        x+= dx[j];
 
       }
       //now integrate in x = tan theta

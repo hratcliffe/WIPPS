@@ -53,6 +53,8 @@ void controller::add_d(int nx, int n_angs){
 
   my_d = new diffusion_coeff(nx, n_angs);
   my_d->my_controller = this;
+  my_d->make_velocity_axis();
+  my_d->make_pitch_axis();
 
 }
 /*

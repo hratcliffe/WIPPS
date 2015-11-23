@@ -289,7 +289,6 @@ void spectrum::make_test_spectrum(){
   my_type * data_tmp, *ax_tmp;
   data_tmp = data_ptr;
   ax_tmp = ax_ptr;
-  std::cout<< data_tmp<<" "<<ax_tmp<<std::endl;
 
   for(int i=0; i<=len0/2; i++, ax_tmp++, data_tmp++) *(data_tmp) = exp(-pow((*(ax_tmp) + centre), 2)/width) + background;
   data_tmp--;

@@ -93,8 +93,8 @@ mu plasma::get_root(calc_type th, calc_type w, calc_type psi, bool Righthand){
 //We loop over components and trust compiler to unroll for us :) most of these will trivially vectorise anyway.
 
   s2psi = std::pow(sin(psi), 2);
-  c2psi = std::pow(cos(psi), 2);
- /** \todo Check these are correct interpretation... */
+  c2psi = 1.0 - s2psi;
+  //To make it smokin'
 
   for(int i=0; i<ncomps; ++i){
     R = R - wp2[i]/(w*(w + wc[i]));
@@ -291,13 +291,13 @@ mu_dmudom plasma::get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int
   
   calc_type R=1.0, L=1.0, P=1.0, J, S, D, A, B, C, s2psi, c2psi, mua2, mub2, mu2;
   calc_type F, G, smu;
-  calc_type dHdF, dHdG, dmudw;
+  calc_type dHdF, dHdG, dmudw, dFdpsi,dGdpsi, dAdpsi,dBdpsi;
   calc_type wp[ncomps], wp2[ncomps], wc[ncomps], X[ncomps], Y[ncomps];
   
   calc_type dmudX[ncomps], dmudY[ncomps];
-  calc_type dPdX[ncomps], dLdX[ncomps], dRdX[ncomps], dSdX[ncomps], dDdX[ncomps];
+  calc_type dPdX[ncomps], dLdX[ncomps], dRdX[ncomps], dSdX[ncomps];
   calc_type dAdX[ncomps], dBdX[ncomps], dCdX[ncomps], dFdX[ncomps], dGdX[ncomps];
-  calc_type dLdY[ncomps], dRdY[ncomps], dSdY[ncomps], dDdY[ncomps];
+  calc_type dLdY[ncomps], dRdY[ncomps], dSdY[ncomps];
   calc_type dAdY[ncomps], dBdY[ncomps], dCdY[ncomps], dFdY[ncomps], dGdY[ncomps], dXdw[ncomps], dYdw[ncomps];
   
   //These will hold suitably calc'd plasma frequency, square and cyclotron freq. If we have to derive from position, we do...
@@ -313,8 +313,8 @@ mu_dmudom plasma::get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int
 //We loop over components and trust compiler to unroll for us :) most of these will trivially vectorise anyway.
 
   s2psi = std::pow(sin(psi), 2);
-  c2psi = std::pow(cos(psi), 2);
- /** \todo Check these are correct interpretation... */
+  c2psi = 1.0 - s2psi;
+  //To make it smokin'
 
   for(int i=0; i<ncomps; ++i){
     R = R - wp2[i]/(w*(w + wc[i]));
@@ -327,7 +327,7 @@ mu_dmudom plasma::get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int
   A = S*s2psi + P*c2psi;
   B = R*L*s2psi + P*S*(1.0+c2psi);
   C = P*R*L;
-  J = sqrt(B*B - 4.0*A*C);
+  J = std::sqrt(B*B - 4.0*A*C);
 
 
   mua2 = 1.0 - 2.0*(A - B + C)/(2.0*A - B + J);
@@ -336,6 +336,7 @@ mu_dmudom plasma::get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int
   //placeholder values if we can't fill...
   my_mu.mu = 1.0;
   my_mu.dmudom = 0.0;
+  my_mu.dmudtheta = 0.0;
   my_mu.err = 1;
 
   if( (mua2 > 0.0) || (mub2 > 0.0) ){
@@ -347,7 +348,7 @@ mu_dmudom plasma::get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int
       else{smu = 1.0; mu2 = mua2;}
     }
 
-    my_mu.mu = sqrt(mu2);
+    my_mu.mu = std::sqrt(mu2);
     
     F = 2.0*(A - B + C);
     G = 2.0*A - B + smu*J;
@@ -360,7 +361,7 @@ mu_dmudom plasma::get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int
 
       dRdX[i] = -1.0/(1.0 + Y[i]);
       dSdX[i] = 0.5*(dRdX[i] + dLdX[i]);
-      dDdX[i] = 0.5*(dRdX[i] - dLdX[i]);
+//      dDdX[i] = 0.5*(dRdX[i] - dLdX[i]);
       dAdX[i] = 0.5*(dRdX[i] + dLdX[i])*s2psi + dPdX[i]*c2psi;
       dBdX[i] = (L*dRdX[i] + R*dLdX[i])*s2psi + (P*dSdX[i] + S*dPdX[i])*(1.0 + c2psi);
       dCdX[i] = P*R*dLdX[i] + P*L*dRdX[i] + R*L*dPdX[i];
@@ -371,7 +372,6 @@ mu_dmudom plasma::get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int
       dRdY[i] = X[i]/( pow(1.0 + Y[i], 2) );
       dLdY[i] = -X[i]/( pow(1.0 - Y[i], 2) );
       dSdY[i] = 0.5*(dRdY[i] + dLdY[i]);
-      dDdY[i] = 0.5*(dRdY[i] - dLdY[i]);
 
       dAdY[i] = dSdY[i]*s2psi;
       dBdY[i] = (L*dRdY[i] + R*dLdY[i])*s2psi + P*dSdY[i]*(1.0 + c2psi);
@@ -387,7 +387,14 @@ mu_dmudom plasma::get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int
       dYdw[i] = -wc[i]/(pow(w, 2));
 
     }
-    
+    dAdpsi = sin(2.0*psi)*(S - P);
+    dBdpsi = sin(2.0*psi)*(R*L - P*S);
+
+    dFdpsi = 2.0*(dAdpsi - dBdpsi);
+    dGdpsi = 2.0*dAdpsi - dBdpsi + (smu/J)*(B*dBdpsi - 2.0*C*dAdpsi);
+
+    my_mu.dmudtheta = (0.5/my_mu.mu)*(dHdF*dFdpsi + dHdG*dGdpsi);
+
     dmudw = 0.0;
     for(int i=0; i<ncomps; i++) dmudw = dmudw + dmudX[i]*dXdw[i] + dmudY[i]*dYdw[i];
     
@@ -402,7 +409,7 @@ mu_dmudom plasma::get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int
 
     term1 = (mu2* sin2psi - P)/(mu2);
     
-    denom = pow(D_mu2S*term1, 2) + pow((P*cos(psi)/mu2), 2);
+    denom = pow(D_mu2S*term1, 2) + pow((P*std::cos(psi)/mu2), 2);
     
     bessel_arg = n* tan(psi)*tan(alpha) * (w - omega_n)/omega_n;// n x tan alpha (om - om_n)/om_n
     

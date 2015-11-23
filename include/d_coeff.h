@@ -42,7 +42,10 @@ public:
 
   void calculate();
   void make_velocity_axis();
-  
+  void make_pitch_axis();
+  int get_min_n(calc_type v_par){return -n_n;};
+  int get_max_n(calc_type v_par){return n_n;};
+  //Return min and max n worth exploring for largest k_par in range
 };
 
 

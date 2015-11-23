@@ -45,10 +45,6 @@ int main(int argc, char *argv[]){
 *
 */
 
-  
-
-//  for(int i=0; i< 1; ++i) std::cout<<"WOOOOO"<<std::endl;
-
   int ierr,err;
   
 {

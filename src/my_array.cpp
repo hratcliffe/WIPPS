@@ -141,7 +141,7 @@ my_type my_array::get_element(int nx, int ny){
 /** Return element at nx, ny. Out of range etc will return 0.0*/
   int ind = get_index(nx, ny);
   if(ind  != -1){
-    return data[get_index(nx, ny)];
+    return data[ind];
   }else{
     return 0.0;
   }
@@ -425,12 +425,12 @@ int data_array::get_axis_index(int dim, int pt){
 
 }
 
-my_type data_array::get_axis_element(int nx, int ny){
+my_type data_array::get_axis_element(int dim, int pt){
 /** Return axis element at nx, ny. Out of range etc will return 0.0*/
 
-  int ind = get_axis_index(nx, ny);
+  int ind = get_axis_index(dim, pt);
   if(ind  != -1){
-    return data[get_axis_index(nx, ny)];
+    return axes[ind];
   }else{
     return 0.0;
   }

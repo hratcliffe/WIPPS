@@ -337,7 +337,7 @@ int test_entity_basic_maths::run(){
   }
   if(std::abs(total) > PRECISION) err |=TEST_WRONG_RESULT;
   //Smooth of 2 on square wave should give 0
-
+  
   memcpy((void*)data_positive, (void*)data_tmp, sizeof(calc_type)*size);
   
   inplace_boxcar_smooth(data_tmp, size, 4, 0);
@@ -348,6 +348,31 @@ int test_entity_basic_maths::run(){
   //Smooth on straight line should do nothing except at ends...
   if(std::abs(total) > PRECISION) err |=TEST_WRONG_RESULT;
   if(err == TEST_PASSED) test_bed->report_info("Boxcar smooth OK", 1);
+
+
+  {
+    calc_type axis[4]={0.0,1.0,2.0,3.0}, vals[4]={0.0,1.0,0.0,1.0}, target, interp;
+
+    target = 0.25;
+    interp = interpolate(axis, vals, target, 1);
+    if(std::abs(interp - 0.0)> PRECISION) err |=TEST_WRONG_RESULT;
+    target = 0.75;
+    interp = interpolate(axis, vals, target, 1);
+    if(std::abs(interp - 1.0)> PRECISION) err |=TEST_WRONG_RESULT;
+    //Nearest value interpol
+    target = 0.5;
+    interp = interpolate(axis, vals, target, 2);
+    if(std::abs(interp - 0.5)> PRECISION) err |=TEST_WRONG_RESULT;
+    target = 1.0;
+    interp = interpolate(axis, vals, target, 2);
+    if(std::abs(interp - 1.0)> PRECISION) err |=TEST_WRONG_RESULT;
+    target = 1.5;
+    interp = interpolate(axis+1, vals+1, target, 2);
+    if(std::abs(interp - 0.5)> PRECISION) err |=TEST_WRONG_RESULT;
+    //2 pt linear interpol
+  }
+  
+  if(err == TEST_PASSED) test_bed->report_info("Interpolate OK", 1);
 
   //  x^3 - 17x^2 + 92x - 150.
   std::vector<calc_type> result = cubic_solve(-17.0, 92.0, -150.0);
@@ -374,8 +399,6 @@ int test_entity_basic_maths::run(){
   /**I think you should be able to recognize them using Vieta's formula for cubic equations, which states that if a cubic equation x3+ax2+bx+c=0x3+ax2+bx+c=0 has three different roots x1,x2,x3x1,x2,x3, then:
   −a=x1+x2+x3 b = x1x2+x1x3+x2x3 and -c = x1x2x3
 **/
-
-
  
   test_bed->report_err(err);
   return err;

@@ -251,7 +251,7 @@ template<typename T> T integrator(T * start, int len, T * increment){
 
 template float integrator<float>(float *, int, float *);
 template double integrator<double>(double *, int, double *);
-//We need both float and int versions
+//We need both float and double versions
 
 calc_type square_integrator(calc_type * start, int len, calc_type * increment){
 /** \brief Basic numerical integrator
@@ -383,11 +383,12 @@ template<typename T> T interpolate(T* axis, T* vals, T target, int pts){
     else ret = vals[1];
   
   }else if(pts ==2){
-    ret = (std::abs(target - axis[0]) * vals[0] + std::abs(target - axis[1]) * vals[1])/(std::abs(axis[1] - axis[0]));
+    ret = (std::abs(target - axis[1]) * vals[0] + std::abs(target - axis[0]) * vals[1])/(std::abs(axis[1] - axis[0]));
   
   }
 
   return ret;
 }
-template my_type interpolate(my_type*, my_type*, my_type, int);
+template float interpolate(float*, float*, float, int);
+template double interpolate(double*, double*, double, int);
 

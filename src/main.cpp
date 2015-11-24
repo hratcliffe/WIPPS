@@ -230,7 +230,47 @@ std::string mk_str(bool b){
 std::string mk_str(long double i){return mk_str((double) i);};
 
 
-calc_type integrator(calc_type * start, int len, calc_type * increment){
+float integrator(float * start, int len, float * increment){
+/** \brief Basic numerical integrator
+*
+*Uses trapezium rule. WARNING this is working with contiguous memory. Not very C++ but faster.
+*/
+
+  float value=0.0;
+  
+  for(int i=0; i<len-1; i++){
+  
+    value += 0.5*(start[i] + start[i+1]) * increment[i];
+    
+  }
+//  value += start[len-1]*increment[len-1];
+  //top bnd we assume flat
+
+ return value;
+
+}
+double integrator(double * start, int len, double * increment){
+/** \brief Basic numerical integrator
+*
+*Uses trapezium rule. WARNING this is working with contiguous memory. Not very C++ but faster.
+*/
+
+  double value=0.0;
+  
+  for(int i=0; i<len-1; i++){
+  
+    value += 0.5*(start[i] + start[i+1]) * increment[i];
+    
+  }
+//  value += start[len-1]*increment[len-1];
+  //top bnd we assume flat
+
+ return value;
+
+}
+
+
+calc_type square_integrator(calc_type * start, int len, calc_type * increment){
 /** \brief Basic numerical integrator
 *
 *Uses trapezium rule. WARNING this is working with contiguous memory. Not very C++ but faster.
@@ -240,7 +280,7 @@ calc_type integrator(calc_type * start, int len, calc_type * increment){
   
   for(int i=0; i<len-1; i++){
   
-    value += 0.5*(start[i] + start[i+1]) * increment[i];
+    value += 0.5*(start[i]*start[i] + start[i+1]*start[i+1]) * increment[i];
     
   }
 //  value += start[len-1]*increment[len-1];

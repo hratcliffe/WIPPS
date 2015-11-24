@@ -478,7 +478,7 @@ int test_entity_plasma::run(){
   /** Now test if the returned mu matches the high density whistler in high dens regime */
 
   size_t n_tests = 10;
-  calc_type tmp_omega=0.0, tmp_theta=pi/(calc_type)(n_tests), tmp_omega_n;
+  calc_type tmp_omega=0.0, tmp_theta=pi/(calc_type)(n_tests), tmp_omega_n=0.0;
   mu_dmudom my_mu;
   mu my_mu_all;
   int err_cnt=0;
@@ -579,6 +579,11 @@ int test_entity_plasma::run(){
     }
     
   }
+
+/** \todo Test mu.dom and mu.dmudtheta too */
+/** \todo Test phi? */
+
+
 
   test_bed->report_err(err);
 

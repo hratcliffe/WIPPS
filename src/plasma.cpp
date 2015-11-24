@@ -508,10 +508,10 @@ calc_type plasma::get_omega_ref(std::string code){
 
 }
 
-calc_type plasma::get_dispersion(my_type k, int wave_type){
+calc_type plasma::get_dispersion(my_type in, int wave_type, bool reverse, bool deriv){
 /** \brief Gets omega for given k
 *
-* Uses local refernce cyclotron and plasma frequencies and works with UNNORMALISED quantitites. Assumes parallel prop, and Em in unmagentised \todo Fix to take angle also
+* Uses local refernce cyclotron and plasma frequencies and works with UNNORMALISED quantitites. Assumes parallel prop, and Em in unmagentised \todo Fix to take angle also @param k Wavenumber @param wave_type wave species (see support.h) @param deriv Whether to instead return anayltic v_g \todo Finish cases in this function
 */
   calc_type ret = 0.0;
   calc_type om_ce_loc, om_pe_loc;
@@ -522,13 +522,19 @@ calc_type plasma::get_dispersion(my_type k, int wave_type){
   switch(wave_type){
 
     case WAVE_WHISTLER :
-      ret = v0*v0*k*k*om_ce_loc/(v0*v0 + om_pe_loc*om_pe_loc)/om_ce_loc;
-      
+      if(!reverse){
+        ret = v0*v0*om_ce_loc/(v0*v0 + om_pe_loc*om_pe_loc)/om_ce_loc;
+        if(!deriv) ret *=std::pow(in, 2);
+        else ret *= (2*in);
+      }else{
+        ret = v0*in*std::sqrt(1.0 - std::pow(om_pe_loc, 2)/(in*(in - om_ce_loc)) );
+      }
       //here goes dispersion in suitable normed units.
       break;
 
     case WAVE_PLASMA :
-      ret = std::sqrt(om_pe_loc*om_pe_loc + v0*v0 * k*k) ;
+      if(!deriv) ret = std::sqrt(om_pe_loc*om_pe_loc + std::pow(v0*in, 2));
+      else ret = v0 * in; /** \todo Check */
       break;
   }
 

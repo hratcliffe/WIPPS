@@ -31,7 +31,7 @@ void spectrum::construct(){
   function_type = 0;
   wave_id = 0;
   my_controller = nullptr;
-  
+  ax_omega = true;
 }
 
 spectrum::spectrum(int * row_lengths, int ny):data_array(row_lengths, ny){
@@ -88,6 +88,8 @@ bool spectrum::generate_spectrum(data_array * parent){
 if(parent && angle_is_function){
   //First we read axes from parent
   int len;
+  ax_omega = false;
+
   my_type * ax_ptr = parent->get_axis(0, len);
   memcpy ((void *)this->axes, (void *)ax_ptr, len*sizeof(my_type));
   ax_ptr = parent->get_axis(1, len);
@@ -102,7 +104,7 @@ if(parent && angle_is_function){
   float total;
   for(int i=0; i<this->dims[0]; ++i){
     
-    om_disp = get_dispersion(this->axes[i], WAVE_WHISTLER);
+    om_disp = get_omega(this->axes[i], WAVE_WHISTLER);
 
     low_bnd = where(ax_ptr, len, om_disp *(1.0-tolerance));
     high_bnd = where(ax_ptr, len, om_disp *(1.0+tolerance));
@@ -151,6 +153,8 @@ if(parent && angle_is_function){
 
     //First we read axes from parent
     int len;
+    ax_omega = false;
+
     my_type * ax_ptr = parent->get_axis(0, len);
     memcpy ((void *)this->axes, (void *)ax_ptr, len*sizeof(my_type));
     ax_ptr = parent->get_axis(1, len);
@@ -176,12 +180,21 @@ if(parent && angle_is_function){
 
 }
 
-my_type spectrum::get_dispersion(my_type k, int wave_type){
+my_type spectrum::get_omega(my_type k, int wave_type, bool deriv){
 /** \brief Gets omega for given k
 *
-* Calls to plasma because approximations for density etc etc should be made there. 
+* Calls to plasma because approximations for density etc etc should be made there. @param k Wavenumber @param wave_type Wave species @param deriv Return v_g instead
 */
-  if(my_controller && (my_controller->get_plasma())) return (my_type) my_controller->get_plasma()->get_dispersion(k, wave_type);
+  if(my_controller && (my_controller->get_plasma())) return (my_type) my_controller->get_plasma()->get_dispersion(k, wave_type, 0, deriv);
+  else return 0.0;
+}
+
+my_type spectrum::get_k(my_type omega, int wave_type, bool deriv){
+/** \brief Gets omega for given k
+*
+* Calls to plasma because approximations for density etc etc should be made there. @param k Wavenumber @param wave_type Wave species @param deriv Return v_g instead
+*/
+  if(my_controller && (my_controller->get_plasma())) return (my_type) my_controller->get_plasma()->get_dispersion(omega, wave_type, 1, deriv);
   else return 0.0;
 }
 
@@ -206,7 +219,6 @@ my_type * spectrum::get_angle_distrib(int &len, my_type omega){
   return ret;
 
 }
-
 
 int spectrum::where(my_type * ax_ptr, int len, my_type target,std::function<bool(my_type,my_type)> func){
 /**\brief Finds first index where ax_ptr[i] vs target value satisfies the function given (e.g. std::greater)
@@ -234,7 +246,6 @@ std::vector<int> spectrum::all_where(my_type * ax_ptr, int len, my_type target,s
 
 }
 
-
 bool spectrum::write_to_file(std::fstream &file){
 
 /**IMPORTANT: the VERSION specifier links output files to code. If modifying output or order commit and clean build before using.
@@ -253,7 +264,8 @@ void spectrum::make_test_spectrum(){
 
   this->set_ids(0, 100, 0, dims[0], WAVE_WHISTLER, id);
   
-  
+  ax_omega = false;
+
   //setup axes
   int len0, len1;
   my_type * ax_ptr;
@@ -299,13 +311,39 @@ void spectrum::make_test_spectrum(){
 
 }
 
-calc_type spectrum::get_G1(){
-//returns G1 calculated as in Albert 2005.
+bool spectrum::normaliseB(){
+/** Calculate the total square integral of values over range \todo Is this data bare or squared?*/
+//calc_type integrator(calc_type * start, int len, calc_type * increment){
+
+  my_type * d_axis = (my_type *) calloc(row_lengths[0], sizeof(my_type));
+  for(int i=0; i<row_lengths[0]-1; i++) d_axis[i] = get_axis_element(0, i+1) - get_axis_element(0, i);
+
+  normB = integrator(get_ptr(0, 0), row_lengths[0], d_axis);
+
+  return 0;
+}
+
+calc_type spectrum::get_G1(calc_type omega){
+/**returns G1 calculated as in Albert 2005.
+\todo Does it matter that our k is limited? Do waves really go to low intensity in bit we see
+*/
+
+  calc_type B2;
+  if(ax_omega){
+  
+  
+  }else{
+    //We have k, need to translate via dispersion relation to get the required index and add the v_g factor
+    
+    
+  
+  
+  }
 
   return 0.0;
 }
 
-calc_type spectrum::get_G2(mu my_mu){
+calc_type spectrum::get_G2(calc_type omega, mu_dmudom my_mu){
 /**returns G2 calculated as in Albert 2005. */
 
   calc_type a;

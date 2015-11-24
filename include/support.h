@@ -104,8 +104,10 @@ std::string mk_str(double i);
 std::string mk_str(float i);
 std::string mk_str(long double i);
 
-calc_type integrator(calc_type * start, int len, calc_type * increment);
+float integrator(float * start, int len, float * increment);
+double integrator(double * start, int len, double * increment);
 void inplace_boxcar_smooth(calc_type * start, int len, int width, bool periodic = 0);
+calc_type square_integrator(calc_type * start, int len, calc_type * increment);
 
 std::vector<calc_type> cubic_solve(calc_type a, calc_type b, calc_type c);
 

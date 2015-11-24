@@ -117,8 +117,8 @@ Get mu, dmu/domega which are used to:
   //copy block id, ranges etc from spect.
 
   calc_type theta, lat, omega_n=0.0, D_tmp;
-  calc_type alpha, v_par; /** temporaries for clarity*/
-  calc_type Eq6, mu_dom_mu, Eq7, dmudx;
+  calc_type alpha, v_par, c2th, s2alpha; /** temporaries for clarity*/
+  calc_type Eq6, mu_dom_mu, Eq7, dmudx, numerator;
 
   int n_min, n_max;
   std::vector<calc_type> omega_calc;
@@ -146,6 +146,7 @@ Get mu, dmu/domega which are used to:
   //Alpha remains, as does particle v.
 
 //-------------------Main loops here----------------------------
+//We have deep nested loops. Move ANYTHING that can be as far up tree as possible
 
   for(int i =0; i< ((1< dims[0]) ? 1:dims[0]); ++i){
     //particle parallel velocity
@@ -156,10 +157,12 @@ Get mu, dmu/domega which are used to:
     for(int k =0; k< ((1 <dims[1]) ? 1: dims[1]); k++){
       //particle pitch angle
       alpha = get_axis_element(1, k);
+      s2alpha = std::pow(std::sin(alpha), 2);
 
       for(int j=0;j<n_thetas; ++j){
       //theta loop for wave angle or x=tan theta
         theta = atan(x[j]);
+        c2th = std::pow(cos(theta), 2);
         std::cout<<j<<" "<<theta/pi<<"+++++++++++++++++++++++++"<<std::endl;
         std::cout<< v_par<<std::endl;
 
@@ -175,20 +178,23 @@ Get mu, dmu/domega which are used to:
             my_mu = plas->get_phi_mu_om(omega_calc[ii], theta, alpha, n, omega_n);
 
             if(!my_mu.err) std::cout<<"YAY!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! "<<n<<" "<<j<<std::endl;
+
             mu_dom_mu = my_mu.mu + omega_calc[ii] * my_mu.dmudom;
-            dmudx = 0.0;
+            dmudx = my_mu.dmudtheta *c2th;
+            //Chain rule...
+
             // FAKENUMBERS
             Eq6 = omega_calc[ii]/(omega_calc[ii] - omega_n)* my_mu.mu/mu_dom_mu;
 
             Eq7 = -1.0* (my_mu.mu*omega_n/(omega_calc[ii]*(omega_calc[ii]-omega_n)) - my_mu.dmudom)/(my_mu.mu *std::sin(theta)*std::cos(theta) - dmudx);
             //Need this iff we use second expression in Eq 5
-            
-            D_tmp += my_mu.phi; // FAKENUMBERS This will be the n summed D so add onto it each n iteration
+            numerator = std::pow( -s2alpha + omega_n/omega_calc[ii], 2);
+            D_tmp += numerator * my_mu.phi/std::abs(1.0 - Eq6)*spect->get_G1(omega_calc[ii])*spect->get_G2(omega_calc[ii], my_mu); // FAKENUMBERS This will be the n summed D so add onto it each n iteration
           }
         }
         //Store into theta array. Might not need tmp in the end
         //Except that it saves us one multiplication per iteration without acting on element in place after.
-        D_theta[j] = D_tmp*pow(cos(theta), 2);
+        D_theta[j] = D_tmp*c2th;
 
       }
       //now integrate in x = tan theta
@@ -196,6 +202,7 @@ Get mu, dmu/domega which are used to:
       //Leaves us with one D for each alpha and v.
       //Store into data at i, k
       set_element(i, k, D_tmp*D_consts);
+      //What about 1/delta omega???
     
     }
   }

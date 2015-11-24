@@ -73,7 +73,7 @@ private:
   std::vector<calc_type> get_omega(calc_type x, calc_type v_par, calc_type n);
 
   calc_type get_omega_ref(std::string code);
-  calc_type get_dispersion(my_type k, int wave_type);
+  calc_type get_dispersion(my_type k, int wave_type, bool reverse=0, bool deriv=0);
 
 
 };

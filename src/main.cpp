@@ -229,33 +229,13 @@ std::string mk_str(bool b){
 
 std::string mk_str(long double i){return mk_str((double) i);};
 
-
-float integrator(float * start, int len, float * increment){
+template<typename T> T integrator(T * start, int len, T * increment){
 /** \brief Basic numerical integrator
 *
 *Uses trapezium rule. WARNING this is working with contiguous memory. Not very C++ but faster.
 */
 
-  float value=0.0;
-  
-  for(int i=0; i<len-1; i++){
-  
-    value += 0.5*(start[i] + start[i+1]) * increment[i];
-    
-  }
-//  value += start[len-1]*increment[len-1];
-  //top bnd we assume flat
-
- return value;
-
-}
-double integrator(double * start, int len, double * increment){
-/** \brief Basic numerical integrator
-*
-*Uses trapezium rule. WARNING this is working with contiguous memory. Not very C++ but faster.
-*/
-
-  double value=0.0;
+  T value=0.0;
   
   for(int i=0; i<len-1; i++){
   
@@ -269,6 +249,9 @@ double integrator(double * start, int len, double * increment){
 
 }
 
+template float integrator<float>(float *, int, float *);
+template double integrator<double>(double *, int, double *);
+//We need both float and int versions
 
 calc_type square_integrator(calc_type * start, int len, calc_type * increment){
 /** \brief Basic numerical integrator
@@ -290,7 +273,7 @@ calc_type square_integrator(calc_type * start, int len, calc_type * increment){
 
 }
 
-void inplace_boxcar_smooth(calc_type * start, int len, int width, bool periodic){
+template<typename T> void inplace_boxcar_smooth(T * start, int len, int width, bool periodic){
 /** \brief Boxcar smoothing of specified width
 *
 *Smooths the array given by start and len using specified width. If periodic is set the ends wrap around. Otherwise they one-side
@@ -338,6 +321,7 @@ void inplace_boxcar_smooth(calc_type * start, int len, int width, bool periodic)
 
 
 }
+template void inplace_boxcar_smooth(calc_type *, int, int, bool);
 
 std::vector<calc_type> cubic_solve(calc_type an, calc_type bn, calc_type cn){
 /** \brief Finds roots of cubic x^3 + an x^2 + bn x + cn = 0
@@ -386,4 +370,24 @@ std::vector<calc_type> cubic_solve(calc_type an, calc_type bn, calc_type cn){
 
 }
 
+template<typename T> T interpolate(T* axis, T* vals, T target, int pts){
+/** Interpolate vals on axis to target value
+*
+*For pts=1 uses closest value, pts=2 uses 2 pt linear, \todo add more pts options
+*/
+
+  T ret;
+  if(pts ==1){
+    //select closer value
+    if(std::abs(target - axis[0]) <= std::abs(target - axis[1])) ret = vals[0];
+    else ret = vals[1];
+  
+  }else if(pts ==2){
+    ret = (std::abs(target - axis[0]) * vals[0] + std::abs(target - axis[1]) * vals[1])/(std::abs(axis[1] - axis[0]));
+  
+  }
+
+  return ret;
+}
+template my_type interpolate(my_type*, my_type*, my_type, int);
 

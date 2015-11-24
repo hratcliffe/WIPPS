@@ -91,7 +91,6 @@ struct mu_dmudom{
 
 };
 
-
 const int DEFAULT_N_ANG = 100;
 
 void my_print(std::string text, int rank, int rank_to_write=0);
@@ -104,9 +103,10 @@ std::string mk_str(double i);
 std::string mk_str(float i);
 std::string mk_str(long double i);
 
-float integrator(float * start, int len, float * increment);
-double integrator(double * start, int len, double * increment);
-void inplace_boxcar_smooth(calc_type * start, int len, int width, bool periodic = 0);
+template<typename T> T interpolate(T* axis, T* vals, T target, int pts);
+template<typename T> T integrator(T * start, int len, T * increment);
+template<typename T> void inplace_boxcar_smooth(T * start, int len, int width, bool periodic = 0);
+//void inplace_boxcar_smooth(calc_type * start, int len, int width, bool periodic = 0);
 calc_type square_integrator(calc_type * start, int len, calc_type * increment);
 
 std::vector<calc_type> cubic_solve(calc_type a, calc_type b, calc_type c);

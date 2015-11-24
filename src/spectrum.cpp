@@ -328,13 +328,13 @@ calc_type spectrum::get_G1(calc_type omega){
 \todo Does it matter that our k is limited? Do waves really go to low intensity in bit we see
 */
 
-  calc_type B2;
+  calc_type B2, k;
   if(ax_omega){
   
   
   }else{
     //We have k, need to translate via dispersion relation to get the required index and add the v_g factor
-    
+    k = get_k(omega, WAVE_WHISTLER);
     
   
   

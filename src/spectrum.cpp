@@ -32,6 +32,7 @@ void spectrum::construct(){
   wave_id = 0;
   my_controller = nullptr;
   ax_omega = true;
+  normB = 0;
 }
 
 spectrum::spectrum(int * row_lengths, int ny):data_array(row_lengths, ny){
@@ -328,19 +329,54 @@ calc_type spectrum::get_G1(calc_type omega){
 \todo Does it matter that our k is limited? Do waves really go to low intensity in bit we see
 */
 
-  calc_type B2, k;
+  calc_type B2;
+  my_type tmpB2;
+  if(normB ==0.0) normaliseB();
+
   if(ax_omega){
-  
-  
+    //look up omega and interpolate
+    int len;
+    my_type data_bit[2];
+    my_type omega_tmp = (my_type) omega;
+    my_type * axis = this->get_axis(0, len);
+    //get the last place where axis is not larger than omega
+    int offset = where(axis, len, omega_tmp);
+    if(offset > 0 && offset < len){
+      data_bit[0] = get_element(0, offset-1);
+      data_bit[1] = get_element(0, offset);
+      //Get interpolated value of B for this k
+      tmpB2 = interpolate(axis + offset-1, data_bit, omega_tmp, 2);
+    }else{
+      //we're right at end, can't meaningfully interpolate, use raw
+      tmpB2 = get_element(0, offset);
+    }
+    //Cast to type and multiply vg to finish change vars
+    B2 = (calc_type) tmpB2;
+    
   }else{
     //We have k, need to translate via dispersion relation to get the required index and add the v_g factor
-    k = get_k(omega, WAVE_WHISTLER);
-    
-  
-  
+    my_type k = get_k((my_type)omega, WAVE_WHISTLER);
+    //find this k in axis
+    int len;
+    my_type data_bit[2];
+    my_type * axis = this->get_axis(0, len);
+    //get the last place where axis is not larger than k
+    int offset = where(axis, len, k);
+    if(offset > 0 && offset < len){
+      data_bit[0] = get_element(0, offset-1);
+      data_bit[1] = get_element(0, offset);
+      //Get interpolated value of B for this k
+      tmpB2 = interpolate(axis + offset-1, data_bit, k, 2);
+    }else{
+      //we're right at end, can't meaningfully interpolate, use raw
+      tmpB2 = get_element(0, offset);
+    }
+    //Cast to type and multiply vg to finish change vars
+    B2 = (calc_type) tmpB2 * get_omega(k, WAVE_WHISTLER, 1);
   }
 
-  return 0.0;
+  return B2/normB;
+
 }
 
 calc_type spectrum::get_G2(calc_type omega, mu_dmudom my_mu){

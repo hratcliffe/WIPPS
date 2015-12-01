@@ -86,67 +86,64 @@ bool spectrum::generate_spectrum(data_array * parent){
 *Takes a parent data array and uses the specified ids to generate a spectrum. Windows using the specified wave dispersion and integrates over frequency. Also adopts axes from parent.
 */
 
-if(parent && angle_is_function){
-  //First we read axes from parent
-  int len;
-  ax_omega = false;
+  if(parent && angle_is_function){
+    //First we read axes from parent
+    int len;
+    ax_omega = false;
 
-  my_type * ax_ptr = parent->get_axis(0, len);
-  memcpy ((void *)this->axes, (void *)ax_ptr, len*sizeof(my_type));
-  ax_ptr = parent->get_axis(1, len);
-  //y-axis to work with
+    my_type * ax_ptr = parent->get_axis(0, len);
+    memcpy ((void *)this->axes, (void *)ax_ptr, len*sizeof(my_type));
+    ax_ptr = parent->get_axis(1, len);
+    //y-axis to work with
 
-  //Now we loop across x, calculate the wave cutout bounds, and total, putting result into data
+    //Now we loop across x, calculate the wave cutout bounds, and total, putting result into data
 
-  int j;
-  int low_bnd, high_bnd;
-  float om_disp;
-  float tolerance = 0.05;
-  float total;
-  for(int i=0; i<this->dims[0]; ++i){
-    
-    om_disp = get_omega(this->axes[i], WAVE_WHISTLER);
+    int j;
+    int low_bnd, high_bnd;
+    float om_disp;
+    float tolerance = 0.05;
+    float total;
+    for(int i=0; i<this->dims[0]; ++i){
+      
+      om_disp = get_omega(this->axes[i], WAVE_WHISTLER);
 
-    low_bnd = where(ax_ptr, len, om_disp *(1.0-tolerance));
-    high_bnd = where(ax_ptr, len, om_disp *(1.0+tolerance));
-    
-    //now total the part of the array between these bnds
-    total=0;
-    for(j=low_bnd; j<high_bnd; j++) total += parent->get_element(i,j);
-    this->set_element(i,0,total);
-  }
-
-  //Now we generate evenly spaced angle axis, and generate required function ...
-  //NB What to work in? tan theta, but from 0 to infty. Need a cut off.... and that only covers paralllel, not antiparallel. We'll need to extend to that sooner or later...
-
-
-  //void data_array::make_linear_axis(int dim, float res, int offset){
-  {int res = 1;
-  //set axis resolution somehow... TODO this
-  make_linear_axis(1, res, 0);
-
-    //Now generate the function data.
-    if(function_type == FUNCTION_DELTA){
-    //Approx delta function, round k_ll. I.e. one cell only. And size is 1/d theta
-    
-      for(int i=1; i<this->dims[0]; ++i) this->set_element(i,1,0);
-      //zero all other elements
-      float val;
-      val = 1.0/res;
-      //TODO this is wrong value. Wants to make integral 1...
-      this->set_element(0, 1, val);
-    }else if(function_type == FUNCTION_GAUSS){
-
-
-    }else if(function_type == FUNCTION_DELTA){
-
-
-    }else{
-
+      low_bnd = where(ax_ptr, len, om_disp *(1.0-tolerance));
+      high_bnd = where(ax_ptr, len, om_disp *(1.0+tolerance));
+      
+      //now total the part of the array between these bnds
+      total=0;
+      for(j=low_bnd; j<high_bnd; j++) total += parent->get_element(i,j);
+      this->set_element(i,0,total);
     }
 
-  }
+    //Now we generate evenly spaced angle axis, and generate required function ...
+    //NB What to work in? tan theta, but from 0 to infty. Need a cut off.... and that only covers paralllel, not antiparallel. We'll need to extend to that sooner or later...
+    {
+      int res = 1;
+      //set axis resolution somehow... TODO this
+      make_linear_axis(1, res, 0);
 
+      //Now generate the function data.
+      if(function_type == FUNCTION_DELTA){
+      //Approx delta function, round k_ll. I.e. one cell only. And size is 1/d theta
+      
+        for(int i=1; i<this->dims[0]; ++i) this->set_element(i,1,0);
+        //zero all other elements
+        float val;
+        val = 1.0/res;
+        //TODO this is wrong value. Wants to make integral 1...
+        this->set_element(0, 1, val);
+      }else if(function_type == FUNCTION_GAUSS){
+
+
+      }else if(function_type == FUNCTION_DELTA){
+
+
+      }else{
+
+      }
+
+    }
 
   }else if(parent){
  /** \todo general spectrum extracttion routine */

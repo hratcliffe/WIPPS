@@ -5,6 +5,7 @@
 
 \begin{document}
 
+\section{Resonant frequency}
 Start from Stix Equation 2.45 for the Right hand mode, noting that $\Omega_c$ contains the \emph{sign} of the particle charge:
 \begin{equation}\label{A}
 \mu^2 =  1 - \frac {\omega_{pe}^2}{\omega(\omega + \Omega_e \cos\theta)}
@@ -16,12 +17,10 @@ along with the resonance condition
 The latter is rewritten as
 \begin{equation}
 k_\parallel = k \cos\theta = \frac{1}{v_\parallel} \left(\omega - \frac{n \Omega_e}{\gamma} \right) \end{equation}
-
 and so as $ \mu = c k /\omega = (c k_\parallel)/( \omega \cos\theta)$ we get
 \begin{equation}\label{B}
 \mu = \frac{c ( \gamma \omega - n \Omega_e)}{\gamma\omega v_\parallel \cos\theta}.
 \end{equation}
-
 Now we equate \ref{A} and \ref{B}:
 \begin{equation}
 \frac{\omega(\omega + \Omega_e \cos\theta) - \omega_{pe}^2}{\omega(\omega + \Omega_e \cos\theta)} = \frac{c^2}{\gamma^2 \omega^2 v_\parallel^2 \cos^2\theta} (\gamma \omega - n \Omega_e)^2 \end{equation}
@@ -43,7 +42,6 @@ Write $v_\parallel / c = \tilde{v}$ and divide through by $c$:
 \begin{align}
 \gamma^2\omega^3 \tilde{v}^2 \cos^2 \theta + \gamma^2 \omega^2 \tilde{v}^2 \cos^3\theta\Omega_e - \gamma^2\omega \tilde{v}^2\cos^2\theta\omega_{pe}^2 &=\notag\\ \gamma^2 \omega^3 +  \Omega_e\cos\theta \gamma^2\omega^2 - 2  \omega^2 n\Omega_e\gamma - 2  n \Omega_e^2 \gamma\omega\cos\theta +  \omega n^2\Omega_e^2 +  n^2\Omega_e^3\cos\theta&
 \end{align}
-
 Now collect up coefficients of each power:
 \begin{align}
 \left(\gamma^2 \tilde{v}^2 \cos^2 \theta - \gamma^2   \right)&\omega^3  \notag\\
@@ -51,7 +49,6 @@ Now collect up coefficients of each power:
 +\left(- \gamma^2 \tilde{v}^2\cos^2\theta\omega_{pe}^2  +2  n \Omega_e^2 \gamma\cos\theta  - n^2\Omega_e^2   \right)&\omega \notag\\
 +\left(  -n^2\Omega_e^3\cos\theta   \right)&
 \end{align}
-
 Or as $\omega , \omega_{pe}, |\Omega_e| \gg 1$ we can make the substitution $ \omega_0 = \omega/\omega_{ref}$ to minimise the differences in size between the coefficients, giving:
 \begin{align}
 \left(\gamma^2 \tilde{v}^2 \cos^2 \theta - \gamma^2   \right)&(\omega_{ref}\omega_0)^3 \notag \\
@@ -67,6 +64,175 @@ or dividing through by $(\omega_{ref})^3$:
 +\left(  -n^2(\Omega_e/\omega_{ref})^3\cos\theta   \right)&\phantom{(\omega_ref\omega_0)^2} 
 \end{align}
 which are expected to be order 1 for $n \sim 1$ and $\tilde{v}, \cos\theta \sim 1$.
+
+\section{Normalisation of angular distribution}
+\newcommand{\atan}{\mathrm{atan}}
+\newcommand{\st}{\right|}
+
+We need to calculate the factor $N(\omega)$ in Lyons 1974  J Plasma Phys, 12, 417, Equation A3 or A5 for arbitrary $\mu$. I.e. 
+\begin{equation}
+N(\omega) = \frac{2}{(2\pi)^2} \int_0^\infty g_\omega( \tan^{-1} x ) \left| J \left( \frac{k_\perp, k_\parallel}{\omega, x} \right)\right| k_\perp d x
+\end{equation}
+Using Eq A6:
+\begin{equation}
+J \left( \frac{k_\perp, k_\parallel}{\omega, x} \right) = - \left.\frac{\partial k_\perp}{\partial x}\right|_\omega \cdot \left.\frac{\partial k_\parallel}{\partial \omega}\right|_{k_\perp}, 
+\end{equation}
+$k_\perp = x k_\parallel$ and $ \mu = c k /\omega$ we get 
+\begin{equation}
+\frac{\partial k_\perp}{\partial x} = \left. \frac{\partial}{\partial x} \left( x \cos(\atan x) \frac{\mu(x) \omega}{c}\right)\st_\omega.
+\end{equation}
+Using the chain rule:
+\begin{equation}
+\frac{\partial k_\perp}{\partial x} = \frac{\partial}{\partial x} \left( x \cos(\atan x)\right) \frac{\mu(x) \omega}{c} + x \cos(\atan x)\frac{\omega}{c}\frac{\partial \mu(x)}{\partial x}.
+\end{equation}
+Note that 
+\begin{align}
+\cos(\atan x) = \frac{1}{\sqrt{(x^2 + 1)}}, & \sin(\atan x) = \frac{x}{\sqrt{(x^2 + 1)}}
+\end{align}
+then we get
+\begin{equation}
+\frac{\partial k_\perp}{\partial x} = \frac{1}{(x^2+1)^\frac{3}{2}} \frac{\mu(x) \omega}{c} +\frac{x}{\sqrt{(x^2+1)}} \frac{\omega}{c}\frac{\partial \mu(x)}{\partial x},
+\end{equation}
+which becomes
+\begin{equation}
+\left.\frac{\partial k_\perp}{\partial x}\st_\omega = \frac{\omega}{c \sqrt{(x^2+1)}}\left( \frac{\mu(x)}{(1+x^2)}  + x \frac{\partial \mu(x)}{\partial x}\right).
+\end{equation}
+
+The other term we need is 
+\begin{equation} \left.\frac{\partial k_\parallel}{\partial \omega}\right|_{k_\perp}, 
+\end{equation}
+%where
+%\begin{equation}
+%k = \sqrt{(k_\parallel^2 + k_\perp^2)} = c \omega \sqrt{ 1 - \frac{\omega_{pe}^2}{\omega(\omega + \cos \theta \Omega_{ce})}}
+%\end{equation}
+%or
+%\begin{equation}
+%\frac{c^2 k^2}{\omega^2} =  1 - \frac {\omega_{pe}^2}{\omega(\omega + \Omega_e \cos\theta)}.
+%\end{equation}
+We can implicitly differentiate $k^2 = k_\parallel^2 + k_\perp^2$ as $ 2 k dk = 2 k_\perp dk_\perp + 2 k_\parallel dk_\parallel$ which for $k_\perp$ held constant means
+\begin{equation}
+\frac{\partial k}{\partial \omega} = \frac{\partial k_\parallel}{\partial \omega} \frac{k_\parallel}{k}.
+\end{equation}Now
+%\begin{align}
+%\frac{c^2 k^2}{\omega^2} &= \mu^2(\omega)\\
+%\frac{\partial \mu}{\partial \omega} &= \frac{- 2 c^2}{\omega^3} \frac{\partial (k^2)}{\partial \omega}\\
+%\frac{\partial (k^2)}{\partial \omega}&= 2 k \frac{\partial k}{\partial \omega}.
+%\end{align}
+\begin{align}
+\frac{c k}{\omega} &= \mu(\omega)\\
+\frac{\partial \mu}{\partial \omega} &= -\frac{ c k }{\omega^2} + \frac{c}{\omega}\frac{\partial k}{\partial \omega}\\
+%\frac{\partial (k^2)}{\partial \omega}&= 2 k \frac{\partial k}{\partial \omega}.
+\end{align}
+So
+\begin{align}
+\frac{\partial k_\parallel}{\partial \omega}  &=  \frac{k}{k_\parallel} \frac{\partial k}{\partial \omega}\notag\\
+&= \frac{k}{k_\parallel}\left( \frac{\partial \mu}{\partial \omega} + \frac {ck}{\omega^2}\right)\frac{\omega}{c}.
+%&=\frac{k}{k_\parallel}  \frac{1}{2k} \frac{\omega^3}{- 2 c^2} \frac{\partial \mu}{\partial \omega}\notag \\
+%&= -\frac{1}{ 4k_\parallel}  \frac{\omega^3}{c^2} \frac{\partial \mu}{\partial \omega}
+\end{align}
+
+Alternately we write $k_\parallel = k^2 - k_\perp^2)^{1/2}$ and differentiate this by $\omega$ to get the same result. 
+
+Now we get:
+\begin{equation}
+N(\omega) = \frac{2  \omega^2}{(2\pi)^2 c^2} \int_0^\infty g_\omega( \tan^{-1} x )
+\left| \frac{\mu(x)}{(1+x^2)}  + x \frac{\partial \mu(x)}{\partial x}\right|
+\left| \frac{\partial \mu}{\partial \omega} + \frac {ck}{\omega^2}\right|
+ k_\perp d x .
+\end{equation}
+The final step is to eliminate $k_\perp$ in favour of $\omega, x, \mu(\omega, x)$, using $ k_\perp = \mu \omega \sin(\atan x)/c$ to get 
+\begin{equation}
+N(\omega) = \frac{2  \omega^3}{(2\pi)^2 c^3} \int_0^\infty g_\omega( \atan x ) 
+\frac{x \mu(x, \omega)}{\sqrt{(x^2 + 1)}}  \left| \frac{\mu(x)}{(1+x^2)}  + x \frac{\partial \mu(x)}{\partial x}\right|
+ \left| \frac{\partial \mu}{\partial \omega} + \frac {\mu}{\omega}\right|
+ d x .
+\end{equation}
+
+\section{Obtaining Lyons A7}
+Substitute Lyons Eq (12) for Whistler mode (rewritten in terms of $x = \tan \theta$):
+\begin{align}
+&\mu^2 = \frac{\omega_{pe}^2}{\Omega_c^2}\frac{1+M}{M} \Psi^{-1} =: A \Psi^{-1}\\
+&\Psi = 1 - \frac{\omega^2}{\Omega_p\Omega_e} - \frac{x^2}{2(x^2 + 1)} + \left[\frac{x^4}{4(x^2+1)^2} + \left(\frac{\omega}{\Omega_p}\right)^2(1-M)^2\frac{1}{x^2 +1}\right]^{1/2}
+\end{align}
+to get \begin{equation}
+N(\omega) = \frac{2  \omega^3}{(2\pi)^2 c^3} \int g_\omega( \atan x ) 
+\frac{x A^{1/2} \Psi^{-1/2}}{\sqrt{(x^2 + 1)}}  \left( \frac{A^{1/2} \Psi^{-1/2}}{(1+x^2)}  + x A^{1/2}\frac{\partial \Psi^{-1/2}}{\partial x}\right)
+ \left( A^{1/2}\frac{\partial  \Psi^{-1/2}}{\partial \omega} + \frac {A^{1/2}\Psi^{-1/2}}{\omega}\right)
+ d x 
+\end{equation}
+\begin{align}
+N(\omega) &= \frac{2  \omega^3 A^{3/2}}{(2\pi)^2 c^3} \int g_\omega( \atan x ) 
+\frac{x \Psi^{-1/2}}{\sqrt{(x^2 + 1)}}  \left( \frac{\Psi^{-1/2}}{(1+x^2)}  + x \frac{\partial \Psi^{-1/2}}{\partial x}\right)
+ \left(\frac{\partial  \Psi^{-1/2}}{\partial \omega} + \frac {\Psi^{-1/2}}{\omega}\right)
+ d x\\ &:= \frac{2  \omega^3 A^{3/2}}{(2\pi)^2 c^3} \int g_\omega( \atan x ) K(x,\omega) dx
+\end{align}
+Now
+\begin{align}
+\frac{\partial \Psi^{-1/2}}{\partial X} &= -\frac{1}{2}\Psi^{-3/2} \frac{\partial \Psi}{\partial X}, \:X=\{x, \omega\}
+\end{align}
+and
+\begin{align}
+& \frac{\partial \Psi}{\partial x} = - \frac{2 x}{2(x^2+1)} + \frac{2x^3}{2(x^2+1)^2} + \notag\\&\frac{1}{2}\left[\frac{x^4}{4(x^2+1)^2} +\left(\frac{\omega}{\Omega_p}\right)^2(1-M)^2\frac{1}{x^2 +1}\right]^{-1/2} \left( \frac{4 x^3}{4(x^2+1)^2} + \frac{-4 x^5 }{4(x^2+1)^3} + \left(\frac{\omega}{\Omega_p}\right)^2(1-M)^2\frac{-2x}{(x^2 +1)^2}\right)\\
+&= - \frac{x}{(x^2+1)} + \frac{x^3}{(x^2+1)^2} + \notag\\&\frac{1}{2}\left[\frac{x^4}{4(x^2+1)^2} +\left(\frac{\omega}{\Omega_p}\right)^2(1-M)^2\frac{1}{x^2 +1}\right]^{-1/2} \left( \frac{x^3}{(x^2+1)^2} - \frac{x^5 }{(x^2+1)^3}  -\left(\frac{\omega}{\Omega_p}\right)^2(1-M)^2\frac{2x}{(x^2 +1)^2}\right)\\
+&= \frac{x}{(x^2+1)^2} \left\{- 1 + \frac{1}{2}\left[\frac{x^4}{4(x^2+1)^2} +\left(\frac{\omega}{\Omega_p}\right)^2(1-M)^2\frac{1}{x^2 +1}\right]^{-1/2} \left( \frac{x^{2?}}{(x^2+1)} -2\left(\frac{\omega}{\Omega_p}\right)^2(1-M)^2\right)\right\}.
+\end{align}
+Also
+\begin{align}
+ &\frac{\partial \Psi}{\partial \omega} = -\frac{2 \omega}{\Omega_p\Omega_e} + \left[\frac{x^4}{4(x^2+1)^2} + \left(\frac{\omega}{\Omega_p}\right)^2(1-M)^2\frac{1}{x^2 +1}\right]^{-1/2}\frac{\omega}{\Omega_p^2}(1-M)^2 \frac{1}{x^2+1}.
+\end{align}
+Now we plop these into $K(x, \omega)$ and find
+\begin{align}
+K(x, \omega)&=\frac{x \Psi^{-1/2}}{\sqrt{(x^2 + 1)}}  \left( \frac{\Psi^{-1/2}}{(1+x^2)}  + x \frac{\partial \Psi^{-1/2}}{\partial x}\right)
+ \left(\frac{\partial  \Psi^{-1/2}}{\partial \omega} + \frac {\Psi^{-1/2}}{\omega}\right)\\
+ &=\Psi^{-1}\frac{1}{\omega} \frac{x}{(x^2+1)^{3/2}}\times\notag\\& \left(1-\frac{1}{2} \Psi^{-1}x \frac{x}{(x^2+1)} \left\{- 1 + \frac{1}{2}\left[\frac{x^4}{4(x^2+1)^2} +\left(\frac{\omega}{\Omega_p}\right)^2(1-M)^2\frac{1}{x^2 +1}\right]^{-1/2} \left( \frac{x^2}{(x^2+1)} -2\left(\frac{\omega}{\Omega_p}\right)^2(1-M)^2\right)\right\}\right)\times\notag\\
+ & \left( 1 + \frac{\omega}{2}\Psi^{-1} \left\{\frac{2\omega}{\Omega_p\Omega_e} + \left[\frac{x^4}{4(x^2+1)^2} + \left(\frac{\omega}{\Omega_p}\right)^2(1-M)^2\frac{1}{x^2 +1}\right]^{-1/2}\frac{\omega}{\Omega_p^2}(1-M)^2 \frac{1}{x^2+1}\right\}  \right)
+\end{align}
+Define $K'$ as without the prefactor $ \Psi^{-1}\frac{1}{\omega} \frac{x}{(x^2+1)^{3/2}}$
+\begin{align}
+K'(x, \omega)&= \left(1 - \frac{1}{2} \Psi^{-1} \frac{x^2}{(x^2+1)} \left\{- 1 + \frac{1}{2}\left[\frac{x^4}{4(x^2+1)^2} +\left(\frac{\omega}{\Omega_p}\right)^2(1-M)^2\frac{1}{x^2 +1}\right]^{-1/2} \left( \frac{x^2}{(x^2+1)} -2\left(\frac{\omega}{\Omega_p}\right)^2(1-M)^2\right)\right\}\right)\times\notag\\
+ & \left( 1 + \frac{\omega}{2}\Psi^{-1} \left\{\frac{2\omega}{\Omega_p\Omega_e} + \left[\frac{x^4}{4(x^2+1)^2} + \left(\frac{\omega}{\Omega_p}\right)^2(1-M)^2\frac{1}{x^2 +1}\right]^{-1/2}\frac{\omega}{\Omega_p^2}(1-M)^2 \frac{1}{x^2+1}\right\}  \right)
+\end{align}
+The part in square brackets can be re-written as 
+\begin{align}
+ \left[\frac{x^4}{4(x^2+1)^2} + \left(\frac{\omega}{\Omega_p}\right)^2(1-M)^2\frac{1}{x^2 +1}\right]^{-1/2} &= \left( \Psi - 1 + \frac{\omega^2}{\Omega_p\Omega_e} + \frac{x^2}{2(x^2+1)}\right)^{-1}\notag\\
+ &=(1+x^2) \left[(1+x^2)\left(\Psi - 1 + \frac{\omega^2}{\Omega_p\Omega_e}\right) + \frac{x^2}{2}\right]^{-1}
+\end{align}
+so multiplying out we get
+\begin{align}
+K'(x, \omega)&= 1 + \Psi^{-1} \frac{\omega^2}{\Omega_p\Omega_e} + \Psi^{-1}\frac{x^2}{2(x^2+1)}\notag\\ 
+%& -\frac{1}{2} (1+x^2) \left[(1+x^2)\left(\Psi - 1 + \frac{\omega^2}{\Omega_p\Omega_e}\right) + \frac{x^2}{2}\right]^{-1}\frac{\omega^2}{\Omega_p^2}(1-M)^2 \frac{1}{1+x^2} \notag\\&+ \frac{1}{2} (1+x^2) \left[(1+x^2)\left(\Psi - 1 + \frac{\omega^2}{\Omega_p\Omega_e}\right) + \frac{x^2}{2}\right]^{-1}\left( \frac{x}{(x^2+1)} -2\left(\frac{\omega}{\Omega_p}\right)^2(1-M)^2\right)\notag\\
+& +\Psi^{-1}\frac{1}{2} \left[(1+x^2)\left(\Psi - 1 + \frac{\omega^2}{\Omega_p\Omega_e}\right) + \frac{x^2}{2}\right]^{-1}\frac{\omega^2}{\Omega_p^2}(1-M)^2 \notag\\&+ \Psi^{-1}\frac{1}{4}	x^2 \left[(1+x^2)\left(\Psi - 1 + \frac{\omega^2}{\Omega_p\Omega_e}\right) + \frac{x^2}{2}\right]^{-1}\left( \frac{x^2}{(x^2+1)} -2\left(\frac{\omega}{\Omega_p}\right)^2(1-M)^2\right)\notag\\
+& - \frac{1}{4}\Psi^{-2} \frac{x^2}{2(x^2+1)} \left\{-1 +\frac{1}{2}\left[\frac{x^4}{4(x^2+1)^2} +\left(\frac{\omega}{\Omega_p}\right)^2(1-M)^2\frac{1}{x^2 +1}\right]^{-1/2} \left( \frac{x^2}{(x^2+1)} -2\left(\frac{\omega}{\Omega_p}\right)^2(1-M)^2\right)\right\}\times\notag\\
+&\left\{\frac{2\omega^2}{\Omega_p\Omega_e} + \left[\frac{x^4}{4(x^2+1)^2} + \left(\frac{\omega}{\Omega_p}\right)^2(1-M)^2\frac{1}{x^2 +1}\right]^{-1/2}\frac{\omega^2}{\Omega_p^2}(1-M)^2 \frac{1}{x^2+1}\right\}.
+%& + \left[(1+x^2)\left(\Psi - 1 + \frac{\omega^2}{\Omega_p\Omega_e}\right) + \frac{x^2}{2}\right]^{-1}\left(\frac{\omega}{\Omega_p^2}(1-M)^2 \frac{x}{2} -(1+x^2)\left(\frac{\omega}{\Omega_p}\right)^2(1-M)^2\right)\notag\\
+\end{align}
+We also have
+\begin{align}
+fff 
+\end{align}
+
+
+% \begin{align}
+% K'(x, \omega)&= 1 + \Psi^{-1} \frac{\omega^2}{2\Omega_p\Omega_e} + \Psi^{-1}\frac{x^2}{2(x^2+1)}\notag\\ 
+% & +\Psi^{-1}\frac{1}{2} \left[(1+x^2)\left(\Psi - 1 + \frac{\omega^2}{\Omega_p\Omega_e}\right) + \frac{x^2}{2}\right]^{-1}\frac{\omega^2}{\Omega_p^2}(1-M)^2(1-x^2) \notag\\&+ \Psi^{-1}\frac{1}{4}	x^2 \left[(1+x^2)\left(\Psi - 1 + \frac{\omega^2}{\Omega_p\Omega_e}\right) + \frac{x^2}{2}\right]^{-1} \frac{x^2}{(x^2+1)}\notag\\
+% & - \frac{1}{4}\Psi^{-2} \frac{x^2}{2(x^2+1)} \left\{-1 +\frac{1}{2}\left[\frac{x^4}{4(x^2+1)^2} +\left(\frac{\omega}{\Omega_p}\right)^2(1-M)^2\frac{1}{x^2 +1}\right]^{-1/2} \left( \frac{x^2}{(x^2+1)} -2\left(\frac{\omega}{\Omega_p}\right)^2(1-M)^2\right)\right\}\times\notag\\
+% &\left\{\frac{2\omega^2}{\Omega_p\Omega_e} + \left[\frac{x^4}{4(x^2+1)^2} + \left(\frac{\omega}{\Omega_p}\right)^2(1-M)^2\frac{1}{x^2 +1}\right]^{-1/2}\frac{\omega^2}{\Omega_p^2}(1-M)^2 \frac{1}{x^2+1}\right\}
+% \end{align}
+% 
+
+%\begin{align}
+%$K'(x, \omega)&= 1 - \Psi^{-1} \frac{\omega^2}{\Omega_p\Omega_e} - \Psi^{-1}\frac{x^2}{x^2+1}\notag\\ 
+%& -\Psi^{-1}\frac{3}{2} \left[(1+x^2)\left(\Psi - 1 + \frac{\omega^2}{\Omega_p\Omega_e}\right) + \frac{x^2}{2}\right]^{-1}\frac{\omega^2}{\Omega_p^2}(1-M)^2 \notag\\&+\Psi^{-1} \frac{1}{2} \left[(1+x^2)\left(\Psi - 1 + \frac{\omega^2}{\Omega_p\Omega_e}\right) + \frac{x^2}{2}\right]^{-1}\left(x  -2 x^2\left(\frac{\omega}{\Omega_p}\right)^2(1-M)^2\right)\notag\\
+%& +\Psi^{-2}...
+%\end{align}
+%Now we consider the terms
+%\begin{align}
+%\frac{x^2}{x^2+1}+  \frac{1}{2} \left[(1+x^2)\left(\Psi - 1 + \frac{\omega^2}{\Omega_p\Omega_e}\right) + \frac{x^2}{2}\right]^{-1}\left(x  -2 x^2\left(\frac{\omega}{\Omega_p}\right)^2(1-M)^2\right)\notag\\
+%=\frac{1}{x^2+1} \left(x^2 + (1+x^2)^2 \left(x  -2 x^2\left(\frac{\omega}{\Omega_p}\right)^2(1-M)^2\right)\right) \left[\frac{x^4}{4(x^2+1)^2} + \left(\frac{\omega}{\Omega_p}\right)^2(1-M)^2\frac{1}{x^2 +1}\right]^{-1/2} 
+%\end{align}
+
+
+
 
 
 

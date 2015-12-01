@@ -153,5 +153,13 @@ class test_entity_plasma : public test_entity{
 //Check plasma functions, get_omega and dispersion relation
 };
 
+class test_entity_albertG1 : public test_entity{
+  private:
+  
+  public:
+  test_entity_albertG1();
+  virtual ~test_entity_albertG1();
+  virtual int run();
+};
 
 #endif

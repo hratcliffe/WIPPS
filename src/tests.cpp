@@ -621,4 +621,15 @@ The reason for using the better dispersion solver is a) to avoid any numerical d
 
 *So basically I am using the easy approx where a) it’s a genuine nightmare to do better (10-14th order polynomial) and b) I expect other errors to be similar or more important and c) I really hope it’s linear or polynomial in error*/
 
+test_entity_albertG1::test_entity_albertG1(){
 
+}
+test_entity_albertG1::~test_entity_albertG1(){
+
+}
+
+int test_entity_albertG1::run(){
+/** \todo WRITE!!!*/
+
+  return TEST_PASSED;
+}

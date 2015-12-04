@@ -1,0 +1,17 @@
+Error Wrong result, (code 1) on test reader class
+Passed test data array class
+Error Wrong result, (code 1) on test read and FFT
+Integrator OK
+Boxcar smooth OK
+Interpolate OK
+Passed test basic maths helpers
+Bessel functions OK
+Passed test external maths routines
+Testing resonant frequency solver
+1 frequency solutions found
+Freq is 5.823058e+03 = 3.310775e-01 om_ce
+Testing whistler high density approx.
+Testing dispersion solver for plasma O mode
+Testing dispersion solver for plasma X mode
+Passed test plasma
+Testing complete and logged in tests.log

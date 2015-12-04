@@ -1,0 +1,10 @@
+SDF/
+SDF_old/
+*.sdf
+obj/
+.DS_Store
+main
+read_test
+Code.xcworkspace
+*.txt
+Derivations.*

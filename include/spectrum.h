@@ -35,8 +35,10 @@ class spectrum : public data_array{
   spectrum(int nx, int n_ang);
   spectrum(int * row_lengths, int ny);
   virtual ~spectrum();
-  calc_type normB;
+  my_type normB;
+  my_type* normg;
   bool normaliseB();
+  bool normaliseg(my_type omega);
 
 public:
 
@@ -67,7 +69,7 @@ public:
   void make_test_spectrum();
 
   calc_type get_G1(calc_type omega);
-  calc_type get_G2(calc_type omega, mu_dmudom my_mu);
+  calc_type get_G2(calc_type omega, calc_type x);
 
 };
 

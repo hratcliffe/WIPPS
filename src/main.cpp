@@ -376,7 +376,7 @@ template<typename T> T interpolate(T* axis, T* vals, T target, int pts){
 *For pts=1 uses closest value, pts=2 uses 2 pt linear, \todo add more pts options
 */
 
-  T ret;
+  T ret = 0.0;
   if(pts ==1){
     //select closer value
     if(std::abs(target - axis[0]) <= std::abs(target - axis[1])) ret = vals[0];

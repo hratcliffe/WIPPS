@@ -33,6 +33,8 @@ void spectrum::construct(){
   my_controller = nullptr;
   ax_omega = true;
   normB = 0;
+  normg = 0;
+
 }
 
 spectrum::spectrum(int * row_lengths, int ny):data_array(row_lengths, ny){
@@ -45,6 +47,8 @@ spectrum::spectrum(int * row_lengths, int ny):data_array(row_lengths, ny){
   angle_is_function = true;
   n_angs = row_lengths[1];
   function_type = FUNCTION_DELTA;
+  normg = (my_type *) calloc(1, sizeof(my_type));
+  //Single row so only one norm
 }
 
 spectrum::spectrum(int nx, int n_ang):data_array(nx, n_ang+1){
@@ -56,6 +60,8 @@ spectrum::spectrum(int nx, int n_ang):data_array(nx, n_ang+1){
   construct();
   angle_is_function = false;
   n_angs = n_ang;
+  normg = (my_type *) calloc(n_ang, sizeof(my_type));
+  //Norm each row
 
 
 }
@@ -83,7 +89,7 @@ spectrum::~spectrum(){
 bool spectrum::generate_spectrum(data_array * parent){
 /**\brief Generate spectrum from data
 *
-*Takes a parent data array and uses the specified ids to generate a spectrum. Windows using the specified wave dispersion and integrates over frequency. Also adopts axes from parent.
+*Takes a parent data array and uses the specified ids to generate a spectrum. Windows using the specified wave dispersion and integrates over frequency. Also adopts axes from parent. \todo Ensure !angle_is_function forces all other rows to be equal length...
 */
 
   if(parent && angle_is_function){
@@ -313,11 +319,56 @@ bool spectrum::normaliseB(){
 /** Calculate the total square integral of values over range \todo Is this data bare or squared?*/
 //calc_type integrator(calc_type * start, int len, calc_type * increment){
 
-  my_type * d_axis = (my_type *) calloc(row_lengths[0], sizeof(my_type));
-  for(int i=0; i<row_lengths[0]-1; i++) d_axis[i] = get_axis_element(0, i+1) - get_axis_element(0, i);
+  int len;
+  if(angle_is_function) len = row_lengths[0];
+  else len = dims[0];
+  my_type * d_axis = (my_type *) calloc(len, sizeof(my_type));
+  for(int i=0; i<len-1; i++) d_axis[i] = get_axis_element(0, i+1) - get_axis_element(0, i);
 
-  normB = integrator(get_ptr(0, 0), row_lengths[0], d_axis);
+  normB = integrator(get_ptr(0, 0), len, d_axis);
 
+  return 0;
+}
+
+bool spectrum::normaliseg(my_type omega){
+/** Calculate the norm of g used in e.g. denom of Albert eq 3 or calc'd in derivations.tex. We assume omega, x are off the axes already so no   \todo Catch zero norms*/
+
+  int len=get_length(1);
+  plasma * plas =my_controller->get_plasma();
+
+  my_type * d_axis = (my_type *) calloc(len, sizeof(my_type));
+  for(int i=0; i<len-1; i++) d_axis[i] = get_axis_element(1, i+1) - get_axis_element(1, i);
+  //Construct dx axis
+
+  my_type * integrand = (my_type *) calloc(len, sizeof(my_type));
+  mu my_mu;
+
+  int om_ind = 1;
+  int lena=get_length(0);
+
+  if(ax_omega){
+    if(!angle_is_function) om_ind = where(get_axis(0, lena), lena, omega);
+  }else{
+    my_type k = get_k(omega, WAVE_WHISTLER);
+    if(!angle_is_function) om_ind = where(get_axis(0, lena), lena, k);
+    
+  }
+
+  my_type x, psi;
+  for(int i=0; i<len; i++){
+    x = get_axis_element(1, i);
+    psi = atan(x);
+    my_mu = plas->get_root(0, omega, psi);
+    integrand[i] = get_element(om_ind, i)* x * std::pow((std::pow(x, 2)+1), -1.5)*std::pow(my_mu.mu, 2) * std::abs( my_mu.mu + omega*my_mu.dmudom);
+  //product of g(theta) * x (x^2+1)^-(3/2) * mu^2 |mu+omega dmu/domega|
+  }
+  
+  //integrate
+  my_type normg_tmp = integrator(integrand, len, d_axis);
+  if(angle_is_function) om_ind -=1;
+  normg[om_ind] = normg_tmp;
+  //store into right place
+  
   return 0;
 }
 
@@ -347,7 +398,6 @@ calc_type spectrum::get_G1(calc_type omega){
       //we're right at end, can't meaningfully interpolate, use raw
       tmpB2 = get_element(0, offset);
     }
-    //Cast to type and multiply vg to finish change vars
     B2 = (calc_type) tmpB2;
     
   }else{
@@ -376,11 +426,20 @@ calc_type spectrum::get_G1(calc_type omega){
 
 }
 
-calc_type spectrum::get_G2(calc_type omega, mu_dmudom my_mu){
+calc_type spectrum::get_G2(calc_type omega, calc_type x){
 /**returns G2 calculated as in Albert 2005. */
 
-  calc_type a;
-  a = my_mu.mu;
-  //to silence unused warning temporarily
+  int om_ind, x_ind, len;
+  len=get_length(0);
+  if(!angle_is_function) om_ind = where(get_axis(0, len), len, omega);
+  else om_ind = 0;
+  if(normg[om_ind] == 0.0) normaliseg(omega);
+
+  len=get_length(1);
+
+  x_ind = where(get_axis(1, len), len, x);
+  
+
   return 0.0;
+
 }

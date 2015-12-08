@@ -129,12 +129,24 @@ int my_array::get_index(int nx, int ny){
   
   }
 }
-int my_array::get_dims(){return n_dims;}
+int my_array::get_dims(){
+  return n_dims;
+}
 int my_array::get_dims(int dim){
   if(dim < n_dims){
     return dims[dim];
   
   }else{return 0;}
+}
+
+int my_array::get_length(int dim){
+
+  if(!ragged) return get_dims(dim);
+  else{
+    if(n_dims==2 && dim < dims[1]) return row_lengths[dim];
+    else return 0;
+  }
+
 }
 
 my_type my_array::get_element(int nx, int ny){

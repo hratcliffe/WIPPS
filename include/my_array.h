@@ -40,6 +40,7 @@ public:
 
   int get_dims();
   int get_dims(int dim);
+  int get_length(int dim);
 
   my_type get_element(int nx, int ny);
   bool set_element(int nx, int ny, my_type val);

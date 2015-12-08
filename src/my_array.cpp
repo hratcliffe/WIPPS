@@ -408,7 +408,7 @@ my_type * data_array::get_axis(int dim, int & length){
 
   int index = get_axis_index(dim, 0);
   //Get index of 0th element
-  length = dims[dim];
+  length = get_length(dim);
   if(index != -1) return axes + index;
   else return nullptr;
 

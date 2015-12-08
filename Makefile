@@ -1,5 +1,7 @@
 
 
+
+OMPI_MPICC=clang++
 CC = mpic++
 SDFPATH = ./SDF
 #Path to the SDF libraries.
@@ -15,8 +17,10 @@ LIBSDF = -L /usr/local/lib/ $(SDFPATH)/C/lib/libsdfc.a
 LIB := $(LIBSDF)
 #LIB += ./matplotpp/matplotpp.a -lglut
 #Add the libraries for glut (openGL) and the matplot library
-CFLAGS = -g -c $(INCLUDE) -DVERSION=\"$(GIT_VERSION)\" -std=c++11
-DEBUG = -W -Wall -pedantic -D_GLIBCXX_DEBUG -Wextra
+CFLAGS = -c $(INCLUDE) -DVERSION=\"$(GIT_VERSION)\" -std=c++11
+DEBUG = -g -W -Wall -pedantic -D_GLIBCXX_DEBUG -Wextra
+PROFILE = -emit-llvm
+LFLAGS =
 #DEBUG+= -Wno-sign-compare
 #DEBUG+= -Wno-unused-parameter
 #Comment/uncomment these to hide specific errors...
@@ -34,6 +38,11 @@ endif
 
 ifeq ($(strip $(MODE)),test)
   CFLAGS += -DRUN_TESTS_AND_EXIT
+endif
+
+ifeq ($(strip $(MODE)),profile)
+  CFLAGS += $(PROFILE)
+  #LFLAGS += $(PROFILE)
 endif
 
 #list of all header and cpp pairs. 
@@ -56,7 +65,7 @@ WARN_STR = "**************Run make clean before changing MODE or TYPE. Run echo_
 #reminder about -D options
 
 main : echo_warning $(OBJS)
-	$(CC) $(INCLUDE) $(OBJS) $(LIB) -o main
+	$(CC) $(LFLAGS) $(INCLUDE) $(OBJS) $(LIB) -o main
 	@echo $(WARN_STR)
 
 echo_warning:

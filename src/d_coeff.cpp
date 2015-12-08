@@ -25,8 +25,8 @@ diffusion_coeff::diffusion_coeff(int nx, int n_angs):data_array(nx, n_angs){
 
   my_controller = nullptr;
 
-  n_thetas = 10;
-  n_n = 4;
+  n_thetas = 100;
+  n_n = 5;
   // FAKENUMBERS
 }
 
@@ -148,14 +148,17 @@ Get mu, dmu/domega which are used to:
 //-------------------Main loops here----------------------------
 //We have deep nested loops. Move ANYTHING that can be as far up tree as possible
 
-  for(int i =0; i< ((1< dims[0]) ? 1:dims[0]); ++i){
+//  for(int i =0; i< ((1< dims[0]) ? 1:dims[0]); ++i){
+  for(int i =0; i< dims[0]; ++i){
     //particle parallel velocity
     v_par = get_axis_element(0, i);
     n_min = get_min_n(v_par);
     n_max = get_max_n(v_par);
-
-    for(int k =0; k< ((1 <dims[1]) ? 1: dims[1]); k++){
+    std::cout<<"i "<<i<<std::endl;
+//    for(int k =0; k< ((1 <dims[1]) ? 1: dims[1]); k++){
+    for(int k =0; k< dims[1]; k++){
       //particle pitch angle
+      //std::cout<<k<<std::endl;
       alpha = get_axis_element(1, k);
       s2alpha = std::pow(std::sin(alpha), 2);
 
@@ -163,8 +166,8 @@ Get mu, dmu/domega which are used to:
       //theta loop for wave angle or x=tan theta
         theta = atan(x[j]);
         c2th = std::pow(cos(theta), 2);
-        std::cout<<j<<" "<<theta/pi<<"+++++++++++++++++++++++++"<<std::endl;
-        std::cout<< v_par<<std::endl;
+        //std::cout<<j<<" "<<theta/pi<<"+++++++++++++++++++++++++"<<std::endl;
+        //std::cout<< v_par<<std::endl;
 
         D_tmp = 0.0;
         for(int n=n_min; n<n_max; ++n){
@@ -173,11 +176,11 @@ Get mu, dmu/domega which are used to:
 
           for(size_t ii =0; ii< omega_calc.size(); ++ii){
           //each solution
-            std::cout<<"Freq is "<<omega_calc[ii]/my_const.omega_ce<<std::endl;
+            //std::cout<<"Freq is "<<omega_calc[ii]/my_const.omega_ce<<std::endl;
 
             my_mu = plas->get_phi_mu_om(omega_calc[ii], theta, alpha, n, omega_n);
 
-            if(!my_mu.err) std::cout<<"YAY!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! "<<n<<" "<<j<<std::endl;
+            //if(!my_mu.err) std::cout<<"YAY!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! "<<n<<" "<<j<<std::endl;
 
             mu_dom_mu = my_mu.mu + omega_calc[ii] * my_mu.dmudom;
             dmudx = my_mu.dmudtheta *c2th;

@@ -279,9 +279,7 @@ void spectrum::make_test_spectrum(){
 
   ax_ptr = get_axis(0, len0);
   float res = 1.0/(float)len0;
-
   for(int i=0; i<len0; i++) *(ax_ptr+i) = res*((float)i - (float)len0/2.0);
-
   
   //Generate the angle function data.
   if(function_type == FUNCTION_DELTA){
@@ -319,14 +317,10 @@ bool spectrum::normaliseB(){
 /** Calculate the total square integral of values over range \todo Is this data bare or squared?*/
 //calc_type integrator(calc_type * start, int len, calc_type * increment){
 
-  int len;
-  if(angle_is_function) len = row_lengths[0];
-  else len = dims[0];
+  int len = get_length(0);
   my_type * d_axis = (my_type *) calloc(len, sizeof(my_type));
   for(int i=0; i<len-1; i++) d_axis[i] = get_axis_element(0, i+1) - get_axis_element(0, i);
-
   normB = integrator(get_ptr(0, 0), len, d_axis);
-
   return 0;
 }
 
@@ -359,6 +353,7 @@ bool spectrum::normaliseg(my_type omega){
     x = get_axis_element(1, i);
     psi = atan(x);
     my_mu = plas->get_root(0, omega, psi);
+    std::cout<<my_mu.err<<std::endl;
     integrand[i] = get_element(om_ind, i)* x * std::pow((std::pow(x, 2)+1), -1.5)*std::pow(my_mu.mu, 2) * std::abs( my_mu.mu + omega*my_mu.dmudom);
   //product of g(theta) * x (x^2+1)^-(3/2) * mu^2 |mu+omega dmu/domega|
   }
@@ -367,6 +362,7 @@ bool spectrum::normaliseg(my_type omega){
   my_type normg_tmp = integrator(integrand, len, d_axis);
   if(angle_is_function) om_ind -=1;
   normg[om_ind] = normg_tmp;
+//  std::cout<<normg_tmp<<std::endl;
   //store into right place
   
   return 0;
@@ -427,19 +423,21 @@ calc_type spectrum::get_G1(calc_type omega){
 }
 
 calc_type spectrum::get_G2(calc_type omega, calc_type x){
-/**returns G2 calculated as in Albert 2005. */
+/**returns G2 calculated as in Albert 2005. \todo Interpolate! \todo IS THIS OMEGA OR do we calc omega according to conditions on integral???*/
+
 
   int om_ind, x_ind, len;
   len=get_length(0);
   if(!angle_is_function) om_ind = where(get_axis(0, len), len, omega);
   else om_ind = 0;
-  if(normg[om_ind] == 0.0) normaliseg(omega);
+  if(normg[om_ind] == 0.0){
+    normaliseg(omega);
+  }
 
   len=get_length(1);
-
   x_ind = where(get_axis(1, len), len, x);
   
-
-  return 0.0;
+  
+  return get_element(om_ind, x_ind)/normg[om_ind];
 
 }

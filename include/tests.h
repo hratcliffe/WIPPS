@@ -121,6 +121,7 @@ class test_entity_basic_maths : public test_entity{
     calc_type * data_positive;
     calc_type * data_tmp;
     calc_type * axis;
+    my_type * axisf;
     calc_type * d_axis;
     int size;
   public:

@@ -1,6 +1,9 @@
-Error Wrong result, (code 1) on test reader class
+Passed test reader class
 Passed test data array class
-Error Wrong result, (code 1) on test read and FFT
+Data read and FFT reports no error
+Passed test read and FFT
+1.350000e+01 1.400000e+01
+2.548900e+02 2.550000e+02
 Integrator OK
 Boxcar smooth OK
 Interpolate OK

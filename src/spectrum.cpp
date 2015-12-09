@@ -238,18 +238,39 @@ my_type * spectrum::get_angle_distrib(int &len, my_type omega){
 
 }*/
 
-int spectrum::where(my_type * ax_ptr, int len, my_type target){
+/*int spectrum::where(my_type * ax_ptr, int len, my_type target){
+/**\brief wraps maths where, because we need to check monotonicity of axes and act accordingly
+*
+*
+*
+//  int j;
+  //for(j=0;j<len; j++) if(ax_ptr[j]> target) break;
+//  for(j=0;j<len; j++) if(func(ax_ptr[j],  target)) break;
+  int cut=0;
+  return whereb(ax_ptr, len, target, cut);
+
+}*/
+
+/*int spectrum::whereb(my_type * ax_ptr, int len, my_type target, int sign, int &cut){
 /**\brief Finds first index where ax_ptr[i] vs target value satisfies the function given (e.g. std::greater)
 *
 *
-*/
-  int j;
-  for(j=0;j<len; j++) if(ax_ptr[j]> target) break;
-//  for(j=0;j<len; j++) if(func(ax_ptr[j],  target)) break;
+*
+  if((len==2 && ax_ptr[0]<target && ax_ptr[1] > target)) return cut;
+  else if(len==1) return cut;
+  else if(sign*ax_ptr[len/2] > sign*target){
+    whereb(ax_ptr, len/2, target, sign, cut);
+    
+  }
+  else if(sign*ax_ptr[len/2] <= sign*target){
+    cut+= len/2;
+    whereb(ax_ptr+len/2, len/2, target, sign, cut);
+  }else{
+    return -1;
+  
+  }
+}*/
 
-  return j;
-
-}
 
 std::vector<int> spectrum::all_where(my_type * ax_ptr, int len, my_type target,std::function<bool(my_type,my_type)> func){
 /**\brief Finds all indices where ax_ptr[i] vs target value satisfies the function given (e.g. std::greater)
@@ -439,9 +460,11 @@ calc_type spectrum::get_G1(calc_type omega){
       data_bit[1] = get_element(0, offset);
       //Get interpolated value of B for this k
       tmpB2 = interpolate(axis + offset-1, data_bit, k, 2);
-    }else{
+    }else if(offset==0){
       //we're right at end, can't meaningfully interpolate, use raw
       tmpB2 = get_element(0, offset);
+    }else{
+    
     }
     //Cast to type and multiply vg to finish change vars
     B2 = (calc_type) tmpB2 * get_omega(k, WAVE_WHISTLER, 1);

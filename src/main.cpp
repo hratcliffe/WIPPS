@@ -156,6 +156,44 @@ int main(int argc, char *argv[]){
 }
 
 
+int where(my_type * ax_ptr, int len, my_type target){
+/** \todo handle sign etc in here...
+*/
+  int cut=0;
+  if(ax_ptr[0] >=target || ax_ptr[len-1] < target) return -1;
+  return whereb(ax_ptr, len, target, cut);
+
+}
+
+int whereb(my_type * ax_ptr, int len, my_type target,int &cut, int sign){
+/**\brief Finds first index where ax_ptr[i] vs target value is greater.
+*
+*
+*/
+
+ // std::cout<<cut<<" "<<len<<std::endl;
+  //std::cout<<"val "<<ax_ptr[len/2]<<std::endl;
+  
+  if(len==1){
+     cut++;
+    // std::cout<<"term"<<std::endl;
+     return cut;
+  }
+  else if(sign*ax_ptr[len/2] >= sign*target){
+  //  std::cout<<"case >= "<<std::endl;
+    whereb(ax_ptr, len/2, target, cut, sign);
+
+    return cut;
+  }
+  else if(sign*ax_ptr[len/2] < sign*target){
+   // std::cout<<"case < "<<std::endl;
+    cut+= len/2;
+    whereb(ax_ptr+len/2, len-len/2, target, cut, sign);
+    return cut;
+  }
+}
+
+
 
 void get_deck_constants(){
 /** \brief Setup run specific constants

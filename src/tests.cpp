@@ -286,16 +286,19 @@ int test_entity_get_and_fft::run(){
 test_entity_basic_maths::test_entity_basic_maths(){
 
   name = "basic maths helpers";
-  size = 500;
+  size = 256;
   data_square=(calc_type*)calloc(size,sizeof(calc_type));
   data_positive=(calc_type*)calloc(size,sizeof(calc_type));
   data_tmp=(calc_type*)calloc(size,sizeof(calc_type));
   axis=(calc_type*)calloc(size,sizeof(calc_type));
   d_axis=(calc_type*)calloc(size,sizeof(calc_type));
 
+  axisf=(my_type*)calloc(size,sizeof(my_type));
+
   data_square[0] = 1.0;
   data_positive[0] = 0.0;
   axis[0] = 0.0;
+  axisf[0] = 0.0;
   d_axis[0] = 1.0;
   for(int i=1; i<size; ++i){
     data_square[i] = - data_square[i-1];
@@ -304,6 +307,8 @@ test_entity_basic_maths::test_entity_basic_maths(){
     //monotonic increase, integral = size * size/10/2 depending on upper bnd
     d_axis[i] = 1.0;
     axis[i] = axis[i-1] + d_axis[i];
+    axisf[i] = axisf[i-1] + 1.0;
+
   }
 
 //set up some data arrays...
@@ -320,6 +325,28 @@ test_entity_basic_maths::~test_entity_basic_maths(){
 
 int test_entity_basic_maths::run(){
   int err=TEST_PASSED;
+
+  my_type target;
+  int whe;
+
+  target = 13.5;
+  whe = where(axisf, size, target);
+  if(whe > 0){
+    if(!(axisf[whe] >= target && axisf[whe-1] <= target)) err|=TEST_WRONG_RESULT;
+    test_bed->report_info(mk_str(target)+" "+mk_str(axisf[whe]), 0);
+  }
+  target = 254.89;
+  whe = where(axisf, size, target);
+  if(whe > 0){
+    if(!(axisf[whe] >= target && axisf[whe-1] <= target)) err|=TEST_WRONG_RESULT;
+    test_bed->report_info(mk_str(target)+" "+mk_str(axisf[whe]), 0);
+  }
+  target = -2;
+  whe = where(axisf, size, target);
+  if(whe > 0){
+    if(!(axisf[whe] >= target && axisf[whe-1] <= target)) err|=TEST_WRONG_RESULT;
+    test_bed->report_info(mk_str(target)+" "+mk_str(axisf[whe]), 0);
+  }
 
   calc_type res = integrator(data_square, size, d_axis);
   if(res!= 0.0) err |= TEST_WRONG_RESULT;

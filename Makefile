@@ -17,7 +17,7 @@ LIBSDF = -L /usr/local/lib/ $(SDFPATH)/C/lib/libsdfc.a
 LIB := $(LIBSDF)
 #LIB += ./matplotpp/matplotpp.a -lglut
 #Add the libraries for glut (openGL) and the matplot library
-CFLAGS = -c $(INCLUDE) -DVERSION=\"$(GIT_VERSION)\" -std=c++11
+CFLAGS = -O0 -c $(INCLUDE) -DVERSION=\"$(GIT_VERSION)\" -std=c++11
 DEBUG = -g -W -Wall -pedantic -D_GLIBCXX_DEBUG -Wextra
 PROFILE = -g
 LFLAGS = -g
@@ -38,6 +38,7 @@ endif
 
 ifeq ($(strip $(MODE)),test)
   CFLAGS += -DRUN_TESTS_AND_EXIT
+  CFLAGS += $(PROFILE)
 endif
 
 ifeq ($(strip $(MODE)),profile)

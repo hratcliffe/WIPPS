@@ -103,6 +103,10 @@ std::string mk_str(double i);
 std::string mk_str(float i);
 std::string mk_str(long double i);
 
+int whereb(my_type * ax_ptr, int len, my_type target, int &cut,int sign=1.0);
+int where(my_type * ax_ptr, int len, my_type target);
+
+
 template<typename T> T interpolate(T* axis, T* vals, T target, int pts);
 template<typename T> T integrator(T * start, int len, T * increment);
 template<typename T> void inplace_boxcar_smooth(T * start, int len, int width, bool periodic = 0);

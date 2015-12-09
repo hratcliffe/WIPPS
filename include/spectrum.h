@@ -62,7 +62,8 @@ public:
   my_type * get_angle_distrib(int &len, my_type omega=0.0);
 
 //  int where(my_type * ax_ptr, int len, my_type target, std::function<bool(my_type,my_type)> func = std::greater<my_type>());
-  int where(my_type * ax_ptr, int len, my_type target);
+//  int where(my_type * ax_ptr, int len, my_type target);
+ // int whereb(my_type * ax_ptr, int len, my_type target, int sign, int &cut);
   std::vector<int> all_where(my_type * ax_ptr, int len, my_type target, std::function<bool(my_type,my_type)> func = std::greater<my_type>());
   
   bool write_to_file(std::fstream &file);

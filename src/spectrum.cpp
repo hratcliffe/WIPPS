@@ -224,14 +224,27 @@ my_type * spectrum::get_angle_distrib(int &len, my_type omega){
 
 }
 
-int spectrum::where(my_type * ax_ptr, int len, my_type target,std::function<bool(my_type,my_type)> func){
+/*int spectrum::where(my_type * ax_ptr, int len, my_type target,std::function<bool(my_type,my_type)> func){
+/**\brief Finds first index where ax_ptr[i] vs target value satisfies the function given (e.g. std::greater)
+*
+*
+*
+  int j;
+//  for(j=0;j<len; j++) if(ax_ptr[j]> target) break;
+  for(j=0;j<len; j++) if(func(ax_ptr[j],  target)) break;
+
+  return j;
+
+}*/
+
+int spectrum::where(my_type * ax_ptr, int len, my_type target){
 /**\brief Finds first index where ax_ptr[i] vs target value satisfies the function given (e.g. std::greater)
 *
 *
 */
   int j;
-//  for(j=0;j<len; j++) if(ax_ptr[j]> target) break;
-  for(j=0;j<len; j++) if(func(ax_ptr[j],  target)) break;
+  for(j=0;j<len; j++) if(ax_ptr[j]> target) break;
+//  for(j=0;j<len; j++) if(func(ax_ptr[j],  target)) break;
 
   return j;
 
@@ -275,25 +288,27 @@ void spectrum::make_test_spectrum(){
   my_type * ax_ptr;
 
   ax_ptr = get_axis(1, len1);
-  for(int i=0; i<len1; i++) *(ax_ptr+i) = (float)i;
+  my_type res_x = 4.0/len1;
+  for(int i=0; i<len1; i++) *(ax_ptr+i) = (my_type)i*res_x;
 
   ax_ptr = get_axis(0, len0);
-  float res = 1.0/(float)len0;
-  for(int i=0; i<len0; i++) *(ax_ptr+i) = res*((float)i - (float)len0/2.0);
+  my_type res_k = 1.0/(my_type)len0;
+  for(int i=0; i<len0; i++) *(ax_ptr+i) = res_k*((my_type)i - (my_type)len0/2.0);
   
   //Generate the angle function data.
   if(function_type == FUNCTION_DELTA){
   //Approx delta function, round k_ll. I.e. one cell only. And size is 1/d theta
-    float res = 1.0;
-    for(int i=1; i<this->row_lengths[1]; ++i) this->set_element(i,1,10);
+    for(int i=1; i<len1; ++i) this->set_element(i,1,1);
     //zero all other elements
-    float val = 1.0/res;
+    my_type val = 1.0/res_x;
     /** \todo this is wrong value. Wants to make integral 1...*/
-    this->set_element(0, 1, val);
+//    this->set_element(0, 1, val);
   }else if(function_type == FUNCTION_GAUSS){
+    for(int i=1; i<len1; ++i) this->set_element(i,1,1);
 
 
   }else{
+    for(int i=1; i<len1; ++i) this->set_element(i,1,1);
 
   }
   //Generate the negative k data
@@ -339,22 +354,33 @@ bool spectrum::normaliseg(my_type omega){
 
   int om_ind = 1;
   int lena=get_length(0);
-
-  if(ax_omega){
-    if(!angle_is_function) om_ind = where(get_axis(0, lena), lena, omega);
-  }else{
-    my_type k = get_k(omega, WAVE_WHISTLER);
-    if(!angle_is_function) om_ind = where(get_axis(0, lena), lena, k);
-    
+  if(!angle_is_function){
+    if(ax_omega){
+      om_ind = where(get_axis(0, lena), lena, omega);
+    }else{
+      my_type k = get_k(omega, WAVE_WHISTLER);
+      om_ind = where(get_axis(0, lena), lena, k);
+      
+    }
   }
-
+//  std::cout<<"ind "<<om_ind<<std::endl;
   my_type x, psi;
-  for(int i=0; i<len; i++){
+  int inda, indb;
+
+  angle_is_function ? indb=om_ind: inda=om_ind;
+
+  for(int i=0; i<len+lena; i++){
     x = get_axis_element(1, i);
     psi = atan(x);
     my_mu = plas->get_root(0, omega, psi);
-    std::cout<<my_mu.err<<std::endl;
-    integrand[i] = get_element(om_ind, i)* x * std::pow((std::pow(x, 2)+1), -1.5)*std::pow(my_mu.mu, 2) * std::abs( my_mu.mu + omega*my_mu.dmudom);
+    //std::cout<<get_element(om_ind, i)<<std::endl;
+
+    angle_is_function ? inda=i: indb=i;
+
+    if(!my_mu.err){
+      integrand[i] = get_element(inda, indb) * x * std::pow((std::pow(x, 2)+1), -1.5)*std::pow(my_mu.mu, 2) * std::abs( my_mu.mu + omega*my_mu.dmudom);
+//      std::cout<<integrand[i]<<std::endl;
+    }
   //product of g(theta) * x (x^2+1)^-(3/2) * mu^2 |mu+omega dmu/domega|
   }
   
@@ -362,7 +388,7 @@ bool spectrum::normaliseg(my_type omega){
   my_type normg_tmp = integrator(integrand, len, d_axis);
   if(angle_is_function) om_ind -=1;
   normg[om_ind] = normg_tmp;
-//  std::cout<<normg_tmp<<std::endl;
+  std::cout<<normg_tmp<<std::endl;
   //store into right place
   
   return 0;
@@ -428,10 +454,14 @@ calc_type spectrum::get_G2(calc_type omega, calc_type x){
 
   int om_ind, x_ind, len;
   len=get_length(0);
-  if(!angle_is_function) om_ind = where(get_axis(0, len), len, omega);
+  if(!angle_is_function){
+    if(ax_omega) om_ind = where(get_axis(0, len), len, omega);
+    else om_ind = where(get_axis(0, len), len, this->get_k(omega, WAVE_WHISTLER));
+  }
   else om_ind = 0;
   if(normg[om_ind] == 0.0){
     normaliseg(omega);
+//    std::cout<<"norming"<<om_ind<<std::endl;
   }
 
   len=get_length(1);

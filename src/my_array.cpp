@@ -234,7 +234,7 @@ bool my_array::write_to_file(std::fstream &file){
   *
   *IMPORTANT: this VERSION specifier links output files to code. If modifying output or order commit and clean build before using. @return 0 (sucess) 1 (error)
 */
-  if(!file.is_open()) return 1;
+  if(!file.is_open() || (this->data ==nullptr)) return 1;
   const char tmp_vers[15] = VERSION;
 
   file.write((char*) &io_verify, sizeof(my_type));
@@ -267,7 +267,7 @@ bool my_array::write_to_file(std::fstream &file){
     }
 
   }
-
+  std::cout<<total_size<<std::endl;
   file.write((char *) data , sizeof(my_type)*total_size);
 
   return 0;

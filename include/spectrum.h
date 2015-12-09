@@ -34,11 +34,11 @@ class spectrum : public data_array{
   void construct();
   spectrum(int nx, int n_ang);
   spectrum(int * row_lengths, int ny);
-  virtual ~spectrum();
   my_type normB;
   my_type* normg;
   bool normaliseB();
   bool normaliseg(my_type omega);
+  virtual ~spectrum();
 
 public:
 

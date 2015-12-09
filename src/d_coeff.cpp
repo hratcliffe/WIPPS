@@ -211,6 +211,9 @@ Get mu, dmu/domega which are used to:
   }
 //------------End main loops-----------------------------------
 
+  free(dx);
+  free(x);
+  free(D_theta);
 }
 
 

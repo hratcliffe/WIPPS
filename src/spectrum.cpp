@@ -33,7 +33,7 @@ void spectrum::construct(){
   my_controller = nullptr;
   ax_omega = true;
   normB = 0;
-  normg = 0;
+  normg = nullptr;
 
 }
 
@@ -83,6 +83,7 @@ void spectrum::set_ids(float time1, float time2, int space1, int space2, int wav
 
 spectrum::~spectrum(){
 
+  free(normg);
 
 }
 
@@ -265,8 +266,6 @@ std::vector<int> spectrum::all_where(my_type * ax_ptr, int len, my_type target,s
 
 bool spectrum::write_to_file(std::fstream &file){
 
-/**IMPORTANT: the VERSION specifier links output files to code. If modifying output or order commit and clean build before using.
-*/
   if(!file.is_open()) return 1;
   data_array::write_to_file(file);
   return 0;
@@ -279,7 +278,7 @@ void spectrum::make_test_spectrum(){
 
   char id[10] = "ex";
 
-  this->set_ids(0, 100, 0, dims[0], WAVE_WHISTLER, id);
+  this->set_ids(0, 100, 0, get_length(0), WAVE_WHISTLER, id);
   
   ax_omega = false;
 
@@ -302,7 +301,7 @@ void spectrum::make_test_spectrum(){
     //zero all other elements
     my_type val = 1.0/res_x;
     /** \todo this is wrong value. Wants to make integral 1...*/
-//    this->set_element(0, 1, val);
+    this->set_element(0, 1, val);
   }else if(function_type == FUNCTION_GAUSS){
     for(int i=1; i<len1; ++i) this->set_element(i,1,1);
 
@@ -336,6 +335,8 @@ bool spectrum::normaliseB(){
   my_type * d_axis = (my_type *) calloc(len, sizeof(my_type));
   for(int i=0; i<len-1; i++) d_axis[i] = get_axis_element(0, i+1) - get_axis_element(0, i);
   normB = integrator(get_ptr(0, 0), len, d_axis);
+  
+  free(d_axis);
   return 0;
 }
 
@@ -369,7 +370,7 @@ bool spectrum::normaliseg(my_type omega){
 
   angle_is_function ? indb=om_ind: inda=om_ind;
 
-  for(int i=0; i<len+lena; i++){
+  for(int i=0; i<len; i++){
     x = get_axis_element(1, i);
     psi = atan(x);
     my_mu = plas->get_root(0, omega, psi);
@@ -388,9 +389,11 @@ bool spectrum::normaliseg(my_type omega){
   my_type normg_tmp = integrator(integrand, len, d_axis);
   if(angle_is_function) om_ind -=1;
   normg[om_ind] = normg_tmp;
-  std::cout<<normg_tmp<<std::endl;
+//  std::cout<<normg_tmp<<std::endl;
   //store into right place
   
+  free(d_axis);
+  free(integrand);
   return 0;
 }
 

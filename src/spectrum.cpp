@@ -288,7 +288,7 @@ void spectrum::make_test_spectrum(){
   //Generate the negative k data
   
   float centre = 0.2, width=0.005, background = 0.5;
-  my_type * data_ptr = get_ptr(0, 0);
+  my_type * data_ptr = data;
   my_type * data_tmp, *ax_tmp;
   data_tmp = data_ptr;
   ax_tmp = ax_ptr;
@@ -311,7 +311,7 @@ bool spectrum::normaliseB(){
   int len = get_length(0);
   my_type * d_axis = (my_type *) calloc(len, sizeof(my_type));
   for(int i=0; i<len-1; i++) d_axis[i] = get_axis_element(0, i+1) - get_axis_element(0, i);
-  normB = integrator(get_ptr(0, 0), len, d_axis);
+  normB = integrator(data, len, d_axis);
   
   free(d_axis);
   return 0;

@@ -147,17 +147,6 @@ my_array::~my_array(){
   }
 }
 
-my_type * my_array::get_ptr(int nx, int ny){
-
-  int ind = get_index(nx, ny);
-  if(ind  != -1){
-    return data + ind; //*sizeof(my_type);
-  }else{
-    return NULL;
-  }
-
-}
-
 int my_array::get_index(int nx, int ny){
 /** \brief Get index for location
 *
@@ -202,6 +191,7 @@ int my_array::get_index(int nx, int ny, int nz){
       return -1;
     }
   }else{
+    return -1;
      /**\todo Can we do this case elegantly??*/
   }
 }
@@ -223,7 +213,8 @@ int my_array::get_index(int nx, int ny, int nz, int nt){
     }
   }else{
      /**\todo Can we do this case elegantly??*/
-  
+    return -1;
+
   }
 }
 
@@ -231,6 +222,10 @@ int my_array::get_dims(){
   return n_dims;
 }
 int my_array::get_dims(int dim){
+/** \brief Return dims[dim]
+*
+*WARNING Do NOT use this to get sizes of a ragged array. It won't work. Use get_length instead
+*/
   if(dim < n_dims){
     return dims[dim];
   
@@ -238,7 +233,10 @@ int my_array::get_dims(int dim){
 }
 
 int my_array::get_length(int dim){
-
+/** \brief Get size of dimension dim
+*
+*For a rectangular array returns the stored dim, else returns the row length for ragged
+*/
   if(!ragged) return get_dims(dim);
   else{
     if(n_dims==2 && dim < dims[1]) return row_lengths[dim];
@@ -361,20 +359,19 @@ bool my_array::populate_data(my_type * dat_in, int n_tot){
 bool my_array::populate_row(void * dat_in, int nx, int y_row){
 /** /brief Fill row
 *
-* Fills the row y_row of array from dat_in to length of nx. Nx is param for sanity so we can't overflow dat_in. @return 0 (sucess) 1 (error)
+* Fills the row y_row of array from dat_in to length of nx. Nx is param for sanity so we can't overflow dat_in. @return 0 (sucess) 1 (error) \todo Extend to larger dimensions
 */
 
   if(nx != dims[0]) return 1;
   if(y_row > dims[1] || y_row < 0) return 1;
+  int indx = get_index(0, y_row);
 
-  void * tmp = (void *)  get_ptr(0, y_row);
+  void * tmp = (void *) (data+indx);
 
-  if(!tmp) return 1;
+  if(indx==-1 || !tmp) return 1;
   memcpy (tmp , dat_in, nx*sizeof(my_type));
 
   return 0;
-
-
 }
 
 bool my_array::write_to_file(std::fstream &file){
@@ -423,94 +420,67 @@ bool my_array::write_to_file(std::fstream &file){
 }
 
 bool my_array::read_from_file(std::fstream &file){
-//For now this just spams to screen tested against what we wrote.
+/** \brief Test file read
+*
+*Spams stuff to screen to check read/write
+*/
 
-char tmp_vers[15];
-my_type verf=0.0;
+  char tmp_vers[15];
+  my_type verf=0.0;
 
-int n_dims_in, dim_tmp;
+  int n_dims_in, dim_tmp;
 
-file.read((char*) &verf, sizeof(my_type));
-std::cout<< verf<<" "<<io_verify<<std::endl;
+  file.read((char*) &verf, sizeof(my_type));
+  std::cout<< verf<<" "<<io_verify<<std::endl;
 
-file.read((char*) &tmp_vers, sizeof(char)*15);
-std::cout<<tmp_vers<<" "<<VERSION<<std::endl;
+  file.read((char*) &tmp_vers, sizeof(char)*15);
+  std::cout<<tmp_vers<<" "<<VERSION<<std::endl;
 
-if(verf != io_verify){
-//equality even though floats as should be identical
-  std::cout<<"Bugger, file read error";
-  if(tmp_vers !=VERSION) std::cout<<"Incompatible code versions"<<std::endl;
-  return 1;
-}else{
-  if(tmp_vers !=VERSION) std::cout<<"WARNING: A different code version was used to write this data. Proceed with caution. Fields may not align correctly."<<std::endl;
-}
-
-
-file.read((char*) &n_dims_in, sizeof(int));
-std::cout<<n_dims_in<<" "<<n_dims<<std::endl;
-
-
-for(int i=0;i<n_dims_in;i++){
-  file.read((char*) &dim_tmp, sizeof(int));
-  std::cout<<dim_tmp<<" "<<dims[i]<<std::endl;
-
-}
-
-my_type * data_tmp;
-data_tmp=(my_type*)malloc(dims[0]*dims[1]*sizeof(my_type));
-
-file.read((char *) data_tmp , sizeof(my_type)*dims[0]*dims[1]);
-std::cout<<std::setprecision(9);
-std::cout<<data_tmp[0]<<" "<<data[0]<<std::endl;
-std::cout<<data_tmp[10]<<" "<<data[10]<<std::endl;
-std::cout<<data_tmp[dims[0]-1]<<" "<<data[dims[0]-1]<<std::endl;
-std::cout<<data_tmp[dims[0]+50]<<" "<<data[dims[0]+50]<<std::endl;
-std::cout<<data_tmp[dims[0]*2+50]<<" "<<data[dims[0]*2+50]<<std::endl;
-
-std::cout<<data_tmp[dims[0]*dims[1]-1]<<" "<<data[dims[0]*dims[1]-1]<<std::endl;
-
-free(data_tmp);
-
-return 0;
-
-
-}
-
-std::string my_array::array_self_test(){
-
-  bool err;
-  std::string ret;
-  int val;
-  //FOR 2-D only...
-  if(n_dims != 2) return "Only 2-D version exists";
-  //assign each element to unique val
-
-  for(int i=0; i<dims[0]; i++){
-    for(int j =0; j<dims[1]; j++){
-      err=set_element(i, j, (i+1)*(2*j+1));
-      if(err) ret = "Cannot set element";
-    }
+  if(verf != io_verify){
+  //equality even though floats as should be identical
+    std::cout<<"Bugger, file read error";
+    if(tmp_vers !=VERSION) std::cout<<"Incompatible code versions"<<std::endl;
+    return 1;
+  }else{
+    if(tmp_vers !=VERSION) std::cout<<"WARNING: A different code version was used to write this data. Proceed with caution. Fields may not align correctly."<<std::endl;
   }
 
-  //test assignments worked
 
-  for(int i=0; i<dims[0]; i++){
-    for(int j =0; j<dims[1]; j++){
-      val = get_element(i,j);
-      if(val != (i+1)*(2*j+1)) ret += " Wrong element read";
-      std::cout<<val<<" ";
-    }
-    std::cout<<std::endl;
+  file.read((char*) &n_dims_in, sizeof(int));
+  std::cout<<n_dims_in<<" "<<n_dims<<std::endl;
+
+
+  for(int i=0;i<n_dims_in;i++){
+    file.read((char*) &dim_tmp, sizeof(int));
+    std::cout<<dim_tmp<<" "<<dims[i]<<std::endl;
+
   }
 
-  if(ret == "") ret = "Array OK";
+  my_type * data_tmp;
+  data_tmp=(my_type*)malloc(dims[0]*dims[1]*sizeof(my_type));
 
-  return ret;
+  file.read((char *) data_tmp , sizeof(my_type)*dims[0]*dims[1]);
+  std::cout<<std::setprecision(9);
+  std::cout<<data_tmp[0]<<" "<<data[0]<<std::endl;
+  std::cout<<data_tmp[10]<<" "<<data[10]<<std::endl;
+  std::cout<<data_tmp[dims[0]-1]<<" "<<data[dims[0]-1]<<std::endl;
+  std::cout<<data_tmp[dims[0]+50]<<" "<<data[dims[0]+50]<<std::endl;
+  std::cout<<data_tmp[dims[0]*2+50]<<" "<<data[dims[0]*2+50]<<std::endl;
+
+  std::cout<<data_tmp[dims[0]*dims[1]-1]<<" "<<data[dims[0]*dims[1]-1]<<std::endl;
+
+  free(data_tmp);
+
+  return 0;
+
 
 }
 
 void data_array::construct(){
-/** Common constructor bits. So we can never have anything uninitialised.*/
+/** \brief Common parts for all constructors
+*
+*
+*/
 
   ax_defined = false;
   time[0]=0; time[1]=1;
@@ -529,6 +499,22 @@ data_array::data_array(int nx, int ny) : my_array(nx,ny){
   if(axes) ax_defined=true;
 
 }
+data_array::data_array(int nx, int ny, int nz) : my_array(nx,ny, nz){
+/**Adds axes to a normal rectangular my array*/
+
+  construct();
+  axes=(my_type*)calloc((nx+ny+nz),sizeof(my_type));
+  if(axes) ax_defined=true;
+
+}
+data_array::data_array(int nx, int ny, int nz, int nt) : my_array(nx,ny, nz, nt){
+/**Adds axes to a normal rectangular my array*/
+
+  construct();
+  axes=(my_type*)calloc((nx+ny+nz+nt),sizeof(my_type));
+  if(axes) ax_defined=true;
+
+}
 
 data_array::data_array(int * row_lengths, int ny): my_array(row_lengths,ny){
 /** Adds axes to a ragged my_array One per row in this case...*/
@@ -544,13 +530,16 @@ data_array::~data_array(){
 /**Similarly destructor automatically calls destructor for my_array and frees axes*/
 
   if(axes) free(axes);
-  axes = NULL; // technically unnecessary as desctructor deletes memebers.
+  axes = NULL; // technically unnecessary as desctructor deletes members.
   
 
 }
 
 my_type * data_array::get_axis(int dim, int & length){
-/** Returns pointer to given axis and its length. If axes don't exist or dimension is out of range, returns nullptr*/
+/**  \brief Get pointer to axis
+*
+*Returns pointer to given axis and its length. If axes don't exist or dimension is out of range, returns nullptr
+*/
 
   if(!ax_defined || (dim >= n_dims)) return nullptr;
 
@@ -568,7 +557,7 @@ int data_array::get_axis_index(int dim, int pt){
 *Takes care of all bounds checking and disposition in memory. Returns -1 if out of range of any sort, otherwise, suitable index. Let this function do all bounds checks.
 */
 
-  if(dim < 0 || dim >=n_dims || (!ragged && pt >=dims[dim])) return -1;
+  if(dim < 0 || dim >=n_dims || pt >=get_length(dim)) return -1;
   //Out of range error
   
   int offset = 0;
@@ -586,7 +575,10 @@ int data_array::get_axis_index(int dim, int pt){
 }
 
 my_type data_array::get_axis_element(int dim, int pt){
-/** Return axis element at nx, ny. Out of range etc will return 0.0*/
+/** \brief Get axis value
+*
+*Returns value at pt in dimension dim if in range, else 0.0
+*/
 
   int ind = get_axis_index(dim, pt);
   if(ind  != -1){
@@ -600,7 +592,7 @@ my_type data_array::get_axis_element(int dim, int pt){
 bool data_array::set_axis_element(int dim, int pt, my_type val){
 /** \brief Sets array element
 *
-*Sets elements at pt on dimension dim, @return 1 if out of range, wrong number of args, 0 else.
+*Sets elements at pt on dimension dim, @return 1 if out of range, 0 else.
 */
 
   int index = get_axis_index(dim, pt);
@@ -646,7 +638,10 @@ float data_array::get_res(int i){
 }
 
 int data_array::get_total_axis_elements(){
-
+/** \brief Return total axes length
+*
+*Sums number of total elements in all axes
+*/
   int tot_els=0;
 
   if(!ragged){
@@ -692,34 +687,36 @@ bool data_array::write_to_file(std::fstream &file){
 }
 
 bool data_array::read_from_file(std::fstream &file){
-//For now this just spams to screen tested against what we wrote.
+/** \brief Test file read
+*
+*Spams stuff to screen to check read/write
+*/
 
-//First read the block ID
-char id_in[11];
+  //First read the block ID
+  char id_in[11];
 
-file.read(id_in, sizeof(char)*11);
-std::cout<< id_in<<" "<<block_id<<std::endl;
+  file.read(id_in, sizeof(char)*11);
+  std::cout<< id_in<<" "<<block_id<<std::endl;
 
-my_array::read_from_file(file);
-//call parent class to read data
+  my_array::read_from_file(file);
+  //call parent class to read data
 
-//now read axes
-std::cout<<"Axes :"<<std::endl;
-my_type * data_tmp;
-data_tmp=(my_type*)malloc((dims[0]+dims[1])*sizeof(my_type));
+  //now read axes
+  std::cout<<"Axes :"<<std::endl;
+  my_type * data_tmp;
+  data_tmp=(my_type*)malloc((dims[0]+dims[1])*sizeof(my_type));
 
-file.read((char *) data_tmp , sizeof(my_type)*(dims[0]+dims[1]));
+  file.read((char *) data_tmp , sizeof(my_type)*(dims[0]+dims[1]));
 
-std::cout<<data_tmp[0]<<" "<<axes[0]<<std::endl;
-std::cout<<data_tmp[10]<<" "<<axes[10]<<std::endl;
-std::cout<<data_tmp[dims[0]-1]<<" "<<axes[dims[0]-1]<<std::endl;
-std::cout<<data_tmp[dims[0]]<<" "<<axes[dims[0]]<<std::endl;
-std::cout<<data_tmp[dims[0]+dims[1]-1]<<" "<<axes[dims[0]+dims[1]-1]<<std::endl;
+  std::cout<<data_tmp[0]<<" "<<axes[0]<<std::endl;
+  std::cout<<data_tmp[10]<<" "<<axes[10]<<std::endl;
+  std::cout<<data_tmp[dims[0]-1]<<" "<<axes[dims[0]-1]<<std::endl;
+  std::cout<<data_tmp[dims[0]]<<" "<<axes[dims[0]]<<std::endl;
+  std::cout<<data_tmp[dims[0]+dims[1]-1]<<" "<<axes[dims[0]+dims[1]-1]<<std::endl;
 
-free(data_tmp);
+  free(data_tmp);
 
-
-return 0;
+  return 0;
 
 
 }
@@ -727,7 +724,7 @@ return 0;
 bool data_array::fft_me(data_array * data_out){
 /** \brief FFT data_array
 *
-* Data and axes in this object are FFT'd using FFTW and stored into the instance pointed to by data_out. Data_out must be created with correct dimensions first, but we check and return error (1) if it is not so.
+* Data and axes in this object are FFT'd using FFTW and stored into the instance pointed to by data_out. Data_out must be created with correct dimensions first, but we check and return error (1) if it is not so. \todo Add 3, 4 dimensions
 */
 
   if(!data_out->is_good()){
@@ -822,7 +819,6 @@ bool data_array::fft_me(data_array * data_out){
 }
 
 void data_array::copy_ids( data_array * src){
-//parent_class::copy_id(parent_class * one){ strcpy(one->id, this->id);}
 /** Copies ID fields from src array to this */
 
   strcpy(src->block_id, this->block_id);

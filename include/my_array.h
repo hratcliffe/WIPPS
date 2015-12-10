@@ -22,7 +22,6 @@ protected:
   int * cumulative_row_lengths; /**Offset to start of given row to iterate through*/
   my_type *data;/** The data */
   bool defined; /**flag to check memory allocation sucess*/
-  my_type * get_ptr(int nx, int ny);/** Shouldn't need this. Should use get/set_element*/
 
 public:
 
@@ -53,15 +52,9 @@ public:
 
   bool populate_data(my_type * dat_in, int n_tot);
   bool populate_row(void * dat_in, int nx, int y_row);
-  /** Populate data
 
-  */
   virtual bool write_to_file(std::fstream &file);
   bool read_from_file(std::fstream &file);
-
-  //we can use [] to wrap get elements and have the args pushed into vector which we then work with to be generic
-
-  std::string array_self_test();
 
 };
 
@@ -82,13 +75,15 @@ public:
 
   virtual void construct();
   data_array(int nx, int ny);
+  data_array(int nx, int ny, int nz);
+  data_array(int nx, int ny, int nz, int nt);
   data_array(int * row_lengths, int ny);
   virtual ~data_array();
 
   virtual bool is_good(){return defined && ax_defined;}
   my_type * get_axis(int dim, int & length);
 
-  int get_axis_index(int nx, int ny);
+  int get_axis_index(int dim, int pt);
 
   my_type get_axis_element(int dim, int pt);
   bool set_axis_element(int dim, int pt, my_type val);

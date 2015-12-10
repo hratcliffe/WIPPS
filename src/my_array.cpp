@@ -18,60 +18,109 @@
 #include "support.h"
 #include "my_array.h"
 
+extern mpi_info_struc mpi_info;
+
 
 my_array::my_array(){
-
+/** Default constructor*/
   construct();
 }
 
 void my_array::construct(){
-//Common constructor bits. So we can never have anything uninitialised.
+/** \brief Shared contructor code
+*
+*Sets default values of things in case of constructor omissions
+*/
   defined = false;
   ragged=false;
   n_dims = 0;
+  data=nullptr;
 
 }
 
-my_array::my_array(int nx, int ny){
-
+my_array::my_array(int nx, int ny, int nz, int nt){
+/** \brief 2-d rectangular array
+*
+*Sets up a n-d rectangular array of nx*ny and allocates data arrays. If either of first 2 sizes is zero or exceeds MAX_SIZE, print error and exit. Otherwise construct 2, 3, 4d as dims specify
+*/
   construct();
-  n_dims = 2;
-  this->dims = (int*)malloc(n_dims*sizeof(int));
-  dims[0]=nx;
-  dims[1]=ny;
-  data = NULL;
+  
+  if(ny==0 || nx==0){
+    my_print("Array cannot have 0 dim", mpi_info.rank);
+    return;
+  }
+  if(ny> MAX_SIZE || nx>MAX_SIZE|| nz>MAX_SIZE || nt>MAX_SIZE){
+    my_print("Array size exceeds MAX_SIZE of "+mk_str(MAX_SIZE), mpi_info.rank);
+    return;
+  }
+  if(nz==0 && nt==0){
+    n_dims = 2;
+    this->dims = (int*)malloc(n_dims*sizeof(int));
+    dims[0]=nx;
+    dims[1]=ny;
 
-  data=(my_type*)calloc(nx*ny,sizeof(my_type));
+    data=(my_type*)calloc(nx*ny,sizeof(my_type));
+  }else if (nt==0){
+    n_dims = 3;
+    this->dims = (int*)malloc(n_dims*sizeof(int));
+    dims[0]=nx;
+    dims[1]=ny;
+    dims[2]=nz;
 
+    data=(my_type*)calloc(nx*ny*nz,sizeof(my_type));
+  
+  }else if (nz>0 && nt>0){
+    n_dims = 4;
+    this->dims = (int*)malloc(n_dims*sizeof(int));
+    dims[0]=nx;
+    dims[1]=ny;
+    dims[2]=nz;
+    dims[3]=nt;
+
+    data=(my_type*)calloc(nx*ny*nz*nt,sizeof(my_type));
+  
+  }else{
+    my_print("Array cannot have 0 dim", mpi_info.rank);
+    return;
+
+  }
   if(data){
     defined = true;
   }
-  //Check allocation suceeded
 }
 
 my_array::my_array(int * row_len, int ny){
-//sets up ragged array with different row lengths
+/** \brief 2-d ragged array
+*
+*Sets up a 2-d array containing ny rows of lengths given in row_len and allocates data arrays. If ny is zero or exceeds MAX_SIZE, or any row_len is, print error and exit
+*/
 
   construct();
-  if(ny ==0) return;
+  
+  int nx_min=MAX_SIZE, nx_max=0;
+  for(int i=0; i< ny; ++i){
+    if(row_len[i]< nx_min) nx_min = row_len[i];
+    if(row_len[i]> nx_max) nx_max = row_len[i];
+  }
+  if(ny==0 || nx_min==0){
+    my_print("Array size cannot be 0", mpi_info.rank);
+    return;
+  }
+  if(ny> MAX_SIZE || nx_max >MAX_SIZE){
+    my_print("Array size exceeds MAX_SIZE of "+mk_str(MAX_SIZE), mpi_info.rank);
+    return;
+  }
+
   n_dims = 2;
   dims = (int*)malloc(n_dims*sizeof(int));
   dims[0]=0;
   dims[1]=ny;
   ragged = true;
 
-  data = NULL;
   this->row_lengths = (int*) malloc(ny*sizeof(int));
   this->cumulative_row_lengths = (int*) malloc(ny*sizeof(int));
 
   memcpy((void *) this->row_lengths, (void *)row_len, ny*sizeof(int));
-
-  //For safety let's test row lengths are all less than MAX_SIZE
-  for(int i=0; i<ny; i++){
-    if(this->row_lengths[i] > MAX_SIZE) this->row_lengths[i] = MAX_SIZE;
-    if(this->row_lengths[i] < 0) this->row_lengths[i] = 0;
-
-  }
   
   cumulative_row_lengths[0] = 0;
 
@@ -85,7 +134,10 @@ my_array::my_array(int * row_len, int ny){
 }
 
 my_array::~my_array(){
-
+/** Clean up explicit allocations
+*
+*
+*/
   if(data) free(data);
   data = NULL; // technically unnecessary as desctructor deletes memebers. 
   if(dims) free(dims);
@@ -109,10 +161,13 @@ my_type * my_array::get_ptr(int nx, int ny){
 int my_array::get_index(int nx, int ny){
 /** \brief Get index for location
 *
-*Takes care of all bounds checking and disposition in memory. Returns -1 if out of range of any sort, otherwise, suitable index. NB. Let this function do all bounds checks. Just call it plain.
+*Takes care of all bounds checking and disposition in memory. Returns -1 if out of range of any sort, otherwise, suitable index. NB. Let this function do all bounds checks. Just call it plain. This function is called often so we make it as simple as possible and write one for each number of args
 */
 
-  if(n_dims != 2) return -1;
+  if(n_dims != 2){
+    return -1;
+    my_print("Wrong array dimension, check get_index calls", mpi_info.rank);
+  }
   if(!ragged){
     if((nx < dims[0]) && (ny<dims[1])){
       return ny*dims[0] + nx;
@@ -129,6 +184,49 @@ int my_array::get_index(int nx, int ny){
   
   }
 }
+int my_array::get_index(int nx, int ny, int nz){
+/** \brief Get index for location
+*
+*Takes care of all bounds checking and disposition in memory. Returns -1 if out of range of any sort, otherwise, suitable index. NB. Let this function do all bounds checks. Just call it plain. This function is called often so we make it as simple as possible and write one for each number of args
+*/
+
+  if(n_dims != 3){
+    return -1;
+    my_print("Wrong array dimension, check get_index calls", mpi_info.rank);
+  }
+
+  if(!ragged){
+    if((nx < dims[0]) && (ny<dims[1]) && ((nz<dims[2]))){
+      return (nz*dims[1]+ ny)*dims[0] + nx;
+    }else{
+      return -1;
+    }
+  }else{
+     /**\todo Can we do this case elegantly??*/
+  }
+}
+int my_array::get_index(int nx, int ny, int nz, int nt){
+/** \brief Get index for location
+*
+*Takes care of all bounds checking and disposition in memory. Returns -1 if out of range of any sort, otherwise, suitable index. NB. Let this function do all bounds checks. Just call it plain. This function is called often so we make it as simple as possible and write one for each number of args
+*/
+
+  if(n_dims != 4){
+    return -1;
+    my_print("Wrong array dimension, check get_index calls", mpi_info.rank);
+  }
+  if(!ragged){
+    if((nx < dims[0]) && (ny<dims[1])&& ((nz<dims[2]))&& ((nt<dims[3]))){
+      return ((nt*dims[2] +nz)*dims[1]+ ny)*dims[0] + nx;
+    }else{
+      return -1;
+    }
+  }else{
+     /**\todo Can we do this case elegantly??*/
+  
+  }
+}
+
 int my_array::get_dims(){
   return n_dims;
 }
@@ -159,6 +257,26 @@ my_type my_array::get_element(int nx, int ny){
   }
 
 }
+my_type my_array::get_element(int nx, int ny, int nz){
+/** Return element at nx, ny, nz. Out of range etc will return 0.0*/
+  int ind = get_index(nx, ny, nz);
+  if(ind  != -1){
+    return data[ind];
+  }else{
+    return 0.0;
+  }
+
+}
+my_type my_array::get_element(int nx, int ny, int nz, int nt){
+/** Return element at nx, ny, nz, nt. Out of range etc will return 0.0*/
+  int ind = get_index(nx, ny, nz, nt);
+  if(ind  != -1){
+    return data[ind];
+  }else{
+    return 0.0;
+  }
+
+}
 
 int my_array::get_total_elements(){
 /** Return total size of array */
@@ -181,6 +299,36 @@ bool my_array::set_element(int nx, int ny, my_type val){
 */
 
   int index = get_index(nx, ny);
+  if(index >= 0){
+    data[index] = val;
+    return 0;
+  }else{
+    return 1;
+  }
+  
+}
+bool my_array::set_element(int nx, int ny, int nz, my_type val){
+/** \brief Sets array element
+*
+*Sets elements at nx, ny, nz, @return 1 if out of range, wrong number of args, 0 else.
+*/
+
+  int index = get_index(nx, ny, nz);
+  if(index >= 0){
+    data[index] = val;
+    return 0;
+  }else{
+    return 1;
+  }
+  
+}
+bool my_array::set_element(int nx, int ny, int nz, int nt, my_type val){
+/** \brief Sets array element
+*
+*Sets elements at nx, ny, nz, nt, @return 1 if out of range, wrong number of args, 0 else.
+*/
+
+  int index = get_index(nx, ny, nz, nt);
   if(index >= 0){
     data[index] = val;
     return 0;

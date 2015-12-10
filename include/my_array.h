@@ -28,13 +28,15 @@ public:
 
   my_array();
   virtual void construct();
-  my_array(int nx, int ny);
+  my_array(int nx, int ny, int nz=0, int nt=0);
   my_array(int * row_lengths, int ny);
   virtual ~my_array();
 
   virtual bool is_good(){return !defined;}/** Check memory allocation etc worked*/
 
   virtual int get_index(int nx, int ny);
+  virtual int get_index(int nx, int ny, int nz);
+  virtual int get_index(int nx, int ny, int nz, int nt);
   int get_total_elements();
   /** These two account for all details of internal layout in memory */
 
@@ -43,7 +45,11 @@ public:
   int get_length(int dim);
 
   my_type get_element(int nx, int ny);
+  my_type get_element(int nx, int ny, int nz);
+  my_type get_element(int nx, int ny, int nz, int nt);
   bool set_element(int nx, int ny, my_type val);
+  bool set_element(int nx, int ny, int nz, my_type val);
+  bool set_element(int nx, int ny, int nz, int nt, my_type val);
 
   bool populate_data(my_type * dat_in, int n_tot);
   bool populate_row(void * dat_in, int nx, int y_row);

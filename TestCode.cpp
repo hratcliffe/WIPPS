@@ -289,5 +289,41 @@ if(parent){
 }
 
 
+int my_array::get_index(int nx, int ny, int nz, int nt){
+/** \brief Get index for location
+*
+*Takes care of all bounds checking and disposition in memory. Returns -1 if out of range of any sort, otherwise, suitable index. NB. Let this function do all bounds checks. Just call it plain. \todo Can we handle >2-d ragged arrays a sensible way?
+*/
+
+  if(!ragged){
+    bool in_range=true;
+    int[4] dim_in;
+    int indx;
+    dim_in[0]=nx;
+    dim_in[1]=ny;
+    dim_in[2]=nz;
+    dim_in[3]=nt;
+    
+    so if (( nx<dims[0] || dims[0]==0) &&
+    for(int i=0; i<n_dims; i++) in_range &= (dim_in[i] < get_dims[i]);
+
+    if(in_range){
+      if(n_dims ==2) return ny*dims[0] + nx;
+
+
+    }else{
+      return -1;
+    }
+  }else if (n_dims == 2){
+    //have to check specific row length...
+    if((ny<dims[1]) && (nx < row_lengths[ny])){
+      return cumulative_row_lengths[ny] + nx;
+    }else{
+      return -1;
+    }
+  
+  }else return -1;
+}
+
 
 

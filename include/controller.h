@@ -13,17 +13,19 @@ class spectrum;
 class plasma;
 class diffusion_coeff;
 
-/** Ties together plasma objects with resulting spectra and diffusion coefficients Will also be responislbe for forming bounce averaged coefficients from a stack of ds?*/
-class controller{
-/** */
-  plasma * my_plas;
+/** \brief Controls plasma, spectrum and d_coeff objects and their connections
+*
+*This is the public facing class controlling plasma, spectrum and d_coeff objects. It makes sure there is a plasma to provide needed functions for the latters. Will also be responislbe for forming bounce averaged coefficients from a stack of ds?
+* @author Heather Ratcliffe @date 19/11/2015.
+*/
 
-  //These might become vectors
-  spectrum * my_spect;
-  diffusion_coeff * my_d;
+class controller{
+  plasma * my_plas; /** Plasma object*/
+
+  spectrum * my_spect;/** Spectrum object or vector thereof?*/
+  diffusion_coeff * my_d;/** Diffusion coefficient object or vector thereof?*/
 
 public:
-
 
   controller();
   ~controller();

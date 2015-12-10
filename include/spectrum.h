@@ -13,11 +13,11 @@ class data_array;
 class plasma;
 class controller;
 
-class spectrum : public data_array{
 /** \brief Specialised data_array to hold spectrum
 *
-*Specialises shape and adds functions to process spectrum, normalise it etc.
+*Specialises shape and adds functions to process spectrum, normalise it etc. Can be created/destroyed only by controllers \author Heather Ratcliffe \date 24/09/2015
 */
+class spectrum : public data_array{
   friend void controller::add_spectrum(int nx, int n_ang);
   friend void controller::add_spectrum(int * row_lengths, int ny);
   friend controller::~controller();

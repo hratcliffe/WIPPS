@@ -12,6 +12,11 @@
 #include <stdlib.h> //for malloc eeejit
 #include <vector>
 
+/** \brief A basic array class
+*
+*Contains dimension information and data. Can be rectangular of 2,3,or 4 dimensions or ragged of 2 (rows of different lengths). \author Heather Ratcliffe \date 21/09/2015
+*/
+
 class my_array{
 
 protected:
@@ -58,9 +63,12 @@ public:
 
 };
 
-
+/** \brief Extended my_array class including axes
+*
+*Contains also data axes and various id's describing the data set from which data came. Also has ability to fft itself into a new instance. \author Heather Ratcliffe \date 21/09/2015
+*/
 class data_array : public my_array{
-/**Data array plus axes to hold field data. Includes ability to window in space/time */
+
 protected:
 
   bool ax_defined;

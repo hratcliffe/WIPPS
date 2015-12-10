@@ -18,33 +18,34 @@
 
 
 
-/** This is going to take care of opening and reading from SDF. We'll give it a pointer to a storage class instance, and it can then use that to obtain pointer to the bit of memory to fill. We'll also give it a numerical range, a file prefix, and a block name to grab. Perhaps we also have option to restrict on the ranges, so we can easily block in space.
-*
-*It will be sort of safe. It wont store the data array to write to, but will need to be fed it. So we can't overwrite the wrong memory. \todo maybe we write a verify sdf which checks our files have the correct dimensionalities etc etc and contain needed blocks...
-
-*
-*/
 
 extern mpi_info_struc mpi_info;
-//void my_print(std::string text, int rank, int rank_to_write=0);
-//std::string mk_str(int i);/**<Converts int to string*/
 
-
-reader::reader(std::string file_prefix_in,  char * block_id_in){
-/**We'll also have to work out how many zeros to use at some point. For nw we'll do it when we make the reader eh, as that's where we assign the prefix. We'll assume a 0th file exists, and default and minimum is 4. We'll also try 5-7.
+reader::reader(std::string file_prefix_in,  char * block_id_in, int first){
+/** \brief Create reader
+*
+*Sets up ids and tests how many zeros are in filename by trial and error. First is by default 0, and is the reference dump number to use for testing dims and zeros.
+Default and minimum is 4 or the length of first as a string, tries 5-7 also.
 */
   strcpy(this->block_id, block_id_in);
   this->file_prefix = file_prefix_in;
-  
+  this->ref_file_num = first;
   std::ifstream file;
-  std::string name = file_prefix + "000.sdf";
-  n_z=3;
+
+  std::string file_ref = mk_str(ref_file_num);
+  int n_z_first = file_ref.size();
+  if(n_z_first > MAX_FILENAME_DIGITS){
+    my_print("Really that many files??", 0, mpi_info.rank);
+  }
+
+  std::string name = file_prefix + file_ref+".sdf";
+  n_z=n_z_first;
 
   while(!file.is_open()){
-   name.insert(file_prefix.size(), "0");
-   file.open(name);
-   n_z ++;
-   if(n_z > 8) break;
+    name.insert(file_prefix.size(), "0");
+    file.open(name);
+    n_z ++;
+    if(n_z > MAX_FILENAME_DIGITS+1) break;
   }
   file.close();
 
@@ -53,13 +54,13 @@ reader::reader(std::string file_prefix_in,  char * block_id_in){
 bool reader::read_dims(int &n_dims, std::vector<int> &dims){
 /** \brief Gets dimensions of the block specified in reader.
 *
-*Opens 0th file, and gets dimension info. Returns by reference, with 0 for success, 1 for file open or read failure. Note we don't have to read the data, only the block list.
+*Opens reference file, and gets dimension info. Returns by reference, with 0 for success, 1 for file open or read failure. Note we don't have to read the data, only the block list.
 
 */
   char fmt[5];
   char file_num[10];
   sprintf(fmt,"%s%d%c" , "%0", n_z, 'd');
-  snprintf(file_num, 10, fmt, 0);
+  snprintf(file_num, 10, fmt, ref_file_num);
   std::string file_name = file_prefix + file_num +".sdf";
 
  // std::cout<<"Opening "<<file_name<<std::endl;
@@ -96,7 +97,9 @@ bool reader::read_dims(int &n_dims, std::vector<int> &dims){
 }
 
 bool reader::read_data(data_array * my_data_in, int time_range[2], int space_range[2]){
-/** This will open the files dictated by time range seuqentially, and populate them into the data_array. It'll stop when the end of rnage is reached, or it goes beyond the size available. Space range upper entry of -1 is taken as respective limit. @return 0 for success, 1 for error \todo Currently gives no report of nature of error...
+/** \brief Read data into given array
+*
+*This will open the files dictated by time range sequentially, and populate them into the data_array. It'll stop when the end of range is reached, or it goes beyond the size available. Space range upper entry of -1 is taken as respective limit. @return 0 for success, 1 for error \todo Currently gives no report of nature of error...
 */
 
 //First we check the space range is within range, and chnage the -1's to the repsective dimensions. If out of rnage we return error (1).
@@ -196,6 +199,10 @@ return 0;
 }
 
 std::string reader::get_full_name(int num){
+/** \brief Construct file name
+*
+*Combines the prefix, correct number of zeros and .sdf extension into name
+*/
 
   char fmt[5];
   char file_num[10];
@@ -209,7 +216,10 @@ std::string reader::get_full_name(int num){
 }
 
 int reader::get_file_size(){
-
+/**\brief Get recorded file size
+*
+*Acts as basic check of SDF integrity and reading. This should match size on disk.
+*/
   sdf_file_t *handle;
   sdf_block_t * block;
 

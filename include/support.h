@@ -39,6 +39,7 @@
 
 
 const int MAX_SIZE = 10000;
+const int MAX_FILENAME_DIGITS = 7;
 const my_type io_verify = 3.0/32.0;
 //An exactly binary representable my_type to verify we're reading what we're writing...
 const calc_type pi = 3.14159265359;
@@ -54,6 +55,10 @@ const calc_type eps0 =8.85418782e-12; //F/m
 //epsilon0 = 8.8541878176203899d-12 ; F/m
 //h_planck = 6.62606957d-34 ; J s
 
+/** \brief Constants read from deck
+*
+*Holds run parameters extracted from deck file such as temperature, reference frequencies etc
+*/
 struct deck_constants{
   float v_t;
   float omega_pe;
@@ -64,12 +69,20 @@ struct deck_constants{
 
 };
 
+/** \brief MPI information
+*
+*Holds info on MPI: processor ranks etc
+*/
 struct mpi_info_struc{
 
   int rank;
   int n_procs;
 };
 
+/** \brief Full refractive index
+*
+*Contains refractive index mu and all derivatives, plus error flag
+*/
 struct mu{
   calc_type mu;
   calc_type mug;
@@ -82,6 +95,10 @@ struct mu{
 
 };
 
+/** \brief Reduced refractive index
+*
+*Contains refractive index mu, the two derivative needed for diffusion coefficient calculation, the phi function of e.g. Albert 2005 and error flag
+*/
 struct mu_dmudom{
   calc_type mu;
   calc_type dmudom;

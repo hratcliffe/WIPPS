@@ -2,10 +2,6 @@
 //  d_coeff.cpp
 //  
 //
-/** \file d_coeff.cpp This file will calculate the diffusion coefficients from a spectrum. We'll try first just going for it. Does it make sense to have this be any sort of object? Possibly, in that we want to keep info on how, where, etc, etc, and the axes. So possibly it is again descended from a data_array. For now, implement some basic calcs
-*
-* @author Heather Ratcliffe @date 23/09/2015.
-*/
 
 #include <math.h>
 #include <algorithm>
@@ -22,7 +18,10 @@ extern mpi_info_struc mpi_info;
 extern deck_constants my_const;
 
 diffusion_coeff::diffusion_coeff(int nx, int n_angs):data_array(nx, n_angs){
-
+/** \brief Create coefficient
+*
+*Creates rectangular data_array and sets additional parameters
+*/
   my_controller = nullptr;
 
   n_thetas = 100;
@@ -36,6 +35,10 @@ diffusion_coeff::~diffusion_coeff(){
 }
 
 void diffusion_coeff::set_ids(float time1, float time2, int space1, int space2, int wave_id, char block_id[10]){
+/**\brief Set parameters
+*
+*Sets the time and space ranges, wave type etc attached to the spectrum. Times should be in terms of file output time. Space in terms of grid points.
+*/
 
   this->time[0] = time1;
   this->time[1] = time2;
@@ -61,7 +64,7 @@ void diffusion_coeff::make_velocity_axis(){
 
   calc_type res = v0 * 0.01;
   make_linear_axis(0, res, -2);
-  //-2 is for testing so 0th element is non zero...
+  //-2 is for testing so 0th element is > zero...
   // FAKENUMBERS
 }
 

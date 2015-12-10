@@ -3,11 +3,6 @@
 //  
 //
 //  Created by Heather Ratcliffe on 07/10/2015.
-/** \brief Plasma parameters and dispersion
-*
-*This class will take care of solving the plasma dispersion roots, selecting a wave mode if necessary etc etc. The base calculations are modified from file mufunctions3.f90 author  Clare E. J. Watt                                   date 18/05/10. From there: Note that mu is calculated using the Appleton-Hartree relation, and the choice of sign is obtained from Albert [2005].
-* @author Heather Ratcliffe  @date 07/10/2015
-*/
 
 #include <stdio.h>
 #include <cmath>

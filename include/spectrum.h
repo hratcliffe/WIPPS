@@ -9,48 +9,36 @@
 #ifndef _spectrum_h
 #define _spectrum_h
 
-
-//Lets have a spectrum class then
-//Contains data, axis, sizes, ids (field, time range, space range)
-//For now, let's stick to the 1-d, then there's only delta say in angle...
-//We can impose say a narrow Gaussian later.
-//NB Note in 1-d also omega and k_pllel and k are freely interchangeable
-//Alright. Lets just add an extra row for the B^2, and fill the rest of the array with g_omega. It's never going to be a massive amount of data
-//But if the angle profile is say a function, we don't need to...
-
 class data_array;
 class plasma;
 class controller;
 
 class spectrum : public data_array{
-//specialised data array with extra ID fields to hold additional data
-
+/** \brief Specialised data_array to hold spectrum
+*
+*Specialises shape and adds functions to process spectrum, normalise it etc.
+*/
   friend void controller::add_spectrum(int nx, int n_ang);
   friend void controller::add_spectrum(int * row_lengths, int ny);
   friend controller::~controller();
 
-  controller * my_controller;
+  controller * my_controller;/**Links this to a plasma object*/
   bool ax_omega;/** Flag whether we derived in k or omega*/
   void construct();
-  spectrum(int nx, int n_ang);
-  spectrum(int * row_lengths, int ny);
-  my_type normB;
-  my_type* normg;
-  bool normaliseB();
-  bool normaliseg(my_type omega);
-  virtual ~spectrum();
+  spectrum(int nx, int n_ang);/**Private because only controllers can create/destroy*/
+  spectrum(int * row_lengths, int ny);/**Private because only controllers can create/destroy*/
+  my_type normB;/** Norm of B(w)*/
+  my_type* normg;/** Norms of g_w(x) for each w*/
+  bool normaliseB();/** Fills normB*/
+  bool normaliseg(my_type omega);/** Fills normg for omega*/
+  virtual ~spectrum();/**Private because only controllers can create/destroy*/
 
 public:
 
-  int wave_id;
-  //ID for which wave cutout we're going for...
-
-  bool angle_is_function;
-  //Says either we're in 1-D, and we impose functional form for anguar profile, e.g delta function or Gaussian, or we're in 2-D but still wish to impose.
-
-  int function_type;
-
-  int n_angs;
+  int wave_id; /**ID for which wave mode cutout we're going for*/
+  bool angle_is_function;/** Says we impose g(x) rather than have one g for each w*/
+  int function_type;/** Type code for angular function*/
+  int n_angs;/** Number of angles to use*/
 
   void set_ids(float time1, float time2, int space1, int space2, int wave_id, char block_id[10], int function_type=FUNCTION_NULL);
 
@@ -61,9 +49,6 @@ public:
 
   my_type * get_angle_distrib(int &len, my_type omega=0.0);
 
-//  int where(my_type * ax_ptr, int len, my_type target, std::function<bool(my_type,my_type)> func = std::greater<my_type>());
-//  int where(my_type * ax_ptr, int len, my_type target);
- // int whereb(my_type * ax_ptr, int len, my_type target, int sign, int &cut);
   std::vector<int> all_where(my_type * ax_ptr, int len, my_type target, std::function<bool(my_type,my_type)> func = std::greater<my_type>());
   
   bool write_to_file(std::fstream &file);

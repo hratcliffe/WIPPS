@@ -18,6 +18,7 @@ LIB := $(LIBSDF)
 #LIB += ./matplotpp/matplotpp.a -lglut
 #Add the libraries for glut (openGL) and the matplot library
 CFLAGS = -O0 -c $(INCLUDE) -DVERSION=\"$(GIT_VERSION)\" -std=c++11
+CFLAGS += -g
 DEBUG = -g -W -Wall -pedantic -D_GLIBCXX_DEBUG -Wextra
 PROFILE = -g
 LFLAGS = -g

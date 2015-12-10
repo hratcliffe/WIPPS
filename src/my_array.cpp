@@ -267,7 +267,7 @@ bool my_array::write_to_file(std::fstream &file){
     }
 
   }
-  std::cout<<total_size<<std::endl;
+  //std::cout<<total_size<<std::endl;
   file.write((char *) data , sizeof(my_type)*total_size);
 
   return 0;

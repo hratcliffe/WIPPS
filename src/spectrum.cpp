@@ -19,10 +19,6 @@
 
 extern deck_constants my_const;
 
-//OK now it makes fine sense for spectrum to know about parent class as it's already descended from it. So we can happily have it take one of those and self generate from it so to speak
-//or vice versa?
-
-
 void spectrum::construct(){
 /** \brief Generic specturm contruction actions
 *
@@ -90,7 +86,7 @@ spectrum::~spectrum(){
 bool spectrum::generate_spectrum(data_array * parent){
 /**\brief Generate spectrum from data
 *
-*Takes a parent data array and uses the specified ids to generate a spectrum. Windows using the specified wave dispersion and integrates over frequency. Also adopts axes from parent. \todo Ensure !angle_is_function forces all other rows to be equal length...
+*Takes a parent data array and uses the specified ids to generate a spectrum. Windows using the specified wave dispersion and integrates over frequency. Also adopts axes from parent. \todo Ensure !angle_is_function forces all other rows to be equal length... \todo Fill in the rest of logic etc
 */
 
   if(parent && angle_is_function){
@@ -107,18 +103,21 @@ bool spectrum::generate_spectrum(data_array * parent){
 
     int j;
     int low_bnd, high_bnd;
-    float om_disp;
-    float tolerance = 0.05;
-    float total;
+    my_type om_disp;
+    my_type tolerance = 0.05;
+    my_type total;
     for(int i=0; i<this->dims[0]; ++i){
       
       om_disp = get_omega(this->axes[i], WAVE_WHISTLER);
 
       low_bnd = where(ax_ptr, len, om_disp *(1.0-tolerance));
       high_bnd = where(ax_ptr, len, om_disp *(1.0+tolerance));
-      
+      if(low_bnd < 0 || high_bnd< 0){
+        this->set_element(i,0,0.0);
+        break;
+      }
       //now total the part of the array between these bnds
-      total=0;
+      total=0.0;
       for(j=low_bnd; j<high_bnd; j++) total += parent->get_element(i,j);
       this->set_element(i,0,total);
     }
@@ -141,9 +140,6 @@ bool spectrum::generate_spectrum(data_array * parent){
         //TODO this is wrong value. Wants to make integral 1...
         this->set_element(0, 1, val);
       }else if(function_type == FUNCTION_GAUSS){
-
-
-      }else if(function_type == FUNCTION_DELTA){
 
 
       }else{
@@ -204,8 +200,10 @@ my_type spectrum::get_k(my_type omega, int wave_type, bool deriv){
 }
 
 my_type * spectrum::get_angle_distrib(int &len, my_type omega){
-//Now if it's a single function we return just a row, and dont need the omega param
-//If it's not, we select row by omega. The length will always be n_angs, but we return it for clarity
+/** \brief Return g_w(x) for given omega
+*
+*Returns the row corresponding to omega. If the angle distribution is a single function, the omega param may be omitted. Len is set to the axis length, which is always = n_angs
+*/
 
   my_type * ret = NULL;
 
@@ -216,7 +214,7 @@ my_type * spectrum::get_angle_distrib(int &len, my_type omega){
   }else if(omega !=0.0){
   //select row by omega...
     int offset = where(axes+ dims[0], n_angs, omega);
-    ret = data + offset*dims[0];
+    if(offset>0) ret = data + offset*dims[0];
 
   }
 
@@ -225,56 +223,10 @@ my_type * spectrum::get_angle_distrib(int &len, my_type omega){
 
 }
 
-/*int spectrum::where(my_type * ax_ptr, int len, my_type target,std::function<bool(my_type,my_type)> func){
-/**\brief Finds first index where ax_ptr[i] vs target value satisfies the function given (e.g. std::greater)
-*
-*
-*
-  int j;
-//  for(j=0;j<len; j++) if(ax_ptr[j]> target) break;
-  for(j=0;j<len; j++) if(func(ax_ptr[j],  target)) break;
-
-  return j;
-
-}*/
-
-/*int spectrum::where(my_type * ax_ptr, int len, my_type target){
-/**\brief wraps maths where, because we need to check monotonicity of axes and act accordingly
-*
-*
-*
-//  int j;
-  //for(j=0;j<len; j++) if(ax_ptr[j]> target) break;
-//  for(j=0;j<len; j++) if(func(ax_ptr[j],  target)) break;
-  int cut=0;
-  return whereb(ax_ptr, len, target, cut);
-
-}*/
-
-/*int spectrum::whereb(my_type * ax_ptr, int len, my_type target, int sign, int &cut){
-/**\brief Finds first index where ax_ptr[i] vs target value satisfies the function given (e.g. std::greater)
-*
-*
-*
-  if((len==2 && ax_ptr[0]<target && ax_ptr[1] > target)) return cut;
-  else if(len==1) return cut;
-  else if(sign*ax_ptr[len/2] > sign*target){
-    whereb(ax_ptr, len/2, target, sign, cut);
-    
-  }
-  else if(sign*ax_ptr[len/2] <= sign*target){
-    cut+= len/2;
-    whereb(ax_ptr+len/2, len/2, target, sign, cut);
-  }else{
-    return -1;
-  
-  }
-}*/
-
-
 std::vector<int> spectrum::all_where(my_type * ax_ptr, int len, my_type target,std::function<bool(my_type,my_type)> func){
-/**\brief Finds all indices where ax_ptr[i] vs target value satisfies the function given (e.g. std::greater)
+/**\brief Find all points where
 *
+*Finds all indices where ax_ptr[i] vs target value satisfies the function given (e.g. std::greater)
 *
 */
   std::vector<int> ret;
@@ -286,7 +238,7 @@ std::vector<int> spectrum::all_where(my_type * ax_ptr, int len, my_type target,s
 }
 
 bool spectrum::write_to_file(std::fstream &file){
-
+/** \brief Write to file*/
   if(!file.is_open()) return 1;
   data_array::write_to_file(file);
   return 0;
@@ -294,7 +246,9 @@ bool spectrum::write_to_file(std::fstream &file){
 }
 
 void spectrum::make_test_spectrum(){
-/**Makes a basic spectrum object with suitable number of points, and twin, symmetric Gaussians centred at fixed x.
+/** \brief Generate dummy spectrum
+*
+*Makes a basic spectrum object with suitable number of points, and twin, symmetric Gaussians centred at fixed x. \todo Finish cases!!!
 */
 
   char id[10] = "ex";
@@ -349,8 +303,10 @@ void spectrum::make_test_spectrum(){
 }
 
 bool spectrum::normaliseB(){
-/** Calculate the total square integral of values over range \todo Is this data bare or squared?*/
-//calc_type integrator(calc_type * start, int len, calc_type * increment){
+/** \brief Normalise B(w)
+*
+* Calculate the total square integral of values over range \todo Is this data bare or squared?
+*/
 
   int len = get_length(0);
   my_type * d_axis = (my_type *) calloc(len, sizeof(my_type));
@@ -362,16 +318,20 @@ bool spectrum::normaliseB(){
 }
 
 bool spectrum::normaliseg(my_type omega){
-/** Calculate the norm of g used in e.g. denom of Albert eq 3 or calc'd in derivations.tex. We assume omega, x are off the axes already so no   \todo Catch zero norms*/
+/** \brief Normalise g_w(x)
+*
+*Calculate the norm of g used in e.g. denom of Albert eq 3 or calc'd in derivations.tex. We assume omega, x are off the axes already so no interpolation  \todo Catch zero norms
+*/
 
   int len=get_length(1);
   plasma * plas =my_controller->get_plasma();
 
   my_type * d_axis = (my_type *) calloc(len, sizeof(my_type));
-  for(int i=0; i<len-1; i++) d_axis[i] = get_axis_element(1, i+1) - get_axis_element(1, i);
-  //Construct dx axis
-
   my_type * integrand = (my_type *) calloc(len, sizeof(my_type));
+
+  for(int i=0; i<len-1; i++) d_axis[i] = get_axis_element(1, i+1) - get_axis_element(1, i);
+  //Construct dx axis for integration
+
   mu my_mu;
 
   int om_ind = 1;
@@ -385,41 +345,45 @@ bool spectrum::normaliseg(my_type omega){
       
     }
   }
-//  std::cout<<"ind "<<om_ind<<std::endl;
+  if(om_ind<0) return 1;
+  //break if Omega is out of range
+
   my_type x, psi;
   int inda, indb;
 
+  //Addressing changes if we have g(x) or g(w, x)
   angle_is_function ? indb=om_ind: inda=om_ind;
 
   for(int i=0; i<len; i++){
     x = get_axis_element(1, i);
     psi = atan(x);
     my_mu = plas->get_root(0, omega, psi);
-    //std::cout<<get_element(om_ind, i)<<std::endl;
 
     angle_is_function ? inda=i: indb=i;
 
     if(!my_mu.err){
       integrand[i] = get_element(inda, indb) * x * std::pow((std::pow(x, 2)+1), -1.5)*std::pow(my_mu.mu, 2) * std::abs( my_mu.mu + omega*my_mu.dmudom);
-//      std::cout<<integrand[i]<<std::endl;
     }
-  //product of g(theta) * x (x^2+1)^-(3/2) * mu^2 |mu+omega dmu/domega|
+    //product of g(theta) * x (x^2+1)^-(3/2) * mu^2 |mu+omega dmu/domega|
   }
   
   //integrate
   my_type normg_tmp = integrator(integrand, len, d_axis);
+
   if(angle_is_function) om_ind -=1;
   normg[om_ind] = normg_tmp;
-//  std::cout<<normg_tmp<<std::endl;
   //store into right place
   
+  //clean up
   free(d_axis);
   free(integrand);
   return 0;
 }
 
 calc_type spectrum::get_G1(calc_type omega){
-/**returns G1 calculated as in Albert 2005.
+/** \brief G1 from Albert 2005.
+*
+*Gets the value of B(w) (interpolated if necessary) and the normalising constant from normB
 \todo Does it matter that our k is limited? Do waves really go to low intensity in bit we see
 */
 
@@ -427,55 +391,50 @@ calc_type spectrum::get_G1(calc_type omega){
   my_type tmpB2;
   if(normB ==0.0) normaliseB();
 
+  int len, offset;
+  my_type data_bit[2];
+  my_type ax_val;
+  my_type * axis = this->get_axis(0, len);
+
+  //If we have B(k) we need to change to B(w)
+  my_type change_of_vars = 1.0;
+
   if(ax_omega){
-    //look up omega and interpolate
-    int len;
-    my_type data_bit[2];
-    my_type omega_tmp = (my_type) omega;
-    my_type * axis = this->get_axis(0, len);
-    //get the last place where axis is not larger than omega
-    int offset = where(axis, len, omega_tmp);
-    if(offset > 0 && offset < len){
-      data_bit[0] = get_element(0, offset-1);
-      data_bit[1] = get_element(0, offset);
-      //Get interpolated value of B for this k
-      tmpB2 = interpolate(axis + offset-1, data_bit, omega_tmp, 2);
-    }else{
-      //we're right at end, can't meaningfully interpolate, use raw
-      tmpB2 = get_element(0, offset);
-    }
-    B2 = (calc_type) tmpB2;
-    
+    ax_val = (my_type) omega;
   }else{
     //We have k, need to translate via dispersion relation to get the required index and add the v_g factor
-    my_type k = get_k((my_type)omega, WAVE_WHISTLER);
-    //find this k in axis
-    int len;
-    my_type data_bit[2];
-    my_type * axis = this->get_axis(0, len);
-    //get the last place where axis is not larger than k
-    int offset = where(axis, len, k);
-    if(offset > 0 && offset < len){
-      data_bit[0] = get_element(0, offset-1);
-      data_bit[1] = get_element(0, offset);
-      //Get interpolated value of B for this k
-      tmpB2 = interpolate(axis + offset-1, data_bit, k, 2);
-    }else if(offset==0){
-      //we're right at end, can't meaningfully interpolate, use raw
-      tmpB2 = get_element(0, offset);
-    }else{
-    
-    }
-    //Cast to type and multiply vg to finish change vars
-    B2 = (calc_type) tmpB2 * get_omega(k, WAVE_WHISTLER, 1);
+    ax_val = get_k((my_type)omega, WAVE_WHISTLER);
+    change_of_vars = get_omega(ax_val, WAVE_WHISTLER, 1);
   }
 
+  offset = where(axis, len, ax_val);
+
+  //Interpolate if possible, else use the end
+  if(offset > 0 && offset < len){
+    data_bit[0] = get_element(0, offset-1);
+    data_bit[1] = get_element(0, offset);
+    tmpB2 = interpolate(axis + offset-1, data_bit, ax_val, 2);
+  }else if(offset==0){
+    //we're right at end, can't meaningfully interpolate, use raw
+    tmpB2 = get_element(0, offset);
+  }else{
+    //offset <0 or > len, value not found
+    tmpB2 = 0.0;
+  }
+
+  //Add change_of_vars constant in case we have k axis
+  B2 = (calc_type) tmpB2 * change_of_vars;
+
+  //Add norm. constant
   return B2/normB;
 
 }
 
 calc_type spectrum::get_G2(calc_type omega, calc_type x){
-/**returns G2 calculated as in Albert 2005. \todo Interpolate! \todo IS THIS OMEGA OR do we calc omega according to conditions on integral???*/
+/** \brief Get G2 from Albert 2005
+*
+* Gets the value of g(w, x) and the normalising constant from normg \todo Interpolate! \todo IS THIS OMEGA OR do we calc omega according to conditions on integral???
+*/
 
 
   int om_ind, x_ind, len;
@@ -485,7 +444,7 @@ calc_type spectrum::get_G2(calc_type omega, calc_type x){
     else om_ind = where(get_axis(0, len), len, this->get_k(omega, WAVE_WHISTLER));
   }
   else om_ind = 0;
-  if(normg[om_ind] == 0.0){
+  if(om_ind>=0 && normg[om_ind] == 0.0){
     normaliseg(omega);
 //    std::cout<<"norming"<<om_ind<<std::endl;
   }
@@ -494,6 +453,7 @@ calc_type spectrum::get_G2(calc_type omega, calc_type x){
   x_ind = where(get_axis(1, len), len, x);
   
   
-  return get_element(om_ind, x_ind)/normg[om_ind];
+  if(x_ind >=0 && om_ind >=0)return get_element(om_ind, x_ind)/normg[om_ind];
+  else return 0.0;
 
 }

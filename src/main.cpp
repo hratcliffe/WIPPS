@@ -112,6 +112,7 @@ int main(int argc, char *argv[]){
   my_reader->read_data(dat, tim_in, space_in);
 
   err = dat->fft_me(dat_fft);
+  
   my_print("FFT returned err_state " + mk_str(err), mpi_info.rank);
 
   fstream file;
@@ -136,7 +137,7 @@ int main(int argc, char *argv[]){
 
   //Now we have some test spectral data we can work with...
 
-  contr->add_d(10, 10);
+  contr->add_d(10, 100);
   contr->get_current_d()->calculate();
 
   //Cleanup objects etc
@@ -155,9 +156,10 @@ int main(int argc, char *argv[]){
   exit(0);
 }
 
-
 int where(my_type * ax_ptr, int len, my_type target){
-/** \todo handle sign etc in here...
+/** \brief Find where ax_ptr exceeds target
+*
+*Checks bounds and calls locally scoped recursive whereb to do the search
 */
   int whereb(my_type * ax_ptr, int len, my_type target, int &cut,int sign); //Recursive function to do the finding
 
@@ -171,7 +173,7 @@ int where(my_type * ax_ptr, int len, my_type target){
 int whereb(my_type * ax_ptr, int len, my_type target,int &cut, int sign){
 /**\brief Recursive binary bisection find. 
 *
-*First index where ax_ptr exceeds target. Note scoped only to where()
+*First index where ax_ptr exceeds target. If sign ==-1 it should do < but as yet untested....
 */
   
   if(len==1){
@@ -192,8 +194,6 @@ int whereb(my_type * ax_ptr, int len, my_type target,int &cut, int sign){
   return -1;
   //Shouldn't ever reach this case, but.
 }
-
-
 
 void get_deck_constants(){
 /** \brief Setup run specific constants

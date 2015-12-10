@@ -4,6 +4,7 @@ Data read and FFT reports no error
 Passed test read and FFT
 1.350000e+01 1.400000e+01
 2.548900e+02 2.550000e+02
+Where OK
 Integrator OK
 Boxcar smooth OK
 Interpolate OK

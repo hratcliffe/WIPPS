@@ -103,7 +103,7 @@ std::string mk_str(double i);
 std::string mk_str(float i);
 std::string mk_str(long double i);
 
-int whereb(my_type * ax_ptr, int len, my_type target, int &cut,int sign=1.0);
+//int whereb(my_type * ax_ptr, int len, my_type target, int &cut,int sign=1.0);
 int where(my_type * ax_ptr, int len, my_type target);
 
 

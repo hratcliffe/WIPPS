@@ -333,20 +333,27 @@ int test_entity_basic_maths::run(){
   whe = where(axisf, size, target);
   if(whe > 0){
     if(!(axisf[whe] >= target && axisf[whe-1] <= target)) err|=TEST_WRONG_RESULT;
-    test_bed->report_info(mk_str(target)+" "+mk_str(axisf[whe]), 0);
+    test_bed->report_info(mk_str(target)+" "+mk_str(axisf[whe]), 2);
   }
   target = 254.89;
   whe = where(axisf, size, target);
   if(whe > 0){
     if(!(axisf[whe] >= target && axisf[whe-1] <= target)) err|=TEST_WRONG_RESULT;
-    test_bed->report_info(mk_str(target)+" "+mk_str(axisf[whe]), 0);
+    test_bed->report_info(mk_str(target)+" "+mk_str(axisf[whe]), 2);
   }
   target = -2;
   whe = where(axisf, size, target);
   if(whe > 0){
     if(!(axisf[whe] >= target && axisf[whe-1] <= target)) err|=TEST_WRONG_RESULT;
-    test_bed->report_info(mk_str(target)+" "+mk_str(axisf[whe]), 0);
+    test_bed->report_info(mk_str(target)+" "+mk_str(axisf[whe]), 2);
   }
+  target = 1302;
+  whe = where(axisf, size, target);
+  if(whe > 0){
+    if(!(axisf[whe] >= target && axisf[whe-1] <= target)) err|=TEST_WRONG_RESULT;
+    test_bed->report_info(mk_str(target)+" "+mk_str(axisf[whe]), 2);
+  }
+  if(err == TEST_PASSED) test_bed->report_info("Where OK", 1);
 
   calc_type res = integrator(data_square, size, d_axis);
   if(res!= 0.0) err |= TEST_WRONG_RESULT;

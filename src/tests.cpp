@@ -29,14 +29,16 @@
 //Provides Bessel functions, erf, and many more
 
 
+extern tests * test_bed; /**< Global testbed, define somewhere in your code*/
+
+// Define any classes you refer to here, and include headers above and in tests.h
 extern mpi_info_struc mpi_info;
-extern tests * test_bed;
 extern deck_constants my_const;
 class reader;
 
-const int err_codes[err_tot] ={TEST_PASSED, TEST_WRONG_RESULT, TEST_NULL_RESULT, TEST_ASSERT_FAIL, TEST_USERDEF_ERR1, TEST_USERDEF_ERR2, TEST_USERDEF_ERR3, TEST_USERDEF_ERR4};
+const int err_codes[err_tot] ={TEST_PASSED, TEST_WRONG_RESULT, TEST_NULL_RESULT, TEST_ASSERT_FAIL, TEST_USERDEF_ERR1, TEST_USERDEF_ERR2, TEST_USERDEF_ERR3, TEST_USERDEF_ERR4};/**< List of error codes available*/
 
-std::string err_names[err_tot]={"None", "Wrong result", "Invalid Null result", "Assignment or assertion failed", "", "", "", ""};
+std::string err_names[err_tot]={"None", "Wrong result", "Invalid Null result", "Assignment or assertion failed", "", "", "", ""};/**< Names corresponding to error codes, which are reported in log files*/
 
 tests::tests(){
   setup_tests();
@@ -274,7 +276,7 @@ int test_entity_get_and_fft::run(){
   if(tmp_err) err|=TEST_ASSERT_FAIL;
   if(err == TEST_PASSED) test_bed->report_info("Data read and FFT reports no error", 1);
 
-  /** Now test the resulting frequency is right.... Also tests our axes...*/
+  /** \todo Now test the resulting frequency is right.... Also tests our axes...*/
   
   //Get primary frequency
   
@@ -427,7 +429,7 @@ int test_entity_basic_maths::run(){
     }
   }
  	
-  /**I think you should be able to recognize them using Vieta's formula for cubic equations, which states that if a cubic equation x3+ax2+bx+c=0x3+ax2+bx+c=0 has three different roots x1,x2,x3x1,x2,x3, then:
+  /*I think you should be able to recognize them using Vieta's formula for cubic equations, which states that if a cubic equation x3+ax2+bx+c=0x3+ax2+bx+c=0 has three different roots x1,x2,x3x1,x2,x3, then:
   −a=x1+x2+x3 b = x1x2+x1x3+x2x3 and -c = x1x2x3
 **/
  
@@ -446,9 +448,6 @@ test_entity_extern_maths::~test_entity_extern_maths(){
 }
 
 int test_entity_extern_maths::run(){
-//test code using bessel funtion. Output values should be zeros.
-//TODO expnd these things so we can test what we use before trying to proceed....
-
 
   //cyl_bessel_j(v, x) = Jv(x)
   //cyl_neumann(v, x) = Yv(x) = Nv(x)

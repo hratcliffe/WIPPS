@@ -35,8 +35,7 @@ plasma::plasma(){
   
   B0 = my_const.omega_ce * me/std::abs(q0);
 
-  this->om_ce = (pcharge[0]) * this->B0 / pmass[0];
-  /**reference electron cyclotron freq \todo FIX! FAKENUMBERS */
+  this->om_ce = (pcharge[0]) * this->B0 / pmass[0]; /*reference electron cyclotron freq \todo FIX! FAKENUMBERS */
 }
 plasma::~plasma(){
 

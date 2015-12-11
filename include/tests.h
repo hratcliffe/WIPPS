@@ -15,7 +15,7 @@
 #include <vector>
 #include "support.h"
 
-/**
+/*
 [10/11/2015 15:24:26] Heather Ratcliffe: Hmm, OK so for my code what I mainly want is to have a test .sdf file with a couple of blocks in, and to read from it say a 1-d and 2-d array and check they match what I put in them
 [10/11/2015 15:25:01] Christopher Brady: Yep. Probably just generating the file from EPOCH or LARE is the easiest solution.
 [10/11/2015 15:25:22] Heather Ratcliffe: Similarly generate 1-d and 2-d arrays with sine waves, and axes, and check the FFTs give the right result and frequency
@@ -39,36 +39,41 @@ const int TEST_USERDEF_ERR2 = 16;
 const int TEST_USERDEF_ERR3 = 32;
 const int TEST_USERDEF_ERR4 = 64;
 const int err_tot = 8;
-const calc_type PRECISION = 1e-6;
-const calc_type LOW_PRECISION = 5e-3;
+const calc_type PRECISION = 1e-6;/**< Constant for equality at normal precision i.e. from rounding errors etc*/
+const calc_type LOW_PRECISION = 5e-3;/**< Constant for equality at low precision, i.e. different approximations to an expression*/
 const int max_verbos = 4;
-const std::string filename = "tests.log";
+const std::string filename = "tests.log";/**<Test log file*/
 
 class reader;
 class data_array;
 class plasma;
 
+/**\brief Testing instance
+*
+*Consists of at least a constructor doing any setup required, a name string for output id, a function run() taking no parameters which performs the necessary test and a destructor doing cleanup.
+*/
 class test_entity{
-//Consists of at least a constructor doing any setup required, a name string for output id, a function run taking no parameters which performs the necessary test and a destructor doing cleanup.
 public:
-  std::string name;
+  std::string name;/**< The name of the test, which will be reported in the log file*/
   
   test_entity(){;}
   virtual ~test_entity(){;}
-  virtual int run()=0;
-  //Pure virtual because we don't want an instances of this template
+  virtual int run()=0;/*Pure virtual because we don't want an instances of this template*/
 
 };
 
+/**\brief Test controller
+*
+*Controls running of tests and their logging etc
+*/
 class tests{
 private:
-  int test_template();
 
   std::string get_printable_error(int err, int test_id);
-  std::fstream * outfile;
-  int current_test_id;
-  std::vector<test_entity*> test_list;
-  int verbosity;
+  std::fstream * outfile; /**< Output file handle*/
+  int current_test_id;/**< Number in list of test being run*/
+  std::vector<test_entity*> test_list;/**< List of tests to run*/
+  int verbosity;/** Verbosity level of output*/
 public:
   void report_err(int err, int test_id=-1);
   void report_info(std::string info, int verb_to_print = 1, int test_id=-1);
@@ -82,6 +87,7 @@ public:
   
 };
 
+/** Test for reader class */
 class test_entity_reader : public test_entity{
   private:
   reader * test_rdr;
@@ -94,6 +100,8 @@ class test_entity_reader : public test_entity{
   virtual int run();
 
 };
+
+/** Test for data array class, assigns values to entry and reads back*/
 class test_entity_data_array : public test_entity{
   private:
   data_array * test_array;
@@ -103,6 +111,9 @@ class test_entity_data_array : public test_entity{
   virtual int run();
 
 };
+
+/** Combined test: reads test sdf file, stores into data array and runs fft. Test data should be a sine curive with one major frequency which is then checked
+*/
 class test_entity_get_and_fft : public test_entity{
   private:
   data_array * test_dat;
@@ -113,8 +124,10 @@ class test_entity_get_and_fft : public test_entity{
   virtual ~test_entity_get_and_fft();
   virtual int run();
 
-//A chunky test. It should read some test data which will be a sine curve from an "ex" block in a test sdf file, into a data array, and then fft it. We then check that the resulting major frequency is as expected
 };
+
+/** Test basic maths routines, including where, integrator, boxcar smoothing, interpolation and cubic solver. Runs predefined test problems and tests results.
+*/
 class test_entity_basic_maths : public test_entity{
   private:
     calc_type * data_square;
@@ -129,9 +142,10 @@ class test_entity_basic_maths : public test_entity{
   virtual ~test_entity_basic_maths();
   virtual int run();
 
-//Verify the basic maths functions after any changes. E.g. integrator, boxcar smooth etc
 };
 
+/** Test external maths routines use and interpretation etc. Currently Bessel functions from boost
+*/
 class test_entity_extern_maths : public test_entity{
   private:
 
@@ -140,9 +154,10 @@ class test_entity_extern_maths : public test_entity{
   virtual ~test_entity_extern_maths();
   virtual int run();
 
-//check use and interpretation of external maths, such as boost Bessel fns etc
 };
 
+/**Check plasma functions, get_omega and dispersion relation
+*/
 class test_entity_plasma : public test_entity{
   private:
   plasma * plas;
@@ -151,9 +166,10 @@ class test_entity_plasma : public test_entity{
   virtual ~test_entity_plasma();
   virtual int run();
 
-//Check plasma functions, get_omega and dispersion relation
 };
 
+/**Check G1 from Albert \todo Write
+*/
 class test_entity_albertG1 : public test_entity{
   private:
   

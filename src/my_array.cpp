@@ -742,11 +742,11 @@ bool data_array::fft_me(data_array * data_out){
     }
   }
 
-  int total_size=1; /**< Total number of elements in array*/
+  int total_size=1; /* Total number of elements in array*/
   for(int i=0; i<n_dims;++i) total_size *= dims[i];
 
   int fft_dim ;
-  fft_dim = 1;/**< Dimension to FFT over, if required*/
+  fft_dim = 1;/* Dimension to FFT over, if required*/
 
   ADD_FFTW(plan) p;
   cplx_type *out;

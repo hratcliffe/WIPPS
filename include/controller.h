@@ -20,10 +20,10 @@ class diffusion_coeff;
 */
 
 class controller{
-  plasma * my_plas; /** Plasma object*/
+  plasma * my_plas; /**< Plasma object*/
 
-  spectrum * my_spect;/** Spectrum object or vector thereof?*/
-  diffusion_coeff * my_d;/** Diffusion coefficient object or vector thereof?*/
+  spectrum * my_spect;/**< Spectrum object or vector thereof?*/
+  diffusion_coeff * my_d;/**< Diffusion coefficient object or vector thereof?*/
 
 public:
 
@@ -34,7 +34,7 @@ public:
   void add_d(int nx, int n_angs);
   spectrum * get_current_spectrum(){return my_spect;};
   diffusion_coeff * get_current_d(){return my_d;};
-  /** For Future expansion and to prevent public access*/
+  /**< For Future expansion and to prevent public access*/
   plasma * get_plasma(){return my_plas;};
 };
 

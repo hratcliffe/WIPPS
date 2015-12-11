@@ -26,9 +26,9 @@ class diffusion_coeff: public data_array{
 
 private:
 
-  int n_thetas; /** Number of wave normal angles to consider */
-  int n_n; /** Max number of resonances to consider */
-  controller * my_controller;/** Owning controller which gives access to plasma and spectrum*/
+  int n_thetas; /**< Number of wave normal angles to consider */
+  int n_n; /**< Max number of resonances to consider */
+  controller * my_controller;/**< Owning controller which gives access to plasma and spectrum*/
   friend void controller::add_d(int nx, int n_angs);
   friend controller::~controller();
 
@@ -38,8 +38,8 @@ private:
 
 public:
 
-  int latitude;/** Latitude of calculation*/
-  int wave_id;/** ID of wave mode considered*/
+  int latitude;/**< Latitude of calculation*/
+  int wave_id;/**< ID of wave mode considered*/
 
   void set_ids(float time1, float time2, int space1, int space2, int wave_id, char block_id[10]);
 

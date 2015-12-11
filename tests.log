@@ -7,6 +7,8 @@ Integrator OK
 Boxcar smooth OK
 Interpolate OK
 Passed test basic maths helpers
+2.775558e-17
+1.387779e-17
 Bessel functions OK
 Passed test external maths routines
 Testing resonant frequency solver

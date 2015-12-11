@@ -14,19 +14,20 @@
 
 /** \brief A basic array class
 *
-*Contains dimension information and data. Can be rectangular of 2,3,or 4 dimensions or ragged of 2 (rows of different lengths). \author Heather Ratcliffe \date 21/09/2015
+*Contains dimension information and data. Can be rectangular of 2,3,or 4 dimensions or ragged of 2 (rows of different lengths). Get_index and get_total_elements account for all details of internal layout in memory. Everything else should go via these as much as possible.
+ \author Heather Ratcliffe \date 21/09/2015
 */
 
 class my_array{
 
 protected:
-  int n_dims;/** Number of dimensions*/
-  int * dims;/** Array dimensions*/
-  bool ragged; /**Flag for if array has different lengths on each row...*/
-  int * row_lengths;/** Row lengths if ragged*/
-  int * cumulative_row_lengths; /**Offset to start of given row to iterate through*/
-  my_type *data;/** The data */
-  bool defined; /**flag to check memory allocation sucess*/
+  int n_dims;/**< Number of dimensions*/
+  int * dims;/**< Array dimensions*/
+  bool ragged; /**< Flag for if array has different lengths on each row...*/
+  int * row_lengths;/**< Row lengths if ragged*/
+  int * cumulative_row_lengths; /**< Offset to start of given row to iterate through*/
+  my_type *data;/**< The data */
+  bool defined; /**< Flag to check memory allocation sucess*/
 
 public:
 
@@ -36,13 +37,12 @@ public:
   my_array(int * row_lengths, int ny);
   virtual ~my_array();
 
-  virtual bool is_good(){return !defined;}/** Check memory allocation etc worked*/
+  virtual bool is_good(){return !defined;}/**< Check memory allocation etc worked*/
 
   virtual int get_index(int nx, int ny);
   virtual int get_index(int nx, int ny, int nz);
   virtual int get_index(int nx, int ny, int nz, int nt);
   int get_total_elements();
-  /** These two account for all details of internal layout in memory */
 
   int get_dims();
   int get_dims(int dim);
@@ -71,15 +71,15 @@ class data_array : public my_array{
 
 protected:
 
-  bool ax_defined;
-  my_type *axes;/**1-d array in sections, so can be arbitary length and dims*/
+  bool ax_defined;/**< Flag showing whether axes are fully defined*/
+  my_type *axes;/**< 1-d array in sections, so can be arbitary length and dims*/
 
 public:
 
-  char block_id[10]; /**the field name id from SDF file*/
+  char block_id[10]; /**< The field name id from SDF file*/
 
-  float time[2];/**time range over data are taken*/
-  int space[2];/**space range ditto*/
+  float time[2];/**< Time range over which data are taken*/
+  int space[2];/**< Space range over which data are taken*/
 
   virtual void construct();
   data_array(int nx, int ny);
@@ -102,7 +102,7 @@ public:
   void make_linear_axis(int dim, float res, int offset=0);
 
   bool write_to_file(std::fstream &file);
-  /** \todo Make mpi safe.. */
+  /**< \todo Make mpi safe.. */
   bool read_from_file(std::fstream &file);
 
   bool fft_me(data_array * data_out);

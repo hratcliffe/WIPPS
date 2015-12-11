@@ -267,12 +267,15 @@ mu_dmudom plasma::get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int
 
  */
  
-  calc_type term1, term2, term3, denom, tmp_bes, bessel_arg, sin2psi, D_mu2S, gamma;
+  calc_type term1, term2, term3, denom, tmp_bes, tmp_besp, tmp_besm, bessel_arg, D_mu2S, gamma, w2, w3;
 
   mu_dmudom my_mu;
 
   calc_type dndr[ncomps], dndth[ncomps];
   calc_type dB0dr, dB0dth;
+  
+  w2 = w*w;
+  w3 = w2*w;
   
   /** \todo get or calc these...*/
   //std::cout<<"These numbers are wrong, remember"<<std::endl;
@@ -284,7 +287,7 @@ mu_dmudom plasma::get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int
   dB0dr = 0.0;
   dB0dth = 0.0;
   
-  calc_type R=1.0, L=1.0, P=1.0, J, S, D, A, B, C, s2psi, c2psi, mua2, mub2, mu2;
+  calc_type R=1.0, L=1.0, P=1.0, J, S, D, A, B, C, s2psi, c2psi, mua2, mub2, mu2, scpsi;
   calc_type F, G, smu;
   calc_type dHdF, dHdG, dmudw, dFdpsi,dGdpsi, dAdpsi,dBdpsi;
   calc_type wp[ncomps], wp2[ncomps], wc[ncomps], X[ncomps], Y[ncomps];
@@ -301,20 +304,22 @@ mu_dmudom plasma::get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int
     wp2[i] = wp[i]*wp[i];
     wc[i] =  (pcharge[i]) * this->B0 / pmass[i];
 
-    X[i] = wp2[i]/(w*w);
+    X[i] = wp2[i]/w2;
     Y[i] = wc[i]/w;
   }
   
 //We loop over components and trust compiler to unroll for us :) most of these will trivially vectorise anyway.
 
-  s2psi = std::pow(sin(psi), 2);
+  scpsi = std::sin(psi);
+  s2psi = std::pow(scpsi, 2);
   c2psi = 1.0 - s2psi;
+  scpsi *= std::sqrt(c2psi);
   //To make it smokin'
 
   for(int i=0; i<ncomps; ++i){
     R = R - wp2[i]/(w*(w + wc[i]));
     L = L - wp2[i]/(w*(w - wc[i]));
-    P = P - wp2[i]/(w*w);
+    P = P - wp2[i]/w2;
   }
 
   S = 0.5*(R + L);
@@ -378,12 +383,17 @@ mu_dmudom plasma::get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int
       dmudY[i] = (0.5/my_mu.mu)*(dHdF*dFdY[i] + dHdG*dGdY[i]);
 
 
-      dXdw[i] = -2.0*wp2[i]/(pow(w, 3));
-      dYdw[i] = -wc[i]/(pow(w, 2));
+      dXdw[i] = -2.0*wp2[i]/w3;
+      dYdw[i] = -wc[i]/w2;
 
     }
-    dAdpsi = sin(2.0*psi)*(S - P);
-    dBdpsi = sin(2.0*psi)*(R*L - P*S);
+
+//    dAdpsi = sin(2.0*psi)*(S - P);
+//    dBdpsi = sin(2.0*psi)*(R*L - P*S);
+
+    dAdpsi = 2.0*scpsi;
+    dBdpsi = dAdpsi*(R*L - P*S);
+    dAdpsi *=(S - P);
 
     dFdpsi = 2.0*(dAdpsi - dBdpsi);
     dGdpsi = 2.0*dAdpsi - dBdpsi + (smu/J)*(B*dBdpsi - 2.0*C*dAdpsi);
@@ -396,26 +406,29 @@ mu_dmudom plasma::get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int
     my_mu.dmudom = dmudw;
     my_mu.err = 0;
   
-    sin2psi = std::pow(sin(psi), 2);
     D_mu2S = D / (mu2 - S);
-    gamma = 1;
-    omega_n = -1.0 * n * my_const.omega_ce/gamma;
+    gamma = 1;// FAKENUMBERS
+    calc_type calc_n = (calc_type) n;
+    omega_n = -1.0 * calc_n * my_const.omega_ce/gamma;
     //temporaries for simplicity
 
-    term1 = (mu2* sin2psi - P)/(mu2);
+    term1 = (mu2* s2psi - P)/(mu2);
     
-    denom = pow(D_mu2S*term1, 2) + pow((P*std::cos(psi)/mu2), 2);
+    denom = pow(D_mu2S*term1, 2) + c2psi*pow((P/mu2), 2);
     
-    bessel_arg = n* tan(psi)*tan(alpha) * (w - omega_n)/omega_n;// n x tan alpha (om - om_n)/om_n
+    bessel_arg = calc_n* std::tan(psi)*tan(alpha) * (w - omega_n)/omega_n;// n x tan alpha (om - om_n)/om_n
     
-    tmp_bes = boost::math::cyl_bessel_j(abs(n)+1, bessel_arg);
-    term2 = (1 + D_mu2S)*tmp_bes;
-    
-    tmp_bes = boost::math::cyl_bessel_j(abs(n)-1, bessel_arg);
-    term2 += (1 - D_mu2S)*tmp_bes;
+    tmp_besp = boost::math::cyl_bessel_j(abs(n)+1, bessel_arg);
+    tmp_besm = boost::math::cyl_bessel_j(abs(n)-1, bessel_arg);
 
-    tmp_bes = boost::math::cyl_bessel_j(abs(n), bessel_arg);
-    term3 = sin(psi)*cos(psi)*tmp_bes/tan(alpha);
+    term2 = (1 + D_mu2S)*tmp_besp;
+    term2 += (1 - D_mu2S)*tmp_besm;
+    
+    //tmp_bes = boost::math::cyl_bessel_j(abs(n), bessel_arg);
+    tmp_bes = calc_n *(tmp_besp + tmp_besm)/bessel_arg;
+    //Use bessel identity to save time.
+
+    term3 = scpsi*tmp_bes/tan(alpha);
 
     my_mu.phi = pow((0.5*term1*term2 + term3), 2)/denom;
 

@@ -22,23 +22,23 @@ class spectrum : public data_array{
   friend void controller::add_spectrum(int * row_lengths, int ny);
   friend controller::~controller();
 
-  controller * my_controller;/**Links this to a plasma object*/
-  bool ax_omega;/** Flag whether we derived in k or omega*/
+  controller * my_controller;/**< Links this to a plasma object*/
+  bool ax_omega;/**< Flag whether we derived in k or omega*/
   void construct();
-  spectrum(int nx, int n_ang);/**Private because only controllers can create/destroy*/
-  spectrum(int * row_lengths, int ny);/**Private because only controllers can create/destroy*/
-  my_type normB;/** Norm of B(w)*/
-  my_type* normg;/** Norms of g_w(x) for each w*/
-  bool normaliseB();/** Fills normB*/
-  bool normaliseg(my_type omega);/** Fills normg for omega*/
-  virtual ~spectrum();/**Private because only controllers can create/destroy*/
+  spectrum(int nx, int n_ang);/**< Private because only controllers can create/destroy*/
+  spectrum(int * row_lengths, int ny);/**< Private because only controllers can create/destroy*/
+  my_type normB;/**< Norm of B(w)*/
+  my_type* normg;/**< Norms of g_w(x) for each w*/
+  bool normaliseB();/**< Fills normB*/
+  bool normaliseg(my_type omega);/**< Fills normg for omega*/
+  virtual ~spectrum();/**< Private because only controllers can create/destroy*/
 
 public:
 
-  int wave_id; /**ID for which wave mode cutout we're going for*/
-  bool angle_is_function;/** Says we impose g(x) rather than have one g for each w*/
-  int function_type;/** Type code for angular function*/
-  int n_angs;/** Number of angles to use*/
+  int wave_id; /**< ID for which wave mode cutout we're going for. See support.h*/
+  bool angle_is_function;/**< Says we impose g(x) rather than have one g for each w*/
+  int function_type;/**< Type code for angular function. See support.h */
+  int n_angs;/**< Number of angles to use*/
 
   void set_ids(float time1, float time2, int space1, int space2, int wave_id, char block_id[10], int function_type=FUNCTION_NULL);
 

@@ -137,7 +137,7 @@ int main(int argc, char *argv[]){
 
   //Now we have some test spectral data we can work with...
 
-  contr->add_d(10, 100);
+  contr->add_d(100, 100);
   contr->get_current_d()->calculate();
 
   //Cleanup objects etc

@@ -452,25 +452,42 @@ int test_entity_extern_maths::run(){
 
   //cyl_bessel_j(v, x) = Jv(x)
   //cyl_neumann(v, x) = Yv(x) = Nv(x)
-  double bess, arg;
+  double bess, arg, bess1, bess2;
   int index, err=TEST_PASSED;
 
   index = 0;
   arg = 2.40482555769577;
   bess = boost::math::cyl_bessel_j(index, arg);
-
   if(std::abs(bess - 0.0) >PRECISION) err|= TEST_WRONG_RESULT;
+
   index = 1;
   arg=7.01558666981561;
   bess = boost::math::cyl_bessel_j(index, arg);
   if(std::abs(bess - 0.0) >PRECISION) err|= TEST_WRONG_RESULT;
-
 
   index=5;
   arg=12.3386041974669;
   bess = boost::math::cyl_bessel_j(index, arg);
 
   if(std::abs(bess - 0.0) >PRECISION) err|= TEST_WRONG_RESULT;
+
+  //Test identities used to save time
+  index=3;
+  arg=1.3457174;
+  bess = boost::math::cyl_bessel_j(index-1, arg);
+  bess1 = boost::math::cyl_bessel_j(index+1, arg);
+  bess2 = boost::math::cyl_bessel_j(index, arg);
+  test_bed->report_info(mk_str(std::abs(bess + bess1 - 2.0*(double)index*bess2/arg)), 1);
+  if(std::abs(bess + bess1- 2.0*(double)index*bess2/arg) >PRECISION) err|= TEST_WRONG_RESULT;
+
+  index=7;
+  arg=-20.98;
+  bess = boost::math::cyl_bessel_j(index-1, arg);
+  bess1 = boost::math::cyl_bessel_j(index+1, arg);
+  bess2 = boost::math::cyl_bessel_j(index, arg);
+  test_bed->report_info(mk_str(std::abs(bess + bess1 - 2.0*(double)index*bess2/arg)), 1);
+  if(std::abs(bess + bess1- 2.0*(double)index*bess2/arg) >PRECISION) err|= TEST_WRONG_RESULT;
+
 
   index =0;
   arg =1.0;

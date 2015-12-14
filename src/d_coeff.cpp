@@ -157,7 +157,8 @@ Get mu, dmu/domega which are used to:
     v_par = get_axis_element(0, i);
     n_min = get_min_n(v_par);
     n_max = get_max_n(v_par);
-    std::cout<<"i "<<i<<std::endl;
+    my_print("i "+mk_str(i), mpi_info.rank);
+
 //    for(int k =0; k< ((1 <dims[1]) ? 1: dims[1]); k++){
     for(int k =0; k< dims[1]; k++){
       //particle pitch angle

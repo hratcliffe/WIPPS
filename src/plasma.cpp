@@ -13,6 +13,7 @@
 #include "plasma.h"
 
 extern deck_constants my_const;
+extern mpi_info_struc mpi_info;
 
 plasma::plasma(){
 
@@ -228,7 +229,7 @@ calc_type plasma::get_phi(calc_type th, calc_type w, calc_type psi, calc_type al
   mu my_mu;
 
   if((last_th != th) || (last_w != w) || (last_psi != psi)){
-    std::cout<<"Regetting"<<std::endl;
+    my_print("Regetting", mpi_info.rank, -1);
     my_mu = this->get_root(th, w, psi);}
   else{my_mu = last_mu;}
   

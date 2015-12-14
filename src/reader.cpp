@@ -17,8 +17,6 @@
 #include <mpi.h>
 
 
-
-
 extern mpi_info_struc mpi_info;
 
 reader::reader(std::string file_prefix_in,  char * block_id_in, int first){
@@ -63,8 +61,6 @@ bool reader::read_dims(int &n_dims, std::vector<int> &dims){
   snprintf(file_num, 10, fmt, ref_file_num);
   std::string file_name = file_prefix + file_num +".sdf";
 
- // std::cout<<"Opening "<<file_name<<std::endl;
-//  std::cout<<"Getting dimensions"<<std::endl;
   my_print("Getting dimensions", mpi_info.rank);
   sdf_file_t *handle = sdf_open(file_name.c_str(), MPI_COMM_WORLD, SDF_READ, 0);
 
@@ -109,8 +105,6 @@ bool reader::read_data(data_array * my_data_in, int time_range[2], int space_ran
   if(space_range[0]==-1) space_range[0] = 0;
   if(space_range[1]==-1) space_range[1] = dim;
   
-  //std::cout<<space_range[0]<<" "<<space_range[1]<<std::endl;
-
   if(time_range[0] < 0) time_range[0] = 0;
   if(time_range[1] < time_range[0]) time_range[1] = time_range[0];
 

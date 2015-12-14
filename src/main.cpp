@@ -35,9 +35,12 @@ using namespace std;
 deck_constants my_const;/**< Physical constants*/
 mpi_info_struc mpi_info;/**< MPI data */
 
+int test_int;
 tests* test_bed;/**Test bed for testing */
 
 void get_deck_constants();
+int local_MPI_setup(int argc, char *argv[]);
+void share_consts();
 
 int main(int argc, char *argv[]){
 /**
@@ -45,29 +48,22 @@ int main(int argc, char *argv[]){
 *
 */
 
-  int ierr,err;
+  int err;
   
-{
-  int rank, n_procs;
-
-  ierr = MPI_Init(&argc, &argv);
-  //Note any other command line arg processing should account for this...
-
-  ierr = MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  ierr = MPI_Comm_size(MPI_COMM_WORLD, &n_procs);
-
-  mpi_info.rank = rank;
-  mpi_info.n_procs = n_procs;
-}
-
-
-
+  int ierr = local_MPI_setup(argc, argv);
+  if(ierr){
+    cout<< "Error initialising MPI. ABORTING!";
+    return 1;
+  }
 
   my_print(std::string("Code Version: ")+ VERSION, mpi_info.rank);
   my_print("Code is running on "+mk_str(mpi_info.n_procs)+" processing elements.", mpi_info.rank);
 
-  get_deck_constants();
-  /** Get constants from deck*/
+  MPI_Barrier(MPI_COMM_WORLD);
+
+  if(mpi_info.rank == 0) get_deck_constants();
+  share_consts();
+  /** Get constants from deck and share to other procs*/
 
 #ifdef RUN_TESTS_AND_EXIT
   my_print("Running basic tests", mpi_info.rank);
@@ -154,6 +150,45 @@ int main(int argc, char *argv[]){
 #endif
 
   exit(0);
+}
+
+int local_MPI_setup(int argc, char *argv[]){
+
+  int ierr, rank, n_procs;
+
+  ierr = MPI_Init(&argc, &argv);
+  //Note any other command line arg processing should account for this...
+
+  ierr = MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  ierr = MPI_Comm_size(MPI_COMM_WORLD, &n_procs);
+  mpi_info.rank = rank;
+  mpi_info.n_procs = n_procs;
+  return ierr;
+}
+
+void share_consts(){
+/*  MPI_Aint addr;
+  MPI_Get_address(&my_const, &addr);
+  cout<<addr<<" "<<&my_const<<endl;
+*/
+
+  const int count = 5;
+  int lens[count] ={1, 1, 1, 1, 1};
+  MPI_Aint disps[count];
+  MPI_Datatype types[count] = {MPI_FLOAT, MPI_FLOAT, MPI_FLOAT, MPI_FLOAT, MPI_INT};
+  MPI_Datatype deckConstType;
+  
+  disps[0] = offsetof(deck_constants, v_t);
+  disps[1] = offsetof(deck_constants, omega_pe);
+  disps[2] = offsetof(deck_constants, omega_ce);
+  disps[3] = offsetof(deck_constants, omega_ci);
+  disps[4] = offsetof(deck_constants, ppc);
+  
+  MPI_Type_create_struct(count, lens, disps, types, &deckConstType);
+  MPI_Type_commit(&deckConstType);
+
+  MPI_Bcast(&my_const, 1, deckConstType, 0, MPI_COMM_WORLD);
+
 }
 
 int where(my_type * ax_ptr, int len, my_type target){
@@ -253,7 +288,6 @@ void get_deck_constants(){
 
 }
 
-
 void trim_string(std::string &str, char ch){
   std::string tmp;
   if(str.find_first_not_of(ch) !=std::string::npos) tmp = str.substr(str.find_first_not_of(ch), str.size());
@@ -266,9 +300,9 @@ void trim_string(std::string &str, char ch){
 void my_print(std::string text, int rank, int rank_to_write){
 /** \brief Write output
 *
-* Currently dump to term. Perhaps also to log file. Accomodates MPI also.
+* Currently dump to term. Perhaps also to log file. Accomodates MPI also. Set rank_to_write to -1 to dump from all. Default value is 0
 */
-  if(rank == rank_to_write){
+  if(rank == rank_to_write || rank_to_write == -1){
   
     std::cout<< text<<std::endl;
   }
@@ -277,11 +311,11 @@ void my_print(std::string text, int rank, int rank_to_write){
 void my_print(fstream * handle, std::string text, int rank, int rank_to_write){
 /** \brief Write output
 *
-* Currently dump to term. Perhaps also to log file. Accomodates MPI also.
+* Currently dump to term. Perhaps also to log file. Accomodates MPI also. Set rank_to_write to -1 to dump from all. Default value is 0
 */
-  if(rank == rank_to_write && handle!=nullptr){
+  if((rank == rank_to_write || rank_to_write == -1) && handle!=nullptr){
     *handle<<text<<std::endl;
-  }else if(rank == rank_to_write){
+  }else if(rank == rank_to_write || rank_to_write == -1){
     std::cout<<text<<std::endl;
 
   }

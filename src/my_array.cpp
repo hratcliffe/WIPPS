@@ -412,7 +412,6 @@ bool my_array::write_to_file(std::fstream &file){
     }
 
   }
-  //std::cout<<total_size<<std::endl;
   file.write((char *) data , sizeof(my_type)*total_size);
 
   return 0;
@@ -728,16 +727,16 @@ bool data_array::fft_me(data_array * data_out){
 */
 
   if(!data_out->is_good()){
-    std::cout<<"Output array for FFT undefined"<<std::endl;
+    my_print("Output array for FFT undefined", mpi_info.rank);
     return 1;
   }
   if(data_out->n_dims != this->n_dims){
-    std::cout<<"Wrong output dimensions for FFT"<<std::endl;
+    my_print("Wrong output dimensions for FFT", mpi_info.rank);
     return 1;
   }
   for(int i=0; i<n_dims;++i){
     if(data_out->dims[i] != this->dims[i]){
-      std::cout<<"Wrong output dimensions for FFT"<<std::endl;
+      my_print("Wrong output dimensions for FFT", mpi_info.rank);
       return 1;
     }
   }
@@ -766,7 +765,8 @@ bool data_array::fft_me(data_array * data_out){
     p = ADD_FFTW(plan_dft_r2c_2d)(dims[0], dims[1], in, out, FFTW_ESTIMATE);
 
   }else{
-    std::cout<<"FFT of more than 2-d arrays not added yet"<<std::endl;
+    my_print("FFT of more than 2-d arrays not added yet", mpi_info.rank);
+
     return 1;
   }
 
@@ -790,7 +790,7 @@ bool data_array::fft_me(data_array * data_out){
   //Copy result into out array
 
   if(err){
-    std::cout<<"Error populating result array "<<data_out<<std::endl;
+    my_print("Error populating result array", mpi_info.rank);
     return 1;
   }
 

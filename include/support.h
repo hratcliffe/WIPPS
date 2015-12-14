@@ -116,6 +116,7 @@ std::string mk_str(bool b);/**<Converts bool to string*/
 std::string mk_str(double i);
 std::string mk_str(float i);
 std::string mk_str(long double i);
+void trim_string(std::string &str, char ch=' ');
 
 //int whereb(my_type * ax_ptr, int len, my_type target, int &cut,int sign=1.0);
 int where(my_type * ax_ptr, int len, my_type target);
@@ -138,5 +139,12 @@ const int FUNCTION_DELTA = 1; /**< Code to id spectral angular distribution as d
 const int FUNCTION_GAUSS = 2; /**< Code to id spectral angular distribution as gaussian (with integral 1) */
 const int FUNCTION_ISO = 3; /**< Code to id spectral angular distribution as isotropic (with integral 1) */
 
+
+const std::string OMEGA_CE = "wCe";
+const std::string OMEGA_PE = "wpe";
+const std::string DENS_RAT = "dens_rat";
+const std::string PPC = "ppc";
+const std::string CONSTANTS = " Constant block values after";
+const std::string CONSTANTS_END = "Deck state:";
 
 #endif

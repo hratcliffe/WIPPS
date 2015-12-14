@@ -198,14 +198,68 @@ int whereb(my_type * ax_ptr, int len, my_type target,int &cut, int sign){
 void get_deck_constants(){
 /** \brief Setup run specific constants
 *
-*This will read deck.status and parse values for user defined constants etc. It will rely on using the specific deck, because it has to look for names. Any changes to deck may need updating here. \todo Write it. \todo Document H assumption...
+*Reads deck.status and parses values for user defined constants etc. It will rely on using the specific deck, because it has to look for names. Any changes to deck may need updating here. Tag names are set as const strings in support.h
 */
 
-my_const.omega_ce = 17588.200878;
-my_const.omega_ci = my_const.omega_ce * me/mp;
-//assumes same charge magnitude, I.e. H plasma
 
-my_const.omega_pe = 5.0*35176.401757;
+//open file deck.status from whatever path
+//Find the line " Constant block values after"
+//Read into vector up to "Deck state" or eof
+//parse out the values we want given by name in support.h
+
+  ifstream infile;
+  infile.open("deck.status");
+  std::string header_row, line;
+  infile>> header_row;
+  std::vector<std::string> lines;
+  
+  while(!infile.eof()){
+    getline(infile, line);
+    if(!(strcmp(line.substr(0, CONSTANTS.size()).c_str(), CONSTANTS.c_str()))) break;
+  }
+
+  while(!infile.eof()){
+    getline(infile, line);
+    if(!(strcmp(line.substr(0, CONSTANTS_END.size()).c_str(), CONSTANTS_END.c_str()))) break;
+    lines.push_back(line);
+  }
+  
+  size_t pos;
+  std::string name, val;
+  float val_f;
+  for(int i=0; i< lines.size(); i++){
+    pos = lines[i].find("=");
+    if(pos == std::string::npos) continue;
+    //is not a x = y line
+    name = lines[i].substr(0, pos);
+    trim_string(name);
+    val = lines[i].substr(pos+1, lines[i].size());
+    trim_string(val);
+    val_f = atof(val.c_str());
+  
+    if(name == OMEGA_CE) my_const.omega_ce = val_f;
+    else if(name == OMEGA_PE) my_const.omega_pe = val_f;
+    //else if(name == DENS_RAT) my_const.dens_rat = val_f;
+    //else if(name == PPC) my_const.ppc = val_f;
+    
+  }
+
+//my_const.omega_ce = 17588.1111;
+
+//my_const.omega_pe = 5.0*35176.401757;
+
+  my_const.omega_ci = my_const.omega_ce * me/mp;
+  //assumes same charge magnitude, I.e. H plasma
+
+}
+
+
+void trim_string(std::string &str, char ch){
+  std::string tmp;
+  if(str.find_first_not_of(ch) !=std::string::npos) tmp = str.substr(str.find_first_not_of(ch), str.size());
+  str=tmp;
+  if(str.find_first_not_of(ch) !=std::string::npos) tmp = str.substr(0, str.find_last_not_of(ch)+1);
+  str=tmp;
 
 }
 

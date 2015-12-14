@@ -7,6 +7,7 @@
 //
 
 #include <stdio.h>
+#include <cmath>
 #include "support.h"
 #include "controller.h"
 #include "plasma.h"
@@ -14,12 +15,14 @@
 #include "d_coeff.h"
 #include "spectrum.h"
 
+extern deck_constants my_const;
+
 controller::controller(){
 /** \brief Setup
 *
 *\todo Plasma object should be setup from files or such
 */
-  my_plas = new plasma();
+  my_plas = new plasma(my_const.omega_ce * me/std::abs(q0));
   my_spect = nullptr;
   my_d = nullptr;
 

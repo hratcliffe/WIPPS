@@ -503,7 +503,7 @@ int test_entity_extern_maths::run(){
 
 test_entity_plasma::test_entity_plasma(){
   name = "plasma";
-  plas = new plasma();
+  plas = new plasma(-1.0);
 
 }
 test_entity_plasma::~test_entity_plasma(){

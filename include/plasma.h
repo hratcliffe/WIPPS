@@ -54,7 +54,7 @@ private:
 
   public:
 
-  plasma();
+  plasma(calc_type ref_B);
   ~plasma();
 
   void get_density(){;}

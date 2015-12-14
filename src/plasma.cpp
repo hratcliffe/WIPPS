@@ -15,7 +15,7 @@
 extern deck_constants my_const;
 extern mpi_info_struc mpi_info;
 
-plasma::plasma(){
+plasma::plasma( calc_type ref_B){
 
   pmass[0] = me;
   pmass[1] = mp;
@@ -34,7 +34,9 @@ plasma::plasma(){
   pdens[2] = 0.0 * ref_dens;
   pdens[3] = 0.0*ref_dens;
   
-  B0 = my_const.omega_ce * me/std::abs(q0);
+  B0 = ref_B;
+  if(ref_B == -1.0) B0 = my_const.omega_ce * me/std::abs(q0);
+  //my_const.omega_ce * me/std::abs(q0);
 
   this->om_ce = (pcharge[0]) * this->B0 / pmass[0]; /*reference electron cyclotron freq \todo FIX! FAKENUMBERS */
 }

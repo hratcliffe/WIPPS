@@ -168,6 +168,16 @@ class test_entity_plasma : public test_entity{
 
 };
 
+/** Check basic spectrum calculations, such as test spectrum derivation etc */
+class test_entity_spectrum : public test_entity{
+  private:
+  
+  public:
+  test_entity_spectrum();
+  virtual ~test_entity_spectrum();
+  virtual int run();
+};
+
 /**Check G1 from Albert \todo Write
 */
 class test_entity_albertG1 : public test_entity{

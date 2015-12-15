@@ -40,7 +40,10 @@ tests* test_bed;/**Test bed for testing */
 
 void get_deck_constants();
 int local_MPI_setup(int argc, char *argv[]);
+setup_args process_command_line(int argc, char *argv[]);
 void share_consts();
+void print_help();
+void divide_domain(std::vector<int>, int space[2], int per_proc, int block_num);
 
 int main(int argc, char *argv[]){
 /**
@@ -61,6 +64,8 @@ int main(int argc, char *argv[]){
 
   MPI_Barrier(MPI_COMM_WORLD);
 
+  setup_args cmd_line_args = process_command_line(argc, argv);
+
   if(mpi_info.rank == 0) get_deck_constants();
   share_consts();
   /** Get constants from deck and share to other procs*/
@@ -76,70 +81,91 @@ int main(int argc, char *argv[]){
 #else
 
   //Actually do the code...
+  my_print("Processing "+mk_str(cmd_line_args.per_proc)+" blocks per core", mpi_info.rank);
 
-  char block_id[10]= "ex";
-  reader * my_reader = new reader("", block_id);
+  char block_id[10];
+  strcpy(block_id, cmd_line_args.block.c_str());
 
-  int tim_in[2], space_in[2];
-  tim_in[0]=0;
-  tim_in[1]=10;
-  space_in[0]=0;
-  space_in[1]=-1;
-  /** \todo These should be specifiable via command line args. Or an input file. Or in parallle we want to subdivide into them
-*/
+  reader * my_reader = new reader(cmd_line_args.file_prefix, block_id);
 
-  int n_tims = max(tim_in[1]-tim_in[0], 1);
+  int n_tims = max(cmd_line_args.time[1]-cmd_line_args.time[0], 1);
+
+  int my_space[2];
+  my_space[0] = cmd_line_args.space[0];
+  my_space[1] = cmd_line_args.space[1];
 
   int n_dims;
   std::vector<int> dims;
   my_reader->read_dims(n_dims, dims);
+  int space_dim = dims[0];
 
+  
   if(n_dims !=1) return 1;
   /**for now abort if data file wrong size... \todo FIX*/
-
-  data_array  * dat = new data_array(dims[0], n_tims);
-  data_array * dat_fft = new data_array(dims[0], n_tims);
-
-  if(!dat->is_good() or !dat_fft->is_good()){
-    my_print("Bugger, data array allocation failed. Aborting.", mpi_info.rank);
-    return 0;
-  }
-
-  my_reader->read_data(dat, tim_in, space_in);
-
-  err = dat->fft_me(dat_fft);
-  
-  my_print("FFT returned err_state " + mk_str(err), mpi_info.rank);
-
-  fstream file;
-  file.open("Tmp.txt", ios::out|ios::binary);
-  if(file.is_open()) dat->write_to_file(file);
-  file.close();
 
   controller * contr;
   contr = new controller();
 
-  int row_lengths[2];
-  row_lengths[0] = 4096;
-  row_lengths[1] = DEFAULT_N_ANG;
-  
-  contr->add_spectrum(row_lengths, 2);
-  contr->get_current_spectrum()->make_test_spectrum();
 
-  file.open("Tmp_spectrum.txt", ios::out|ios::binary);
 
-  if(file.is_open() && contr->get_current_spectrum()) contr->get_current_spectrum()->write_to_file(file);
-  file.close();
+  //---------------- Now we loop over blocks per proc-------
+  for(int block_num = 0; block_num<cmd_line_args.per_proc; block_num++){
 
-  //Now we have some test spectral data we can work with...
+    divide_domain(dims, my_space, cmd_line_args.per_proc, block_num);
 
-  contr->add_d(100, 100);
-  contr->get_current_d()->calculate();
+    space_dim = my_space[1]-my_space[0];
+    
+    std::string out = mk_str(mpi_info.rank)+" "+mk_str(my_space[0])+" "+mk_str(my_space[1])+" "+ mk_str(my_space[1]-my_space[0]+1);
+    my_print(out, mpi_info.rank, -1);
+
+    MPI_Barrier(MPI_COMM_WORLD);
+    //--------------THIS will slightly slow down some cores to match the slowest. But it makes output easier. Consider removing if many blocks
+
+    data_array  * dat = new data_array(space_dim, n_tims);
+    data_array * dat_fft = new data_array(space_dim, n_tims);
+
+    if(!dat->is_good() or !dat_fft->is_good()){
+      my_print("Bugger, data array allocation failed. Aborting.", mpi_info.rank);
+      return 0;
+    }
+
+    my_reader->read_data(dat, cmd_line_args.time, my_space);
+
+    err = dat->fft_me(dat_fft);
+    
+    my_print("FFT returned err_state " + mk_str(err), mpi_info.rank, -1);
+
+//    fstream file;
+//    file.open("Tmp.txt", ios::out|ios::binary);
+//    if(file.is_open()) dat->write_to_file(file);
+//    file.close();
+//----------------NOT thread safe!!!
+
+    int row_lengths[2];
+    row_lengths[0] = space_dim;
+    row_lengths[1] = DEFAULT_N_ANG;
+    
+    contr->add_spectrum(row_lengths, 2);
+    contr->get_current_spectrum()->make_test_spectrum();
+
+//    file.open("Tmp_spectrum.txt", ios::out|ios::binary);
+
+//    if(file.is_open() && contr->get_current_spectrum()) contr->get_current_spectrum()->write_to_file(file);
+//    file.close();
+
+    //Now we have some test spectral data we can work with...
+
+    contr->add_d(10, 10);
+    contr->get_current_d()->calculate();
+
+    delete dat;
+    delete dat_fft;
+
+  }
+  //-----------------end of per_proc loop---- Now controller holds one spectrum and d per block
 
   //Cleanup objects etc
   delete my_reader;
-  delete dat;
-  delete dat_fft;
   delete contr;
 
   cout<<"Grep for FAKENUMBERS !!!!"<<endl;
@@ -189,6 +215,93 @@ void share_consts(){
 
   MPI_Bcast(&my_const, 1, deckConstType, 0, MPI_COMM_WORLD);
 
+}
+
+setup_args process_command_line(int argc, char *argv[]){
+/** \brief Set basic parameters
+*
+*Sets defaults or those given via command line (see help.txt). Forces an constant integer number of space blocks on each core.
+*/
+
+  setup_args values;
+  values.n_space = -1;
+  values.space[0] = -1;
+  values.space[1] = -1;
+
+  values.time[0] = 0;
+  values.time[1] = 1;
+  values.file_prefix = "";
+  values.block = "ex";
+
+  for(int i=1; i< argc; i++){
+    if(strcmp(argv[i], "-h")==0) print_help();
+    if(strcmp(argv[i], "-f")==0 && i < argc-1) values.file_prefix = argv[i+1];
+    if(strcmp(argv[i], "-start")==0 && i < argc-1) values.time[0] = atoi(argv[i+1]);
+    if(strcmp(argv[i], "-end")==0 && i < argc-1) values.time[1] = atoi(argv[i+1]);
+    if(strcmp(argv[i], "-block")==0 && i < argc-1) values.block = argv[i+1];
+    if(strcmp(argv[i], "-n")==0 && i < argc-1) values.n_space= atoi(argv[i+1]);
+    if(strcmp(argv[i], "-space")==0 && i < argc-2){
+      values.space[0] = atoi(argv[i+1]);
+      values.space[1] = atoi(argv[i+2]);
+    }
+    
+  }
+
+  if(values.space[0] == -1 && values.space[1] == -1 && values.n_space == -1){
+    values.n_space = mpi_info.n_procs;
+    values.per_proc = 1;
+  }
+  //By default do one block per processor
+  else{
+    values.per_proc = values.n_space / mpi_info.n_procs;
+    //integer division!
+    values.n_space = values.per_proc * mpi_info.n_procs;
+  //Exactly divide
+  }
+
+  if(values.time[0]< 0 ) values.time[0] = 0;
+  if(values.time[1]< 0 ) values.time[1] = 0;
+  if(values.time[1] < values.time[0]) values.time[1] = values.time[0] + 1;
+  //Weird UI protectino
+
+  return values;
+}
+
+void print_help(){
+
+  ifstream halp;
+  
+  halp.open(halp_file);
+  if(mpi_info.rank == 0){
+    cout<<"Command line options: "<<endl;
+    cout<<halp.rdbuf();
+  }
+}
+
+void divide_domain(std::vector<int> dims, int space[2], int per_proc, int block_num){
+/** \brief Divide dims evenly between procs
+*
+*Uses the number of space blocks from args (if specified) and the domain size from dims to ensure perfect subdivision and set current proc's bounds. We can ignore incoming space vals as they should be -1
+*/
+
+  if(mpi_info.n_procs > 1){
+    int end, block_start, block_end, block_len;
+    float per_proc_size;
+    end = dims[0];
+    per_proc_size = std::ceil( (float) end / (float) mpi_info.n_procs);
+    //Force overlap not missing
+    
+    block_start = mpi_info.rank * (int) std::floor((float) end/(float) (mpi_info.n_procs));
+    block_end = block_start + (int) per_proc_size;
+    block_len = block_end- block_start;
+    space[0] = block_start + (block_num) * block_len / per_proc;
+    space[1] = space[0] + block_len / per_proc;
+  }else{
+  
+    if(space[0]==-1) space[0] = 0;
+    if(space[1]==-1) space[1] = dims[0]-1;
+  }
+  
 }
 
 int where(my_type * ax_ptr, int len, my_type target){
@@ -321,7 +434,6 @@ void my_print(fstream * handle, std::string text, int rank, int rank_to_write){
   }
 
 }
-
 
 std::string mk_str(int i){
 

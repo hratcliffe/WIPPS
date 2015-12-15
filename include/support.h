@@ -147,4 +147,16 @@ const std::string PPC = "ppc";
 const std::string CONSTANTS = " Constant block values after";
 const std::string CONSTANTS_END = "Deck state:";
 
+const std::string halp_file = "help.txt";
+
+struct setup_args{
+  int time[2];
+  int space[2];
+  std::string block;
+  std::string file_prefix;
+  int n_space;
+  int per_proc;
+
+};
+
 #endif

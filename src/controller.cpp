@@ -23,16 +23,24 @@ controller::controller(){
 *\todo Plasma object should be setup from files or such
 */
   my_plas = new plasma(my_const.omega_ce * me/std::abs(q0));
-  my_spect = nullptr;
-  my_d = nullptr;
+  current_spect=0;
+  current_d=0;
 
 };
 
 controller::~controller(){
 
   if(my_plas) delete my_plas;
-  if(my_spect) delete my_spect;
-  if(my_d) delete my_d;
+  
+  for(int i=0; i<my_spect.size(); i++){
+    delete my_spect[i];
+    my_spect[i] = nullptr;
+  }
+  for(int i=0; i<my_d.size(); i++){
+    delete my_d[i];
+    my_d[i] = nullptr;
+  }
+
 };
 
 void controller::add_spectrum(int nx, int n_ang){
@@ -40,8 +48,12 @@ void controller::add_spectrum(int nx, int n_ang){
 *
 *rectangular spectrum, for when angular distribution depends on omega
 */
-  my_spect = new spectrum(nx, n_ang);
-  my_spect->my_controller = this;
+  spectrum * tmp_spect;
+  tmp_spect = new spectrum(nx, n_ang);
+  tmp_spect->my_controller = this;
+  my_spect.push_back(tmp_spect);
+  current_spect = my_spect.size()-1;
+
 }
 
 void controller::add_spectrum(int * row_lengths, int ny){
@@ -49,9 +61,11 @@ void controller::add_spectrum(int * row_lengths, int ny){
 *
 *Spectrum for when angular distribution does not depend on omega
 */
-
-  my_spect = new spectrum(row_lengths, ny);
-  my_spect->my_controller = this;
+  spectrum * tmp_spect;
+  tmp_spect = new spectrum(row_lengths, ny);
+  tmp_spect->my_controller = this;
+  my_spect.push_back(tmp_spect);
+  current_spect = my_spect.size()-1;
   
 }
 
@@ -60,13 +74,30 @@ void controller::add_d(int nx, int n_angs){
 *
 *
 */
-
-  my_d = new diffusion_coeff(nx, n_angs);
-  my_d->my_controller = this;
-  my_d->make_velocity_axis();
-  my_d->make_pitch_axis();
+  diffusion_coeff * tmp_d;
+  tmp_d = new diffusion_coeff(nx, n_angs);
+  tmp_d->my_controller = this;
+  tmp_d->make_velocity_axis();
+  tmp_d->make_pitch_axis();
+  my_d.push_back(tmp_d);
+  current_d = my_d.size()-1;
 
 }
+
+spectrum * controller::get_current_spectrum(){
+
+  if(!my_spect.empty()) return my_spect[current_spect];
+  else return nullptr;
+
+}
+
+diffusion_coeff * controller::get_current_d(){
+  
+  if(!my_d.empty()) return my_d[current_d];
+  else return nullptr;
+}
+
+
 /*
 A bounce average function here would: assemble ordered stack of d's and spectrums.
 Run calculate on each, matching proerply

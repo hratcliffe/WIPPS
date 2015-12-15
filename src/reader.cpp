@@ -97,17 +97,7 @@ bool reader::read_data(data_array * my_data_in, int time_range[2], int space_ran
 *
 *This will open the files dictated by time range sequentially, and populate them into the data_array. It'll stop when the end of range is reached, or it goes beyond the size available. Space range upper entry of -1 is taken as respective limit. @return 0 for success, 1 for error \todo Currently gives no report of nature of error...
 */
-
-//First we check the space range is within range, and chnage the -1's to the repsective dimensions. If out of rnage we return error (1).
-  int dim = my_data_in->get_dims(0);
-  if((space_range[1] > dim) || ((space_range[1]> 0)  &&(space_range[0] > space_range[1]))) return 1;
-
-  if(space_range[0]==-1) space_range[0] = 0;
-  if(space_range[1]==-1) space_range[1] = dim;
   
-  if(time_range[0] < 0) time_range[0] = 0;
-  if(time_range[1] < time_range[0]) time_range[1] = time_range[0];
-
   strcpy(my_data_in->block_id, block_id);
   //set block id
 
@@ -175,8 +165,10 @@ bool reader::read_data(data_array * my_data_in, int time_range[2], int space_ran
     *(ax_ptr + i) = handle->time;
     //save time of file
     if(!block->data) break;
-
-    my_data_in->populate_row(block->data, dim, i-time_range[0]);
+    my_type * my_ptr = (my_type *) block->data;
+    my_ptr +=space_range[0];
+    
+    my_data_in->populate_row(my_ptr, space_range[1], i-time_range[0]);
 
     sdf_close(handle);
 

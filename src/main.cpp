@@ -163,6 +163,14 @@ int main(int argc, char *argv[]){
 
   }
   //-----------------end of per_proc loop---- Now controller holds one spectrum and d per block
+  MPI_Barrier(MPI_COMM_WORLD);
+  
+  contr->bounce_average();
+  int ddims[2];
+  contr->get_size(ddims);
+  int total = ddims[0]*ddims[1];
+
+  //MPI_Reduce(MPI_IN_PLACE, contr->get_current_d()->data, total, MPI_CALCTYPE, MPI_SUM, 0, MPI_COMM_WORLD);
 
   //Cleanup objects etc
   delete my_reader;

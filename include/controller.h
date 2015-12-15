@@ -36,6 +36,10 @@ public:
   spectrum * get_current_spectrum();
   diffusion_coeff * get_current_d();
   plasma * get_plasma(){return my_plas;};
+  void bounce_average();
+  void get_size(int dims[2]);
+
+
 };
 
 

@@ -97,12 +97,28 @@ diffusion_coeff * controller::get_current_d(){
   else return nullptr;
 }
 
+void controller::bounce_average(){
+  /** \todo finish this!!*/
+  if(my_d.size() ==1) return;
+  //No averaging to do!
 
-/*
-A bounce average function here would: assemble ordered stack of d's and spectrums.
-Run calculate on each, matching proerply
-*** If required, supply v_par axes to them so they line up as wanted
-Bounce average into global D interpolating v as necessary etc
-\todo Write this...
-*/
+  int dims[2];
+  get_size(dims);
+  add_d(dims[0], dims[1]);
+  //Add new averaged D
+  
+  for(int i=0; i<my_d.size() -1; i++){
+    //Flatten down each d onto this one
+  
+  
+  }
+  
 
+}
+
+void controller::get_size(int dims[2]){
+
+  dims[0] = my_d[current_d]->get_dims(0);
+  dims[1] = my_d[current_d]->get_dims(1);
+
+}

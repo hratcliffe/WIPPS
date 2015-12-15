@@ -34,6 +34,7 @@
 */
 
 #define calc_type double
+#define MPI_CALCTYPE MPI_DOUBLE
 
 #define tiny_calc_type 1e-12
 

@@ -32,9 +32,13 @@
  * \subsection contr Spectrum and D generation
  * The main calculations involving extracting a spectrum from the data read, and turning this into a diffusion coefficient, according to equations in Albert 2005 and/or Lyons 1972. Control of this process, matching spectra and coefficients and providing plasma parameters, is managed by the controller class.
  * \section docs This Documentation
- * These docs describe all classes and methods under the classes section. Helper functions, constants etc are in support.h
+ * These docs describe all classes and methods under the classes section. Helper functions, constants etc are grouped under modules.
  * \section build Building or Editing the Code
  * Build using make. If input data is type float, use make TYPE=float to build with correct libraries. 
  *Any changes to code include files or addition of files will change dependencies. In this case run make echo_deps before a clean build
+ *
+ *\section test Integrated Testing
+ * All (hopefully) significant (copout!) parts of the code should be covered by inbuilt tests. These are defined in test.cpp and cover a mixture of unit testing, science testing and library integration tests. To run the tests, clean build with make MODE=test and run. To add tests, see class \ref tests. Consider adding tests for any significant additions or changes, and running the existing ones ditto.
+ *
  */
 

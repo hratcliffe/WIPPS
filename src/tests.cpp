@@ -6,15 +6,6 @@
 //
 //
 
-/** \file tests.cpp 
-*
-*To add a test, do the following:
-*Descend an object from test_entity which has at least a constructor doing any setup required, a name string for output id, a function run taking no parameters which performs the necessary test and a destructor doing cleanup. Add any other member variables or functions required. In tests::setup_tests create an instance of your class as test_obj = new your_class() and then add your test to the remit using add_test(test_obj); Alternately make the instance and use the global test_bed using test_bed->add(your pntr) from anywhere.
-*To add errors, add the message into the blank spaces in the list below, err_names, and declare a const int of desired name aliased to TEST_USERDEF_ERR* where * = 1-4
-*To report the errors by code, call test_bed->report_err(err); To report other salient information use test_bed->report_info(info, verbosity) where the second parameter is an integer describing the verbosity setting at which to print this info (0=always, the larger int means more and more detail).
-
-
-*/
 
 #include <stdio.h>
 #include <math.h>
@@ -31,10 +22,8 @@
 
 extern tests * test_bed; /**< Global testbed, define somewhere in your code*/
 
-// Define any classes you refer to here, and include headers above and in tests.h
 extern mpi_info_struc mpi_info;
 extern deck_constants my_const;
-class reader;
 
 const int err_codes[err_tot] ={TEST_PASSED, TEST_WRONG_RESULT, TEST_NULL_RESULT, TEST_ASSERT_FAIL, TEST_USERDEF_ERR1, TEST_USERDEF_ERR2, TEST_USERDEF_ERR3, TEST_USERDEF_ERR4};/**< List of error codes available*/
 
@@ -48,6 +37,7 @@ tests::~tests(){
 }
 
 void tests::set_verbosity(int verb){
+/** Set the verbosity of testing output, from 0 (minimal) to max_verbos.*/
   if((verb > 0)) this->verbosity = std::max(verb, max_verbos);
 
 }
@@ -88,6 +78,9 @@ void tests::add_test(test_entity * test){
 }
 
 void tests::report_err(int err, int test_id){
+/** \brief Log error
+*
+* Logs error text corresponding to code err for test defined by test_id. Errors are always recorded.*/
   if(test_id == -1) test_id = current_test_id;
 
   my_print(outfile, get_printable_error(err, test_id), mpi_info.rank);
@@ -98,7 +91,7 @@ void tests::report_err(int err, int test_id){
 void tests::report_info(std::string info, int verb_to_print, int test_id){
 /** \brief Other test info
 *
-*Records string info to the tests.log file and to screen according to requested verbosity.
+*Records string info to the tests.log file and to screen, according to requested verbosity.
 */
   if(test_id == -1) test_id = current_test_id;
   if(verb_to_print <= this->verbosity){
@@ -110,7 +103,10 @@ void tests::report_info(std::string info, int verb_to_print, int test_id){
 }
 
 std::string tests::get_printable_error(int err, int test_id){
-
+/** \brief Make an error message
+*
+* Converts error code to printable string, adds code for reference and adds test name. Note code is bitmask and additional errors are appended together
+*/
   std::string err_string="";
   if(err!=TEST_PASSED){
     for(int i=err_tot-1; i>0; --i){

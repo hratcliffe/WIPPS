@@ -36,7 +36,7 @@ deck_constants my_const;/**< Physical constants*/
 mpi_info_struc mpi_info;/**< MPI data */
 
 int test_int;
-tests* test_bed;/**Test bed for testing */
+tests* test_bed;/**<Test bed for testing */
 
 void get_deck_constants();
 int local_MPI_setup(int argc, char *argv[]);
@@ -184,8 +184,14 @@ int main(int argc, char *argv[]){
   exit(0);
 }
 
-int local_MPI_setup(int argc, char *argv[]){
+/** \defgroup main Main Helper Functions
+*@{ */
 
+int local_MPI_setup(int argc, char *argv[]){
+/** \brief Do the MPI init
+*
+* Calls MPI init and sets up communicator. Stores number of processors and each rank into mpi_info.
+*/
   int ierr, rank, n_procs;
 
   ierr = MPI_Init(&argc, &argv);
@@ -199,6 +205,11 @@ int local_MPI_setup(int argc, char *argv[]){
 }
 
 void share_consts(){
+/** \brief MPI Share deck constants
+*
+*Share the deck constants read on root to all procs
+*/
+
 /*  MPI_Aint addr;
   MPI_Get_address(&my_const, &addr);
   cout<<addr<<" "<<&my_const<<endl;
@@ -288,7 +299,10 @@ setup_args process_command_line(int argc, char *argv[]){
 }
 
 void print_help(){
-
+/** \brief Print command line help
+*
+*Prints contents of halp_file from rank zero.
+*/
   ifstream halp;
   
   halp.open(halp_file);
@@ -420,6 +434,9 @@ void get_deck_constants(){
   //assumes same charge magnitude, I.e. H plasma
 
 }
+
+/** @} */
+
 
 void trim_string(std::string &str, char ch){
   std::string tmp;

@@ -16,7 +16,6 @@ class spectrum;
 class plasma;
 class controller;
 
-
 /** \brief Diffusion coefficient object
 *
 * Specialised data_array containing the calculated coefficient plus relevant ids. Can be made/destroyed only by controller object. 
@@ -29,9 +28,9 @@ private:
   int n_thetas; /**< Number of wave normal angles to consider */
   int n_n; /**< Max number of resonances to consider */
   controller * my_controller;/**< Owning controller which gives access to plasma and spectrum*/
-  friend void controller::add_d(int nx, int n_angs);
+  friend void controller::add_d(int nx, int n_angs, int pos);
   friend controller::~controller();
-
+  friend void controller::handle_d_mpi();
   diffusion_coeff(int nx, int n_ang);
   virtual ~diffusion_coeff();
 
@@ -40,7 +39,7 @@ public:
 
   int latitude;/**< Latitude of calculation*/
   int wave_id;/**< ID of wave mode considered*/
-
+  std::string tag; /**<Identifies as local, averaged etc*/
   void set_ids(float time1, float time2, int space1, int space2, int wave_id, char block_id[10]);
 
   bool write_to_file(std::fstream &file);

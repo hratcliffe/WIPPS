@@ -133,7 +133,10 @@ int main(int argc, char *argv[]){
 
     err = dat->fft_me(dat_fft);
     
-    my_print("FFT returned err_state " + mk_str(err), mpi_info.rank, -1);
+    if(mpi_info.rank ==0) MPI_Reduce(MPI_IN_PLACE, &err, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+    else MPI_Reduce(&err, NULL, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+
+    my_print("FFT returned err_state " + mk_str(err), mpi_info.rank);
 
 //    fstream file;
 //    file.open("Tmp.txt", ios::out|ios::binary);
@@ -155,7 +158,7 @@ int main(int argc, char *argv[]){
 
     //Now we have some test spectral data we can work with...
 
-    contr->add_d(10, 10);
+    contr->add_d(cmd_line_args.d[0], cmd_line_args.d[1]);
     contr->get_current_d()->calculate();
 
     delete dat;
@@ -166,11 +169,6 @@ int main(int argc, char *argv[]){
   MPI_Barrier(MPI_COMM_WORLD);
   
   contr->bounce_average();
-  int ddims[2];
-  contr->get_size(ddims);
-  int total = ddims[0]*ddims[1];
-
-  //MPI_Reduce(MPI_IN_PLACE, contr->get_current_d()->data, total, MPI_CALCTYPE, MPI_SUM, 0, MPI_COMM_WORLD);
 
   //Cleanup objects etc
   delete my_reader;
@@ -252,6 +250,10 @@ setup_args process_command_line(int argc, char *argv[]){
       values.space[0] = atoi(argv[i+1]);
       values.space[1] = atoi(argv[i+2]);
     }
+    if(strcmp(argv[i], "-d")==0 && i < argc-2){
+      values.d[0] = atoi(argv[i+1]);
+      values.d[1] = atoi(argv[i+2]);
+    }
     
   }
 
@@ -270,7 +272,17 @@ setup_args process_command_line(int argc, char *argv[]){
   if(values.time[0]< 0 ) values.time[0] = 0;
   if(values.time[1]< 0 ) values.time[1] = 0;
   if(values.time[1] < values.time[0]) values.time[1] = values.time[0] + 1;
-  //Weird UI protectino
+  if(values.d[0] < 0) values.d[0] = 0;
+  if(values.d[1] < 0) values.d[1] = 0;
+  if(values.d[0] >MAX_SIZE){
+    values.d[0] = MAX_SIZE;
+    my_print("WARNING: Requested size exceeds MAXSIZE", mpi_info.rank);
+  }
+  if(values.d[1] >MAX_SIZE){
+    values.d[1] = MAX_SIZE;
+    my_print("WARNING: Requested size exceeds MAXSIZE", mpi_info.rank);
+  }
+  //Protect from invalid user input
 
   return values;
 }

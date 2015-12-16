@@ -26,19 +26,20 @@ class controller{
   std::vector<diffusion_coeff *> my_d;/**< Diffusion coefficient object or vector thereof?*/
   int current_spect;
   int current_d;
+  void get_size(int dims[2]);
+
 public:
 
   controller();
   ~controller();
   void add_spectrum(int nx, int n_ang);
   void add_spectrum(int * row_lengths, int ny);
-  void add_d(int nx, int n_angs);
+  void add_d(int nx, int n_angs, int pos=-1);
   spectrum * get_current_spectrum();
   diffusion_coeff * get_current_d();
   plasma * get_plasma(){return my_plas;};
   void bounce_average();
-  void get_size(int dims[2]);
-
+  void handle_d_mpi();
 
 };
 

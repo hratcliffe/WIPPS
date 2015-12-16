@@ -26,6 +26,7 @@ diffusion_coeff::diffusion_coeff(int nx, int n_angs):data_array(nx, n_angs){
 
   n_thetas = 100;
   n_n = 5;
+  tag = LOCAL;
   // FAKENUMBERS
 }
 
@@ -62,8 +63,9 @@ void diffusion_coeff::make_velocity_axis(){
 *Makes suitably binned velocity axis and copies into axes for dim [0]
 */
 
-  calc_type res = v0 * 0.01;
-  make_linear_axis(0, res, -2);
+  calc_type res = (V_MAX - V_MIN)/dims[0];
+  int offset = V_MIN/res;
+  make_linear_axis(0, res, offset);
   //-2 is for testing so 0th element is > zero...
   // FAKENUMBERS
 }
@@ -74,8 +76,9 @@ void diffusion_coeff::make_pitch_axis(){
 *Makes suitably binned axis and copies into axes for dim [1]
 */
 
-  calc_type res = 4.0/dims[1]; //To cover range from 0 to 2...
-  make_linear_axis(1, res, dims[1]/2.0);
+  calc_type res = (ANG_MAX - ANG_MIN)/dims[1]; //To cover range from 0 to 2...
+  int offset = ANG_MIN/res;
+  make_linear_axis(1, res, offset);
   // FAKENUMBERS
 }
 
@@ -148,6 +151,13 @@ Get mu, dmu/domega which are used to:
   //innermost loop should be n. Next theta, as we need mu at each theta. Omega and x are interchangeable...
   //Alpha remains, as does particle v.
 
+
+  int last_report=0;
+  int report_interval = dims[0]/10; //10 prints per round
+  if(report_interval > 20) report_interval = 20;
+  if(report_interval < 1) report_interval = 1;
+
+
 //-------------------Main loops here----------------------------
 //We have deep nested loops. Move ANYTHING that can be as far up tree as possible
 
@@ -157,7 +167,11 @@ Get mu, dmu/domega which are used to:
     v_par = get_axis_element(0, i);
     n_min = get_min_n(v_par);
     n_max = get_max_n(v_par);
-    my_print("i "+mk_str(i), mpi_info.rank);
+    if((i-last_report) >= report_interval){
+      my_print("i "+mk_str(i), mpi_info.rank);
+
+      last_report = i;
+    }
 
 //    for(int k =0; k< ((1 <dims[1]) ? 1: dims[1]); k++){
     for(int k =0; k< dims[1]; k++){

@@ -21,6 +21,7 @@
 #define cplx_type ADD_FFTW(complex)
 #define my_type float
 #define my_sdf_type SDF_DATATYPE_REAL4
+#define MPI_MYTYPE MPI_FLOAT
 
 #else
 
@@ -28,6 +29,7 @@
 #define cplx_type ADD_FFTW(complex)
 #define my_type double
 #define my_sdf_type SDF_DATATYPE_REAL8
+#define MPI_MYTYPE MPI_DOUBLE
 
 #endif
 /** These set up our types so we can easily recompile to work with doubles or floats. First adds correct FFTW library prefix, adjust to float or normal. Next defines suitable complex type. Third s working data type, and the last is set to suitable SDF data type matching my_type. Lets be sane, and assume we want the f libraries to work with float data, and the double to work with doubles. So we don't have extraneous copying and false precision.
@@ -37,7 +39,6 @@
 #define MPI_CALCTYPE MPI_DOUBLE
 
 #define tiny_calc_type 1e-12
-
 
 const int MAX_SIZE = 10000;/**< Maximum array size allowed (per processor if MPI in use) */
 const int MAX_FILENAME_DIGITS = 7;/**< Maximum number of digits in filename dump number string*/
@@ -150,6 +151,16 @@ const std::string CONSTANTS_END = "Deck state:";
 
 const std::string halp_file = "help.txt";
 
+const std::string LOCAL = "loc";
+const std::string BOUNCE_AV = "bav";
+const std::string GLOBAL = "glb";
+
+const float V_MIN = -0.3*v0;
+const float V_MAX = 0.3*v0;
+const float ANG_MIN = 0;
+const float ANG_MAX = 4;
+//V and angle axes for coefficient
+
 struct setup_args{
   int time[2];
   int space[2];
@@ -157,7 +168,7 @@ struct setup_args{
   std::string file_prefix;
   int n_space;
   int per_proc;
-
+  int d[2];
 };
 
 #endif

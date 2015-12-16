@@ -115,8 +115,8 @@ int main(int argc, char *argv[]){
 
     space_dim = my_space[1]-my_space[0];
     
-    std::string out = mk_str(mpi_info.rank)+" "+mk_str(my_space[0])+" "+mk_str(my_space[1])+" "+ mk_str(my_space[1]-my_space[0]+1);
-    my_print(out, mpi_info.rank, -1);
+//    std::string out = mk_str(mpi_info.rank)+" "+mk_str(my_space[0])+" "+mk_str(my_space[1])+" "+ mk_str(my_space[1]-my_space[0]+1);
+//    my_print(out, mpi_info.rank, -1);
 
     MPI_Barrier(MPI_COMM_WORLD);
     //--------------THIS will slightly slow down some cores to match the slowest. But it makes output easier. Consider removing if many blocks
@@ -249,6 +249,8 @@ setup_args process_command_line(int argc, char *argv[]){
   values.time[1] = 1;
   values.file_prefix = "";
   values.block = "ex";
+  values.d[0] = 10;
+  values.d[1] = 10;
 
   for(int i=1; i< argc; i++){
     if(strcmp(argv[i], "-h")==0) print_help();

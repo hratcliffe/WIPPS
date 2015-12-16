@@ -7,14 +7,27 @@ Integrator OK
 Boxcar smooth OK
 Interpolate OK
 Passed test basic maths helpers
-2.775558e-17
-1.387779e-17
 Bessel functions OK
 Passed test external maths routines
 Testing resonant frequency solver
 1 frequency solutions found
-Freq is 5.823058e+03 = 3.310775e-01 om_ce
+Freq is 1.087984e+04 = 6.185876e-01 om_ce
 Testing whistler high density approx.
+Mismatch in high density approx or dispersion solver at 4.545455e-01 3.141593e-01
+Mu 4.349346e+00 difference 2.226037e-02 relative error 5.118096e-03
+Mismatch in high density approx or dispersion solver at 5.454545e-01 3.141593e-01
+Mu 4.403197e+00 difference 3.511681e-02 relative error 7.975298e-03
+Mismatch in high density approx or dispersion solver at 6.363636e-01 3.141593e-01
+Mu 4.638331e+00 difference 5.857974e-02 relative error 1.262949e-02
+Mismatch in high density approx or dispersion solver at 7.272727e-01 3.141593e-01
+Mu 5.168298e+00 difference 1.108980e-01 relative error 2.145735e-02
+Mismatch in high density approx or dispersion solver at 8.181818e-01 3.141593e-01
+Mu 6.427527e+00 difference 2.799077e-01 relative error 4.354827e-02
+Mismatch in high density approx or dispersion solver at 9.090909e-01 3.141593e-01
+Mu 1.248019e+01 difference 2.191954e+00 relative error 1.756347e-01
+Mismatch in high density approx or dispersion solver at 6.000000e-01 6.283185e-01
+Mu 6.146580e+00 difference 4.111352e-01 relative error 6.688844e-02
+Total 7 out of 20 issues in high density approx or dispersion solver at precision: 5.000000e-03
 Testing dispersion solver for plasma O mode
 Testing dispersion solver for plasma X mode
 Passed test plasma

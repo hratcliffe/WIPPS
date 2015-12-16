@@ -58,7 +58,7 @@ bool diffusion_coeff::write_to_file(std::fstream &file){
 }
 
 void diffusion_coeff::make_velocity_axis(){
-/**\Set velocity axis
+/**\brief Set velocity axis
 *
 *Makes suitably binned velocity axis and copies into axes for dim [0]
 */
@@ -71,7 +71,7 @@ void diffusion_coeff::make_velocity_axis(){
 }
 
 void diffusion_coeff::make_pitch_axis(){
-/**\Set pitch angle axis (tan theta)
+/**\brief Set pitch angle axis (tan theta)
 *
 *Makes suitably binned axis and copies into axes for dim [1]
 */

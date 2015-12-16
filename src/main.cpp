@@ -472,14 +472,6 @@ std::string mk_str(double i){
   return ret;
   
 }
-std::string mk_str(float i){
-
-  char buffer[25];
-  std::snprintf(buffer, 25, "%e", i);
-  std::string ret = buffer;
-  return ret;
-  
-}
 
 std::string mk_str(bool b){
 
@@ -489,6 +481,7 @@ std::string mk_str(bool b){
 }
 
 std::string mk_str(long double i){return mk_str((double) i);};
+std::string mk_str(float i){return mk_str((double) i);};
 
 template<typename T> T integrator(T * start, int len, T * increment){
 /** \brief Basic numerical integrator

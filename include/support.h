@@ -15,31 +15,33 @@
 #include <stdio.h>
 #include <vector>
 
+//-----------TYPE HANDLING----------------------------
 #ifdef _USE_FLOAT
 
-#define ADD_FFTW(x) fftwf_ ## x
-#define cplx_type ADD_FFTW(complex)
-#define my_type float
-#define my_sdf_type SDF_DATATYPE_REAL4
-#define MPI_MYTYPE MPI_FLOAT
+#define ADD_FFTW(x) fftwf_ ## x /**< Add the correct FFTW library prefix to function/variable names */
+#define cplx_type ADD_FFTW(complex) /**< Suitable complex type for FFTW work*/
+#define my_type float /**< Input data type*/
+#define my_sdf_type SDF_DATATYPE_REAL4 /**< SDF type matching \ref my_type*/
+#define MPI_MYTYPE MPI_FLOAT /**< MPI type matching \ref my_type*/
 
 #else
 
-#define ADD_FFTW(x) fftw_ ## x
-#define cplx_type ADD_FFTW(complex)
-#define my_type double
-#define my_sdf_type SDF_DATATYPE_REAL8
-#define MPI_MYTYPE MPI_DOUBLE
+#define ADD_FFTW(x) fftw_ ## x /**< Add the correct FFTW library prefix to function/variable names */
+#define cplx_type ADD_FFTW(complex)/**< Suitable complex type for FFTW work*/
+#define my_type double /**< Input data type*/
+#define my_sdf_type SDF_DATATYPE_REAL8 /**< SDF type matching \ref my_type*/
+#define MPI_MYTYPE MPI_DOUBLE /**< MPI type matching \ref my_type*/
 
 #endif
-/** These set up our types so we can easily recompile to work with doubles or floats. First adds correct FFTW library prefix, adjust to float or normal. Next defines suitable complex type. Third s working data type, and the last is set to suitable SDF data type matching my_type. Lets be sane, and assume we want the f libraries to work with float data, and the double to work with doubles. So we don't have extraneous copying and false precision.
-*/
 
-#define calc_type double
-#define MPI_CALCTYPE MPI_DOUBLE
+#define calc_type double /**< Type to do calculations in. This is independent of the input data type \ref my_type */
+#define MPI_CALCTYPE MPI_DOUBLE /**< MPI type matching \ref calc_type */
 
-#define tiny_calc_type 1e-12
+#define tiny_calc_type 1e-12/**< Tiny value for \ref calc_type */
 
+//----------- END TYPE HANDLING----------------------------
+
+//----------- CONSTANTS ---------------------------------
 const int MAX_SIZE = 10000;/**< Maximum array size allowed (per processor if MPI in use) */
 const int MAX_FILENAME_DIGITS = 7;/**< Maximum number of digits in filename dump number string*/
 const my_type io_verify = 3.0/32.0;/**< An exactly binary representable my_type to verify we're reading what we're writing.*/
@@ -54,6 +56,40 @@ const calc_type eps0 =8.85418782e-12; /**< Epsilon_0 permittivity of free space 
 //mu0 = 4.0d-7 * !dpi  ; N/A^2
 //epsilon0 = 8.8541878176203899d-12 ; F/m
 //h_planck = 6.62606957d-34 ; J s
+
+const int DEFAULT_N_ANG = 100;/**< Default number of wave normal angles to consider*/
+
+const int WAVE_WHISTLER = 1; /**< Code to id wave as whistler mode */
+const int WAVE_PLASMA = 2; /**< Code to id wave as plasma/Langmuir mode */
+const int WAVE_O = 3; /**< Code to id wave as ordinary EM mode */
+
+const int FUNCTION_NULL = 0; /**< Code to id spectral angular distribution as absent */
+const int FUNCTION_DELTA = 1; /**< Code to id spectral angular distribution as delta function (with integral 1) */
+const int FUNCTION_GAUSS = 2; /**< Code to id spectral angular distribution as gaussian (with integral 1) */
+const int FUNCTION_ISO = 3; /**< Code to id spectral angular distribution as isotropic (with integral 1) */
+
+
+const std::string OMEGA_CE = "wCe";/**< String specifying  omega_ce in deck.status*/
+const std::string OMEGA_PE = "wpe";/**< String specifying  omega_pe in deck.status*/
+const std::string DENS_RAT = "dens_rat";/**< String specifying  density ratio in deck.status*/
+const std::string PPC = "ppc";/**< String specifying ppc in deck.status*/
+const std::string CONSTANTS = " Constant block values after";/**< String denoting start of constant value dump in deck.status*/
+const std::string CONSTANTS_END = "Deck state:";/**< String denoting end of constant value dump in deck.status*/
+
+const std::string halp_file = "help.txt";/**< Name of command line options help file*/
+
+const std::string LOCAL = "loc";/**< Tag identifying diffusion coefficient processing level: local to space block*/
+const std::string BOUNCE_AV = "bav";/**< Tag identifying diffusion coefficient processing level: bounce averaged*/
+const std::string GLOBAL = "glb";/**< Tag identifying diffusion coefficient processing level: reduced over all space*/
+
+const float V_MIN = -0.3*v0;/**< Minimum particle velocity for D*/
+const float V_MAX = 0.3*v0;/**< Maximum particle velocity for D*/
+const float ANG_MIN = 0;/**< Minimum angle (tan theta) for D*/
+const float ANG_MAX = 4;/**< Maximum angle (tan theta) for D*/
+
+//----------- END CONSTANTS ---------------------------------
+
+//----------- STRUCTURES ---------------------------------
 
 /** \brief Constants read from deck
 *
@@ -107,7 +143,24 @@ struct mu_dmudom{
 
 };
 
-const int DEFAULT_N_ANG = 100;/**< Default number of wave normal angles to consider*/
+/** \brief Command line arguments
+*
+* Processed command line arguments used in main
+*/
+struct setup_args{
+  int time[2];/**< Start and end dump numbers*/
+  int space[2];/**< Local space block start and end*/
+  std::string block;/**< Block ID to use (ex, bz etc)*/
+  std::string file_prefix;/**< Prifix part of SDF file names*/
+  int n_space;/**< Number of space blocks in global x direction*/
+  int per_proc;/**< Resulting number of space blocks per proc*/
+  int d[2];/**< Dimensions of D to produce*/
+};
+
+
+//-----------END STRUCTURES ---------------------------------
+
+//----------- HELPER TYPE FUNCTION DECLARATIONS -------------
 
 void my_print(std::string text, int rank, int rank_to_write=0);
 void my_print(std::fstream * handle, std::string text, int rank, int rank_to_write=0);
@@ -115,12 +168,11 @@ void my_print(std::fstream * handle, std::string text, int rank, int rank_to_wri
 std::string mk_str(int i);/**<Converts int to string*/
 std::string mk_str(bool b);/**<Converts bool to string*/
 //std::string mk_str(size_t i){ return mk_str((int) i);} /**<Converts size_t to string*/
-std::string mk_str(double i);
-std::string mk_str(float i);
-std::string mk_str(long double i);
-void trim_string(std::string &str, char ch=' ');
+std::string mk_str(double i);/**<Converts double to string*/
+std::string mk_str(float i);/**<Converts float to string*/
+std::string mk_str(long double i);/**<Converts long double to string*/
+void trim_string(std::string &str, char ch=' '); /**< Trim all leading/trailing ch's from str*/
 
-//int whereb(my_type * ax_ptr, int len, my_type target, int &cut,int sign=1.0);
 int where(my_type * ax_ptr, int len, my_type target);
 
 
@@ -132,43 +184,6 @@ calc_type square_integrator(calc_type * start, int len, calc_type * increment);
 
 std::vector<calc_type> cubic_solve(calc_type a, calc_type b, calc_type c);
 
-const int WAVE_WHISTLER = 1; /**< Code to id wave as whistler mode */
-const int WAVE_PLASMA = 2; /**< Code to id wave as plasma/Langmuir mode */
-const int WAVE_O = 3; /**< Code to id wave as ordinary EM mode */
-
-const int FUNCTION_NULL = 0; /**< Code to id spectral angular distribution as absent */
-const int FUNCTION_DELTA = 1; /**< Code to id spectral angular distribution as delta function (with integral 1) */
-const int FUNCTION_GAUSS = 2; /**< Code to id spectral angular distribution as gaussian (with integral 1) */
-const int FUNCTION_ISO = 3; /**< Code to id spectral angular distribution as isotropic (with integral 1) */
-
-
-const std::string OMEGA_CE = "wCe";
-const std::string OMEGA_PE = "wpe";
-const std::string DENS_RAT = "dens_rat";
-const std::string PPC = "ppc";
-const std::string CONSTANTS = " Constant block values after";
-const std::string CONSTANTS_END = "Deck state:";
-
-const std::string halp_file = "help.txt";
-
-const std::string LOCAL = "loc";
-const std::string BOUNCE_AV = "bav";
-const std::string GLOBAL = "glb";
-
-const float V_MIN = -0.3*v0;
-const float V_MAX = 0.3*v0;
-const float ANG_MIN = 0;
-const float ANG_MAX = 4;
-//V and angle axes for coefficient
-
-struct setup_args{
-  int time[2];
-  int space[2];
-  std::string block;
-  std::string file_prefix;
-  int n_space;
-  int per_proc;
-  int d[2];
-};
+//----------- END HELPER TYPE FUNCTION DECLARATIONS -----------
 
 #endif

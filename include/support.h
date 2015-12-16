@@ -42,7 +42,7 @@
 
 #define tiny_calc_type 1e-12/**< Tiny value for \ref calc_type */
 
-/** @}
+/** @} */
 //----------- END TYPE HANDLING----------------------------
 
 /** \defgroup const Constants
@@ -92,7 +92,7 @@ const float V_MIN = -0.3*v0;/**< Minimum particle velocity for D*/
 const float V_MAX = 0.3*v0;/**< Maximum particle velocity for D*/
 const float ANG_MIN = 0;/**< Minimum angle (tan theta) for D*/
 const float ANG_MAX = 4;/**< Maximum angle (tan theta) for D*/
-/** @}
+/** @} */
 //----------- END CONSTANTS ---------------------------------
 
 /** \defgroup str Data Structures
@@ -165,7 +165,7 @@ struct setup_args{
   int d[2];/**< Dimensions of D to produce*/
 };
 
-/** @}
+/** @} */
 //-----------END STRUCTURES ---------------------------------
 
 /** \defgroup help Global Helper and Maths Functions
@@ -193,7 +193,7 @@ template<typename T> void inplace_boxcar_smooth(T * start, int len, int width, b
 calc_type square_integrator(calc_type * start, int len, calc_type * increment);
 
 std::vector<calc_type> cubic_solve(calc_type a, calc_type b, calc_type c);
-/** @}
+/** @} */
 //----------- END HELPER TYPE FUNCTION DECLARATIONS -----------
 
 #endif

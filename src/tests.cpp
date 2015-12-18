@@ -223,7 +223,7 @@ int test_entity_data_array::run(){
 test_entity_get_and_fft::test_entity_get_and_fft(){
   name = "read and FFT";
   char block_id[10]= "ex";
-  test_rdr = new reader("test", block_id);
+  test_rdr = new reader("sin", block_id);
 
 }
 test_entity_get_and_fft::~test_entity_get_and_fft(){
@@ -242,13 +242,14 @@ int test_entity_get_and_fft::run(){
   tim_in[0]=0;
   tim_in[1]=1;
   space_in[0]=0;
-  space_in[1]=-1;
 
   int n_tims = std::max(tim_in[1]-tim_in[0], 1);
 
   int n_dims;
   std::vector<int> dims;
   test_rdr->read_dims(n_dims, dims);
+
+  space_in[1]=dims[0];
 //  std::cout<<dims[0]<<std::endl;
   if(n_dims !=1){
     err |= TEST_WRONG_RESULT;
@@ -265,17 +266,33 @@ int test_entity_get_and_fft::run(){
     err|=TEST_ASSERT_FAIL;
     return err;
   }
-
+  
   test_rdr->read_data(test_dat, tim_in, space_in);
 
   bool tmp_err = test_dat->fft_me(test_dat_fft);
   if(tmp_err) err|=TEST_ASSERT_FAIL;
   if(err == TEST_PASSED) test_bed->report_info("Data read and FFT reports no error", 1);
 
-  /** \todo Now test the resulting frequency is right.... Also tests our axes...*/
-  
   //Get primary frequency
-  
+  int max_index = 0;
+  my_type max_val = 0, tmp;
+  //FFT is abs square so +ve
+
+  for(int i=0; i< test_dat_fft->get_dims(0); i++){
+    tmp = test_dat_fft->get_element(i, 0);
+    if(tmp >= max_val){
+      max_index = i;
+      max_val = tmp;
+    
+    }
+  }
+//  for(int i=0; i< test_dat_fft->get_dims(0); i++) std::cout<< test_dat_fft->get_axis_element(0, i);
+  my_type expected_max = 1.2566371e-4;
+  if(std::abs(test_dat_fft->get_axis_element(0,max_index) - expected_max) > PRECISION){
+    err|= TEST_WRONG_RESULT;
+    test_bed->report_info("Max freq is "+mk_str(test_dat_fft->get_axis_element(0,max_index))+" ("+mk_str(max_index)+")", 1);
+  }
+  else test_bed->report_info("FFT Frequency correct!", 1);
   test_bed->report_err(err);
   return err;
 

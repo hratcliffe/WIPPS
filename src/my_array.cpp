@@ -630,7 +630,6 @@ float data_array::get_res(int i){
 /**Return resolution of axis on dimension i. Assumes linear etc etc. If axis is undefined or zero or one in length, return 1.0 */
   int len;
   my_type * axis = this->get_axis(i, len);
-
   if(axis && len >1) return std::abs(axis[0]-axis[1]);
   else return 1.0;
 
@@ -757,8 +756,8 @@ bool data_array::fft_me(data_array * data_out){
 
   result = (my_type*) ADD_FFTW(malloc)(sizeof(my_type) * total_size);
 
-  //Possibly this bit can be genericised?
-  if(n_dims == 1){
+  /** \todo Possibly this bit can be genericised?*/
+  if(n_dims == 1 || (n_dims == 2 && dims[1] == 1) ){
     p = ADD_FFTW(plan_dft_r2c_1d)(dims[0], in, out, FFTW_ESTIMATE);
 
   }else if(n_dims == 2){
@@ -779,12 +778,15 @@ bool data_array::fft_me(data_array * data_out){
   cplx_type * addr;
   addr = out;
   //because double indirection is messy and cplx type is currently a 2-element array of floats
-  for(int i=0; i< total_size; i++){
-    *(result+i) = (my_type)(((*addr)[0])*((*addr)[0]) + ((*addr)[1])*((*addr)[1])) ;
+  for(int i=0; i< total_size/2 +1; i++){
+    *(result+i+total_size/2) = (my_type)(((*addr)[0])*((*addr)[0]) + ((*addr)[1])*((*addr)[1]));
+    *(result-i+total_size/2) = (my_type)(((*addr)[0])*((*addr)[0]) + ((*addr)[1])*((*addr)[1]));
+    
     addr++;
   }
   //Absolute square of out array to produce final result of type my_type
-
+  /** Make sure for 2-d we are making shape we expect!*/
+  
   bool err;
   err = data_out->populate_data(result, total_size);
   //Copy result into out array
@@ -811,7 +813,7 @@ bool data_array::fft_me(data_array * data_out){
 
     N2 = ((float) dims[i])/2.0;
     res = this->get_res(i);
-    for(int j= 0; j< dims[i]; j++) *(tmp_axis + j) = pi * ((float)j - N2)/N2/res;
+    for(int j= 0; j< dims[i]; j++) *(tmp_axis + j) = pi * ((float)j -N2)/N2/res;
   }
 
   return 0;

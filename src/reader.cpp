@@ -55,11 +55,8 @@ bool reader::read_dims(int &n_dims, std::vector<int> &dims){
 *Opens reference file, and gets dimension info. Returns by reference, with 0 for success, 1 for file open or read failure. Note we don't have to read the data, only the block list.
 
 */
-  char fmt[5];
-  char file_num[10];
-  sprintf(fmt,"%s%d%c" , "%0", n_z, 'd');
-  snprintf(file_num, 10, fmt, ref_file_num);
-  std::string file_name = file_prefix + file_num +".sdf";
+
+  std::string file_name = get_full_name(ref_file_num);
 
   my_print("Getting dimensions", mpi_info.rank);
   sdf_file_t *handle = sdf_open(file_name.c_str(), MPI_COMM_WORLD, SDF_READ, 0);
@@ -83,6 +80,8 @@ bool reader::read_dims(int &n_dims, std::vector<int> &dims){
     my_print("Bleh. Requested block not found. Aborting", mpi_info.rank);
     return 1;
   }
+
+  if(block->datatype != my_sdf_type) my_print("WARNING!!! Data type does not match. Output may be nonsense!", mpi_info.rank);
 
   n_dims = block->ndims;
   for(int i=0; i<n_dims; i++) dims.push_back(block->dims[i]);
@@ -126,8 +125,17 @@ bool reader::read_data(data_array * my_data_in, int time_range[2], int space_ran
   sdf_read_data(handle);
 
   ax_ptr = my_data_in->get_axis(0, len);
-  memcpy ((void *)ax_ptr, block->grids[0], len*sizeof(my_type));
+
+/*  for(int i=0; i< len; i++){
+    std::cout<<((double *)block->grids[0])[i]<<std::endl;
+  //  ax_ptr[i] = (my_type)(((double *)block->grids[0])[i]);
+  }
+  C style way of doing copy with cast
+*/
+  // Mostly c++ way
+  std::copy((double *) block->grids[0], (double *) block->grids[0] + len, ax_ptr);
   /**get 0th axis. \todo extend to 2-d data */
+
   sdf_close(handle);
 
   ax_ptr = my_data_in->get_axis(my_data_in->get_dims()-1, len);
@@ -151,7 +159,7 @@ bool reader::read_data(data_array * my_data_in, int time_range[2], int space_ran
 
       last_report = i;
     }
-  
+
     handle = sdf_open(file_name.c_str(), MPI_COMM_WORLD, SDF_READ, 0);
     if(!handle) break;
 
@@ -161,6 +169,8 @@ bool reader::read_data(data_array * my_data_in, int time_range[2], int space_ran
   
     handle->current_block = block;
     sdf_read_data(handle);
+
+    if(block->datatype != my_sdf_type) my_print("WARNING!!! Data type does not match. Output may be nonsense!", mpi_info.rank);
 
     *(ax_ptr + i) = handle->time;
     //save time of file
@@ -193,11 +203,9 @@ std::string reader::get_full_name(int num){
   char fmt[5];
   char file_num[10];
   sprintf(fmt,"%s%d%c" , "%0", n_z, 'd');
-  std::string file_name;
 
   snprintf(file_num, 10, fmt, num);
-  file_name = file_prefix + file_num +".sdf";
-  return file_name;
+  return file_prefix + file_num +".sdf";
 
 }
 
@@ -220,3 +228,4 @@ int reader::get_file_size(){
 
 
 }
+

@@ -430,7 +430,7 @@ void get_deck_constants(){
 
 //my_const.omega_ce = 17588.1111;
 
-//my_const.omega_pe = 5.0*35176.401757;
+//my_const.omega_pe =2.0*35176.401757;
 
   my_const.omega_ci = my_const.omega_ce * me/mp;
   //assumes same charge magnitude, I.e. H plasma

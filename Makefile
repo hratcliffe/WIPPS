@@ -22,15 +22,20 @@ CFLAGS += -g
 DEBUG = -g -W -Wall -pedantic -D_GLIBCXX_DEBUG -Wextra
 PROFILE = -g
 LFLAGS = -g
+
 #DEBUG+= -Wno-sign-compare
 #DEBUG+= -Wno-unused-parameter
 #Comment/uncomment these to hide specific errors...
+
+SED_STR = sed -i.bak 's/ _USE_FLOAT/ _NO_USE_FLOAT/' Doxyfile
 
 ifeq ($(strip $(TYPE)),double)
   LIB += -lfftw3 -lm
 else
   LIB += -lfftw3f -lm
   CFLAGS += -D_USE_FLOAT
+  SED_STR = sed -i.bak 's/_NO_USE_FLOAT/_USE_FLOAT/' Doxyfile
+#Set Doxygen to document correct version
 endif
 
 ifeq ($(strip $(MODE)),debug)
@@ -69,10 +74,9 @@ WARN_STR = "**************Run make clean before changing MODE or TYPE. Run echo_
 main : echo_warning $(OBJS)
 	$(CC) $(LFLAGS) $(INCLUDE) $(OBJS) $(LIB) -o main
 	@echo $(WARN_STR)
-
+	@$(SED_STR)
 echo_warning:
 	@echo $(WARN_STR)
-
 
 read_test : $(OBJDIR)/read_test.o
 	$(CC) $(INCLUDE) $(SRCDIR)/read_test.cpp $(LIBSDF) -o read_test
@@ -116,7 +120,7 @@ $(OBJDIR)/%.o:./$(SRCDIR)/%.cpp
 $(OBJDIR)/read_test.o:./$(SRCDIR)/read_test.cpp
 	$(CC) $(CFLAGS)  $< -o $@
 
-.PHONY : tar tartest clean veryclean
+.PHONY : tar tartest clean veryclean docs
 
 tar:
 	tar -cvzf Source.tgz $(SOURCE) $(INCLS) ./files/* Makefile input.deck
@@ -128,4 +132,9 @@ veryclean:
 	@rm main dependencies.log*
 	@rm -r $(OBJDIR)
 
+docs:
+	doxygen Doxyfile &> Doxy.log
+	./redox.sh
+	cd latex ; pdflatex --file-line-error --synctex=1 -interaction nonstopmode ./refman.tex &> pdflatex.log
+	@echo "Docs built. See Doxy.log and pdflatex.log for details"
 

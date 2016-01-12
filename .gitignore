@@ -9,3 +9,5 @@ Code.xcworkspace
 *.txt
 Derivations.*
 main.dSYM
+html/
+latex/

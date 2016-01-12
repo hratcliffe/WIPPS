@@ -5,6 +5,7 @@
 //  Created by Heather Ratcliffe on 10/11/2015.
 //
 //
+#ifdef RUN_TESTS_AND_EXIT
 
 #ifndef _tests_h
 #define _tests_h
@@ -196,4 +197,5 @@ class test_entity_albertG1 : public test_entity{
   virtual int run();
 };
 
+#endif
 #endif

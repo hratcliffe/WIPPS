@@ -6,6 +6,7 @@
 //
 //
 
+#ifdef RUN_TESTS_AND_EXIT
 
 #include <stdio.h>
 #include <math.h>
@@ -159,7 +160,7 @@ void tests::run_tests(){
 test_entity_reader::test_entity_reader(){
   name = "reader class";
   char block_id[10]= "run_info";
-  test_rdr = new reader("test", block_id);
+  test_rdr = new reader("./files/test", block_id);
   
 }
 test_entity_reader::~test_entity_reader(){
@@ -223,7 +224,7 @@ int test_entity_data_array::run(){
 test_entity_get_and_fft::test_entity_get_and_fft(){
   name = "read and FFT";
   char block_id[10]= "ex";
-  test_rdr = new reader("sin", block_id);
+  test_rdr = new reader("./files/sin", block_id);
 
 }
 test_entity_get_and_fft::~test_entity_get_and_fft(){
@@ -711,3 +712,4 @@ int test_entity_albertG1::run(){
 
   return TEST_PASSED;
 }
+#endif

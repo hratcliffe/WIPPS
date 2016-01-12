@@ -82,7 +82,7 @@ const std::string PPC = "ppc";/**< String specifying ppc in deck.status*/
 const std::string CONSTANTS = " Constant block values after";/**< String denoting start of constant value dump in deck.status*/
 const std::string CONSTANTS_END = "Deck state:";/**< String denoting end of constant value dump in deck.status*/
 
-const std::string halp_file = "help.txt";/**< Name of command line options help file*/
+const std::string halp_file = "./files/help.txt";/**< Name of command line options help file*/
 
 const std::string LOCAL = "loc";/**< Tag identifying diffusion coefficient processing level: local to space block*/
 const std::string BOUNCE_AV = "bav";/**< Tag identifying diffusion coefficient processing level: bounce averaged*/

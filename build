@@ -1,2 +1,0 @@
-
-mpic++ -I /usr/local/include/ -I ./SDF/C/include ./SDF/C/lib/libsdfc.a my_array.cpp main.cpp

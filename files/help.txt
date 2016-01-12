@@ -1,0 +1,9 @@
+-h Show help
+-f <string> Prefix for input files
+-start <int> Starting dump number
+-end <int> Ending dump number
+-block <string> Block id string
+-n <int> Number of space blocks to divide into. This should be divisible by the number of processors used or it will be reduced to be so. If the total number fo space points do not divide perfectly, blocks will overlap
+-space <int, int> Process one space block between int and int (use with single core only)
+-d <int, int> Dimension of D to generate
+

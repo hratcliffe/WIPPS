@@ -28,6 +28,7 @@ LFLAGS = -g
 #Comment/uncomment these to hide specific errors...
 
 SED_STR = sed -i.bak 's/ _USE_FLOAT/ _NO_USE_FLOAT/' Doxyfile
+SED_STR_Test = sed -i.bak 's/ _RUN_TESTS_AND_EXIT/ _NO_RUN_TESTS_AND_EXIT/' Doxyfile
 
 ifeq ($(strip $(TYPE)),double)
   LIB += -lfftw3 -lm
@@ -45,6 +46,8 @@ endif
 ifeq ($(strip $(MODE)),test)
   CFLAGS += -DRUN_TESTS_AND_EXIT
   CFLAGS += $(PROFILE)
+  SED_STR_Test = sed -i.bak 's/ _NO_RUN_TESTS_AND_EXIT/ _RUN_TESTS_AND_EXIT/' Doxyfile
+
 endif
 
 ifeq ($(strip $(MODE)),profile)
@@ -75,6 +78,7 @@ main : echo_warning $(OBJS)
 	$(CC) $(LFLAGS) $(INCLUDE) $(OBJS) $(LIB) -o main
 	@echo $(WARN_STR)
 	@$(SED_STR)
+	@$(SED_STR_Test)
 echo_warning:
 	@echo $(WARN_STR)
 
@@ -123,7 +127,7 @@ $(OBJDIR)/read_test.o:./$(SRCDIR)/read_test.cpp
 .PHONY : tar tartest clean veryclean docs
 
 tar:
-	tar -cvzf Source.tgz $(SOURCE) $(INCLS) ./files/* Makefile input.deck
+	tar -cvzf Source.tgz $(SOURCE) $(INCLS) ./files/* Makefile redox.sh process_deps.sh
 
 clean:
 	@rm main $(OBJS)
@@ -133,8 +137,12 @@ veryclean:
 	@rm -r $(OBJDIR)
 
 docs:
-	doxygen Doxyfile &> Doxy.log
-	./redox.sh
-	cd latex ; pdflatex --file-line-error --synctex=1 -interaction nonstopmode ./refman.tex &> pdflatex.log
-	@echo "Docs built. See Doxy.log and pdflatex.log for details"
+	@echo Running Doxygen...
+	@doxygen Doxyfile &> Doxy.log
+	@echo Processing Doxygen output...
+	@./redox.sh
+	@echo Running pdftex...
+	@cd latex ; pdflatex --file-line-error --synctex=1 -interaction nonstopmode ./refman.tex &> ../docs.log; cd ..
+#	@mv ./latex/docs.log .
+	@echo "Docs built. See Doxy.log and docs.log for details"
 

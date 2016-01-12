@@ -36,14 +36,17 @@ deck_constants my_const;/**< Physical constants*/
 mpi_info_struc mpi_info;/**< MPI data */
 
 int test_int;
+#ifdef RUN_TESTS_AND_EXIT
 tests* test_bed;/**<Test bed for testing */
+#endif
 
-void get_deck_constants();
+void get_deck_constants(std::string file_prefix);
 int local_MPI_setup(int argc, char *argv[]);
 setup_args process_command_line(int argc, char *argv[]);
 void share_consts();
 void print_help();
 void divide_domain(std::vector<int>, int space[2], int per_proc, int block_num);
+void safe_exit();
 
 int main(int argc, char *argv[]){
 /**
@@ -66,7 +69,7 @@ int main(int argc, char *argv[]){
 
   setup_args cmd_line_args = process_command_line(argc, argv);
 
-  if(mpi_info.rank == 0) get_deck_constants();
+  if(mpi_info.rank == 0) get_deck_constants(cmd_line_args.file_prefix);
   share_consts();
   /** Get constants from deck and share to other procs*/
 
@@ -204,6 +207,17 @@ int local_MPI_setup(int argc, char *argv[]){
   return ierr;
 }
 
+void safe_exit(){
+/** \brief Exit program
+*
+* Does minimal cleanup and exits
+*/
+
+  MPI_Finalize();
+
+  exit(0);
+}
+
 void share_consts(){
 /** \brief MPI Share deck constants
 *
@@ -247,7 +261,7 @@ setup_args process_command_line(int argc, char *argv[]){
 
   values.time[0] = 0;
   values.time[1] = 1;
-  values.file_prefix = "";
+  values.file_prefix = "./files/";
   values.block = "ex";
   values.d[0] = 10;
   values.d[1] = 10;
@@ -303,7 +317,7 @@ setup_args process_command_line(int argc, char *argv[]){
 void print_help(){
 /** \brief Print command line help
 *
-*Prints contents of halp_file from rank zero.
+*Prints contents of halp_file from rank zero and calls safe exit.
 */
   ifstream halp;
   
@@ -312,6 +326,7 @@ void print_help(){
     cout<<"Command line options: "<<endl;
     cout<<halp.rdbuf();
   }
+  safe_exit();
 }
 
 void divide_domain(std::vector<int> dims, int space[2], int per_proc, int block_num){
@@ -379,7 +394,7 @@ int whereb(my_type * ax_ptr, int len, my_type target,int &cut, int sign){
   //Shouldn't ever reach this case, but.
 }
 
-void get_deck_constants(){
+void get_deck_constants(std::string file_prefix){
 /** \brief Setup run specific constants
 *
 *Reads deck.status and parses values for user defined constants etc. It will rely on using the specific deck, because it has to look for names. Any changes to deck may need updating here. Tag names are set as const strings in support.h
@@ -392,7 +407,7 @@ void get_deck_constants(){
 //parse out the values we want given by name in support.h
 
   ifstream infile;
-  infile.open("deck.status");
+  infile.open(file_prefix+"deck.status");
   std::string header_row, line;
   infile>> header_row;
   std::vector<std::string> lines;

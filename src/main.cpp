@@ -1,7 +1,7 @@
 /** \file main.cpp \brief Main program
 *
 * This should: open a sequence of SDF files using the SDF library and read E and B field data. Fourier transform it. Extract frequency/wavenumber and angular spectra (if possible). Calculate the resulting particle diffusion coefficients using Lyons 1974 a, b, Albert 2005 and such.
-* Depends on the SDF file libraries, the FFTW library, and boost's math for special functions.
+* Depends on the SDF file libraries, the FFTW library, and boost's math for special functions. A set of test arguments is supplied. Call using ./main `<test_pars` to use these.
   \author Heather Ratcliffe \date 18/09/2015.
 */
 
@@ -68,7 +68,6 @@ int main(int argc, char *argv[]){
   MPI_Barrier(MPI_COMM_WORLD);
 
   setup_args cmd_line_args = process_command_line(argc, argv);
-
   if(mpi_info.rank == 0) get_deck_constants(cmd_line_args.file_prefix);
   share_consts();
   /** Get constants from deck and share to other procs*/
@@ -411,7 +410,12 @@ void get_deck_constants(std::string file_prefix){
   std::string header_row, line;
   infile>> header_row;
   std::vector<std::string> lines;
+
+  if(!infile.is_open()){
+    my_print("No deck.status file found, aborting", mpi_info.rank);
+    safe_exit();
   
+  }
   while(!infile.eof()){
     getline(infile, line);
     if(!(strcmp(line.substr(0, CONSTANTS.size()).c_str(), CONSTANTS.c_str()))) break;

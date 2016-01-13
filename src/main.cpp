@@ -410,18 +410,25 @@ void get_deck_constants(std::string file_prefix){
   std::string header_row, line;
   infile>> header_row;
   std::vector<std::string> lines;
-
+  bool found=false;
   if(!infile.is_open()){
     my_print("No deck.status file found, aborting", mpi_info.rank);
     safe_exit();
   
   }
-  while(!infile.eof()){
+  while(infile){
     getline(infile, line);
-    if(!(strcmp(line.substr(0, CONSTANTS.size()).c_str(), CONSTANTS.c_str()))) break;
+    if(!(strcmp(line.substr(0, CONSTANTS.size()).c_str(), CONSTANTS.c_str()))){
+      found = true;
+      break;
+    }
+  }
+  if(!found){
+    my_print("No constants dump found in deck.status, aborting", mpi_info.rank);
+    safe_exit();
   }
 
-  while(!infile.eof()){
+  while(infile){
     getline(infile, line);
     if(!(strcmp(line.substr(0, CONSTANTS_END.size()).c_str(), CONSTANTS_END.c_str()))) break;
     lines.push_back(line);

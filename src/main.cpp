@@ -98,16 +98,15 @@ int main(int argc, char *argv[]){
 
   int n_dims;
   std::vector<int> dims;
-  my_reader->read_dims(n_dims, dims);
+  err = my_reader->read_dims(n_dims, dims);
+  if(err) safe_exit();
   int space_dim = dims[0];
-
   
   if(n_dims !=1) return 1;
   /**for now abort if data file wrong size... \todo FIX*/
 
   controller * contr;
   contr = new controller();
-
 
 
   //---------------- Now we loop over blocks per proc-------
@@ -131,8 +130,8 @@ int main(int argc, char *argv[]){
       return 0;
     }
 
-    my_reader->read_data(dat, cmd_line_args.time, my_space);
-
+    err = my_reader->read_data(dat, cmd_line_args.time, my_space);
+    if(err == 1) safe_exit();
     err = dat->fft_me(dat_fft);
     
     if(mpi_info.rank ==0) MPI_Reduce(MPI_IN_PLACE, &err, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
@@ -309,7 +308,7 @@ setup_args process_command_line(int argc, char *argv[]){
     my_print("WARNING: Requested size exceeds MAXSIZE", mpi_info.rank);
   }
   //Protect from invalid user input
-
+  cout<< values.time[1];
   return values;
 }
 

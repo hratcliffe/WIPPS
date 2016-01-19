@@ -83,7 +83,12 @@ bool reader::read_dims(int &n_dims, std::vector<int> &dims){
 
   if(block->datatype != my_sdf_type) my_print("WARNING!!! Data type does not match. Output may be nonsense!", mpi_info.rank);
 
-  n_dims = block->ndims;
+  if(!is_accum(this->block_id)){
+    n_dims = block->ndims;
+  }else{
+    n_dims = block->ndims -1 ;
+    //remove time dimension
+  }
   for(int i=0; i<n_dims; i++) dims.push_back(block->dims[i]);
   
   sdf_close(handle);
@@ -91,10 +96,10 @@ bool reader::read_dims(int &n_dims, std::vector<int> &dims){
   return 0;
 }
 
-bool reader::read_data(data_array * my_data_in, int time_range[2], int space_range[2]){
+int reader::read_data(data_array * my_data_in, int time_range[2], int space_range[2]){
 /** \brief Read data into given array
 *
-*This will open the files dictated by time range sequentially, and populate them into the data_array. It'll stop when the end of range is reached, or it goes beyond the size available. Space range upper entry of -1 is taken as respective limit. @return 0 for success, 1 for error \todo Currently gives no report of nature of error...
+*This will open the files dictated by time range sequentially, and populate them into the data_array. It'll stop when the end of range is reached, or it goes beyond the size available. Space range upper entry of -1 is taken as respective limit. @return 0 for success, 1 for error \todo Currently gives no report of nature of error... use 2 for non-fatal read error
 */
   
   strcpy(my_data_in->block_id, block_id);
@@ -140,14 +145,15 @@ bool reader::read_data(data_array * my_data_in, int time_range[2], int space_ran
 
   ax_ptr = my_data_in->get_axis(my_data_in->get_dims()-1, len);
   //pointer to last axis, which will be time
-
+  bool accumulated = is_accum(block_id);
   int i;
   int last_report=0;
   int report_interval = (time_range[1]-time_range[0])/10;
   if(report_interval > 20) report_interval = 20;
   if(report_interval < 1) report_interval = 1;
     //Say we want to report 10 times over the list, or every 20th file if  more than 200.
-
+  int rows=0;
+  int total_reads=0;
   //now loop over files and get actual data
   for(i=time_range[0]; i<time_range[1];++i){
     file_name = get_full_name(i);
@@ -178,17 +184,29 @@ bool reader::read_data(data_array * my_data_in, int time_range[2], int space_ran
     my_type * my_ptr = (my_type *) block->data;
     my_ptr +=space_range[0];
     
-    my_data_in->populate_row(my_ptr, space_range[1], i-time_range[0]);
-
+    if(!accumulated){
+      my_data_in->populate_row(my_ptr, space_range[1], i-time_range[0]);
+      total_reads++;
+    }
+    else{
+      rows = block->dims[block->ndims-1];
+      if(total_reads + rows >= time_range[1]) rows = time_range[1]- total_reads;
+      //don't read more than time[1] rows
+      for(int j=0; j<rows; j++){
+        my_data_in->populate_row(my_ptr, space_range[1], i-time_range[0]+j);
+        my_ptr += block->dims[0];
+      }
+      total_reads+= rows;
+    }
     sdf_close(handle);
-
+    if(accumulated && total_reads >=time_range[1]) break;
   }
 
 //report if we broke out of loop and print filename
 
-  if(i < time_range[1]-1){
+  if(total_reads < time_range[1]-1){
     my_print("Read stopped by error at file "+file_name, mpi_info.rank);
-    return 1;
+    return 2;
   }
 
 return 0;
@@ -226,6 +244,16 @@ int reader::get_file_size(){
   block = handle->last_block_in_file;
   return block->next_block_location;
 
+
+}
+
+bool reader::is_accum(std::string block_id){
+/** \brief checks for time accumulated blocks */
+
+  if(block_id == "ax" || block_id =="ay" || block_id =="az" || block_id =="abx" || block_id =="aby" || block_id =="abz") return true;
+
+
+  return false;
 
 }
 

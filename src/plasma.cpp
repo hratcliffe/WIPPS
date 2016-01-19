@@ -39,6 +39,7 @@ plasma::plasma( calc_type ref_B){
   //my_const.omega_ce * me/std::abs(q0);
 
   this->om_ce = (pcharge[0]) * this->B0 / pmass[0]; /*reference electron cyclotron freq \todo FIX! FAKENUMBERS */
+  //ret_vec.reserve(4);
 }
 plasma::~plasma(){
 
@@ -449,7 +450,7 @@ Return empty vector if no valid solutions \todo Extend to general case?
 */
 
   std::vector<calc_type> ret_vec;
-
+//  ret_vec.resize(0);
   calc_type wc = this->get_omega_ref("ce");
   calc_type omega_pe_loc = this->get_omega_ref("pe");
   calc_type om_ref_ce = my_const.omega_ce;
@@ -500,7 +501,8 @@ Return empty vector if no valid solutions \todo Extend to general case?
       --i;
     }
   }
-  
+//  ret_vec.push_back(10.0);
+//  ret_vec.pop_back();
   return ret_vec;
 
 }

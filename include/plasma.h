@@ -32,6 +32,8 @@ private:
   calc_type * om_pe;
   calc_type om_ce;
 
+//  std::vector<calc_type> ret_vec;
+
   /*calc_type * dndr[ncomps];
   calc_type * dndth[ncomps];
   calc_type * dB0dr;

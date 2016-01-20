@@ -39,6 +39,7 @@ int test_int;
 #ifdef RUN_TESTS_AND_EXIT
 tests* test_bed;/**<Test bed for testing */
 #endif
+//We wrap in ifdef for a)
 
 void get_deck_constants(std::string file_prefix);
 int local_MPI_setup(int argc, char *argv[]);
@@ -78,6 +79,8 @@ int main(int argc, char *argv[]){
   test_bed->set_verbosity(2);
   test_bed->run_tests();
   delete test_bed;
+
+  MPI_Finalize();
 
   return 0;
 #else

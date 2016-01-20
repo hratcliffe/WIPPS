@@ -161,6 +161,7 @@ test_entity_reader::test_entity_reader(){
   name = "reader class";
   char block_id[10]= "run_info";
   test_rdr = new reader("./files/test", block_id);
+  accum_reader = new reader("./files/accum", "ax");
   
 }
 test_entity_reader::~test_entity_reader(){
@@ -174,7 +175,14 @@ int test_entity_reader::run(){
   int sz = test_rdr->get_file_size();
   if(sz != size) err |= TEST_WRONG_RESULT;
 
-/* do testing */
+  int n_dims;
+  std::vector<int> dims;
+  accum_reader->read_dims(n_dims, dims);
+  
+  data_array  * dat = new data_array(dims[0], 30);
+  //We know there are at most ten rows per accumulate in our test file
+
+
   test_bed->report_err(err);
   return err;
 

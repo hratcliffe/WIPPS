@@ -99,6 +99,7 @@ public:
 class test_entity_reader : public test_entity{
   private:
   reader * test_rdr;
+  reader * accum_reader;
   const static int size = 49367784;
   //Size of my test file...
 

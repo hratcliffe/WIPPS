@@ -151,6 +151,15 @@ int my_array::get_index(int nx, int ny){
 /** \brief Get index for location
 *
 *Takes care of all bounds checking and disposition in memory. Returns -1 if out of range of any sort, otherwise, suitable index. NB. Let this function do all bounds checks. Just call it plain. This function is called often so we make it as simple as possible and write one for each number of args
+
+* A 2-d array 5x3 is
+|ooooo||ooooo||ooooo|
+<-row->
+
+A 3-d 5x3x2 is
+[|ooooo||ooooo||ooooo|][|ooooo||ooooo||ooooo|]
+<--------'slice'------>
+Etc
 */
 
   if(n_dims != 2){
@@ -472,6 +481,79 @@ bool my_array::read_from_file(std::fstream &file){
 
   return 0;
 
+
+}
+
+bool my_array::resize(int dim, int sz){
+/** \brief Resize my_array on the fly
+*
+*dim is the dimension to resize, sz the new size. If sz < dims[dim] the first sz rows will be kept and the rest deleted. If sz > dims[dim] the new elements will be added zero initialised. Note due to using 1-d memory layout both cases require copying all data and therefore briefly memory to store the old and new arrays. However shinking the last dimension does not necessarily require a copy. Note cannot be called on ragged array. NOTE dim runs from 1 to number of dims \todo Add 4 d. 
+*/
+
+  if(sz < 0 || sz > MAX_SIZE) return 1;
+  //size errors
+  if(dim > this->n_dims) return 1;
+  if(dim>0 && sz == dims[dim-1]) return 1;
+  if(ragged){
+   my_print("Cannot resize a ragged array. Create new and copy", mpi_info.rank);
+     return 1;
+  }
+  
+  my_type * new_data;
+  int part_sz = 1;
+
+  if(dim == n_dims-1){
+    //special case as we can shrink and maybe grow without copy
+    for(int i=0; i<n_dims-1; ++i) part_sz*= dims[i];
+    //product of all other dims
+//  void* realloc (void* ptr, size_t size);
+    new_data = (my_type *) realloc((void*) this->data, part_sz*sz*sizeof(my_type));
+    if(!new_data){
+      my_print("Failed to reallocate memory", mpi_info.rank);
+      return 1;
+      //failure. leave as was.
+    }
+    int new_els = part_sz*(sz - dims[n_dims-1]);
+    
+    if(new_els > 0) memset((void*)(new_data + part_sz*dims[n_dims-1]), 0.0, new_els*sizeof(my_type));
+    //zero new elements
+//    void * memset ( void * ptr, int value, size_t num );
+    data = new_data;
+    dims[dim] = sz;
+
+  }
+  else{
+    //have to allocate a new block and copy across.
+    for(int i=0; i<dim-1; ++i) part_sz*= dims[i];
+    for(int i=dim+1; i<n_dims; ++i) part_sz*= dims[i];
+
+    new_data=(my_type*)calloc(part_sz*sz,sizeof(my_type));
+    int els_to_copy;
+    int n_segments = 1;
+    if(dim == 0){
+      for(int i=1; i< n_dims; ++i) n_segments *=dims[i];
+      //number of segments to copy i.e. total number of "rows"
+
+      (sz> dims[0])? els_to_copy = dims[0] : els_to_copy = sz;
+      for(int i=0; i< n_segments; ++i) memcpy((void*)(data + i*dims[0]), (void*)(new_data + i*sz), els_to_copy);
+      //memcpy not std::copy because lets' stick with one style eh?
+/**    }else if(n_dims ==3){
+      // Now we know dim ==1 i.e. middle dimension. So we copy in chunks of (dims[1] or sz) * dims[0] and total dims[2] chunks
+      (sz> dims[1])? els_to_copy = dims[0]*dims[1] : els_to_copy = dims[0]*sz;
+      for(int i=0; i< dims[2]; ++i) memcpy((void*)(data + i*dims[0]*dims[1]), (void*)(new_data + i*dims[0]*sz), els_to_copy);
+      //memcpy not std::copy because lets' stick with one style eh?*/
+    }else{
+      // Now we know n_dims is 3 or 4 and dim is a middle dimension. (1 for n_dims==3, 1 or 2 for n_dims==4.So we copy in chunks
+      for(int i=0; i<dim; ++i) els_to_copy *= dims[i];
+      int chunk_sz = els_to_copy;
+      (sz> dims[dim])? els_to_copy *= dims[dim] : els_to_copy *= sz;
+      for(int i=dim+1; i< n_dims; ++i) n_segments *= dims[i];
+      for(int i=0; i< n_segments; ++i) memcpy((void*)(data + i*chunk_sz*dims[1]), (void*)(new_data + i*chunk_sz*sz), els_to_copy);
+      //memcpy not std::copy because lets' stick with one style eh?
+    }
+  }
+
+  return 0;
 
 }
 

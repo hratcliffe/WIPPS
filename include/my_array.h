@@ -14,7 +14,7 @@
 
 /** \brief A basic array class
 *
-*Contains dimension information and data. Can be rectangular of 2,3,or 4 dimensions or ragged of 2 (rows of different lengths). Get_index and get_total_elements account for all details of internal layout in memory. Everything else should go via these as much as possible.
+*Contains dimension information and data. Can be rectangular of 2,3,or 4 dimensions or ragged of 2 (rows of different lengths). Get_index and get_total_elements account for all details of internal layout in memory. Everything else should go via these as much as possible. NOTE this is completely C style. But contigous memory and pointer arithmetic give major speed advantage and we very rarely change size on the fly. However nothing outside this class should need to do anything except access by index and populate by element, row or entire.
  \author Heather Ratcliffe \date 21/09/2015
 */
 
@@ -60,6 +60,7 @@ public:
 
   virtual bool write_to_file(std::fstream &file);
   bool read_from_file(std::fstream &file);
+  bool resize(int dim, int sz);
 
 };
 

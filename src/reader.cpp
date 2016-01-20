@@ -138,7 +138,7 @@ int reader::read_data(data_array * my_data_in, int time_range[2], int space_rang
   C style way of doing copy with cast
 */
   // Mostly c++ way
-  std::copy((double *) block->grids[0], (double *) block->grids[0] + len, ax_ptr);
+  std::copy((my_type *) block->grids[0], (my_type *) block->grids[0] + len, ax_ptr);
   /**get 0th axis. \todo extend to 2-d data */
 
   sdf_close(handle);
@@ -155,6 +155,7 @@ int reader::read_data(data_array * my_data_in, int time_range[2], int space_rang
   int rows=0;
   int total_reads=0;
   //now loop over files and get actual data
+
   for(i=time_range[0]; i<time_range[1];++i){
     file_name = get_full_name(i);
 //    snprintf(file_num, 10, fmt, i);
@@ -185,8 +186,10 @@ int reader::read_data(data_array * my_data_in, int time_range[2], int space_rang
     my_ptr +=space_range[0];
     
     if(!accumulated){
+
       my_data_in->populate_row(my_ptr, space_range[1], i-time_range[0]);
       total_reads++;
+
     }
     else{
       rows = block->dims[block->ndims-1];

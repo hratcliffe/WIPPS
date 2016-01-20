@@ -528,7 +528,7 @@ bool my_array::resize(int dim, int sz){
     for(int i=dim+1; i<n_dims; ++i) part_sz*= dims[i];
 
     new_data=(my_type*)calloc(part_sz*sz,sizeof(my_type));
-    int els_to_copy;
+    int els_to_copy = 1;
     int n_segments = 1;
     if(dim == 0){
       for(int i=1; i< n_dims; ++i) n_segments *=dims[i];

@@ -490,6 +490,7 @@ bool my_array::resize(int dim, int sz){
 *dim is the dimension to resize, sz the new size. If sz < dims[dim] the first sz rows will be kept and the rest deleted. If sz > dims[dim] the new elements will be added zero initialised. Note due to using 1-d memory layout both cases require copying all data and therefore briefly memory to store the old and new arrays. However shinking the last dimension does not necessarily require a copy. Note cannot be called on ragged array. NOTE dim runs from 1 to number of dims \todo Add 4 d. 
 */
 
+  my_print("Attempting to resize", mpi_info.rank);
   if(sz < 0 || sz > MAX_SIZE) return 1;
   //size errors
   if(dim > this->n_dims) return 1;
@@ -520,7 +521,6 @@ bool my_array::resize(int dim, int sz){
 //    void * memset ( void * ptr, int value, size_t num );
     data = new_data;
     dims[dim] = sz;
-
   }
   else{
     //have to allocate a new block and copy across.
@@ -535,6 +535,8 @@ bool my_array::resize(int dim, int sz){
       //number of segments to copy i.e. total number of "rows"
 
       (sz> dims[0])? els_to_copy = dims[0] : els_to_copy = sz;
+      
+      
       for(int i=0; i< n_segments; ++i) memcpy((void*)(data + i*dims[0]), (void*)(new_data + i*sz), els_to_copy);
       //memcpy not std::copy because lets' stick with one style eh?
 /**    }else if(n_dims ==3){
@@ -551,7 +553,13 @@ bool my_array::resize(int dim, int sz){
       for(int i=0; i< n_segments; ++i) memcpy((void*)(data + i*chunk_sz*dims[1]), (void*)(new_data + i*chunk_sz*sz), els_to_copy);
       //memcpy not std::copy because lets' stick with one style eh?
     }
+    data = new_data;
+    dims[dim] = sz;
+    free(data);
+
   }
+  
+  my_print("New size of dim "+mk_str(dim)+  " is " + mk_str(dims[dim]), mpi_info.rank);
 
   return 0;
 
@@ -804,7 +812,7 @@ bool data_array::read_from_file(std::fstream &file){
 bool data_array::fft_me(data_array * data_out){
 /** \brief FFT data_array
 *
-* Data and axes in this object are FFT'd using FFTW and stored into the instance pointed to by data_out. Data_out must be created with correct dimensions first, but we check and return error (1) if it is not so. \todo Add 3, 4 dimensions
+* Data and axes in this object are FFT'd using FFTW and stored into the instance pointed to by data_out. Data_out must be created with correct dimensions first, but we check and return error (1) if it is not so. \todo Add 3, 4 dimensions \todo Check handling of odd vs even total sizes
 */
 
   if(!data_out->is_good()){
@@ -860,7 +868,10 @@ bool data_array::fft_me(data_array * data_out){
   cplx_type * addr;
   addr = out;
   //because double indirection is messy and cplx type is currently a 2-element array of floats
-  for(int i=0; i< total_size/2 +1; i++){
+  int middle = total_size/2;
+  if(middle*2 !=total_size) middle++;
+  //odd or even total length
+  for(int i=0; i< middle ; i++){
     *(result+i+total_size/2) = (my_type)(((*addr)[0])*((*addr)[0]) + ((*addr)[1])*((*addr)[1]));
     *(result-i+total_size/2) = (my_type)(((*addr)[0])*((*addr)[0]) + ((*addr)[1])*((*addr)[1]));
     

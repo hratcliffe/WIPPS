@@ -126,15 +126,25 @@ int main(int argc, char *argv[]){
     //--------------THIS will slightly slow down some cores to match the slowest. But it makes output easier. Consider removing if many blocks
 
     data_array  * dat = new data_array(space_dim, n_tims);
-    data_array * dat_fft = new data_array(space_dim, n_tims);
 
-    if(!dat->is_good() or !dat_fft->is_good()){
+    if(!dat->is_good()){
       my_print("Bugger, data array allocation failed. Aborting.", mpi_info.rank);
       return 0;
     }
 
     err = my_reader->read_data(dat, cmd_line_args.time, my_space);
     if(err == 1) safe_exit();
+
+    if(err == 2) n_tims = dat->get_dims(1);
+    my_print(mk_str(n_tims), mpi_info.rank);
+    //Check is we had to truncate data array...
+    data_array * dat_fft = new data_array(space_dim, n_tims);
+
+    if(!dat_fft->is_good()){
+      my_print("Bugger, data array allocation failed. Aborting.", mpi_info.rank);
+      return 0;
+    }
+
     err = dat->fft_me(dat_fft);
     
     if(mpi_info.rank ==0) MPI_Reduce(MPI_IN_PLACE, &err, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);

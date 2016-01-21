@@ -129,6 +129,11 @@ int reader::read_data(data_array * my_data_in, int time_range[2], int space_rang
   }
   sdf_read_data(handle);
 
+  if(block->datatype != my_sdf_type){
+    //Axis type doesn't match expected, we'll get nonsense
+    my_print("Wrong data type detected. Grids will be corrupt", mpi_info.rank);
+  }
+
   ax_ptr = my_data_in->get_axis(0, len);
 
 /*  for(int i=0; i< len; i++){
@@ -158,8 +163,6 @@ int reader::read_data(data_array * my_data_in, int time_range[2], int space_rang
 
   for(i=time_range[0]; i<time_range[1];++i){
     file_name = get_full_name(i);
-//    snprintf(file_num, 10, fmt, i);
-  //  file_name = file_prefix + file_num +".sdf";
 
     if((i-last_report) >= report_interval){
       my_print("Opening " + file_name, mpi_info.rank);
@@ -179,7 +182,7 @@ int reader::read_data(data_array * my_data_in, int time_range[2], int space_rang
 
     if(block->datatype != my_sdf_type) my_print("WARNING!!! Data type does not match. Output may be nonsense!", mpi_info.rank);
 
-    *(ax_ptr + i) = handle->time;
+    *(ax_ptr + i) = (my_type) handle->time;
     //save time of file
     if(!block->data) break;
     my_type * my_ptr = (my_type *) block->data;
@@ -207,7 +210,10 @@ int reader::read_data(data_array * my_data_in, int time_range[2], int space_rang
 
 //report if we broke out of loop and print filename
 
-  if(total_reads < time_range[1]-1){
+  if(total_reads < time_range[1]){
+    my_print(mk_str(total_reads), mpi_info.rank);
+    my_data_in->resize(1, total_reads);
+    //trim array to number of lines read
     my_print("Read stopped by error at file "+file_name, mpi_info.rank);
     return 2;
   }

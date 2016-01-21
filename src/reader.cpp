@@ -96,10 +96,10 @@ bool reader::read_dims(int &n_dims, std::vector<int> &dims){
   return 0;
 }
 
-int reader::read_data(data_array * my_data_in, int time_range[2], int space_range[2]){
+int reader::read_data(data_array * my_data_in, int time_range[3], int space_range[2]){
 /** \brief Read data into given array
 *
-*This will open the files dictated by time range sequentially, and populate them into the data_array. It'll stop when the end of range is reached, or it goes beyond the size available. Space range upper entry of -1 is taken as respective limit. @return 0 for success, 1 for error \todo Currently gives no report of nature of error... use 2 for non-fatal read error
+*This will open the files dictated by time range sequentially, and populate them into the data_array. It'll stop when the end of range is reached, or it goes beyond the size available. Space range upper entry of -1 is taken as respective limit. @return 0 for success, 1 for error \todo Currently gives no report of nature of error... use 2 for non-fatal read error \todo 2-d array???!
 */
   
   strcpy(my_data_in->block_id, block_id);
@@ -196,23 +196,22 @@ int reader::read_data(data_array * my_data_in, int time_range[2], int space_rang
     }
     else{
       rows = block->dims[block->ndims-1];
-      if(total_reads + rows >= time_range[1]) rows = time_range[1]- total_reads;
-      //don't read more than time[1] rows
+      if(total_reads + rows >= time_range[2]) rows = time_range[2]- total_reads;
+      //don't read more than time[2] rows
       for(int j=0; j<rows; j++){
-        my_data_in->populate_row(my_ptr, space_range[1], i-time_range[0]+j);
+        my_data_in->populate_row(my_ptr, space_range[1], total_reads+j);
         my_ptr += block->dims[0];
       }
       total_reads+= rows;
     }
     sdf_close(handle);
-    if(accumulated && total_reads >=time_range[1]) break;
+    if(accumulated && total_reads >=time_range[2]) break;
   }
 
-//report if we broke out of loop and print filename
-
-  if(total_reads < time_range[1]){
+  //report if we broke out of loop and print filename
+  if(i < time_range[1]){
     my_data_in->resize(1, total_reads);
-    //trim array to number of lines read
+    //trim array to number of lines read... NB 2-D ONLY
     my_print("Read stopped by error at file "+file_name, mpi_info.rank);
     return 2;
   }

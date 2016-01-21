@@ -491,10 +491,14 @@ bool my_array::resize(int dim, int sz){
 */
 
   my_print("Attempting to resize", mpi_info.rank);
+
   if(sz < 0 || sz > MAX_SIZE) return 1;
   //size errors
   if(dim > this->n_dims) return 1;
-  if(dim>0 && sz == dims[dim-1]) return 1;
+  if(dim>=0 && sz == dims[dim]){
+     my_print("Size matches", mpi_info.rank);
+     return 1;
+  }
   if(ragged){
    my_print("Cannot resize a ragged array. Create new and copy", mpi_info.rank);
      return 1;

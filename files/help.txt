@@ -2,6 +2,7 @@
 -f <string> Prefix for input files
 -start <int> Starting dump number
 -end <int> Ending dump number
+-rows <int> For accumulated blocks, read no more than this many rows To get an exact number of rows set -end larger than required and set this. No effect for plain blocks
 -block <string> Block id string
 -n <int> Number of space blocks to divide into. This should be divisible by the number of processors used or it will be reduced to be so. If the total number of space points do not divide perfectly, blocks will overlap
 -space <int int> Process one space block between int and int (use with single core only)

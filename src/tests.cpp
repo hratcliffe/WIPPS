@@ -177,16 +177,35 @@ int test_entity_reader::run(){
   
   int sz = test_rdr->get_file_size();
   if(sz != size) err |= TEST_WRONG_RESULT;
-  bool rd_err;
+  int rd_err;
   int n_dims;
-  int time[2]={0,40}, space[2]={-1, -1};
   std::vector<int> dims;
   rd_err = accum_reader->read_dims(n_dims, dims);
-  if(rd_err) safe_exit();
-  data_array  * dat = new data_array(dims[0], 40);
-  //We know there are at most ten rows per accumulate in our test file and 4 files
-  rd_err = accum_reader->read_data(dat, time, space);
+  int time[3]={0,10, 40}, space[2]={0, dims[0]};
 
+  if(!rd_err){
+    
+    data_array  * dat = new data_array(dims[0], 40);
+    //We know there are at most ten rows per accumulate in our test file and 4 files
+    rd_err = accum_reader->read_data(dat, time, space);
+    
+    if(rd_err!=1){
+    
+       my_print(mk_str(dat->get_element(0,0)), mpi_info.rank);
+       my_print(mk_str(dat->get_element(0,1)), mpi_info.rank);
+       my_print(mk_str(dat->get_element(0,2)), mpi_info.rank);
+       my_print(mk_str(dat->get_element(1,2)), mpi_info.rank);
+    
+    
+    
+    }else{
+      err |=TEST_NULL_RESULT;
+
+    }
+    
+  }else{
+    err |=TEST_NULL_RESULT;
+  }
 
   test_bed->report_err(err);
   return err;
@@ -252,9 +271,10 @@ int test_entity_get_and_fft::run(){
 
   int err = TEST_PASSED;
 
-  int tim_in[2], space_in[2];
+  int tim_in[3], space_in[2];
   tim_in[0]=0;
   tim_in[1]=1;
+  tim_in[2]=0;
   space_in[0]=0;
 
   int n_tims = std::max(tim_in[1]-tim_in[0], 1);

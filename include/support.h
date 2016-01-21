@@ -156,7 +156,7 @@ struct mu_dmudom{
 * Processed command line arguments used in main
 */
 struct setup_args{
-  int time[2];/**< Start and end dump numbers*/
+  int time[3];/**< Start and end dump numbers*/
   int space[2];/**< Local space block start and end*/
   std::string block;/**< Block ID to use (ex, bz etc)*/
   std::string file_prefix;/**< Prifix part of SDF file names*/

@@ -62,7 +62,7 @@ begin:output
   px = always
 
   # Properties on grid
-  grid = always
+  grid = always+single
   ex = always+single
   ey = always
   ez = always

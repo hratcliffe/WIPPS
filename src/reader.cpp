@@ -211,7 +211,6 @@ int reader::read_data(data_array * my_data_in, int time_range[2], int space_rang
 //report if we broke out of loop and print filename
 
   if(total_reads < time_range[1]){
-    my_print(mk_str(total_reads), mpi_info.rank);
     my_data_in->resize(1, total_reads);
     //trim array to number of lines read
     my_print("Read stopped by error at file "+file_name, mpi_info.rank);

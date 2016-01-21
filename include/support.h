@@ -172,6 +172,8 @@ struct setup_args{
 *@{ */
 //----------- HELPER TYPE FUNCTION DECLARATIONS -------------
 
+void safe_exit();
+
 void my_print(std::string text, int rank, int rank_to_write=0);
 void my_print(std::fstream * handle, std::string text, int rank, int rank_to_write=0);
 

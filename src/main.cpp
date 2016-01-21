@@ -47,7 +47,6 @@ setup_args process_command_line(int argc, char *argv[]);
 void share_consts();
 void print_help();
 void divide_domain(std::vector<int>, int space[2], int per_proc, int block_num);
-void safe_exit();
 
 int main(int argc, char *argv[]){
 /**
@@ -321,7 +320,6 @@ setup_args process_command_line(int argc, char *argv[]){
     my_print("WARNING: Requested size exceeds MAXSIZE", mpi_info.rank);
   }
   //Protect from invalid user input
-  cout<< values.time[1];
   return values;
 }
 

@@ -163,3 +163,52 @@ void controller::get_size(int dims[2]){
   dims[1] = my_d[current_d]->get_dims(1);
 
 }
+
+bool controller::save_spectra(std::string pref){
+/** \brief Save spectra to files (one per chunk)
+*
+* Writes each spectrum object to a file, identified by space range and time.
+*/
+
+  std::fstream file;
+  std::string filename, tmp;
+  tmp = my_spect[0]->block_id;
+  for(int i=0; i<my_spect.size(); ++i){
+    filename = pref+"spec_"+tmp +"_"+mk_str(my_spect[i]->time[0]) + "_"+mk_str(my_spect[i]->time[1])+"_"+mk_str(my_spect[i]->space[0])+"_"+mk_str(my_spect[i]->space[1])+".dat";
+    file.open(filename.c_str(),std::ios::out|std::ios::binary);
+    if(file.is_open()) my_spect[i]->write_to_file(file);
+    else return 1;
+    file.close();
+  
+  }
+
+  return 0;
+}
+
+bool controller::save_D(std::string pref){
+/** \brief Save D's to files (one per chunk)
+*
+* Writes each spectrum object to a file, identified by space range and time. Note root will also write a bounce averaged file
+*/
+
+  std::fstream file;
+  std::string filename, tmp;
+  tmp = my_d[0]->block_id;
+  for(int i=0; i<my_d.size(); ++i){
+    if(my_d[i]->tag == LOCAL) filename = pref+"D_"+tmp +"_"+mk_str(my_d[i]->time[0]) + "_"+mk_str(my_d[i]->time[1])+"_"+mk_str(my_d[i]->space[0])+"_"+mk_str(my_d[i]->space[1])+".dat";
+    else if(my_d[i]->tag == BOUNCE_AV) continue;
+    //Don't bother saving these...
+    else if(my_d[i]->tag == GLOBAL) filename = pref+"D_"+tmp +"_"+mk_str(my_d[i]->time[0]) + "_"+mk_str(my_d[i]->time[1])+"_global.dat";
+    
+    file.open(filename.c_str(),std::ios::out|std::ios::binary);
+    if(file.is_open()) my_d[i]->write_to_file(file);
+    else return 1;
+    file.close();
+  
+  }
+
+  return 0;
+
+
+}
+

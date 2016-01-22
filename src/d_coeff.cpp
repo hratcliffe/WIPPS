@@ -118,7 +118,7 @@ Get mu, dmu/domega which are used to:
     my_print("No controller", mpi_info.rank);
     return;
   }
-  
+
   this->copy_ids(spect);
   //copy block id, ranges etc from spect.
 

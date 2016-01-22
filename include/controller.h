@@ -40,6 +40,8 @@ public:
   plasma * get_plasma(){return my_plas;};
   void bounce_average();
   void handle_d_mpi();
+  bool save_spectra(std::string pref);
+  bool save_D(std::string pref);
 
 };
 

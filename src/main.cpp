@@ -35,7 +35,6 @@ using namespace std;
 deck_constants my_const;/**< Physical constants*/
 mpi_info_struc mpi_info;/**< MPI data */
 
-int test_int;
 #ifdef RUN_TESTS_AND_EXIT
 tests* test_bed;/**<Test bed for testing */
 #endif
@@ -136,7 +135,7 @@ int main(int argc, char *argv[]){
 
     if(err == 2) n_tims = dat->get_dims(1);
     my_print(mk_str(n_tims), mpi_info.rank);
-    //Check is we had to truncate data array...
+    //Check if we had to truncate data array...
     data_array * dat_fft = new data_array(space_dim, n_tims);
 
     if(!dat_fft->is_good()){
@@ -151,23 +150,12 @@ int main(int argc, char *argv[]){
 
     my_print("FFT returned err_state " + mk_str(err), mpi_info.rank);
 
-//    fstream file;
-//    file.open("Tmp.txt", ios::out|ios::binary);
-//    if(file.is_open()) dat->write_to_file(file);
-//    file.close();
-//----------------NOT thread safe!!!
-
     int row_lengths[2];
     row_lengths[0] = space_dim;
     row_lengths[1] = DEFAULT_N_ANG;
     
     contr->add_spectrum(row_lengths, 2);
     contr->get_current_spectrum()->make_test_spectrum();
-
-//    file.open("Tmp_spectrum.txt", ios::out|ios::binary);
-
-//    if(file.is_open() && contr->get_current_spectrum()) contr->get_current_spectrum()->write_to_file(file);
-//    file.close();
 
     //Now we have some test spectral data we can work with...
 
@@ -182,6 +170,9 @@ int main(int argc, char *argv[]){
   MPI_Barrier(MPI_COMM_WORLD);
   
   contr->bounce_average();
+  
+  contr->save_spectra(cmd_line_args.file_prefix);
+  contr->save_D(cmd_line_args.file_prefix);
 
   //Cleanup objects etc
   delete my_reader;

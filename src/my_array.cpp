@@ -557,9 +557,9 @@ bool my_array::resize(int dim, int sz){
       for(int i=0; i< n_segments; ++i) memcpy((void*)(data + i*chunk_sz*dims[1]), (void*)(new_data + i*chunk_sz*sz), els_to_copy);
       //memcpy not std::copy because lets' stick with one style eh?
     }
-    data = new_data;
     dims[dim] = sz;
     free(data);
+    data = new_data;
 
   }
   
@@ -920,9 +920,69 @@ bool data_array::fft_me(data_array * data_out){
 void data_array::copy_ids( data_array * src){
 /** Copies ID fields from src array to this */
 
-  strcpy(src->block_id, this->block_id);
+  strcpy(this->block_id, src->block_id);
   
   std::copy(src->time, src->time + 1, this->time);
   for(int i=0; i < 2; ++i) this->space[i] = src->space[i];
+}
+
+bool data_array::resize(int dim, int sz){
+/** \brief Resize my_array on the fly
+*
+*dim is the dimension to resize, sz the new size. If sz < dims[dim] the first sz rows will be kept and the rest deleted. If sz > dims[dim] the new elements will be added zero initialised. Similarly for axis elements. See my_array::resize() for more.
+*/
+
+
+  //call my_array::resize to resize data...
+  bool err = my_array::resize(dim, sz);
+
+  if(!err){
+    //success! Do axes!
+    my_type * new_ax;
+    int part_sz = 0;
+
+    if(dim == n_dims-1){
+      //special case as we can shrink and maybe grow without copy
+      for(int i=0; i<n_dims-1; ++i) part_sz+= dims[i];
+      //product of all other dims
+      new_ax = (my_type *) realloc((void*) this->axes, (part_sz+sz)*sizeof(my_type));
+      if(!new_ax){
+        my_print("Failed to reallocate axes", mpi_info.rank);
+        return 1;
+        //failure. leave as was.
+      }
+      int new_els = (sz - dims[n_dims-1]);
+      
+      if(new_els > 0) memset((void*)(new_ax + part_sz), 0.0, new_els*sizeof(my_type));
+      //zero new elements
+      axes = new_ax;
+    }else{
+      //have to allocate a new block and copy across.
+      for(int i=0; i<dim-1; ++i) part_sz+= dims[i];
+      for(int i=dim+1; i<n_dims; ++i) part_sz+= dims[i];
+
+      new_ax=(my_type*)calloc(part_sz+sz,sizeof(my_type));
+      int els_to_copy = 0, old_starts=0, new_starts=0;
+      for(int i=0;i<n_dims; ++i){
+        els_to_copy = dims[i];
+        if(i == dim && sz< dims[i]) els_to_copy = sz;
+        memcpy((void*)(axes + old_starts), (void*)(new_ax + new_starts), els_to_copy);
+
+        old_starts += dims[i];
+        i==dim ? new_starts += sz: new_starts += dims[i];
+      
+      }
+      free(axes);
+      axes = new_ax;
+
+    }
+    return 0;
+  }else{
+  
+    return err;
+  
+  }
+
+
 }
 

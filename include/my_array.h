@@ -60,7 +60,7 @@ public:
 
   virtual bool write_to_file(std::fstream &file);
   bool read_from_file(std::fstream &file);
-  bool resize(int dim, int sz);
+  virtual bool resize(int dim, int sz);
 
 };
 
@@ -108,6 +108,7 @@ public:
 
   bool fft_me(data_array * data_out);
   void copy_ids( data_array * src);
+  virtual bool resize(int dim, int sz);
 
 };
 

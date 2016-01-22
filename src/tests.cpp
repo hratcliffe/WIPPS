@@ -190,21 +190,40 @@ int test_entity_reader::run(){
     rd_err = accum_reader->read_data(dat, time, space);
     
     if(rd_err!=1){
-    
-       my_print(mk_str(dat->get_element(0,0)), mpi_info.rank);
-       my_print(mk_str(dat->get_element(0,1)), mpi_info.rank);
-       my_print(mk_str(dat->get_element(0,2)), mpi_info.rank);
-       my_print(mk_str(dat->get_element(1,2)), mpi_info.rank);
-    
-    
+       //Test data should have row 0 =0, row 1=2 (generation procedure does this, row 3=1, 4=2 through to 9, then begin again at 1 through 10, 1 through 10.
+       //Check some selection of elements and sum errs. Note all test entries are whole ints
+       int tot_errs=0;
+
+       //Check a few selected rows are right...
+       tot_errs += !(dat->get_element(0,0) == 0.0);
+       tot_errs += !(dat->get_element(0,1) == 2.0);
+       tot_errs += !(dat->get_element(0,2) == 1.0);
+       tot_errs += !(dat->get_element(0,10) == 9.0);
+       tot_errs += !(dat->get_element(0,11) == 1.0);
+      
+       //Check both ends of a few rows for off by ones etc
+       int rows[3] = {1,10,11};
+       for(int i = 0; i<3; i++ ){
+         tot_errs += !(dat->get_element(0,rows[i]) == dat->get_element(1,rows[i]));
+         tot_errs += !(dat->get_element(0,rows[i]) == dat->get_element(399,rows[i]));
+         tot_errs += !(dat->get_element(0,rows[i]) == dat->get_element(200,rows[i]));
+
+       }
+       
+       if(tot_errs != 0){
+         err |=TEST_WRONG_RESULT;
+         test_bed->report_info("Error reading accumulated data", 1);
+       }
     
     }else{
       err |=TEST_NULL_RESULT;
-
+      test_bed->report_info("Error reading test files", 1);
     }
     
   }else{
     err |=TEST_NULL_RESULT;
+    test_bed->report_info("Error reading test files", 1);
+
   }
 
   test_bed->report_err(err);

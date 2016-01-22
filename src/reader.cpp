@@ -136,12 +136,6 @@ int reader::read_data(data_array * my_data_in, int time_range[3], int space_rang
 
   ax_ptr = my_data_in->get_axis(0, len);
 
-/*  for(int i=0; i< len; i++){
-    std::cout<<((double *)block->grids[0])[i]<<std::endl;
-  //  ax_ptr[i] = (my_type)(((double *)block->grids[0])[i]);
-  }
-  C style way of doing copy with cast
-*/
   // Mostly c++ way
   std::copy((my_type *) block->grids[0], (my_type *) block->grids[0] + len, ax_ptr);
   /**get 0th axis. \todo extend to 2-d data */

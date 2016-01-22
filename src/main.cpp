@@ -30,15 +30,13 @@
 #include "spectrum.h"
 #include "tests.h"
 
-using namespace std;
-
 deck_constants my_const;/**< Physical constants*/
 mpi_info_struc mpi_info;/**< MPI data */
 
 #ifdef RUN_TESTS_AND_EXIT
 tests* test_bed;/**<Test bed for testing */
 #endif
-//We wrap in ifdef for a)
+//We wrap in ifdef for nice Doxygen docs
 
 void get_deck_constants(std::string file_prefix);
 int local_MPI_setup(int argc, char *argv[]);
@@ -57,7 +55,7 @@ int main(int argc, char *argv[]){
   
   int ierr = local_MPI_setup(argc, argv);
   if(ierr){
-    cout<< "Error initialising MPI. ABORTING!";
+    std::cout<< "Error initialising MPI. ABORTING!";
     return 1;
   }
 
@@ -91,7 +89,7 @@ int main(int argc, char *argv[]){
 
   reader * my_reader = new reader(cmd_line_args.file_prefix, block_id);
 
-  int n_tims = max(cmd_line_args.time[1]-cmd_line_args.time[0], 1);
+  int n_tims = std::max(cmd_line_args.time[1]-cmd_line_args.time[0], 1);
 
   int my_space[2];
   my_space[0] = cmd_line_args.space[0];
@@ -117,9 +115,6 @@ int main(int argc, char *argv[]){
 
     space_dim = my_space[1]-my_space[0];
     
-//    std::string out = mk_str(mpi_info.rank)+" "+mk_str(my_space[0])+" "+mk_str(my_space[1])+" "+ mk_str(my_space[1]-my_space[0]+1);
-//    my_print(out, mpi_info.rank, -1);
-
     MPI_Barrier(MPI_COMM_WORLD);
     //--------------THIS will slightly slow down some cores to match the slowest. But it makes output easier. Consider removing if many blocks
 
@@ -178,7 +173,7 @@ int main(int argc, char *argv[]){
   delete my_reader;
   delete contr;
 
-  cout<<"Grep for FAKENUMBERS !!!!"<<endl;
+  std::cout<<"Grep for FAKENUMBERS !!!!"<<std::endl;
 
   ADD_FFTW(cleanup());
   MPI_Finalize();
@@ -223,11 +218,6 @@ void share_consts(){
 /** \brief MPI Share deck constants
 *
 *Share the deck constants read on root to all procs
-*/
-
-/*  MPI_Aint addr;
-  MPI_Get_address(&my_const, &addr);
-  cout<<addr<<" "<<&my_const<<endl;
 */
 
   const int count = 5;
@@ -323,12 +313,12 @@ void print_help(){
 *
 *Prints contents of halp_file from rank zero and calls safe exit.
 */
-  ifstream halp;
+  std::ifstream halp;
   
   halp.open(halp_file);
   if(mpi_info.rank == 0){
-    cout<<"Command line options: "<<endl;
-    cout<<halp.rdbuf();
+    std::cout<<"Command line options: "<<std::endl;
+    std::cout<<halp.rdbuf();
   }
   safe_exit();
 }
@@ -410,7 +400,7 @@ void get_deck_constants(std::string file_prefix){
 //Read into vector up to "Deck state" or eof
 //parse out the values we want given by name in support.h
 
-  ifstream infile;
+  std::ifstream infile;
   infile.open(file_prefix+"deck.status");
   std::string header_row, line;
   infile>> header_row;
@@ -491,7 +481,7 @@ void my_print(std::string text, int rank, int rank_to_write){
   }
 
 }
-void my_print(fstream * handle, std::string text, int rank, int rank_to_write){
+void my_print(std::fstream * handle, std::string text, int rank, int rank_to_write){
 /** \brief Write output
 *
 * Currently dump to term. Perhaps also to log file. Accomodates MPI also. Set rank_to_write to -1 to dump from all. Default value is 0
@@ -618,10 +608,7 @@ template<typename T> void inplace_boxcar_smooth(T * start, int len, int width, b
     //we just truncate at the bottom
     
   
-  
   }
-
-
 
 
 }

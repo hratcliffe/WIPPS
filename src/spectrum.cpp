@@ -446,7 +446,6 @@ calc_type spectrum::get_G2(calc_type omega, calc_type x){
   else om_ind = 0;
   if(om_ind>=0 && normg[om_ind] == 0.0){
     normaliseg(omega);
-//    std::cout<<"norming"<<om_ind<<std::endl;
   }
 
   len=get_length(1);

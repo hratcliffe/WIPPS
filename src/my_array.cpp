@@ -430,7 +430,7 @@ bool my_array::write_to_file(std::fstream &file){
 bool my_array::read_from_file(std::fstream &file){
 /** \brief Test file read
 *
-*Spams stuff to screen to check read/write
+*Spams stuff to screen to check read/write \todo Make this read usefully eh???
 */
 
   char tmp_vers[15];
@@ -511,7 +511,7 @@ bool my_array::resize(int dim, int sz){
     //special case as we can shrink and maybe grow without copy
     for(int i=0; i<n_dims-1; ++i) part_sz*= dims[i];
     //product of all other dims
-//  void* realloc (void* ptr, size_t size);
+
     new_data = (my_type *) realloc((void*) this->data, part_sz*sz*sizeof(my_type));
     if(!new_data){
       my_print("Failed to reallocate memory", mpi_info.rank);
@@ -522,7 +522,7 @@ bool my_array::resize(int dim, int sz){
     
     if(new_els > 0) memset((void*)(new_data + part_sz*dims[n_dims-1]), 0.0, new_els*sizeof(my_type));
     //zero new elements
-//    void * memset ( void * ptr, int value, size_t num );
+
     data = new_data;
     dims[dim] = sz;
   }
@@ -543,11 +543,6 @@ bool my_array::resize(int dim, int sz){
       
       for(int i=0; i< n_segments; ++i) memcpy((void*)(data + i*dims[0]), (void*)(new_data + i*sz), els_to_copy);
       //memcpy not std::copy because lets' stick with one style eh?
-/**    }else if(n_dims ==3){
-      // Now we know dim ==1 i.e. middle dimension. So we copy in chunks of (dims[1] or sz) * dims[0] and total dims[2] chunks
-      (sz> dims[1])? els_to_copy = dims[0]*dims[1] : els_to_copy = dims[0]*sz;
-      for(int i=0; i< dims[2]; ++i) memcpy((void*)(data + i*dims[0]*dims[1]), (void*)(new_data + i*dims[0]*sz), els_to_copy);
-      //memcpy not std::copy because lets' stick with one style eh?*/
     }else{
       // Now we know n_dims is 3 or 4 and dim is a middle dimension. (1 for n_dims==3, 1 or 2 for n_dims==4.So we copy in chunks
       for(int i=0; i<dim; ++i) els_to_copy *= dims[i];
@@ -555,7 +550,6 @@ bool my_array::resize(int dim, int sz){
       (sz> dims[dim])? els_to_copy *= dims[dim] : els_to_copy *= sz;
       for(int i=dim+1; i< n_dims; ++i) n_segments *= dims[i];
       for(int i=0; i< n_segments; ++i) memcpy((void*)(data + i*chunk_sz*dims[1]), (void*)(new_data + i*chunk_sz*sz), els_to_copy);
-      //memcpy not std::copy because lets' stick with one style eh?
     }
     dims[dim] = sz;
     free(data);
@@ -580,8 +574,6 @@ void data_array::construct(){
   space[0]=0; space[1]=1;
   memset((void *) block_id, 0, 10*sizeof(char));
 
-/*[06/10/2015 17:39:06] Christopher Brady: float t_temp[2]={0,1};
-[06/10/2015 17:39:20] Christopher Brady: memcpy(&t_temp,&time,2*sizeof(float));*/
 }
 
 data_array::data_array(int nx, int ny) : my_array(nx,ny){

@@ -112,7 +112,6 @@ int main(int argc, char *argv[]){
   for(int block_num = 0; block_num<cmd_line_args.per_proc; block_num++){
 
     divide_domain(dims, my_space, cmd_line_args.per_proc, block_num);
-
     space_dim = my_space[1]-my_space[0];
     
     MPI_Barrier(MPI_COMM_WORLD);
@@ -129,7 +128,6 @@ int main(int argc, char *argv[]){
     if(err == 1) safe_exit();
 
     if(err == 2) n_tims = dat->get_dims(1);
-    my_print(mk_str(n_tims), mpi_info.rank);
     //Check if we had to truncate data array...
     data_array * dat_fft = new data_array(space_dim, n_tims);
 
@@ -150,7 +148,7 @@ int main(int argc, char *argv[]){
     row_lengths[1] = DEFAULT_N_ANG;
     
     contr->add_spectrum(row_lengths, 2);
-    contr->get_current_spectrum()->make_test_spectrum();
+    contr->get_current_spectrum()->make_test_spectrum(cmd_line_args.time, my_space);
 
     //Now we have some test spectral data we can work with...
 
@@ -330,24 +328,17 @@ void divide_domain(std::vector<int> dims, int space[2], int per_proc, int block_
 *Uses the number of space blocks from args (if specified) and the domain size from dims to ensure perfect subdivision and set current proc's bounds. We can ignore incoming space vals as they should be -1
 */
 
-  if(mpi_info.n_procs > 1){
     int end, block_start, block_end, block_len;
     float per_proc_size;
     end = dims[0];
     per_proc_size = std::ceil( (float) end / (float) mpi_info.n_procs);
     //Force overlap not missing
-    
     block_start = mpi_info.rank * (int) std::floor((float) end/(float) (mpi_info.n_procs));
     block_end = block_start + (int) per_proc_size;
-    block_len = block_end- block_start;
+    block_len = block_end - block_start;
     space[0] = block_start + (block_num) * block_len / per_proc;
     space[1] = space[0] + block_len / per_proc;
-  }else{
-  
-    if(space[0]==-1) space[0] = 0;
-    if(space[1]==-1) space[1] = dims[0]-1;
-  }
-  
+
 }
 
 int where(my_type * ax_ptr, int len, my_type target){

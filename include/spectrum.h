@@ -53,7 +53,7 @@ public:
   
   bool write_to_file(std::fstream &file);
 
-  void make_test_spectrum();
+  void make_test_spectrum(int time[2], int space[2]);
 
   calc_type get_G1(calc_type omega);
   calc_type get_G2(calc_type omega, calc_type x);

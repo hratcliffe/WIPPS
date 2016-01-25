@@ -18,10 +18,11 @@
 
 extern deck_constants my_const;
 extern mpi_info_struc mpi_info;
+
 controller::controller(std::string file_prefix){
 /** \brief Setup
 *
-*\todo Plasma object should be setup from files or such
+* Create plasma object and initialise
 */
   my_plas = new plasma(my_const.omega_ce * me/std::abs(q0), file_prefix);
   current_spect=0;
@@ -111,9 +112,12 @@ void controller::bounce_average(){
 
   int dims[2];
   get_size(dims);
+  char blck[15];
+  strcpy(blck, my_d[current_d]->block_id);
   add_d(dims[0], dims[1]);
   //Add new averaged D
   my_d[current_d]->tag = BOUNCE_AV;
+  strcpy(my_d[current_d]->block_id, blck);
 
     //Flatten down each d onto this one with all integrand included...
   my_type val;
@@ -143,11 +147,15 @@ void controller::handle_d_mpi(){
   int dims[2];
   get_size(dims);
   int total = dims[0]*dims[1];
+  char blck[15];
+  strcpy(blck, my_d[current_d]->block_id);
 
   int current_d_keep = current_d;
   if(mpi_info.rank ==0){
     add_d(dims[0], dims[1], 0);
     my_d[current_d]->tag = GLOBAL;
+    strcpy(my_d[current_d]->block_id, blck);
+
   }
   current_d = current_d_keep;
   
@@ -172,16 +180,17 @@ bool controller::save_spectra(std::string pref){
 
   std::fstream file;
   std::string filename, tmp;
-  tmp = my_spect[0]->block_id;
   for(int i=0; i<my_spect.size(); ++i){
+    tmp = my_spect[i]->block_id;
     filename = pref+"spec_"+tmp +"_"+mk_str(my_spect[i]->time[0]) + "_"+mk_str(my_spect[i]->time[1])+"_"+mk_str(my_spect[i]->space[0])+"_"+mk_str(my_spect[i]->space[1])+".dat";
+    std::cout<<filename<<std::endl;
     file.open(filename.c_str(),std::ios::out|std::ios::binary);
     if(file.is_open()) my_spect[i]->write_to_file(file);
     else return 1;
     file.close();
   
   }
-
+  
   return 0;
 }
 
@@ -193,8 +202,9 @@ bool controller::save_D(std::string pref){
 
   std::fstream file;
   std::string filename, tmp;
-  tmp = my_d[0]->block_id;
   for(int i=0; i<my_d.size(); ++i){
+    tmp = my_d[i]->block_id;
+    //They might have different blocks
     if(my_d[i]->tag == LOCAL) filename = pref+"D_"+tmp +"_"+mk_str(my_d[i]->time[0]) + "_"+mk_str(my_d[i]->time[1])+"_"+mk_str(my_d[i]->space[0])+"_"+mk_str(my_d[i]->space[1])+".dat";
     else if(my_d[i]->tag == BOUNCE_AV) continue;
     //Don't bother saving these...

@@ -46,6 +46,7 @@ On error we continue using defaults set below
 
   calc_type ref_dens = my_const.omega_pe * my_const.omega_pe * eps0 * me / q0/q0;
 
+//Default values -----------------------------------------
   pmass[0] = me;
   pmass[1] = mp;
   pmass[2] = mp;
@@ -61,6 +62,9 @@ On error we continue using defaults set below
   pdens[1] = 1.0 * ref_dens;
   pdens[2] = 0.0 * ref_dens;
   pdens[3] = 0.0*ref_dens;
+
+//End default values -----------------------------------------
+
 
   std::ifstream infile;
   infile.open(file_prefix+"plasma.conf");
@@ -97,12 +101,8 @@ On error we continue using defaults set below
         
         }else if(name == "charge") pcharge[block_num] = atof(val.c_str()) * q0;
         else if(name == "dens") pdens[block_num] = atof(val.c_str()) * ref_dens;
-      
       }
-    
     }
-  
-  
   }
 
   if(block_num >= ncomps){
@@ -115,16 +115,7 @@ On error we continue using defaults set below
   }else{
     return 0;
   }
-/**  for(int i =0; i< ncomps; i++) std::cout<< pmass[i]<<std::endl;
-  for(int i =0; i< ncomps; i++) std::cout<< pcharge[i]<<std::endl;
-  for(int i =0; i< ncomps; i++) std::cout<< pdens[i]<<std::endl;
 
-
-  for(int i =0; i< ncomps; i++) std::cout<< pmass[i]<<std::endl;
-  for(int i =0; i< ncomps; i++) std::cout<< pcharge[i]<<std::endl;
-  for(int i =0; i< ncomps; i++) std::cout<< pdens[i]<<std::endl;
-
-**/
 }
 
 mu plasma::get_root(calc_type th, calc_type w, calc_type psi, bool Righthand){
@@ -139,7 +130,6 @@ mu plasma::get_root(calc_type th, calc_type w, calc_type psi, bool Righthand){
   calc_type dB0dr, dB0dth;
   
   /** \todo get or calc these...*/
-  //std::cout<<"These numbers are wrong, remember"<<std::endl;
   // FAKENUMBERS
   for(int i=0;i<ncomps; i++){
     dndr[i] = 1.0;
@@ -362,7 +352,6 @@ mu_dmudom plasma::get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int
   w3 = w2*w;
   
   /** \todo get or calc these...*/
-  //std::cout<<"These numbers are wrong, remember"<<std::endl;
   // FAKENUMBERS
   for(int i=0;i<ncomps; i++){
     dndr[i] = 0.0;

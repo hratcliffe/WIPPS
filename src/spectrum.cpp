@@ -245,7 +245,7 @@ bool spectrum::write_to_file(std::fstream &file){
 
 }
 
-void spectrum::make_test_spectrum(){
+void spectrum::make_test_spectrum(int time[2], int space[2]){
 /** \brief Generate dummy spectrum
 *
 *Makes a basic spectrum object with suitable number of points, and twin, symmetric Gaussians centred at fixed x. \todo Finish cases!!!
@@ -253,7 +253,7 @@ void spectrum::make_test_spectrum(){
 
   char id[10] = "ex";
 
-  this->set_ids(0, 100, 0, get_length(0), WAVE_WHISTLER, id);
+  this->set_ids(time[0], time[1], space[0], space[1], WAVE_WHISTLER, id);
   
   ax_omega = false;
 

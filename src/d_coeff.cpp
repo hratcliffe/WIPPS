@@ -51,9 +51,12 @@ void diffusion_coeff::set_ids(float time1, float time2, int space1, int space2, 
 
 
 bool diffusion_coeff::write_to_file(std::fstream &file){
-/** \todo WRITE */
-  file<<"";
+/** \todo Add any additionals */
+
+  if(!file.is_open()) return 1;
+  data_array::write_to_file(file);
   return 0;
+
 
 }
 
@@ -121,7 +124,6 @@ Get mu, dmu/domega which are used to:
 
   this->copy_ids(spect);
   //copy block id, ranges etc from spect.
-
   calc_type theta, lat, omega_n=0.0, D_tmp;
   calc_type alpha, v_par, c2th, s2alpha; /** temporaries for clarity*/
   calc_type Eq6, mu_dom_mu, Eq7, dmudx, numerator;

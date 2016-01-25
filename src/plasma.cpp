@@ -15,25 +15,9 @@
 extern deck_constants my_const;
 extern mpi_info_struc mpi_info;
 
-plasma::plasma( calc_type ref_B){
+plasma::plasma( calc_type ref_B, std::string file_prefix){
 
-  pmass[0] = me;
-  pmass[1] = mp;
-  pmass[2] = mp*4.0;
-  pmass[3] = me*16.0;
-  
-  pcharge[0] = -1.0*q0;
-  pcharge[1] = 1.0*q0;
-  pcharge[2] = 1.0*q0;
-  pcharge[3] = 1.0*q0;
-  
-  calc_type ref_dens = my_const.omega_pe * my_const.omega_pe * eps0 * me / q0/q0;
-
-  pdens[0] = 1.0 * ref_dens;
-  pdens[1] = 1.00 * ref_dens;
-  pdens[2] = 0.0 * ref_dens;
-  pdens[3] = 0.0*ref_dens;
-  
+  configure_from_file(file_prefix);
   B0 = ref_B;
   if(ref_B == -1.0) B0 = my_const.omega_ce * me/std::abs(q0);
   //my_const.omega_ce * me/std::abs(q0);
@@ -44,6 +28,103 @@ plasma::plasma( calc_type ref_B){
 plasma::~plasma(){
 
 
+}
+
+bool plasma::configure_from_file(std::string file_prefix){
+/** \brief Setup plasma from file
+*
+*Reads file_prefix/plasma.conf and parses component mass, charge and density
+*Sample block looks like
+* electron:
+*mass = 1.0*me
+*charge = -1.0
+*dens = 1.0
+
+On error we continue using defaults set below
+*/
+
+
+  calc_type ref_dens = my_const.omega_pe * my_const.omega_pe * eps0 * me / q0/q0;
+
+  pmass[0] = me;
+  pmass[1] = mp;
+  pmass[2] = mp;
+  pmass[3] = mp;
+  
+  pcharge[0] = -1.0*q0;
+  pcharge[1] = 1.0*q0;
+  pcharge[2] = 0.0*q0;
+  pcharge[3] = 0.0*q0;
+  
+
+  pdens[0] = 1.0 * ref_dens;
+  pdens[1] = 1.0 * ref_dens;
+  pdens[2] = 0.0 * ref_dens;
+  pdens[3] = 0.0*ref_dens;
+
+  std::ifstream infile;
+  infile.open(file_prefix+"plasma.conf");
+  std::string line, name, val, head, tail;
+  int block_num = -1;
+  bool parse_err;
+  size_t pos;
+  //very naive parsing. We spin through until we find a ":" and read the next lines until we find another
+  //if we don't find n_comps such blocks, we report and continue
+  
+  while(getline(infile, line)){
+    
+    if(line.find(':') != std::string::npos){
+      block_num ++;
+      if(block_num >= ncomps) break;
+      continue;
+      // is next block, skip this header line
+    }
+    if(block_num >= 0){
+      //this line is a valid input one, probably!
+      parse_err = parse_name_val(line, name, val);
+      if(!parse_err){
+        if(name == "mass" && val.find('*') == std::string::npos){
+          pmass[block_num] = atof(val.c_str());
+        }else if(name == "mass"){
+          //find which mass is relative to
+          pos = val.find('*');
+          tail = val.substr(pos+1, val.size());
+          head = val.substr(0, pos);
+          trim_string(tail);
+          trim_string(head);
+          if(tail == "me") pmass[block_num] = atof(val.c_str())* me;
+          else if(tail == "mp") pmass[block_num] = atof(val.c_str())* mp;
+        
+        }else if(name == "charge") pcharge[block_num] = atof(val.c_str()) * q0;
+        else if(name == "dens") pdens[block_num] = atof(val.c_str()) * ref_dens;
+      
+      }
+    
+    }
+  
+  
+  }
+
+  if(block_num >= ncomps){
+    my_print("Too many blocks in plasma file, truncating!", mpi_info.rank);
+    return 1;
+  }
+  else if(block_num < ncomps){
+    my_print("Insufficient blocks in config file, using defaults for others", mpi_info.rank);
+    return 1;
+  }else{
+    return 0;
+  }
+/**  for(int i =0; i< ncomps; i++) std::cout<< pmass[i]<<std::endl;
+  for(int i =0; i< ncomps; i++) std::cout<< pcharge[i]<<std::endl;
+  for(int i =0; i< ncomps; i++) std::cout<< pdens[i]<<std::endl;
+
+
+  for(int i =0; i< ncomps; i++) std::cout<< pmass[i]<<std::endl;
+  for(int i =0; i< ncomps; i++) std::cout<< pcharge[i]<<std::endl;
+  for(int i =0; i< ncomps; i++) std::cout<< pdens[i]<<std::endl;
+
+**/
 }
 
 mu plasma::get_root(calc_type th, calc_type w, calc_type psi, bool Righthand){

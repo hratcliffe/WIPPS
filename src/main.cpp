@@ -105,7 +105,7 @@ int main(int argc, char *argv[]){
   /**for now abort if data file wrong size... \todo FIX*/
 
   controller * contr;
-  contr = new controller();
+  contr = new controller(cmd_line_args.file_prefix);
 
 
   //---------------- Now we loop over blocks per proc-------
@@ -305,6 +305,7 @@ setup_args process_command_line(int argc, char *argv[]){
     my_print("WARNING: Requested size exceeds MAXSIZE", mpi_info.rank);
   }
   //Protect from invalid user input
+  
   return values;
 }
 
@@ -429,17 +430,13 @@ void get_deck_constants(std::string file_prefix){
     lines.push_back(line);
   }
   
-  size_t pos;
   std::string name, val;
+  bool parse_err;
   float val_f;
   for(int i=0; i< lines.size(); i++){
-    pos = lines[i].find("=");
-    if(pos == std::string::npos) continue;
-    //is not a x = y line
-    name = lines[i].substr(0, pos);
-    trim_string(name);
-    val = lines[i].substr(pos+1, lines[i].size());
-    trim_string(val);
+
+    parse_err = parse_name_val(lines[i], name, val);
+    if(parse_err) continue;
     val_f = atof(val.c_str());
   
     if(name == OMEGA_CE) my_const.omega_ce = val_f;
@@ -460,6 +457,28 @@ void get_deck_constants(std::string file_prefix){
 
 /** @} */
 
+
+bool parse_name_val(std::string in, std::string &name, std::string &val){
+/** \brief Parse x=y strings
+*
+* Basic line parser. Takes a string and if it contains an '=' splits into the left and right segments, stripping leading and trailing spaces. Returns 0 if success, 1 if no equals sign. Standard comment character is # as first non-whitespace
+*/
+  if(in[in.find_first_not_of(" \t\n")] == '#') return 1;
+  size_t pos = in.find("=");
+  if(pos == std::string::npos){
+    //is not a x = y line
+    name = "";
+    val="";
+    return 1;
+
+  }else{
+    name = in.substr(0, pos);
+    trim_string(name);
+    val = in.substr(pos+1, in.size());
+    trim_string(val);
+    return 0;
+  }
+}
 
 void trim_string(std::string &str, char ch){
   std::string tmp;

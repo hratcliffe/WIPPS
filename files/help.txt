@@ -1,5 +1,5 @@
 -h Show help
--f <string> Prefix for input files
+-f <string> Prefix for all input files, including directory
 -start <int> Starting dump number
 -end <int> Ending dump number
 -rows <int> For accumulated blocks, read no more than this many rows To get an exact number of rows set -end larger than required and set this. No effect for plain blocks

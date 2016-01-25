@@ -18,12 +18,12 @@
 
 extern deck_constants my_const;
 extern mpi_info_struc mpi_info;
-controller::controller(){
+controller::controller(std::string file_prefix){
 /** \brief Setup
 *
 *\todo Plasma object should be setup from files or such
 */
-  my_plas = new plasma(my_const.omega_ce * me/std::abs(q0));
+  my_plas = new plasma(my_const.omega_ce * me/std::abs(q0), file_prefix);
   current_spect=0;
   current_d=0;
 

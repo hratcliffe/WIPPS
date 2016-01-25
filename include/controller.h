@@ -27,10 +27,9 @@ class controller{
   int current_spect;
   int current_d;
   void get_size(int dims[2]);
-
 public:
 
-  controller();
+  controller(std::string file_prefix);
   ~controller();
   void add_spectrum(int nx, int n_ang);
   void add_spectrum(int * row_lengths, int ny);

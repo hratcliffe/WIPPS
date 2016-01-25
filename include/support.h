@@ -185,6 +185,8 @@ std::string mk_str(float i);/**<Converts float to string*/
 std::string mk_str(long double i);/**<Converts long double to string*/
 void trim_string(std::string &str, char ch=' '); /**< Trim all leading/trailing ch's from str*/
 
+bool parse_name_val(std::string in, std::string &name, std::string &val);
+
 int where(my_type * ax_ptr, int len, my_type target);
 
 

@@ -53,10 +53,10 @@ private:
 
   mu last_mu;
   calc_type last_th, last_w, last_psi;
-
+  bool configure_from_file(std::string file_prefix);
   public:
 
-  plasma(calc_type ref_B);
+  plasma(calc_type ref_B, std::string file_prefix);
   ~plasma();
 
   void get_density(){;}

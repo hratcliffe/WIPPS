@@ -181,9 +181,7 @@ class test_entity_plasma : public test_entity{
 /** Check basic spectrum calculations, such as test spectrum derivation etc */
 class test_entity_spectrum : public test_entity{
   private:
-  data_array * test_dat;
   data_array * test_dat_fft;
-  reader * test_rdr;
   controller * test_contr;
   std::string file_prefix;
   int tim_in[3], space_in[2];

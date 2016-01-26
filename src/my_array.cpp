@@ -427,10 +427,10 @@ bool my_array::write_to_file(std::fstream &file){
 
 }
 
-bool my_array::read_from_file(std::fstream &file){
-/** \brief Test file read
+bool my_array::read_from_file(std::fstream &file, bool no_version_check){
+/** \brief File read
 *
-*Spams stuff to screen to check read/write \todo Make this read usefully eh???
+*Reads block id, data and axes from a file. Requires the dimensions of array to be already setup and will check for consistency with those in file
 */
 
   char tmp_vers[15];
@@ -439,48 +439,34 @@ bool my_array::read_from_file(std::fstream &file){
   int n_dims_in, dim_tmp;
 
   file.read((char*) &verf, sizeof(my_type));
-  std::cout<< verf<<" "<<io_verify<<std::endl;
-
   file.read((char*) &tmp_vers, sizeof(char)*15);
-  std::cout<<tmp_vers<<" "<<VERSION<<std::endl;
 
   if(verf != io_verify){
   //equality even though floats as should be identical
-    std::cout<<"Bugger, file read error";
-    if(tmp_vers !=VERSION) std::cout<<"Incompatible code versions"<<std::endl;
+    my_print("Bugger, file read error", mpi_info.rank);
+    if(tmp_vers !=VERSION && strcmp(tmp_vers, "IDL data write")!= 0 ) my_print("Incompatible code versions", mpi_info.rank);
     return 1;
   }else{
-    if(tmp_vers !=VERSION) std::cout<<"WARNING: A different code version was used to write this data. Proceed with caution. Fields may not align correctly."<<std::endl;
+    if(!no_version_check && tmp_vers !=VERSION) my_print("WARNING: A different code version was used to write this data. Proceed with caution. Fields may not align correctly.", mpi_info.rank);
   }
 
-
   file.read((char*) &n_dims_in, sizeof(int));
-  std::cout<<n_dims_in<<" "<<n_dims<<std::endl;
-
+  if(n_dims_in !=n_dims){
+    my_print("Dimensions do not match, aborting read", mpi_info.rank);
+    return 1;
+  }
 
   for(int i=0;i<n_dims_in;i++){
     file.read((char*) &dim_tmp, sizeof(int));
-    std::cout<<dim_tmp<<" "<<dims[i]<<std::endl;
-
+    if(dim_tmp !=dims[i]){
+      my_print("Dimensions do not match, aborting read", mpi_info.rank);
+      return 1;
+    }
   }
-
-  my_type * data_tmp;
-  data_tmp=(my_type*)malloc(dims[0]*dims[1]*sizeof(my_type));
-
-  file.read((char *) data_tmp , sizeof(my_type)*dims[0]*dims[1]);
-  std::cout<<std::setprecision(9);
-  std::cout<<data_tmp[0]<<" "<<data[0]<<std::endl;
-  std::cout<<data_tmp[10]<<" "<<data[10]<<std::endl;
-  std::cout<<data_tmp[dims[0]-1]<<" "<<data[dims[0]-1]<<std::endl;
-  std::cout<<data_tmp[dims[0]+50]<<" "<<data[dims[0]+50]<<std::endl;
-  std::cout<<data_tmp[dims[0]*2+50]<<" "<<data[dims[0]*2+50]<<std::endl;
-
-  std::cout<<data_tmp[dims[0]*dims[1]-1]<<" "<<data[dims[0]*dims[1]-1]<<std::endl;
-
-  free(data_tmp);
+  
+  file.read((char *) data , sizeof(my_type)*dims[0]*dims[1]);
 
   return 0;
-
 
 }
 
@@ -608,6 +594,78 @@ data_array::data_array(int * row_lengths, int ny): my_array(row_lengths,ny){
 
   axes=(my_type*)calloc(tot_els, sizeof(my_type));
   if(axes) ax_defined=true;
+
+}
+
+data_array::data_array(std::string filename, bool no_version_check){
+/**\brief Create data array from file
+*
+* Create a data array by reading from the named file. If the file does not exist no memory is allocated. Otherwise it reads the dimensions and sets itself up accordingly
+*/
+
+  std::fstream infile;
+  infile.open(filename, std::ios::in|std::ios::binary);
+  if(!infile.is_open()) return;
+  
+  char id_in[ID_SIZE];
+  char tmp_vers[15];
+  my_type verf=0.0;
+  int n_dims_in, dim_tmp;
+
+  infile.read(id_in, sizeof(char)*ID_SIZE);
+  
+  infile.read((char*) &verf, sizeof(my_type));
+
+  infile.read((char*) &tmp_vers, sizeof(char)*15);
+
+  if(verf != io_verify){
+  //equality even though floats as should be identical
+    my_print("Bugger, file read error", mpi_info.rank);
+    if(tmp_vers !=VERSION && strcmp(tmp_vers, "IDL data write")!= 0) my_print("Incompatible code versions", mpi_info.rank);
+    return;
+  }else{
+    if(!no_version_check && tmp_vers !=VERSION) my_print("WARNING: A different code version was used to write this data. Proceed with caution. Fields may not align correctly.", mpi_info.rank);
+  }
+
+
+  infile.read((char*) &n_dims_in, sizeof(int));
+
+  //Now we have the dimensions, construct
+  int total_data=1, total_axes=0;
+  if(n_dims_in >0){
+    
+    construct();
+
+    this->n_dims = n_dims_in;
+    this->dims = (int*)malloc(n_dims*sizeof(int));
+    for(int i=0;i<n_dims;i++){
+      infile.read((char*) &dim_tmp, sizeof(int));
+
+      dims[i] = dim_tmp;
+      total_axes += dims[i];
+      total_data *= dims[i];
+      
+    }
+    
+    data=(my_type*)calloc(total_data,sizeof(my_type));
+    if(data) defined=true;
+    axes=(my_type*)calloc(total_axes,sizeof(my_type));
+    if(axes) ax_defined=true;
+
+    //Finally read in data and axes using normal routines
+    infile.seekg(0, std::ios::beg);
+    this->read_from_file(infile, no_version_check);
+
+  
+  }else if(n_dims_in < 0){
+    //This means ragged array
+    my_print("I didn't finish this because i am useless!!!!!!!!!!!!!!!!!!!!!!!!!!!", mpi_info.rank);
+  
+  }else{
+    my_print("Invalid dimensionality in input file", mpi_info.rank);
+  
+  }
+
 
 }
 
@@ -770,38 +828,26 @@ bool data_array::write_to_file(std::fstream &file){
 
 }
 
-bool data_array::read_from_file(std::fstream &file){
+bool data_array::read_from_file(std::fstream &file, bool no_version_check){
 /** \brief Test file read
 *
 *Spams stuff to screen to check read/write
 */
 
+  bool err;
   //First read the block ID
-  char id_in[11];
+  char id_in[ID_SIZE];
 
-  file.read(id_in, sizeof(char)*11);
-  std::cout<< id_in<<" "<<block_id<<std::endl;
+  file.read(id_in, sizeof(char)*ID_SIZE);
+  strcpy(this->block_id, id_in);
 
-  my_array::read_from_file(file);
-  //call parent class to read data
+  if(file.good()) err=my_array::read_from_file(file, no_version_check);
+  //call parent class to read data, checking we read id ok first
 
-  //now read axes
-  std::cout<<"Axes :"<<std::endl;
-  my_type * data_tmp;
-  data_tmp=(my_type*)malloc((dims[0]+dims[1])*sizeof(my_type));
+  if(!err) file.read((char *) this->axes , sizeof(my_type)*(dims[0]+dims[1]));
+  //If we managed to get dims etc, continue on to get axes
 
-  file.read((char *) data_tmp , sizeof(my_type)*(dims[0]+dims[1]));
-
-  std::cout<<data_tmp[0]<<" "<<axes[0]<<std::endl;
-  std::cout<<data_tmp[10]<<" "<<axes[10]<<std::endl;
-  std::cout<<data_tmp[dims[0]-1]<<" "<<axes[dims[0]-1]<<std::endl;
-  std::cout<<data_tmp[dims[0]]<<" "<<axes[dims[0]]<<std::endl;
-  std::cout<<data_tmp[dims[0]+dims[1]-1]<<" "<<axes[dims[0]+dims[1]-1]<<std::endl;
-
-  free(data_tmp);
-
-  return 0;
-
+  return err;
 
 }
 

@@ -32,4 +32,5 @@ Total 7 out of 20 issues in high density approx or dispersion solver at precisio
 Testing dispersion solver for plasma O mode
 Testing dispersion solver for plasma X mode
 Passed test plasma
+Passed test spectrum checks
 Testing complete and logged in tests.log

@@ -75,6 +75,8 @@ void tests::setup_tests(){
   add_test(test_obj);
   test_obj = new test_entity_plasma();
   add_test(test_obj);
+  test_obj = new test_entity_spectrum();
+  add_test(test_obj);
 
 }
 void tests::add_test(test_entity * test){
@@ -747,15 +749,12 @@ test_entity_spectrum::test_entity_spectrum(){
 
   name = "spectrum checks";
   char block_id[10]= "ex";
-  file_prefix = "./files/spect";
-  test_rdr = new reader(file_prefix, block_id);
+  file_prefix = "./files/";
 
 
 }
 test_entity_spectrum::~test_entity_spectrum(){
 
-  delete test_rdr;
-  delete test_dat;
   delete test_dat_fft;
   delete test_contr;
 
@@ -786,36 +785,14 @@ int test_entity_spectrum::setup(){
 
   int err = TEST_PASSED;
 
-  tim_in[0]=0;
-  tim_in[1]=1;
-  tim_in[2]=0;
-  space_in[0]=0;
+  test_dat_fft = new data_array(file_prefix + "FFT_data.dat", 1);
 
-  int n_tims = std::max(tim_in[1]-tim_in[0], 1);
+  std::cout<< test_dat_fft->is_good()<<std::endl;
 
-  int n_dims;
-  std::vector<int> dims;
-  test_rdr->read_dims(n_dims, dims);
-
-  space_in[1]=dims[0];
-
-  if(n_dims !=1){
-    err |= TEST_WRONG_RESULT;
-    test_bed->report_err(err);
-    return err;
-  }
-
-  test_dat = new data_array(dims[0], n_tims);
-  test_dat_fft = new data_array(dims[0], n_tims);
-  if(!test_dat->is_good()||!test_dat_fft->is_good()){
-    err|=TEST_ASSERT_FAIL;
-    return err;
-  }
-  
-  test_rdr->read_data(test_dat, tim_in, space_in);
-
-  bool tmp_err = test_dat->fft_me(test_dat_fft);
-  if(tmp_err) err|=TEST_ASSERT_FAIL;
+  std::cout<< test_dat_fft->get_dims()<<std::endl;
+  std::cout<< test_dat_fft->get_dims(0)<<std::endl;
+  std::cout<< test_dat_fft->get_dims(1)<<std::endl;
+  std::cout<< test_dat_fft->block_id<<std::endl;
 
   return err;
 }
@@ -828,7 +805,7 @@ int test_entity_spectrum::basic_tests(){
   test_contr = new controller(file_prefix);
   
   int row_lengths[2];
-  row_lengths[0] = test_dat->get_dims(0);
+  row_lengths[0] = test_dat_fft->get_dims(0);
   row_lengths[1] = DEFAULT_N_ANG;
     
   test_contr->add_spectrum(row_lengths, 2);

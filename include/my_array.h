@@ -59,7 +59,7 @@ public:
   bool populate_row(void * dat_in, int nx, int y_row);
 
   virtual bool write_to_file(std::fstream &file);
-  bool read_from_file(std::fstream &file);
+  bool read_from_file(std::fstream &file, bool no_version_check=0);
   virtual bool resize(int dim, int sz);
 
 };
@@ -87,6 +87,7 @@ public:
   data_array(int nx, int ny, int nz);
   data_array(int nx, int ny, int nz, int nt);
   data_array(int * row_lengths, int ny);
+  data_array(std::string filename, bool no_version_check = 0);
   virtual ~data_array();
 
   virtual bool is_good(){return defined && ax_defined;}
@@ -104,7 +105,7 @@ public:
 
   bool write_to_file(std::fstream &file);
   /**< \todo Make mpi safe.. */
-  bool read_from_file(std::fstream &file);
+  bool read_from_file(std::fstream &file, bool no_version_check=0);
 
   bool fft_me(data_array * data_out);
   void copy_ids( data_array * src);

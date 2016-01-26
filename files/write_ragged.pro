@@ -43,7 +43,7 @@ writeu, 1, io_check
 writeu, 1, commit_out
 writeu, 1, null_byte
 
-writeu, 1, 0
+writeu, 1, -n_dims
 writeu, 1, dims
 
 FOR i=0, n_dims-1 DO BEGIN

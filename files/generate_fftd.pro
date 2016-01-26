@@ -9,8 +9,8 @@ output_file = "FFT_data.dat"
 spectrum_file = "spectrum.dat"
 
 x_ran = [0, 1e7]
-t_ran = [0, 1e-2]
-n_pts = [1024, 100]
+t_ran = [0, 5e-2]
+n_pts = [1024, 500]
 
 om_ce = 17588.200878
 om_pe = 35176.401757
@@ -61,7 +61,8 @@ k_distrib = exp( - (axes[0] - (axes[0])[n_pts[0]/2.0 + k_peak])^2 / 0.01/max(axe
 k_distrib[0:n_pts[0]/2.0 -1] = reverse(k_distrib[n_pts[0]/2.0:n_pts[0]-1])
 
 FOR i=0, sz[1]-1 DO BEGIN
-  FFT_data[i, om_min_ind[i]:om_max_ind[i]]= k_distrib[i]
+  cells = abs(om_min_ind[i]-om_max_ind[i]-1)
+  IF(cells GT 0) THEN FFT_data[i, om_min_ind[i]:om_max_ind[i]] = k_distrib[i]/cells
 END
 
 
@@ -69,10 +70,9 @@ END
 err = write_data(output_file, FFT_data, axes, id='FFTd')
 
 ;Make spectrum back from data
-calculate_energy_density, FFT_data, axes, dispersion, output=spectrum, margin=1
+calculate_energy_density, FFT_data, axes, dispersion, output=spectrum, margin=om_fuzz
 
 ;Save the spectrum
 err = write_data(spectrum_file, spectrum, axes[0], id="spect")
 
-stop
 end

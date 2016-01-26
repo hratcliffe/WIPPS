@@ -758,7 +758,7 @@ bool data_array::write_to_file(std::fstream &file){
 
   if(!file.is_open()) return 1;
 
-  file.write(block_id, sizeof(char)*10);
+  file.write(block_id, sizeof(char)*ID_SIZE);
 
   my_array::write_to_file(file);
   //call base class method to write that data.

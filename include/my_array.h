@@ -77,7 +77,7 @@ protected:
 
 public:
 
-  char block_id[10]; /**< The field name id from SDF file*/
+  char block_id[ID_SIZE]; /**< The field name id from SDF file*/
 
   float time[2];/**< Time range over which data are taken*/
   int space[2];/**< Space range over which data are taken*/

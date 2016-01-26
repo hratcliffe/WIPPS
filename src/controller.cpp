@@ -112,7 +112,7 @@ void controller::bounce_average(){
 
   int dims[2];
   get_size(dims);
-  char blck[15];
+  char blck[ID_SIZE];
   strcpy(blck, my_d[current_d]->block_id);
   add_d(dims[0], dims[1]);
   //Add new averaged D
@@ -147,7 +147,7 @@ void controller::handle_d_mpi(){
   int dims[2];
   get_size(dims);
   int total = dims[0]*dims[1];
-  char blck[15];
+  char blck[ID_SIZE];
   strcpy(blck, my_d[current_d]->block_id);
 
   int current_d_keep = current_d;

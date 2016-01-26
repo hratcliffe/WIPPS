@@ -48,6 +48,7 @@ const std::string filename = "tests.log";/**<Test log file*/
 class reader;
 class data_array;
 class plasma;
+class controller;
 
 /**\brief Testing instance
 *
@@ -180,23 +181,24 @@ class test_entity_plasma : public test_entity{
 /** Check basic spectrum calculations, such as test spectrum derivation etc */
 class test_entity_spectrum : public test_entity{
   private:
-  
+  data_array * test_dat;
+  data_array * test_dat_fft;
+  reader * test_rdr;
+  controller * test_contr;
+  std::string file_prefix;
+  int tim_in[3], space_in[2];
+
   public:
   test_entity_spectrum();
   virtual ~test_entity_spectrum();
   virtual int run();
+  int setup();
+  int basic_tests();
+  int albertGs_tests();
 };
 
-/**Check G1 from Albert \todo Write
+/**Check G1 ad G2 from Albert \todo Write
 */
-class test_entity_albertG1 : public test_entity{
-  private:
-  
-  public:
-  test_entity_albertG1();
-  virtual ~test_entity_albertG1();
-  virtual int run();
-};
 
 #endif
 #endif

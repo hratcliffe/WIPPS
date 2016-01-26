@@ -15,7 +15,11 @@
 #include "reader.h"
 #include "support.h"
 #include "plasma.h"
+#include "controller.h"
 #include "my_array.h"
+#include "spectrum.h"
+#include "d_coeff.h"
+
 #include <math.h>
 #include <boost/math/special_functions.hpp>
 //Provides Bessel functions, erf, and many more
@@ -306,7 +310,7 @@ int test_entity_get_and_fft::run(){
 //  std::cout<<dims[0]<<std::endl;
   if(n_dims !=1){
     err |= TEST_WRONG_RESULT;
-    if(err == TEST_PASSED) test_bed->report_info("Array dims wrong", 1);
+    test_bed->report_info("Array dims wrong", 1);
     test_bed->report_err(err);
 
     return err;
@@ -569,7 +573,7 @@ int test_entity_extern_maths::run(){
 
 test_entity_plasma::test_entity_plasma(){
   name = "plasma";
-  plas = new plasma(-1.0);
+  plas = new plasma(-1.0, "./files/test");
 
 }
 test_entity_plasma::~test_entity_plasma(){
@@ -578,6 +582,10 @@ test_entity_plasma::~test_entity_plasma(){
 }
 
 int test_entity_plasma::run(){
+/** \brief Test resonant frequencies and refractive indices
+*
+*
+*/
 
   int err=TEST_PASSED;
 
@@ -595,7 +603,7 @@ int test_entity_plasma::run(){
   gamma = std::sqrt(gamma2);
   
   results = plas->get_omega(x, v_par, n);
-  /**Now check each element of this satisfies Stix 2.45 and the resonance condition together*/
+  /**Now check each element of the resonant frequency solution set satisfies Stix 2.45 and the resonance condition together*/
   test_bed->report_info("Testing resonant frequency solver", 1);
   test_bed->report_info(mk_str((int)results.size())+" frequency solutions found", 2);
   
@@ -632,7 +640,7 @@ int test_entity_plasma::run(){
       test_bed->report_info("Mismatch in high density approx or dispersion solver at "+mk_str(tmp_omega/std::abs(om_ce_local))+" "+mk_str(tmp_theta), 1);
       test_bed->report_info("Mu "+mk_str(my_mu.mu)+" difference "+mk_str(my_mu.mu - mu_tmp2)+" relative error "+mk_str((my_mu.mu-mu_tmp2)/my_mu.mu), 2);
     }
-    //my_mu_all.mu and my_mu.mu should be exactly equal:
+    /**my_mu_all.mu and my_mu.mu should be exactly equal*/
     if(std::abs(my_mu_all.mu-my_mu.mu) > PRECISION){
       test_bed->report_info("Inconsistent root between get_root and get_phi_mu_om", 2);
       err|=TEST_WRONG_RESULT;
@@ -646,7 +654,7 @@ int test_entity_plasma::run(){
     my_mu = plas->get_phi_mu_om(tmp_omega, tmp_theta, 0.0, 0.0, tmp_omega_n);
     my_mu_all = plas->get_root(0.0, tmp_omega, tmp_theta);
 
-    /** my_mu.mu should roughly equal Stix 2.45*/
+    /* my_mu.mu should roughly equal Stix 2.45*/
     mu_tmp2 = sqrt(1.0 - (std::pow(om_pe_local,2)/(tmp_omega*(tmp_omega + om_ce_local*std::cos(tmp_theta)))));
     if(std::abs(my_mu.mu-mu_tmp2)/my_mu.mu > LOW_PRECISION){
       err_cnt++;
@@ -670,7 +678,7 @@ int test_entity_plasma::run(){
 
   test_bed->report_info("Testing dispersion solver for plasma O mode", 1);
 
-  //Try plasma wave modes in solvers, perpendicular propagation
+  /**Try plasma wave modes in solvers, perpendicular propagation*/
   tmp_omega = om_pe_local;
   tmp_theta = pi/2.0;
   for(size_t i =0; i<n_tests; i++){
@@ -693,7 +701,7 @@ int test_entity_plasma::run(){
     }
     
   }
-  //Try left hand X mode too
+  /**Try left hand X mode too*/
   test_bed->report_info("Testing dispersion solver for plasma X mode", 1);
 
   calc_type omega_UH = std::sqrt(om_pe_local*om_pe_local + om_ce_local*om_ce_local);
@@ -737,31 +745,111 @@ The reason for using the better dispersion solver is a) to avoid any numerical d
 
 test_entity_spectrum::test_entity_spectrum(){
 
+  name = "spectrum checks";
+  char block_id[10]= "ex";
+  file_prefix = "./files/spect";
+  test_rdr = new reader(file_prefix, block_id);
+
 
 }
 test_entity_spectrum::~test_entity_spectrum(){
 
+  delete test_rdr;
+  delete test_dat;
+  delete test_dat_fft;
+  delete test_contr;
 
 }
 
 int test_entity_spectrum::run(){
+/**
+*
+* This should test the dispersion relation approximations are OK (plain and vg). Test extraction of a spectrum from data and the normalisation functions. We use a test data set and check against a spectrum we derived by hand in IDL from it \todo Actual tests..... Note data does not come from files, but from a test file which is already written as a data array
+*/
 
-  int err=TEST_PASSED;
+  int err = TEST_PASSED;
+
+  err|= setup();
+  err|= basic_tests();
+  err|= albertGs_tests();
+  
+  test_bed->report_err(err);
+  return err;
+
+}
+
+int test_entity_spectrum::setup(){
+/** \brief Setup to test spectrum
+*
+* Everything in here has been tested in other parts.
+*/
+
+  int err = TEST_PASSED;
+
+  tim_in[0]=0;
+  tim_in[1]=1;
+  tim_in[2]=0;
+  space_in[0]=0;
+
+  int n_tims = std::max(tim_in[1]-tim_in[0], 1);
+
+  int n_dims;
+  std::vector<int> dims;
+  test_rdr->read_dims(n_dims, dims);
+
+  space_in[1]=dims[0];
+
+  if(n_dims !=1){
+    err |= TEST_WRONG_RESULT;
+    test_bed->report_err(err);
+    return err;
+  }
+
+  test_dat = new data_array(dims[0], n_tims);
+  test_dat_fft = new data_array(dims[0], n_tims);
+  if(!test_dat->is_good()||!test_dat_fft->is_good()){
+    err|=TEST_ASSERT_FAIL;
+    return err;
+  }
+  
+  test_rdr->read_data(test_dat, tim_in, space_in);
+
+  bool tmp_err = test_dat->fft_me(test_dat_fft);
+  if(tmp_err) err|=TEST_ASSERT_FAIL;
+
+  return err;
+}
+
+int test_entity_spectrum::basic_tests(){
+/** \brief Basic tests of spectrum
+*/
+  int err = TEST_PASSED;
+
+  test_contr = new controller(file_prefix);
+  
+  int row_lengths[2];
+  row_lengths[0] = test_dat->get_dims(0);
+  row_lengths[1] = DEFAULT_N_ANG;
+    
+  test_contr->add_spectrum(row_lengths, 2);
+  test_contr->get_current_spectrum()->make_test_spectrum(tim_in, space_in);
+
+  /** Check this test spectrum makes sense....*/
+  
+  /** Now make the real spectrum from data and check the result matches the plain text test file*/
+
+  /** Now check the normalising works. */
 
   return err;
 
 }
 
-test_entity_albertG1::test_entity_albertG1(){
+int test_entity_spectrum::albertGs_tests(){
+/** \brief Tests of the Albert G functions in spectrum
+*/
+  int err = TEST_PASSED;
 
+  return err;
 }
-test_entity_albertG1::~test_entity_albertG1(){
 
-}
-
-int test_entity_albertG1::run(){
-/** \todo WRITE!!!*/
-
-  return TEST_PASSED;
-}
 #endif

@@ -109,7 +109,9 @@ On error we continue using defaults set below
     my_print("Too many blocks in plasma file, truncating!", mpi_info.rank);
     return 1;
   }
-  else if(block_num < ncomps){
+  else if(block_num < ncomps-1){
+    my_print(mk_str(block_num), mpi_info.rank);
+  
     my_print("Insufficient blocks in config file, using defaults for others", mpi_info.rank);
     return 1;
   }else{

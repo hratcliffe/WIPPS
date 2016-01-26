@@ -64,6 +64,7 @@ const calc_type eps0 =8.85418782e-12; /**< Epsilon_0 permittivity of free space 
 //h_planck = 6.62606957d-34 ; J s
 
 const int DEFAULT_N_ANG = 100;/**< Default number of wave normal angles to consider*/
+const int ID_SIZE = 10;/**< Length of block ids*/
 
 const int WAVE_WHISTLER = 1; /**< Code to id wave as whistler mode */
 const int WAVE_PLASMA = 2; /**< Code to id wave as plasma/Langmuir mode */

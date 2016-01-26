@@ -11,3 +11,4 @@ Derivations.*
 main.dSYM
 html/
 latex/
+files/*.dat

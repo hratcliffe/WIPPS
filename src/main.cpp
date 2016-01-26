@@ -84,7 +84,7 @@ int main(int argc, char *argv[]){
   //Actually do the code...
   my_print("Processing "+mk_str(cmd_line_args.per_proc)+" blocks per core", mpi_info.rank);
 
-  char block_id[10];
+  char block_id[ID_SIZE];
   strcpy(block_id, cmd_line_args.block.c_str());
 
   reader * my_reader = new reader(cmd_line_args.file_prefix, block_id);

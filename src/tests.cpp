@@ -179,6 +179,10 @@ test_entity_reader::~test_entity_reader(){
 }
 
 int test_entity_reader::run(){
+/**\brief Reads test data and checks
+*
+*For normal data we just check a test file opens and find the size from the final SDF block and test against on-disk size. For accumulated data we use test data with values corresponding to row in file, and check the values and correctness at each end.
+*/
   int err = TEST_PASSED;
   
   int sz = test_rdr->get_file_size();
@@ -248,6 +252,10 @@ test_entity_data_array::~test_entity_data_array(){
 }
 
 int test_entity_data_array::run(){
+/** \brief Puts data into selected elements of a data array and reads back. Checks indexing, and bounds.
+*
+*
+*/
   int err = TEST_PASSED;
   bool tmp_err;
   
@@ -293,6 +301,10 @@ test_entity_get_and_fft::~test_entity_get_and_fft(){
 }
 
 int test_entity_get_and_fft::run(){
+/** \brief Checks full read and fft procedure
+*
+*Reads a test sdf file, stores into data array and runs fft. Test data should be a sine curve with one major frequency which is then checked. Note frequency is hard coded to match that produced by ./files/sin.deck
+*/
 
   int err = TEST_PASSED;
 
@@ -501,8 +513,8 @@ int test_entity_basic_maths::run(){
     }
   }
  	
-  /*I think you should be able to recognize them using Vieta's formula for cubic equations, which states that if a cubic equation x3+ax2+bx+c=0x3+ax2+bx+c=0 has three different roots x1,x2,x3x1,x2,x3, then:
-  −a=x1+x2+x3 b = x1x2+x1x3+x2x3 and -c = x1x2x3
+  /*"I think you should be able to recognize them using Vieta's formula for cubic equations, which states that if a cubic equation x3+ax2+bx+c=0x3+ax2+bx+c=0 has three different roots x1,x2,x3x1,x2,x3, then:
+  −a=x1+x2+x3 b = x1x2+x1x3+x2x3 and -c = x1x2x3"
 **/
  
   test_bed->report_err(err);
@@ -586,7 +598,7 @@ test_entity_plasma::~test_entity_plasma(){
 int test_entity_plasma::run(){
 /** \brief Test resonant frequencies and refractive indices
 *
-*
+*Checks the resonant frequencies obey the equations used to derive them. Checks the dispersion roots for Whistlers match those found using high-density approx. Checks plasma O and X mode dispersion too.
 */
 
   int err=TEST_PASSED;
@@ -762,9 +774,9 @@ test_entity_spectrum::~test_entity_spectrum(){
 }
 
 int test_entity_spectrum::run(){
-/**
+/** \brief Test spectrum extraction
 *
-* This should test the dispersion relation approximations are OK (plain and vg). Test extraction of a spectrum from data and the normalisation functions. We use a test data set and check against a spectrum we derived by hand in IDL from it \todo Actual tests..... Note data does not come from files, but from a test file which is already written as a data array
+* This should test the dispersion relation approximations are OK (plain and vg). Check test spectrum makes sense. Test extraction of a spectrum from data. Note data does not come from files, but from a test file which is already written as a data array using ./files/generate_fftd.pro which makes FFT_data.dat with the FFTd data and spectrum.dat with a derived spectrum to check against.
 */
 
   int err = TEST_PASSED;
@@ -781,7 +793,7 @@ int test_entity_spectrum::run(){
 int test_entity_spectrum::setup(){
 /** \brief Setup to test spectrum
 *
-* Everything in here has been tested in other parts.
+* Note strictly this is the test of data array constructor taking a filename too.
 */
 
   int err = TEST_PASSED;
@@ -793,6 +805,8 @@ int test_entity_spectrum::setup(){
 
 int test_entity_spectrum::basic_tests(){
 /** \brief Basic tests of spectrum
+*
+* Read in data, derive spectrum, test against correct result, omitting very low frequencies.
 */
   int err = TEST_PASSED;
 
@@ -807,9 +821,11 @@ int test_entity_spectrum::basic_tests(){
 
   /** Check this test spectrum makes sense....*/
   
+  
+  
   /** Now make the real spectrum from data and check the result matches the plain text test file*/
 
-  test_contr->get_current_spectrum()->generate_spectrum(test_dat_fft ,10);
+  test_contr->get_current_spectrum()->generate_spectrum(test_dat_fft ,10, FUNCTION_GAUSS);
 
   test_spect = new data_array(file_prefix + "spectrum.dat", 1);
 
@@ -817,7 +833,7 @@ int test_entity_spectrum::basic_tests(){
   int len=0;
   my_type * ax = test_spect->get_axis(0, len);
   int min_ind = where(ax+len/2, len/2, 17588.200*0.05);
-  //Hard code to match the IDL file with test data generation...
+  /**Hard code min freq to match the IDL file with test data generation...*/
   my_type total_error =0.0;
   for(int i=0; i< row_lengths[0]/2 - min_ind; i++){
     total_error += std::abs(test_contr->get_current_spectrum()->get_element(i,0)-test_spect->get_element(i));
@@ -830,20 +846,18 @@ int test_entity_spectrum::basic_tests(){
     err |= TEST_WRONG_RESULT;
     test_bed->report_info("Mismatch between generated spectrum and test spectrum");
   }
-  /** Preserve the spectrum*/
-/*  std::fstream outfile;
+  /* Preserve the spectrum*/
+  std::fstream outfile;
   outfile.open("spect_out.dat", std::ios::out|std::ios::binary);
   test_contr->get_current_spectrum()->write_to_file(outfile);
   outfile.close();
-*/
-  /** Now check the normalising works. */
-  
+
   return err;
 
 }
 
 int test_entity_spectrum::albertGs_tests(){
-/** \brief Tests of the Albert G functions in spectrum
+/** \brief Tests of the Albert G functions in spectrum. Also tests the normalisations on the way
 */
   int err = TEST_PASSED;
 

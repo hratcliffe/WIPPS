@@ -66,7 +66,7 @@ void diffusion_coeff::make_velocity_axis(){
 *Makes suitably binned velocity axis and copies into axes for dim [0]
 */
 
-  calc_type res = (V_MAX - V_MIN)/dims[0];
+  calc_type res = (V_MAX - V_MIN)/this->get_length(0);
   int offset = V_MIN/res;
   make_linear_axis(0, res, offset);
   //-2 is for testing so 0th element is > zero...
@@ -79,7 +79,7 @@ void diffusion_coeff::make_pitch_axis(){
 *Makes suitably binned axis and copies into axes for dim [1]
 */
 
-  calc_type res = (ANG_MAX - ANG_MIN)/dims[1]; //To cover range from 0 to 2...
+  calc_type res = (ANG_MAX - ANG_MIN)/this->get_length(1); //To cover range from 0 to 2...
   int offset = ANG_MIN/res;
   make_linear_axis(1, res, offset);
   // FAKENUMBERS
@@ -138,6 +138,8 @@ Get mu, dmu/domega which are used to:
   //Temporaries for wave normal angle***********************************
   calc_type *D_theta = (calc_type *) calloc(n_thetas, sizeof(calc_type));
   calc_type *x = (calc_type *) calloc(n_thetas, sizeof(calc_type));
+ 
+  /** Why are we using different angles for D and for waves?*/
 
   for(int i=0; i<n_thetas; ++i){
     x[i] = i* 4.0/n_thetas;

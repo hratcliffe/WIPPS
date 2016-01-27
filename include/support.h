@@ -93,6 +93,8 @@ const float V_MIN = -0.3*v0;/**< Minimum particle velocity for D*/
 const float V_MAX = 0.3*v0;/**< Maximum particle velocity for D*/
 const float ANG_MIN = 0;/**< Minimum angle (tan theta) for D*/
 const float ANG_MAX = 4;/**< Maximum angle (tan theta) for D*/
+const float SPECTRUM_ANG_STDDEV = 0.1;/**< Maximum angle (tan theta) for D*/
+
 /** @} */
 //----------- END CONSTANTS ---------------------------------
 

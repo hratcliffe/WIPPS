@@ -15,7 +15,7 @@ class controller;
 
 /** \brief Specialised data_array to hold spectrum
 *
-*Specialises shape and adds functions to process spectrum, normalise it etc. Can be created/destroyed only by controllers \author Heather Ratcliffe \date 24/09/2015
+*Specialises shape and adds functions to process spectrum, normalise it etc. Can be created/destroyed only by controllers The "angle" axis is stored as tan(theta) for theta the wave normal angle. We seperate forwards and backwards wave modes by \author Heather Ratcliffe \date 24/09/2015
 */
 class spectrum : public data_array{
   friend void controller::add_spectrum(int nx, int n_ang);
@@ -40,9 +40,9 @@ public:
   int function_type;/**< Type code for angular function. See support.h */
   int n_angs;/**< Number of angles to use*/
 
-  void set_ids(float time1, float time2, int space1, int space2, int wave_id, char block_id[10], int function_type=FUNCTION_NULL);
+  void set_ids(float time1, float time2, int space1, int space2, int wave_id, char block_id[10], int function_type=FUNCTION_DELTA);
 
-  bool generate_spectrum(data_array * parent, int om_fuzz=10);
+  bool generate_spectrum(data_array * parent, int om_fuzz=10, int angle_type=FUNCTION_DELTA);
 
   my_type get_omega(my_type k, int wave_type, bool deriv=0);
   my_type get_k(my_type omega, int wave_type, bool deriv =0);

@@ -122,7 +122,7 @@ class test_entity_data_array : public test_entity{
 
 };
 
-/** Combined test: reads test sdf file, stores into data array and runs fft. Test data should be a sine curive with one major frequency which is then checked
+/** Combined test: reads test sdf file, stores into data array and runs fft. Test data should be a sine curve with one major frequency which is then checked
 */
 class test_entity_get_and_fft : public test_entity{
   private:

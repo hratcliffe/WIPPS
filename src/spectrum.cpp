@@ -83,15 +83,16 @@ spectrum::~spectrum(){
 
 }
 
-bool spectrum::generate_spectrum(data_array * parent, int om_fuzz){
+bool spectrum::generate_spectrum(data_array * parent, int om_fuzz, int angle_type){
 /**\brief Generate spectrum from data
 *
-*Takes a parent data array and uses the specified ids to generate a spectrum. Windows using the specified wave dispersion and integrates over frequency. Also adopts axes from parent. \todo Ensure !angle_is_function forces all other rows to be equal length... \todo Fill in the rest of logic etc @param parent Data array to erad from @param om_fuzz Band width around dispersion curve in percent of central frequency
+*Takes a parent data array and uses the specified ids to generate a spectrum. Windows using the specified wave dispersion and integrates over frequency. Also adopts axes from parent. \todo Ensure !angle_is_function forces all other rows to be equal length... \todo Fill in the rest of logic etc @param parent Data array to read from @param om_fuzz Band width around dispersion curve in percent of central frequency
 */
 
   if(parent && angle_is_function){
     //First we read axes from parent
-
+    this->copy_ids(parent);
+    this->function_type = angle_type;
     int len;
     ax_omega = false;
 
@@ -126,21 +127,33 @@ bool spectrum::generate_spectrum(data_array * parent, int om_fuzz){
     //Now we generate evenly spaced angle axis, and generate required function ...
     //NB What to work in? tan theta, but from 0 to infty. Need a cut off.... and that only covers paralllel, not antiparallel. We'll need to extend to that sooner or later...
     {
-      int res = 1;
-      //set axis resolution somehow... TODO this
-      make_linear_axis(1, res, 0);
+
+      calc_type res = (ANG_MAX - ANG_MIN)/this->get_length(1); //To cover range from 0 to 2...
+      int offset = ANG_MIN/res;
+      make_linear_axis(1, res, offset);
+      len = get_length(0);
+      my_type val;
 
       //Now generate the function data.
       if(function_type == FUNCTION_DELTA){
-      //Approx delta function, round k_ll. I.e. one cell only. And size is 1/d theta
+        //Approx delta function, round k_ll. I.e. one cell only. And size is 1/d theta
       
-        for(int i=1; i<this->dims[0]; ++i) this->set_element(i,1,0);
+        for(int i=1; i<len; ++i) this->set_element(i,1,0.0);
         //zero all other elements
-        float val;
         val = 1.0/res;
-        //TODO this is wrong value. Wants to make integral 1...
-        this->set_element(0, 1, val);
+        int zero = where(this->get_axis(0, len), len, 0);
+        this->set_element(zero, 1, val);
       }else if(function_type == FUNCTION_GAUSS){
+        //Gaussian round 0 with integral one
+        my_type ax_el;
+        my_type norm;
+        norm = 1.0/ (std::sqrt(2.0*pi) * SPECTRUM_ANG_STDDEV);
+        for(int i=0; i<len; ++i){
+          ax_el = this->get_axis_element(1, i);
+          val = std::exp( -0.5 * std::pow(ax_el/SPECTRUM_ANG_STDDEV, 2)) * norm;
+          this->set_element(i,1,val);
+          
+        }
 
 
       }else{
@@ -434,12 +447,16 @@ calc_type spectrum::get_G1(calc_type omega){
 calc_type spectrum::get_G2(calc_type omega, calc_type x){
 /** \brief Get G2 from Albert 2005
 *
-* Gets the value of g(w, x) and the normalising constant from normg \todo Interpolate! \todo IS THIS OMEGA OR do we calc omega according to conditions on integral???
+* Gets the value of g(w, x) and the normalising constant from normg \todo IS THIS OMEGA OR do we calc omega according to conditions on integral??? \todo interpolate on omega? or angle or both. Or fix angle axis as matched to D. In some sense we want to minimise work here...
 */
 
 
-  int om_ind, x_ind, len;
+  int om_ind, offset, len;
+  my_type tmpg;
+  my_type data_bit[2];
+
   len=get_length(0);
+
   if(!angle_is_function){
     if(ax_omega) om_ind = where(get_axis(0, len), len, omega);
     else om_ind = where(get_axis(0, len), len, this->get_k(omega, WAVE_WHISTLER));
@@ -449,11 +466,25 @@ calc_type spectrum::get_G2(calc_type omega, calc_type x){
     normaliseg(omega);
   }
 
-  len=get_length(1);
-  x_ind = where(get_axis(1, len), len, x);
+  my_type * axis = this->get_axis(1, len);
+//  len=get_length(1);
+  offset = where(axis, len, x);
   
+  //Interpolate if possible, else use the end
+  if(offset > 0 && offset < len){
+    data_bit[0] = get_element(om_ind, offset-1);
+    data_bit[1] = get_element(om_ind, offset);
+    tmpg = interpolate(axis + offset-1, data_bit, (my_type)x, 2);
+  }else if(offset==0){
+    //we're right at end, can't meaningfully interpolate, use raw
+    tmpg = get_element(om_ind, offset);
+  }else{
+    //offset <0 or > len, value not found
+    tmpg = 0.0;
+  }
+
   
-  if(x_ind >=0 && om_ind >=0)return get_element(om_ind, x_ind)/normg[om_ind];
+  if(offset >=0 && om_ind >=0)return tmpg/normg[om_ind];
   else return 0.0;
 
 }

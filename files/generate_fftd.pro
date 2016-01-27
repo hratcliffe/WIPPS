@@ -73,6 +73,6 @@ err = write_data(output_file, FFT_data, axes, id='FFTd')
 calculate_energy_density, FFT_data, axes, dispersion, output=spectrum, margin=om_fuzz
 
 ;Save the spectrum
-err = write_data(spectrum_file, spectrum, axes[0], id="spect")
+err = write_data(spectrum_file, spectrum, axes, id="spect")
 
 end

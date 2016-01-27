@@ -455,16 +455,17 @@ bool my_array::read_from_file(std::fstream &file, bool no_version_check){
     my_print("Dimensions do not match, aborting read", mpi_info.rank);
     return 1;
   }
-
+  int tot_els =1;
   for(int i=0;i<n_dims_in;i++){
     file.read((char*) &dim_tmp, sizeof(int));
     if(dim_tmp !=dims[i]){
       my_print("Dimensions do not match, aborting read", mpi_info.rank);
       return 1;
     }
+    tot_els *= dims[i];
   }
   
-  file.read((char *) data , sizeof(my_type)*dims[0]*dims[1]);
+  file.read((char *) data , sizeof(my_type)*tot_els);
 
   return 0;
 
@@ -844,7 +845,10 @@ bool data_array::read_from_file(std::fstream &file, bool no_version_check){
   if(file.good()) err=my_array::read_from_file(file, no_version_check);
   //call parent class to read data, checking we read id ok first
 
-  if(!err) file.read((char *) this->axes , sizeof(my_type)*(dims[0]+dims[1]));
+  int tot_els = 0;
+  for(int i=0;i<n_dims;i++) tot_els += dims[i];
+
+  if(!err) file.read((char *) this->axes , sizeof(my_type)*(tot_els));
   //If we managed to get dims etc, continue on to get axes
 
   return err;

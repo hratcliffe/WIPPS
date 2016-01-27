@@ -41,17 +41,26 @@ readu, 1, n_dims
 if(n_dims GT 0) THEN BEGIN
   dims = lonarr(n_dims)
   readu, 1, dims
+  print, dims
   IF my_type_code EQ 'f' THEN BEGIN
-    axes_list = {k:fltarr(dims[0]), omega:fltarr(dims[1])}
-    data = {id:id_in,data:fltarr(dims[0], dims[1]), axes:axes_list}
+    axes_list = {x:fltarr(dims[0])}
+    if(n_dims GT 1) THEN axes_list = create_struct(axes_list, {Y:fltarr(dims[1])})
+    if(n_dims GT 2) THEN axes_list = create_struct(axes_list, {Z:fltarr(dims[2])})
+
+    data = {id:id_in,data:fltarr(dims), axes:axes_list}
+    tmp2=fltarr(dims)
+
   ENDIF ELSE BEGIN
     axes_list = {k:dblarr(dims[0]), omega:dblarr(dims[1])}
-    data = {id:id_in,data:dblarr(dims[0], dims[1]), axes:axes_list}
+    axes_list = {x:dblarr(dims[0])}
+    if(n_dims GT 1) THEN axes_list = create_struct(axes_list, {Y:dblarr(dims[1])})
+    if(n_dims GT 2) THEN axes_list = create_struct(axes_list, {Z:dblarr(dims[2])})
+
+    data = {id:id_in,data:dblarr(dims), axes:axes_list}
+    tmp2=dblarr(dims)
+
   ENDELSE
 
-  ;Now we do need the right majority...
-
-  tmp2=fltarr(dims[0], dims[1])
   ;Can't read directly into anon structure field, so use tmp
   readu, 1, tmp2
   data.data = tmp2
@@ -61,15 +70,39 @@ ENDIF ELSE BEGIN
 
 ENDELSE
 
-;EXPLICTLY 2-D here
-tmpa=fltarr(dims[0])
-;Can't read directly into anon structure field, so use tmp
-readu, 1, tmpa
-data.axes.k = tmpa
 
-tmpa=fltarr(dims[1])
-readu, 1, tmpa
-data.axes.omega = tmpa
+IF my_type_code EQ 'f' THEN BEGIN
+  tmpa=fltarr(dims[0])
+  readu, 1, tmpa
+  data.axes.X = tmpa
+
+  IF(n_dims GT 1) THEN BEGIN
+    tmpa=fltarr(dims[1])
+    readu, 1, tmpa
+    data.axes.Y = tmpa
+  ENDIF
+  IF(n_dims GT 2) THEN BEGIN
+    tmpa=fltarr(dims[2])
+    readu, 1, tmpa
+    data.axes.Z = tmpa
+  ENDIF
+ENDIF ELSE BEGIN
+  tmpa=dblarr(dims[0])
+  readu, 1, tmpa
+  data.axes.X = tmpa
+
+  IF(n_dims GT 1) THEN BEGIN
+    tmpa=dblarr(dims[1])
+    readu, 1, tmpa
+    data.axes.Y = tmpa
+  ENDIF
+  IF(n_dims GT 2) THEN BEGIN
+    tmpa=dblarr(dims[2])
+    readu, 1, tmpa
+    data.axes.Z = tmpa
+  ENDIF
+ENDELSE
+
 
 tmpa = 0
 

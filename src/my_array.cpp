@@ -147,6 +147,33 @@ my_array::~my_array(){
   }
 }
 
+int my_array::get_index(int nx){
+/** \brief Get index for location
+*
+*Takes care of all bounds checking and disposition in memory. Returns -1 if out of range of any sort, otherwise, suitable index. NB. Let this function do all bounds checks. Just call it plain. This function is called often so we make it as simple as possible and write one for each number of args
+
+* A 2-d array 5x3 is
+|ooooo||ooooo||ooooo|
+<-row->
+
+A 3-d 5x3x2 is
+[|ooooo||ooooo||ooooo|][|ooooo||ooooo||ooooo|]
+<--------'slice'------>
+Etc \todo We may get speedup from removing checks. If so, wrap them in a debug IFDEF for fiddling vs running
+*/
+
+  if(n_dims != 1){
+    my_print("Wrong array dimension, check get_index calls", mpi_info.rank);
+    return -1;
+
+  }
+  if((nx < dims[0])){
+    return nx;
+  }else{
+    return -1;
+  }
+
+}
 int my_array::get_index(int nx, int ny){
 /** \brief Get index for location
 *
@@ -163,8 +190,9 @@ Etc
 */
 
   if(n_dims != 2){
-    return -1;
     my_print("Wrong array dimension, check get_index calls", mpi_info.rank);
+    return -1;
+
   }
   if(!ragged){
     if((nx < dims[0]) && (ny<dims[1])){
@@ -254,6 +282,16 @@ int my_array::get_length(int dim){
 
 }
 
+my_type my_array::get_element(int nx){
+/** Return element at nx, ny. Out of range etc will return 0.0*/
+  int ind = get_index(nx);
+  if(ind  != -1){
+    return data[ind];
+  }else{
+    return 0.0;
+  }
+
+}
 my_type my_array::get_element(int nx, int ny){
 /** Return element at nx, ny. Out of range etc will return 0.0*/
   int ind = get_index(nx, ny);
@@ -842,7 +880,8 @@ bool data_array::read_from_file(std::fstream &file, bool no_version_check){
   file.read(id_in, sizeof(char)*ID_SIZE);
   strcpy(this->block_id, id_in);
 
-  if(file.good()) err=my_array::read_from_file(file, no_version_check);
+  if(file.good())err=my_array::read_from_file(file, no_version_check);
+  else my_print("Read error!", mpi_info.rank);
   //call parent class to read data, checking we read id ok first
 
   int tot_els = 0;

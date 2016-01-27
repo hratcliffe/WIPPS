@@ -42,7 +42,8 @@ FOR i=2, sz[0] DO BEGIN
 END
 
 ;Calculate whistler dispersion, omega as function of k
-dispersion = axes[0]*axes[0]*v0*v0*om_ce/(axes[0]*axes[0]*v0*v0 + om_pe*om_pe);
+dispersion = fltarr(sz[1])
+dispersion = axes[0]*axes[0]*float(v0*v0)*om_ce/(axes[0]*axes[0]*float(v0*v0) + om_pe*om_pe);
 
 ;Fill the data. Based on calculate_energy_density but in reverse
 
@@ -69,10 +70,12 @@ END
 ;Save the data
 err = write_data(output_file, FFT_data, axes, id='FFTd')
 
-;Make spectrum back from data
-calculate_energy_density, FFT_data, axes, dispersion, output=spectrum, margin=om_fuzz
+PRINT, "Making psectrum"
 
+;Make spectrum back from data
+calculate_energy_density, FFT_data, axes, dispersion, output=spectrum, margin=om_fuzz*2
+;Make it fuzzier...
 ;Save the spectrum
-err = write_data(spectrum_file, spectrum, axes, id="spect")
+err = write_data(spectrum_file, spectrum, list(dispersion), id="spect")
 
 end

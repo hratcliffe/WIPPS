@@ -83,14 +83,15 @@ spectrum::~spectrum(){
 
 }
 
-bool spectrum::generate_spectrum(data_array * parent){
+bool spectrum::generate_spectrum(data_array * parent, int om_fuzz){
 /**\brief Generate spectrum from data
 *
-*Takes a parent data array and uses the specified ids to generate a spectrum. Windows using the specified wave dispersion and integrates over frequency. Also adopts axes from parent. \todo Ensure !angle_is_function forces all other rows to be equal length... \todo Fill in the rest of logic etc
+*Takes a parent data array and uses the specified ids to generate a spectrum. Windows using the specified wave dispersion and integrates over frequency. Also adopts axes from parent. \todo Ensure !angle_is_function forces all other rows to be equal length... \todo Fill in the rest of logic etc @param parent Data array to erad from @param om_fuzz Band width around dispersion curve in percent of central frequency
 */
 
   if(parent && angle_is_function){
     //First we read axes from parent
+
     int len;
     ax_omega = false;
 
@@ -104,11 +105,11 @@ bool spectrum::generate_spectrum(data_array * parent){
     int j;
     int low_bnd, high_bnd;
     my_type om_disp;
-    my_type tolerance = 0.05;
+    my_type tolerance = om_fuzz/100.0;
     my_type total;
-    for(int i=0; i<this->dims[0]; ++i){
-      
-      om_disp = get_omega(this->axes[i], WAVE_WHISTLER);
+    for(int i=0; i<this->get_length(0); ++i){
+
+      om_disp = get_omega(this->get_axis_element(0,i), WAVE_WHISTLER);
 
       low_bnd = where(ax_ptr, len, om_disp *(1.0-tolerance));
       high_bnd = where(ax_ptr, len, om_disp *(1.0+tolerance));

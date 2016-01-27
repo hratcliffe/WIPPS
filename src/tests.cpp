@@ -756,6 +756,7 @@ test_entity_spectrum::test_entity_spectrum(){
 test_entity_spectrum::~test_entity_spectrum(){
 
   delete test_dat_fft;
+  delete test_spect;
   delete test_contr;
 
 }
@@ -787,13 +788,6 @@ int test_entity_spectrum::setup(){
 
   test_dat_fft = new data_array(file_prefix + "FFT_data.dat", 1);
 
-  std::cout<< test_dat_fft->is_good()<<std::endl;
-
-  std::cout<< test_dat_fft->get_dims()<<std::endl;
-  std::cout<< test_dat_fft->get_dims(0)<<std::endl;
-  std::cout<< test_dat_fft->get_dims(1)<<std::endl;
-  std::cout<< test_dat_fft->block_id<<std::endl;
-
   return err;
 }
 
@@ -807,16 +801,43 @@ int test_entity_spectrum::basic_tests(){
   int row_lengths[2];
   row_lengths[0] = test_dat_fft->get_dims(0);
   row_lengths[1] = DEFAULT_N_ANG;
-    
   test_contr->add_spectrum(row_lengths, 2);
+
   test_contr->get_current_spectrum()->make_test_spectrum(tim_in, space_in);
 
   /** Check this test spectrum makes sense....*/
   
   /** Now make the real spectrum from data and check the result matches the plain text test file*/
 
-  /** Now check the normalising works. */
+  test_contr->get_current_spectrum()->generate_spectrum(test_dat_fft ,10);
 
+  test_spect = new data_array(file_prefix + "spectrum.dat", 1);
+
+  //We ignore frequencies below say 0.05 om_ce
+  int len=0;
+  my_type * ax = test_spect->get_axis(0, len);
+  int min_ind = where(ax+len/2, len/2, 17588.200*0.05);
+  //Hard code to match the IDL file with test data generation...
+  my_type total_error =0.0;
+  for(int i=0; i< row_lengths[0]/2 - min_ind; i++){
+    total_error += std::abs(test_contr->get_current_spectrum()->get_element(i,0)-test_spect->get_element(i));
+  }
+  for(int i=row_lengths[0]/2 + min_ind; i< row_lengths[0]; i++){
+    total_error += std::abs(test_contr->get_current_spectrum()->get_element(i,0)-test_spect->get_element(i));
+
+  }
+  if(total_error > LOW_PRECISION){
+    err |= TEST_WRONG_RESULT;
+    test_bed->report_info("Mismatch between generated spectrum and test spectrum");
+  }
+  /** Preserve the spectrum*/
+/*  std::fstream outfile;
+  outfile.open("spect_out.dat", std::ios::out|std::ios::binary);
+  test_contr->get_current_spectrum()->write_to_file(outfile);
+  outfile.close();
+*/
+  /** Now check the normalising works. */
+  
   return err;
 
 }

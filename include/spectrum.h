@@ -42,7 +42,7 @@ public:
 
   void set_ids(float time1, float time2, int space1, int space2, int wave_id, char block_id[10], int function_type=FUNCTION_NULL);
 
-  bool generate_spectrum(data_array * parent);
+  bool generate_spectrum(data_array * parent, int om_fuzz=10);
 
   my_type get_omega(my_type k, int wave_type, bool deriv=0);
   my_type get_k(my_type omega, int wave_type, bool deriv =0);

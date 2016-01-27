@@ -28,11 +28,6 @@ src/plasma.cpp\
 
 obj/tests.o:\
 src/tests.cpp\
-include/tests.h\
-include/support.h\
-include/reader.h\
-  include/plasma.h\
-  include/my_array.h\
 
 obj/reader.o:\
 src/reader.cpp\
@@ -42,8 +37,8 @@ include/reader.h\
 
 obj/controller.o:\
 src/controller.cpp\
-include/support.h\
-include/controller.h\
+  include/support.h\
+  include/controller.h\
   include/plasma.h\
   include/my_array.h\
   include/d_coeff.h\

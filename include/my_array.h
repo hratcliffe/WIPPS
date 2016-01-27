@@ -38,7 +38,7 @@ public:
   virtual ~my_array();
 
   virtual bool is_good(){return !defined;}/**< Check memory allocation etc worked*/
-
+  virtual int get_index(int nx);
   virtual int get_index(int nx, int ny);
   virtual int get_index(int nx, int ny, int nz);
   virtual int get_index(int nx, int ny, int nz, int nt);
@@ -47,7 +47,7 @@ public:
   int get_dims();
   int get_dims(int dim);
   int get_length(int dim);
-
+  my_type get_element(int nx);
   my_type get_element(int nx, int ny);
   my_type get_element(int nx, int ny, int nz);
   my_type get_element(int nx, int ny, int nz, int nt);

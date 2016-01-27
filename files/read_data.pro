@@ -37,11 +37,9 @@ readu, 1, commit_in
 
 n_dims = int_type
 readu, 1, n_dims
-
 if(n_dims GT 0) THEN BEGIN
   dims = lonarr(n_dims)
   readu, 1, dims
-  print, dims
   IF my_type_code EQ 'f' THEN BEGIN
     axes_list = {x:fltarr(dims[0])}
     if(n_dims GT 1) THEN axes_list = create_struct(axes_list, {Y:fltarr(dims[1])})
@@ -67,7 +65,8 @@ if(n_dims GT 0) THEN BEGIN
   tmp2=0
 ENDIF ELSE BEGIN
   print, "Array is ragged. Use read_ragged.pro"
-
+  close, 1
+  RETURN, !NULL
 ENDELSE
 
 

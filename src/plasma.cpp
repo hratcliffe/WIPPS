@@ -608,7 +608,7 @@ calc_type plasma::get_dispersion(my_type in, int wave_type, bool reverse, bool d
     case WAVE_WHISTLER :
       if(!reverse){
         calc_type csq_ksq = v0*v0*in*in;
-        ret = v0*v0*om_ce_loc/(csq_ksq + om_pe_loc*om_pe_loc)/om_ce_loc;
+        ret = v0*v0*std::abs(om_ce_loc)/(csq_ksq + om_pe_loc*om_pe_loc);
         if(!deriv) ret *=std::pow(in, 2);
         else ret *= (2*in) * (csq_ksq / (csq_ksq + om_pe_loc*om_pe_loc) - 1.0);
         // FAKENUMBERS THIS IS WRONG. WHY????? IS IT RIGHT NOW?

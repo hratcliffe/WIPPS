@@ -59,13 +59,13 @@ if(n_dims LT 0) THEN BEGIN
     FOR i=0, dims[1]-1 DO BEGIN
       tmp = fltarr(lengths[i])
       readu, 1, tmp
-      print, minmax(tmp)
+;      print, minmax(tmp)
       data_list[i] = tmp
     END
     FOR i=0, dims[1]-1 DO BEGIN
       tmp = fltarr(lengths[i])
       readu, 1, tmp
-      print, minmax(tmp)
+;      print, minmax(tmp)
       axes_list[i] = tmp
     END
 

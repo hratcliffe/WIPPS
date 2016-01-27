@@ -20,8 +20,10 @@ END
 IF(n_dims EQ 0) THEN RETURN, 1
 ;And a sane dimensionality
 
-my_type_code = 'f'
-my_type = 0.0
+;my_type_code = 'f'
+
+;IF((sz[-2] EQ 5) my_type_code ='d'
+;my_type = 0.0
 ;this matches the type of the C code my_type...
 ;Usually float or double. Set code to f for float, d for double...
 

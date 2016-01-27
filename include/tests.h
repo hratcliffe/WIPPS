@@ -182,6 +182,7 @@ class test_entity_plasma : public test_entity{
 class test_entity_spectrum : public test_entity{
   private:
   data_array * test_dat_fft;
+  data_array * test_spect;
   controller * test_contr;
   std::string file_prefix;
   int tim_in[3], space_in[2];

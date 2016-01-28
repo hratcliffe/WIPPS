@@ -18,6 +18,7 @@
 #include "spectrum.h"
 
 extern deck_constants my_const;
+extern mpi_info_struc mpi_info;
 
 void spectrum::construct(){
 /** \brief Generic specturm contruction actions
@@ -163,7 +164,7 @@ bool spectrum::generate_spectrum(data_array * parent, int om_fuzz, int angle_typ
 bool spectrum::make_angle_distrib(){
 /** \brief Generate angle axis and distribution
 *
-*Generates an angle axis linear spaced in tan theta between MIN_ANGLE and MAX_ANGLE. Then generates and fills the angular spectrum according to function specified by function_type member variable. Options are FUNCTION_DELTA: delta function with peak at 0 angle and integral 1. FUNCTION_GAUSS: Gaussian with std-dev SPECTRUM_ANG_STDDEV, centre at 0 angle and integral 1. FUNCTION_ISO: Isotropic distribution over range considered, with integral 1. FUNCTION \todo How to handle parallel/anti.
+*Generates an angle axis linear spaced in tan theta between MIN_ANGLE and MAX_ANGLE. Then generates and fills the angular spectrum according to function specified by function_type member variable. Options are FUNCTION_DELTA: delta function with peak at 0 angle and integral 1. FUNCTION_GAUSS: Gaussian with std-dev SPECTRUM_ANG_STDDEV, centre at 0 angle and integral 1. FUNCTION_ISO: Isotropic distribution over range considered, with integral 1. FUNCTION \todo How to handle parallel/anti. \todo Integrals sum to 1 or 0.5???
 */
 
 
@@ -171,13 +172,9 @@ bool spectrum::make_angle_distrib(){
     my_print("Angular distrib is not a function. Returning", mpi_info.rank);
     return 1;
   }
-  if(function_type < 0 || function_type > FUNCTION_ISO){
-    my_print("Invalid function type. Returning", mpi_info.rank);
-    return 1;
-  }
   
   calc_type res = (ANG_MAX - ANG_MIN)/this->get_length(1);
-  
+  int len;
   int offset = ANG_MIN/res;
   make_linear_axis(1, res, offset);
   len = get_length(0);
@@ -187,7 +184,7 @@ bool spectrum::make_angle_distrib(){
   
     for(int i=1; i<len; ++i) this->set_element(i,1,0.0);
     val = 1.0/res;
-    int zero = where(this->get_axis(0, len), len, 0);
+    int zero = where(this->get_axis(1, len), len, 0.0);
     this->set_element(zero, 1, val);
 
   }else if(function_type == FUNCTION_GAUSS){
@@ -204,8 +201,13 @@ bool spectrum::make_angle_distrib(){
 
   }else if(function_type ==FUNCTION_ISO){
 
-    val = 1.0/ res/ (ANG_MAX - ANG_MIN);
+    val = 0.5/ (ANG_MAX - ANG_MIN)*get_length(1)/(get_length(1)-1);
     for(int i=0; i<len; ++i) this->set_element(i,1,val);
+
+  }else{
+  
+    my_print("Invalid function type. Returning", mpi_info.rank);
+    return 1;
 
   }
 
@@ -234,7 +236,7 @@ my_type spectrum::get_k(my_type omega, int wave_type, bool deriv){
 my_type * spectrum::get_angle_distrib(int &len, my_type omega){
 /** \brief Return g_w(x) for given omega
 *
-*Returns the row corresponding to omega. If the angle distribution is a single function, the omega param may be omitted. Len is set to the axis length, which is always = n_angs
+*Returns the row corresponding to omega. If the angle distribution is a single function, the omega param may be omitted. Len is set to the axis length, which is always = n_angs \todo. What if omega is 0?
 */
 
   my_type * ret = NULL;

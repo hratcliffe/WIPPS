@@ -806,22 +806,53 @@ int test_entity_spectrum::setup(){
 int test_entity_spectrum::basic_tests(){
 /** \brief Basic tests of spectrum
 *
-* Read in data, derive spectrum, test against correct result, omitting very low frequencies.
+* Read in data, derive spectrum, test against correct result, omitting very low frequencies. \todo The angles are integrating to 0.5 not 1. Which do we want????
 */
   int err = TEST_PASSED;
 
   test_contr = new controller(file_prefix);
-  
+  std::fstream outfile;
+
+  int len=0;
+  my_type total_error =0.0;
+  my_type * d_angle, * angle_data;
   int row_lengths[2];
+
   row_lengths[0] = test_dat_fft->get_dims(0);
   row_lengths[1] = DEFAULT_N_ANG;
   test_contr->add_spectrum(row_lengths, 2);
 
-  test_contr->get_current_spectrum()->make_test_spectrum(tim_in, space_in);
+  /** Check this test spectrum makes sense \todo HOW????*/
 
-  /** Check this test spectrum makes sense....*/
+  test_contr->get_current_spectrum()->make_test_spectrum(tim_in, space_in, FUNCTION_DELTA);
+  //Check angle distrib integrates to 1 for each case
+
+  d_angle = (my_type *) calloc(row_lengths[1], sizeof(my_type));
+  for(int i=0; i<row_lengths[1]-1; ++i){
+    d_angle[i] = std::abs(test_contr->get_current_spectrum()->get_axis_element(1, i) - test_contr->get_current_spectrum()->get_axis_element(1, i+1));
+  }
+  angle_data = test_contr->get_current_spectrum()->get_angle_distrib(len);
   
+  total_error = integrator(angle_data, len, d_angle);
+
+  test_contr->get_current_spectrum()->make_test_spectrum(tim_in, space_in, FUNCTION_GAUSS);
+  angle_data = test_contr->get_current_spectrum()->get_angle_distrib(len);
+  total_error += integrator(angle_data, len, d_angle);
+
+  test_contr->get_current_spectrum()->make_test_spectrum(tim_in, space_in, FUNCTION_ISO);
+  angle_data = test_contr->get_current_spectrum()->get_angle_distrib(len);
+  total_error += integrator(angle_data, len, d_angle);
   
+  if(std::abs(total_error - 1.5)/3.0 > NUM_PRECISION){
+  
+    err |= TEST_WRONG_RESULT;
+    test_bed->report_info("Error in angular distribution integrals");
+  }
+  
+  outfile.open("spect_testy.dat", std::ios::out|std::ios::binary);
+  test_contr->get_current_spectrum()->write_to_file(outfile);
+  outfile.close();
+
   
   /** Now make the real spectrum from data and check the result matches the plain text test file*/
 
@@ -830,11 +861,10 @@ int test_entity_spectrum::basic_tests(){
   test_spect = new data_array(file_prefix + "spectrum.dat", 1);
 
   //We ignore frequencies below say 0.05 om_ce
-  int len=0;
   my_type * ax = test_spect->get_axis(0, len);
   int min_ind = where(ax+len/2, len/2, 17588.200*0.05);
   /**Hard code min freq to match the IDL file with test data generation...*/
-  my_type total_error =0.0;
+  total_error = 0.0;
   for(int i=0; i< row_lengths[0]/2 - min_ind; i++){
     total_error += std::abs(test_contr->get_current_spectrum()->get_element(i,0)-test_spect->get_element(i));
   }
@@ -847,7 +877,6 @@ int test_entity_spectrum::basic_tests(){
     test_bed->report_info("Mismatch between generated spectrum and test spectrum");
   }
   /* Preserve the spectrum*/
-  std::fstream outfile;
   outfile.open("spect_out.dat", std::ios::out|std::ios::binary);
   test_contr->get_current_spectrum()->write_to_file(outfile);
   outfile.close();

@@ -344,13 +344,14 @@ void divide_domain(std::vector<int> dims, int space[2], int per_proc, int block_
 int where(my_type * ax_ptr, int len, my_type target){
 /** \brief Find where ax_ptr exceeds target
 *
-*Checks bounds and calls locally scoped recursive whereb to do the search
+*Checks bounds and calls locally scoped recursive whereb to do the search. Special case if target equals bottom end
 */
   int whereb(my_type * ax_ptr, int len, my_type target, int &cut,int sign); //Recursive function to do the finding
 
   int sign = 1.0;
   int cut = 0;
-  if(ax_ptr[0] >=target || ax_ptr[len-1] < target) return -1;
+  if(ax_ptr[0] == target) return 0;
+  if(ax_ptr[0] > target || ax_ptr[len-1] < target) return -1;
   return whereb(ax_ptr, len, target, cut, sign);
 
 }

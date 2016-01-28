@@ -28,7 +28,7 @@ LFLAGS = -g
 #Comment/uncomment these to hide specific errors...
 
 SED_STR = sed -i.bak 's/ _USE_FLOAT/ _NO_USE_FLOAT/' Doxyfile
-SED_STR_Test = sed -i.bak 's/ _RUN_TESTS_AND_EXIT/ _NO_RUN_TESTS_AND_EXIT/' Doxyfile
+SED_STR_Test = sed -i.bak 's/ RUN_TESTS_AND_EXIT/ _NORUN_TESTS_AND_EXIT/' Doxyfile
 
 ifeq ($(strip $(TYPE)),double)
   LIB += -lfftw3 -lm
@@ -46,7 +46,7 @@ endif
 ifeq ($(strip $(MODE)),test)
   CFLAGS += -DRUN_TESTS_AND_EXIT
   CFLAGS += $(PROFILE)
-  SED_STR_Test = sed -i.bak 's/ _NO_RUN_TESTS_AND_EXIT/ _RUN_TESTS_AND_EXIT/' Doxyfile
+  SED_STR_Test = sed -i.bak 's/ NO_RUN_TESTS_AND_EXIT/ RUN_TESTS_AND_EXIT/' Doxyfile
 
 endif
 
@@ -138,6 +138,7 @@ veryclean:
 
 docs:
 	@echo Running Doxygen...
+	@echo "Mode: " $(MODE) "Type: " $(TYPE)
 	@doxygen Doxyfile &> Doxy.log
 	@echo Processing Doxygen output...
 	@./redox.sh

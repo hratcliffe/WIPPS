@@ -482,7 +482,7 @@ mu_dmudom plasma::get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int
     my_mu.err = 0;
   
     D_mu2S = D / (mu2 - S);
-    gamma = 1;// FAKENUMBERS
+    gamma = 1;// FAKENUMBERS /** \todo FIX!!!! */
     calc_type calc_n = (calc_type) n;
     omega_n = -1.0 * calc_n * my_const.omega_ce/gamma;
     //temporaries for simplicity
@@ -500,12 +500,12 @@ mu_dmudom plasma::get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int
     term2 += (1 - D_mu2S)*tmp_besm;
     
     //tmp_bes = boost::math::cyl_bessel_j(abs(n), bessel_arg);
-    tmp_bes = calc_n *(tmp_besp + tmp_besm)/bessel_arg;
+    tmp_bes = 0.5*bessel_arg *(tmp_besp + tmp_besm)/calc_n;
     //Use bessel identity to save time.
+    // J_(n-1) + J_(n+1) = (2 n / arg) J_n
+    term3 = scpsi*tmp_bes/std::tan(alpha);
 
-    term3 = scpsi*tmp_bes/tan(alpha);
-
-    my_mu.phi = pow((0.5*term1*term2 + term3), 2)/denom;
+    my_mu.phi = std::pow((0.5*term1*term2 + term3), 2)/denom;
 
   }
 

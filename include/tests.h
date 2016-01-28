@@ -17,13 +17,6 @@
 #include "support.h"
 
 /*
-[10/11/2015 15:24:26] Heather Ratcliffe: Hmm, OK so for my code what I mainly want is to have a test .sdf file with a couple of blocks in, and to read from it say a 1-d and 2-d array and check they match what I put in them
-[10/11/2015 15:25:01] Christopher Brady: Yep. Probably just generating the file from EPOCH or LARE is the easiest solution.
-[10/11/2015 15:25:22] Heather Ratcliffe: Similarly generate 1-d and 2-d arrays with sine waves, and axes, and check the FFTs give the right result and frequency
-[10/11/2015 15:25:52] Christopher Brady: Yep. Could combine the two and just adjust the arrays in EPOCH or LARE just before writing the file.
-[10/11/2015 15:27:10] Heather Ratcliffe: Basic tests of numerical integrals and the like
-[10/11/2015 15:27:52] Heather Ratcliffe: And some evil evil tests of the dispersion solvers and the like and of the overall coefficient production
-
 check 2011 paper for whistler mode tests
 Bortnik, 
 test particle particle whistler 
@@ -172,6 +165,10 @@ class test_entity_extern_maths : public test_entity{
 class test_entity_plasma : public test_entity{
   private:
   plasma * plas;
+  int resonant_freq();
+  int high_density();
+  int other_modes();
+  int phi_dom();
   public:
   test_entity_plasma();
   virtual ~test_entity_plasma();
@@ -179,7 +176,7 @@ class test_entity_plasma : public test_entity{
 
 };
 
-/** Check basic spectrum calculations, such as test spectrum derivation etc */
+/** Check spectrum calculations, such as test spectrum derivation etc */
 class test_entity_spectrum : public test_entity{
   private:
   data_array * test_dat_fft;
@@ -197,8 +194,27 @@ class test_entity_spectrum : public test_entity{
   int albertGs_tests();
 };
 
-/**Check G1 ad G2 from Albert \todo Write
-*/
+/** Spectrum to D test. Setup sample data in a spectrum with analytic solvable form. Calculate resulting D. Cross check*/
+class test_entity_d : public test_entity{
+  private:
+
+  public:
+  test_entity_d();
+  virtual ~test_entity_d();
+  virtual int run();
+};
+
+/** Test bounce averaging. Setup dummy D data across multiple blocks and average. Cross check with analytic results*/
+class test_entity_bounce: public test_entity{
+  private:
+
+  public:
+  test_entity_bounce();
+  virtual ~test_entity_bounce();
+  virtual int run();
+};
+
+
 
 #endif
 #endif

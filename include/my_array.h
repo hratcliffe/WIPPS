@@ -104,7 +104,6 @@ public:
   void make_linear_axis(int dim, float res, int offset=0);
 
   bool write_to_file(std::fstream &file);
-  /**< \todo Make mpi safe.. */
   bool read_from_file(std::fstream &file, bool no_version_check=0);
 
   bool fft_me(data_array * data_out);

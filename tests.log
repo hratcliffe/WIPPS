@@ -33,4 +33,5 @@ Testing dispersion solver for plasma O mode
 Testing dispersion solver for plasma X mode
 Passed test plasma
 Passed test spectrum checks
+0 total errors
 Testing complete and logged in tests.log

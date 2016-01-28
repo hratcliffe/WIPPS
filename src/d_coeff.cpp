@@ -88,7 +88,7 @@ void diffusion_coeff::make_pitch_axis(){
 void diffusion_coeff::calculate(){
 /** \brief Calculate D from wave spectrum and plasma
 *
-*Uses the data available via my_controller to calculate D, the raw diffusion coefficient as function of particle velocity.
+*Uses the data available via my_controller to calculate D, the raw diffusion coefficient as function of particle velocity. \todo Can we break this down at all?
 */
 
 /*Subsections:

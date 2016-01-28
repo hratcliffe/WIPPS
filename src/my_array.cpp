@@ -512,7 +512,7 @@ bool my_array::read_from_file(std::fstream &file, bool no_version_check){
 bool my_array::resize(int dim, int sz){
 /** \brief Resize my_array on the fly
 *
-*dim is the dimension to resize, sz the new size. If sz < dims[dim] the first sz rows will be kept and the rest deleted. If sz > dims[dim] the new elements will be added zero initialised. Note due to using 1-d memory layout both cases require copying all data and therefore briefly memory to store the old and new arrays. However shinking the last dimension does not necessarily require a copy. Note cannot be called on ragged array. NOTE dim runs from 1 to number of dims \todo Add 4 d. 
+*dim is the dimension to resize, sz the new size. If sz < dims[dim] the first sz rows will be kept and the rest deleted. If sz > dims[dim] the new elements will be added zero initialised. Note due to using 1-d memory layout both cases require copying all data and therefore briefly memory to store the old and new arrays. However shinking the last dimension does not necessarily require a copy. Note cannot be called on ragged array. NOTE dim runs from 1 to number of dims
 */
 
   my_print("Attempting to resize", mpi_info.rank);

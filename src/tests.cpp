@@ -79,6 +79,7 @@ void tests::setup_tests(){
   add_test(test_obj);
 
 }
+
 void tests::add_test(test_entity * test){
   /** Adds a test to the list to be performed*/
   test_list.push_back(test);
@@ -154,12 +155,16 @@ void tests::cleanup_tests(){
 void tests::run_tests(){
 /** \brief Run scheduled tests
 *
-*
+*Runs each test in list and reports total errors found
 */
+
+  int total_errs = 0;
   for(current_test_id=0; current_test_id< (int)test_list.size(); current_test_id++){
-    test_list[current_test_id]->run();
-    
+    total_errs += (bool) test_list[current_test_id]->run();
+    //Add one if is any error returned
   }
+
+  test_bed->report_info(mk_str(total_errs)+" total errors", mpi_info.rank);
 
 }
 
@@ -602,6 +607,22 @@ int test_entity_plasma::run(){
 */
 
   int err=TEST_PASSED;
+  
+  err |= resonant_freq();
+  err |= high_density();
+  err |= other_modes();
+  test_bed->report_err(err);
+  return err;
+
+}
+
+int test_entity_plasma::resonant_freq(){
+/** \brief Check resonant frequency solver
+*
+*Checks the returned resonant frequency obeys equations used to derive it by solving both for mu.
+*/
+
+  int err=TEST_PASSED;
 
   std::vector<calc_type> results;
   calc_type x=1.0, v_par, n=-1, om_ce_local, om_pe_local;
@@ -631,9 +652,24 @@ int test_entity_plasma::run(){
       test_bed->report_info("refractive index mismatch of "+mk_str(mu_tmp1-mu_tmp2), 2);
     }
   }
-  
 
-  /** Now test if the returned mu matches the high density whistler in high dens regime */
+  return err;
+
+}
+
+int test_entity_plasma::high_density(){
+/** \brief Tests high density approximation for dispersion relations
+*
+*Test if the mu found by get_root and get_phi_mu_om matches the high density whistler in high dens regime
+*/
+
+  int err=TEST_PASSED;
+
+  calc_type om_ce_local, om_pe_local;
+  calc_type mu_tmp1, mu_tmp2;
+
+  om_ce_local = plas->get_omega_ref("ce");
+  om_pe_local = plas->get_omega_ref("pe");
 
   size_t n_tests = 10;
   calc_type tmp_omega=0.0, tmp_theta=pi/(calc_type)(n_tests), tmp_omega_n=0.0;
@@ -690,11 +726,30 @@ int test_entity_plasma::run(){
     //Make these a warning not an error because we expect them sometimes
   }
 
+  return err;
+}
+
+int test_entity_plasma::other_modes(){
+/** \brief Test dispersion solver with other wave modes */
+
+  int err=TEST_PASSED;
+
+  calc_type om_ce_local, om_pe_local;
+  calc_type mu_tmp1, mu_tmp2;
+
+  om_ce_local = plas->get_omega_ref("ce");
+  om_pe_local = plas->get_omega_ref("pe");
+
+
   test_bed->report_info("Testing dispersion solver for plasma O mode", 1);
+  size_t n_tests = 10;
+  mu_dmudom my_mu;
+  mu my_mu_all;
+  int err_cnt=0;
 
   /**Try plasma wave modes in solvers, perpendicular propagation*/
-  tmp_omega = om_pe_local;
-  tmp_theta = pi/2.0;
+  calc_type tmp_omega = om_pe_local, tmp_omega_n;
+  calc_type tmp_theta = pi/2.0;
   for(size_t i =0; i<n_tests; i++){
     tmp_omega += std::abs(om_pe_local)/(calc_type)(n_tests + 1);
     my_mu_all = plas->get_root(0.0, tmp_omega, tmp_theta);
@@ -739,12 +794,32 @@ int test_entity_plasma::run(){
     
   }
 
-/** \todo Test mu.dom and mu.dmudtheta too */
-/** \todo Test phi? */
+  return err;
+
+}
+
+int test_entity_plasma::phi_dom(){
+/** \brief Test other plasma returns
+*
+* Checks the values of mu.dom, mu.dmudtheta and phi against special cases. \todo Write this
+*/
+
+  int err=TEST_PASSED;
+
+  calc_type om_ce_local, om_pe_local;
+  calc_type mu_tmp1, mu_tmp2;
+
+  om_ce_local = plas->get_omega_ref("ce");
+  om_pe_local = plas->get_omega_ref("pe");
 
 
+  test_bed->report_info("Testing phi derivation", 1);
+  size_t n_tests = 10;
+  mu_dmudom my_mu;
+  mu my_mu_all;
+  int err_cnt=0;
 
-  test_bed->report_err(err);
+
 
   return err;
 
@@ -891,6 +966,38 @@ int test_entity_spectrum::albertGs_tests(){
   int err = TEST_PASSED;
 
   return err;
+}
+
+test_entity_d::test_entity_d(){
+
+
+}
+test_entity_d::~test_entity_d(){
+
+
+}
+
+int test_entity_d::run(){
+
+  int err = TEST_PASSED;
+
+  return err;
+
+}
+
+test_entity_bounce::test_entity_bounce(){
+
+}
+test_entity_bounce::~test_entity_bounce(){
+
+}
+
+int test_entity_bounce::run(){
+
+  int err = TEST_PASSED;
+
+  return err;
+
 }
 
 #endif

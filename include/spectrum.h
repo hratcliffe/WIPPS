@@ -46,14 +46,14 @@ public:
 
   my_type get_omega(my_type k, int wave_type, bool deriv=0);
   my_type get_k(my_type omega, int wave_type, bool deriv =0);
-
+  bool make_angle_distrib();
   my_type * get_angle_distrib(int &len, my_type omega=0.0);
 
   std::vector<int> all_where(my_type * ax_ptr, int len, my_type target, std::function<bool(my_type,my_type)> func = std::greater<my_type>());
   
   bool write_to_file(std::fstream &file);
 
-  void make_test_spectrum(int time[2], int space[2]);
+  void make_test_spectrum(int time[2], int space[2],int angle_type=FUNCTION_DELTA);
 
   calc_type get_G1(calc_type omega);
   calc_type get_G2(calc_type omega, calc_type x);

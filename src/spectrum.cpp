@@ -124,43 +124,8 @@ bool spectrum::generate_spectrum(data_array * parent, int om_fuzz, int angle_typ
       this->set_element(i,0,total);
     }
 
-    //Now we generate evenly spaced angle axis, and generate required function ...
-    //NB What to work in? tan theta, but from 0 to infty. Need a cut off.... and that only covers paralllel, not antiparallel. We'll need to extend to that sooner or later...
-    {
-
-      calc_type res = (ANG_MAX - ANG_MIN)/this->get_length(1); //To cover range from 0 to 2...
-      int offset = ANG_MIN/res;
-      make_linear_axis(1, res, offset);
-      len = get_length(0);
-      my_type val;
-
-      //Now generate the function data.
-      if(function_type == FUNCTION_DELTA){
-        //Approx delta function, round k_ll. I.e. one cell only. And size is 1/d theta
-      
-        for(int i=1; i<len; ++i) this->set_element(i,1,0.0);
-        //zero all other elements
-        val = 1.0/res;
-        int zero = where(this->get_axis(0, len), len, 0);
-        this->set_element(zero, 1, val);
-      }else if(function_type == FUNCTION_GAUSS){
-        //Gaussian round 0 with integral one
-        my_type ax_el;
-        my_type norm;
-        norm = 1.0/ (std::sqrt(2.0*pi) * SPECTRUM_ANG_STDDEV);
-        for(int i=0; i<len; ++i){
-          ax_el = this->get_axis_element(1, i);
-          val = std::exp( -0.5 * std::pow(ax_el/SPECTRUM_ANG_STDDEV, 2)) * norm;
-          this->set_element(i,1,val);
-          
-        }
-
-
-      }else{
-
-      }
-
-    }
+    make_angle_distrib();
+    
 
   }else if(parent){
  /** \todo general spectrum extracttion routine */
@@ -188,6 +153,59 @@ bool spectrum::generate_spectrum(data_array * parent, int om_fuzz, int angle_typ
 
   }else{
     return 1;
+
+  }
+
+  return 0;
+
+}
+
+bool spectrum::make_angle_distrib(){
+/** \brief Generate angle axis and distribution
+*
+*Generates an angle axis linear spaced in tan theta between MIN_ANGLE and MAX_ANGLE. Then generates and fills the angular spectrum according to function specified by function_type member variable. Options are FUNCTION_DELTA: delta function with peak at 0 angle and integral 1. FUNCTION_GAUSS: Gaussian with std-dev SPECTRUM_ANG_STDDEV, centre at 0 angle and integral 1. FUNCTION_ISO: Isotropic distribution over range considered, with integral 1. FUNCTION \todo How to handle parallel/anti.
+*/
+
+
+  if(!angle_is_function){
+    my_print("Angular distrib is not a function. Returning", mpi_info.rank);
+    return 1;
+  }
+  if(function_type < 0 || function_type > FUNCTION_ISO){
+    my_print("Invalid function type. Returning", mpi_info.rank);
+    return 1;
+  }
+  
+  calc_type res = (ANG_MAX - ANG_MIN)/this->get_length(1);
+  
+  int offset = ANG_MIN/res;
+  make_linear_axis(1, res, offset);
+  len = get_length(0);
+  my_type val;
+
+  if(function_type == FUNCTION_DELTA){
+  
+    for(int i=1; i<len; ++i) this->set_element(i,1,0.0);
+    val = 1.0/res;
+    int zero = where(this->get_axis(0, len), len, 0);
+    this->set_element(zero, 1, val);
+
+  }else if(function_type == FUNCTION_GAUSS){
+    my_type ax_el;
+    my_type norm;
+    norm = 1.0/ (std::sqrt(2.0*pi) * SPECTRUM_ANG_STDDEV);
+    for(int i=0; i<len; ++i){
+      ax_el = this->get_axis_element(1, i);
+      val = std::exp( -0.5 * std::pow(ax_el/SPECTRUM_ANG_STDDEV, 2)) * norm;
+      this->set_element(i,1,val);
+      
+    }
+
+
+  }else if(function_type ==FUNCTION_ISO){
+
+    val = 1.0/ res/ (ANG_MAX - ANG_MIN);
+    for(int i=0; i<len; ++i) this->set_element(i,1,val);
 
   }
 
@@ -223,12 +241,12 @@ my_type * spectrum::get_angle_distrib(int &len, my_type omega){
 
   if(angle_is_function){
 
-    ret = data + dims[0];
+    ret = data + get_length(0);
 
   }else if(omega !=0.0){
   //select row by omega...
-    int offset = where(axes+ dims[0], n_angs, omega);
-    if(offset>0) ret = data + offset*dims[0];
+    int offset = where(axes + get_length(0), n_angs, omega);
+    if(offset>0) ret = data + offset*get_length(0);
 
   }
 
@@ -259,7 +277,7 @@ bool spectrum::write_to_file(std::fstream &file){
 
 }
 
-void spectrum::make_test_spectrum(int time[2], int space[2]){
+void spectrum::make_test_spectrum(int time[2], int space[2],int angle_type){
 /** \brief Generate dummy spectrum
 *
 *Makes a basic spectrum object with suitable number of points, and twin, symmetric Gaussians centred at fixed x. \todo Finish cases!!!
@@ -267,7 +285,7 @@ void spectrum::make_test_spectrum(int time[2], int space[2]){
 
   char id[10] = "ex";
 
-  this->set_ids(time[0], time[1], space[0], space[1], WAVE_WHISTLER, id);
+  this->set_ids(time[0], time[1], space[0], space[1], WAVE_WHISTLER, id, angle_type);
   
   ax_omega = false;
 
@@ -283,25 +301,11 @@ void spectrum::make_test_spectrum(int time[2], int space[2]){
   my_type res_k = 1.0/(my_type)len0;
   for(int i=0; i<len0; i++) *(ax_ptr+i) = res_k*((my_type)i - (my_type)len0/2.0);
   
-  //Generate the angle function data.
-  if(function_type == FUNCTION_DELTA){
-  //Approx delta function, round k_ll. I.e. one cell only. And size is 1/d theta
-    for(int i=1; i<len1; ++i) this->set_element(i,1,1);
-    //zero all other elements
-    my_type val = 1.0/res_x;
-    /** \todo this is wrong value. Wants to make integral 1...*/
-    this->set_element(0, 1, val);
-  }else if(function_type == FUNCTION_GAUSS){
-    for(int i=1; i<len1; ++i) this->set_element(i,1,1);
+  make_angle_distrib();
 
-
-  }else{
-    for(int i=1; i<len1; ++i) this->set_element(i,1,1);
-
-  }
   //Generate the negative k data
   
-  float centre = 0.2, width=0.005, background = 0.5;
+  my_type centre = 0.2, width=0.005, background = 0.0;
   my_type * data_ptr = data;
   my_type * data_tmp, *ax_tmp;
   data_tmp = data_ptr;

@@ -185,6 +185,7 @@ bool spectrum::make_angle_distrib(){
     for(int i=1; i<len; ++i) this->set_element(i,1,0.0);
     val = 1.0/res;
     int zero = where(this->get_axis(1, len), len, 0.0);
+    //Set_element checks bnds automagically
     this->set_element(zero, 1, val);
 
   }else if(function_type == FUNCTION_GAUSS){

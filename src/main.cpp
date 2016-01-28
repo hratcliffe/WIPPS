@@ -366,7 +366,12 @@ int whereb(my_type * ax_ptr, int len, my_type target,int &cut, int sign){
      cut++;
      return cut;
   }
-  else if(sign*ax_ptr[len/2] >= sign*target){
+  else if(sign*ax_ptr[len/2] == sign*target){
+    //Exact equality. Save recursing deeper
+    cut+= len/2;
+    return cut;
+  }
+  else if(sign*ax_ptr[len/2] > sign*target){
     whereb(ax_ptr, len/2, target, cut, sign);
 
     return cut;

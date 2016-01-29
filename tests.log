@@ -31,6 +31,7 @@ Mu 6.146580e+00 difference 4.111352e-01 relative error 6.688844e-02
 Total 7 out of 20 issues in high density approx or dispersion solver at precision: 5.000000e-03
 Testing dispersion solver for plasma O mode
 Testing dispersion solver for plasma X mode
+Testing dmu/domega
 Passed test plasma
 Passed test spectrum checks
 0 total errors

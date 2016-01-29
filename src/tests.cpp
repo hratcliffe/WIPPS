@@ -603,7 +603,7 @@ test_entity_plasma::~test_entity_plasma(){
 int test_entity_plasma::run(){
 /** \brief Test resonant frequencies and refractive indices
 *
-*Checks the resonant frequencies obey the equations used to derive them. Checks the dispersion roots for Whistlers match those found using high-density approx. Checks plasma O and X mode dispersion too.
+*Checks the resonant frequencies obey the equations used to derive them. Checks the dispersion roots for Whistlers match those found using high-density approx. Checks plasma O and X mode dispersion too. Note, first call for issues with these tests is to check returned mu.err on failing tests
 */
 
   int err=TEST_PASSED;
@@ -611,6 +611,8 @@ int test_entity_plasma::run(){
   err |= resonant_freq();
   err |= high_density();
   err |= other_modes();
+  err |= phi_dom();
+
   test_bed->report_err(err);
   return err;
 
@@ -806,19 +808,54 @@ int test_entity_plasma::phi_dom(){
 
   int err=TEST_PASSED;
 
-  calc_type om_ce_local, om_pe_local;
-  calc_type mu_tmp1, mu_tmp2;
-
+  calc_type mu_tmp1, mu_tmp2, om_ce_local, om_pe_local;
   om_ce_local = plas->get_omega_ref("ce");
   om_pe_local = plas->get_omega_ref("pe");
 
+  calc_type d_omega = std::abs(om_ce_local)/1e8;
+  //Derivative step size.
 
-  test_bed->report_info("Testing phi derivation", 1);
   size_t n_tests = 10;
-  mu_dmudom my_mu;
-  mu my_mu_all;
+  mu_dmudom my_mu, my_mu_p;
+  mu my_mu_all, my_mu_all_p;
   int err_cnt=0;
 
+  calc_type tmp_omega = 0.0, tmp_theta=pi/(calc_type)(n_tests), tmp_omega_n=0.0;
+
+
+  test_bed->report_info("Testing dmu/domega", 1);
+
+  //dmu.dom should be as simple as requesting two nearby omegas and doing numerical deriv...
+
+  for(size_t i =0; i<n_tests; i++){
+    tmp_omega += std::abs(om_ce_local)/(calc_type)(n_tests + 1);
+    my_mu = plas->get_phi_mu_om(tmp_omega, tmp_theta, 0.0, 0.0, tmp_omega_n);
+    my_mu_all = plas->get_root(0.0, tmp_omega, tmp_theta);
+    my_mu_p = plas->get_phi_mu_om(tmp_omega+d_omega, tmp_theta, 0.0, 0.0, tmp_omega_n);
+    my_mu_all_p = plas->get_root(0.0, tmp_omega+d_omega, tmp_theta);
+
+    /** Approx numerical derivative*/
+    mu_tmp1 = (my_mu.mu - my_mu_p.mu)/d_omega;
+    mu_tmp2 = (my_mu_all.mu - my_mu_all_p.mu)/d_omega;
+    if(std::abs(std::abs(mu_tmp1/my_mu.dmudom) - 1.0) > NUM_PRECISION){
+      err|=TEST_WRONG_RESULT;
+      test_bed->report_info("Wrong derivative in get_phi_mu_om", 2);
+    }
+    if(std::abs(std::abs(mu_tmp2/my_mu_all.dmudom) - 1.0) > NUM_PRECISION){
+      err|=TEST_WRONG_RESULT;
+      test_bed->report_info("Wrong derivative in get_root", 2);
+    }
+
+    /**my_mu_all.mu and my_mu.mu should be exactly equal*/
+    if(std::abs(my_mu_all.dmudom-my_mu.dmudom) > PRECISION){
+      test_bed->report_info("Inconsistent derivative between get_root and get_phi_mu_om", 2);
+      err|=TEST_WRONG_RESULT;
+    }
+    
+  }
+  
+  
+  //Now to test mu.dmudtheta (latitude)
 
 
   return err;

@@ -801,7 +801,7 @@ int test_entity_plasma::other_modes(){
 int test_entity_plasma::phi_dom(){
 /** \brief Test other plasma returns
 *
-* Checks the values of mu.dom, mu.dmudtheta and phi against special cases. \todo Write this
+* Checks the values of mu.dom, mu.dmudtheta and phi against special cases. \todo Write this Phi is pretty utestable really...
 */
 
   int err=TEST_PASSED;

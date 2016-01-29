@@ -57,6 +57,7 @@ public:
 
   calc_type get_G1(calc_type omega);
   calc_type get_G2(calc_type omega, calc_type x);
+  calc_type check_upper();
 
 };
 

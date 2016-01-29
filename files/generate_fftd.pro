@@ -8,13 +8,13 @@ om_fuzz = 5 ;In percent
 output_file = "FFT_data.dat"
 spectrum_file = "spectrum.dat"
 
-x_ran = [0, 1e7]
+x_ran = [0, 1e6]
 t_ran = [0, 5e-2]
 n_pts = [1024, 500]
 
 om_ce = 17588.200878
 om_pe = 35176.401757
-k_peak = n_pts[0]/ 8.0 ;Location of peaks in k relative to k=0 at n_pts[0]/2.0
+k_peak = n_pts[0]/ 12.0 ;Location of peaks in k relative to k=0 at n_pts[0]/2.0
 
 ;Fixed constants
 q0 = 1.602176565d-19 ; elementary charge [C]
@@ -70,7 +70,7 @@ END
 ;Save the data
 err = write_data(output_file, FFT_data, axes, id='FFTd')
 
-PRINT, "Making psectrum"
+PRINT, "Making spectrum"
 
 ;Make spectrum back from data
 calculate_energy_density, FFT_data, axes, dispersion, output=spectrum, margin=om_fuzz*2
@@ -78,4 +78,5 @@ calculate_energy_density, FFT_data, axes, dispersion, output=spectrum, margin=om
 ;Save the spectrum
 err = write_data(spectrum_file, spectrum, list(dispersion), id="spect")
 
+stop
 end

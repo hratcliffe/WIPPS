@@ -34,11 +34,11 @@ controller::~controller(){
 
   if(my_plas) delete my_plas;
   
-  for(int i=0; i<my_spect.size(); i++){
+  for(size_t i=0; i<my_spect.size(); i++){
     delete my_spect[i];
     my_spect[i] = nullptr;
   }
-  for(int i=0; i<my_d.size(); i++){
+  for(size_t i=0; i<my_d.size(); i++){
     delete my_d[i];
     my_d[i] = nullptr;
   }
@@ -81,11 +81,11 @@ void controller::add_d(int nx, int n_angs, int pos){
   tmp_d->my_controller = this;
   tmp_d->make_velocity_axis();
   tmp_d->make_pitch_axis();
-  if(pos == -1 || pos == my_d.size()){
+  if(pos == -1 || pos == (int)my_d.size()){
     my_d.push_back(tmp_d);
     current_d = my_d.size()-1;
   }
-  else if(pos >=0 && pos< my_d.size()){
+  else if(pos >=0 && pos< (int)my_d.size()){
     //insert at position specified
     my_d.insert(my_d.begin() + pos, tmp_d);
     current_d = pos;
@@ -124,7 +124,7 @@ void controller::bounce_average(){
   for(int j=0; j< dims[0]; j++){
     for(int k=0; k<dims[1]; k++){
       val = 0;
-      for(int i=0; i<my_d.size() -1; i++){
+      for(size_t i=0; i<my_d.size() -1; i++){
         val += my_d[i]->get_element(j, k);
         
       }
@@ -180,7 +180,7 @@ bool controller::save_spectra(std::string pref){
 
   std::fstream file;
   std::string filename, tmp;
-  for(int i=0; i<my_spect.size(); ++i){
+  for(size_t i=0; i<my_spect.size(); ++i){
     tmp = my_spect[i]->block_id;
     filename = pref+"spec_"+tmp +"_"+mk_str(my_spect[i]->time[0]) + "_"+mk_str(my_spect[i]->time[1])+"_"+mk_str(my_spect[i]->space[0])+"_"+mk_str(my_spect[i]->space[1])+".dat";
     std::cout<<filename<<std::endl;
@@ -202,7 +202,7 @@ bool controller::save_D(std::string pref){
 
   std::fstream file;
   std::string filename, tmp;
-  for(int i=0; i<my_d.size(); ++i){
+  for(size_t i=0; i<my_d.size(); ++i){
     tmp = my_d[i]->block_id;
     //They might have different blocks
     if(my_d[i]->tag == LOCAL) filename = pref+"D_"+tmp +"_"+mk_str(my_d[i]->time[0]) + "_"+mk_str(my_d[i]->time[1])+"_"+mk_str(my_d[i]->space[0])+"_"+mk_str(my_d[i]->space[1])+".dat";

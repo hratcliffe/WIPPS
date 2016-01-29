@@ -89,12 +89,12 @@ const std::string LOCAL = "loc";/**< Tag identifying diffusion coefficient proce
 const std::string BOUNCE_AV = "bav";/**< Tag identifying diffusion coefficient processing level: bounce averaged*/
 const std::string GLOBAL = "glb";/**< Tag identifying diffusion coefficient processing level: reduced over all space*/
 
-const float V_MIN = -0.3*v0;/**< Minimum particle velocity for D*/
-const float V_MAX = 0.3*v0;/**< Maximum particle velocity for D*/
-const float ANG_MIN = 0;/**< Minimum angle (tan theta) for D*/
-const float ANG_MAX = 4;/**< Maximum angle (tan theta) for D*/
-const float SPECTRUM_ANG_STDDEV = 0.1;/**< Maximum angle (tan theta) for D*/
-
+const my_type V_MIN = -0.3*v0;/**< Minimum particle velocity for D*/
+const my_type V_MAX = 0.3*v0;/**< Maximum particle velocity for D*/
+const my_type ANG_MIN = 0;/**< Minimum angle (tan theta) for D*/
+const my_type ANG_MAX = 4;/**< Maximum angle (tan theta) for D*/
+const my_type SPECTRUM_ANG_STDDEV = 0.1;/**< Maximum angle (tan theta) for D*/
+const my_type SPECTRUM_THRESHOLD = 1e-3;/**< Fraction of peak power considered to be "significant" spectral power*/
 /** @} */
 //----------- END CONSTANTS ---------------------------------
 

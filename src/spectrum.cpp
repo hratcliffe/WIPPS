@@ -495,3 +495,16 @@ calc_type spectrum::get_G2(calc_type omega, calc_type x){
   else return 0.0;
 
 }
+
+calc_type spectrum::check_upper(){
+/** \brief Check upper k limit of spectral power
+*
+* Checks the upper bound of region of significant spectral power, i.e. above SPECTRUM_THRESHOLD*peak_power
+*/
+
+
+
+
+
+}
+

@@ -430,7 +430,7 @@ void get_deck_constants(std::string file_prefix){
   std::string name, val;
   bool parse_err;
   float val_f;
-  for(int i=0; i< lines.size(); i++){
+  for(size_t i=0; i< lines.size(); i++){
 
     parse_err = parse_name_val(lines[i], name, val);
     if(parse_err) continue;

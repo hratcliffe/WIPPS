@@ -24,8 +24,8 @@ class controller{
 
   std::vector<spectrum *> my_spect;/**< Spectrum object or vector thereof?*/
   std::vector<diffusion_coeff *> my_d;/**< Diffusion coefficient object or vector thereof?*/
-  int current_spect;
-  int current_d;
+  size_t current_spect;
+  size_t current_d;
   void get_size(int dims[2]);
 public:
 

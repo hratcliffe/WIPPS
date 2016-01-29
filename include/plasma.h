@@ -24,12 +24,7 @@ class plasma{
 private:
   static const int ncomps=4; 
 
-  int wave_type;
-
-  calc_type * position;
-  calc_type * ne;
   calc_type B0;
-  calc_type * om_pe;
   calc_type om_ce;
 
 //  std::vector<calc_type> ret_vec;

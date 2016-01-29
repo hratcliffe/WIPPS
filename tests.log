@@ -32,7 +32,14 @@ Total 7 out of 20 issues in high density approx or dispersion solver at precisio
 Testing dispersion solver for plasma O mode
 Testing dispersion solver for plasma X mode
 Testing dmu/domega
-Passed test plasma
+Testing dmu/dtheta
+Wrong derivative in get_phi_mu_om
+Wrong derivative in get_root
+Wrong derivative in get_phi_mu_om
+Wrong derivative in get_root
+Wrong derivative in get_phi_mu_om
+Wrong derivative in get_root
+Error Wrong result, (code 1) on test plasma
 Passed test spectrum checks
-0 total errors
+1 total errors
 Testing complete and logged in tests.log

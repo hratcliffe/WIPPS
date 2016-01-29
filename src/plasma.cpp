@@ -463,12 +463,12 @@ mu_dmudom plasma::get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int
 
     }
 
-//    dAdpsi = sin(2.0*psi)*(S - P);
-//    dBdpsi = sin(2.0*psi)*(R*L - P*S);
+    dAdpsi = sin(2.0*psi)*(S - P);
+    dBdpsi = sin(2.0*psi)*(R*L - P*S);
 
-    dAdpsi = 2.0*scpsi;
-    dBdpsi = dAdpsi*(R*L - P*S);
-    dAdpsi *=(S - P);
+//    dAdpsi = 2.0*scpsi;
+//    dBdpsi = dAdpsi*(R*L - P*S);
+//    dAdpsi *=(S - P);
 
     dFdpsi = 2.0*(dAdpsi - dBdpsi);
     dGdpsi = 2.0*dAdpsi - dBdpsi + (smu/J)*(B*dBdpsi - 2.0*C*dAdpsi);
@@ -476,7 +476,7 @@ mu_dmudom plasma::get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int
     my_mu.dmudtheta = (0.5/my_mu.mu)*(dHdF*dFdpsi + dHdG*dGdpsi);
 
     dmudw = 0.0;
-    for(int i=0; i<ncomps; i++) dmudw = dmudw + dmudX[i]*dXdw[i] + dmudY[i]*dYdw[i];
+    for(int i=0; i<ncomps; i++) dmudw += dmudX[i]*dXdw[i] + dmudY[i]*dYdw[i];
     
     my_mu.dmudom = dmudw;
     my_mu.err = 0;

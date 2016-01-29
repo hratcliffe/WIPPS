@@ -807,15 +807,17 @@ int test_entity_plasma::phi_dom(){
 */
 
   int err=TEST_PASSED;
+  size_t n_tests = 10;
 
   calc_type mu_tmp1, mu_tmp2, om_ce_local, om_pe_local;
   om_ce_local = plas->get_omega_ref("ce");
   om_pe_local = plas->get_omega_ref("pe");
 
   calc_type d_omega = std::abs(om_ce_local)/1e8;
+  calc_type d_theta = pi/(calc_type)(n_tests)/1e6;
+
   //Derivative step size.
 
-  size_t n_tests = 10;
   mu_dmudom my_mu, my_mu_p;
   mu my_mu_all, my_mu_all_p;
   int err_cnt=0;
@@ -854,9 +856,39 @@ int test_entity_plasma::phi_dom(){
     
   }
   
+  test_bed->report_info("Testing dmu/dtheta", 1);
   
-  //Now to test mu.dmudtheta (latitude)
+  tmp_omega = 0.6*std::abs(om_ce_local);
+  for(size_t i =0; i<n_tests; i++){
+    tmp_theta += pi/(calc_type)(n_tests);
+    my_mu = plas->get_phi_mu_om(tmp_omega, tmp_theta, 0.0, 0.0, tmp_omega_n);
+    my_mu_all = plas->get_root(0.0, tmp_omega, tmp_theta);
+    my_mu_p = plas->get_phi_mu_om(tmp_omega, tmp_theta+d_theta, 0.0, 0.0, tmp_omega_n);
+    my_mu_all_p = plas->get_root(0.0, tmp_omega, tmp_theta+d_theta);
+    
+    /** Approx numerical derivative*/
+    mu_tmp1 = -(my_mu.mu - my_mu_p.mu)/d_theta;
+    std::cout<<1.0-(mu_tmp1/my_mu.dmudtheta)<<std::endl;
 
+    mu_tmp2 = -(my_mu_all.mu - my_mu_all_p.mu)/d_theta;
+    std::cout<<1.0-(mu_tmp2/my_mu_all.dmudtheta)<<std::endl;
+
+    if(std::abs(std::abs(mu_tmp1 /my_mu.dmudtheta) - 1.0) > NUM_PRECISION){
+      err|=TEST_WRONG_RESULT;
+      test_bed->report_info("Wrong derivative in get_phi_mu_om", 2);
+    }
+    if(std::abs(std::abs(mu_tmp2/my_mu_all.dmudtheta) - 1.0) > NUM_PRECISION){
+      err|=TEST_WRONG_RESULT;
+      test_bed->report_info("Wrong derivative in get_root", 2);
+    }
+    //std::cout<<my_mu_all.dmudtheta<<" "<<my_mu.dmudtheta<<std::endl;
+    /**my_mu_all.mu and my_mu.mu should be exactly equal*/
+    if(std::abs(my_mu_all.dmudtheta-my_mu.dmudtheta) > PRECISION){
+      test_bed->report_info("Inconsistent derivative between get_root and get_phi_mu_om", 2);
+      err|=TEST_WRONG_RESULT;
+    }
+    
+  }
 
   return err;
 

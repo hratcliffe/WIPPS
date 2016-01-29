@@ -11,4 +11,7 @@ Derivations.*
 main.dSYM
 html/
 latex/
-files/*.dat
+profiler/
+*.dat
+*.bak
+*.log

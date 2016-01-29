@@ -31,6 +31,7 @@ void spectrum::construct(){
   ax_omega = true;
   normB = 0;
   normg = nullptr;
+  max_power=0.0;
 
 }
 
@@ -106,7 +107,7 @@ bool spectrum::generate_spectrum(data_array * parent, int om_fuzz, int angle_typ
 
     int j;
     int low_bnd, high_bnd;
-    my_type om_disp;
+    my_type om_disp, max=0.0;
     my_type tolerance = om_fuzz/100.0;
     my_type total;
     for(int i=0; i<this->get_length(0); ++i){
@@ -123,10 +124,11 @@ bool spectrum::generate_spectrum(data_array * parent, int om_fuzz, int angle_typ
       total=0.0;
       for(j=low_bnd; j<high_bnd; j++) total += parent->get_element(i,j);
       this->set_element(i,0,total);
+      if(total > max) max = total;
     }
 
     make_angle_distrib();
-    
+    this->max_power = total;
 
   }else if(parent){
  /** \todo general spectrum extracttion routine */
@@ -320,7 +322,8 @@ void spectrum::make_test_spectrum(int time[2], int space[2],int angle_type){
   for(int i=1; i<len0/2; i++) *(data_tmp + i) = *(data_tmp - i);
   //reflect onto +ve k
 //+ 0.25*exp(-pow((*(ax_tmp) + centre), 2)/width*50.0)
-
+  max_power = 1.0;
+  //Store value of maximum
 }
 
 bool spectrum::normaliseB(){
@@ -502,9 +505,35 @@ calc_type spectrum::check_upper(){
 * Checks the upper bound of region of significant spectral power, i.e. above SPECTRUM_THRESHOLD*peak_power
 */
 
+//First move up from bottom in strides and find where _first_ rises above threshold. Specifcally upwards.
 
+  size_t stride = 1;
+  size_t ax_len = get_length(0);
+  size_t len = ax_len/2 - stride;
+  my_type threshold = SPECTRUM_THRESHOLD*this->max_power, k_thresh;
+  size_t index=0;
 
-
-
+  for(size_t i=0; i< len; i+=stride){
+    if((get_element(i, 0) < threshold && get_element(i+stride, 0) > threshold) ||(get_element(ax_len - i, 0) < threshold && get_element(ax_len - i - stride, 0) > threshold)){
+      index = i;
+      break;
+    }
+  }
+  
+  if(!ax_omega) k_thresh = std::abs(this->get_axis_element(0, index));
+  else{
+    //get omega value and convert to k...
+    my_type tmp = std::abs(this->get_axis_element(0, index));
+    k_thresh = get_k(tmp, WAVE_WHISTLER);
+  }
+  
+  //TEMPORARY check:
+  if(k_thresh > get_axis_element(0, ax_len-1)){
+    my_print("Error getting k", mpi_info.rank);
+    k_thresh =get_axis_element(0, ax_len-1);
+  
+  }
+  
+  return k_thresh;
 }
 

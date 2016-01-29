@@ -125,7 +125,7 @@ Get mu, dmu/domega which are used to:
 
   this->copy_ids(spect);
   //copy block id, ranges etc from spect.
-  calc_type theta, lat, omega_n=0.0, D_tmp;
+  calc_type theta, lat, omega_n=0.0, D_tmp, k_thresh;
   calc_type alpha, v_par, c2th, s2alpha; /** temporaries for clarity*/
   calc_type Eq6, mu_dom_mu, Eq7, dmudx, numerator;
 
@@ -133,7 +133,8 @@ Get mu, dmu/domega which are used to:
   std::vector<calc_type> omega_calc;
   mu_dmudom my_mu;
   
-  calc_type D_consts = 0.5* pi*plas->get_omega_ref("ce")*pow(v0, 3);
+  calc_type om_ce_ref = plas->get_omega_ref("ce");
+  calc_type D_consts = 0.5* pi*om_ce_ref*pow(v0, 3);
   //Time saving constant
 
   //Temporaries for wave normal angle***********************************
@@ -150,6 +151,9 @@ Get mu, dmu/domega which are used to:
   for(int i=0; i<n_thetas -1; ++i){
     dx[i] = x[i+1] - x[i];
   }
+  
+  k_thresh = spect->check_upper();
+  std::cout<<k_thresh<<std::endl;
   //*******************************************************************
 
   
@@ -170,8 +174,11 @@ Get mu, dmu/domega which are used to:
   for(int i =0; i< dims[0]; ++i){
     //particle parallel velocity
     v_par = get_axis_element(0, i);
-    n_min = get_min_n(v_par);
-    n_max = get_max_n(v_par);
+ //   n_min = get_min_n(v_par, k_thresh, om_ce_ref);
+//    n_max = get_max_n(v_par, k_thresh, om_ce_ref);
+    n_min = -n_n;
+    n_max = - n_min;
+    std::cout<<n_max<<std::endl;
     if((i-last_report) >= report_interval){
       my_print("i "+mk_str(i), mpi_info.rank);
 
@@ -239,5 +246,29 @@ Get mu, dmu/domega which are used to:
   free(D_theta);
 }
 
+int diffusion_coeff::get_min_n(calc_type v_par, my_type k_thresh, calc_type om_ce){
+/** \brief Limits on n 
+*
+* Uses the maximum k and the velocity to give min/max n to consider (note signs)
+*/
+
+  calc_type gamma = 1.0;
+  /** \todo FIX!!! */
+  return (int)(gamma * k_thresh * v_par / om_ce);
+
+}
+
+int diffusion_coeff::get_max_n(calc_type v_par, my_type k_thresh, calc_type om_ce){
+/** \brief Limits on n 
+*
+* Uses the maximum k and the velocity to give min/max n to consider (note signs)
+*/
+
+  calc_type gamma = 1.0;
+  /** \todo FIX!!! */
+  return -1*(int)(gamma * k_thresh * v_par / om_ce);
+
+
+}
 
 

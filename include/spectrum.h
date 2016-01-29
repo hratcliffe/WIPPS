@@ -32,14 +32,14 @@ class spectrum : public data_array{
   bool normaliseB();/**< Fills normB*/
   bool normaliseg(my_type omega);/**< Fills normg for omega*/
   virtual ~spectrum();/**< Private because only controllers can create/destroy*/
-
+  my_type max_power;/**<Value of maximum in spectral power*/
+//  my_type k_thresh;/**<K value of where spectrum crosses threshold (noise) value*/
 public:
 
   int wave_id; /**< ID for which wave mode cutout we're going for. See support.h*/
   bool angle_is_function;/**< Says we impose g(x) rather than have one g for each w*/
   int function_type;/**< Type code for angular function. See support.h */
   int n_angs;/**< Number of angles to use*/
-
   void set_ids(float time1, float time2, int space1, int space2, int wave_id, char block_id[10], int function_type=FUNCTION_DELTA);
 
   bool generate_spectrum(data_array * parent, int om_fuzz=10, int angle_type=FUNCTION_DELTA);

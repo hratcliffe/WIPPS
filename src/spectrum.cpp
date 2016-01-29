@@ -303,20 +303,23 @@ void spectrum::make_test_spectrum(int time[2], int space[2],int angle_type){
   for(int i=0; i<len1; i++) *(ax_ptr+i) = (my_type)i*res_x;
 
   ax_ptr = get_axis(0, len0);
-  my_type res_k = 1.0/(my_type)len0;
+  my_type res_k = 1e-2*1.0/(my_type)len0;
+  //Rough value for length of
   for(int i=0; i<len0; i++) *(ax_ptr+i) = res_k*((my_type)i - (my_type)len0/2.0);
   
   make_angle_distrib();
 
   //Generate the negative k data
   
-  my_type centre = 0.2, width=0.005, background = 0.0;
+  my_type centre = 0.0005, width=0.2e-6, background = 0.0;
   my_type * data_ptr = data;
   my_type * data_tmp, *ax_tmp;
   data_tmp = data_ptr;
   ax_tmp = ax_ptr;
 
-  for(int i=0; i<=len0/2; i++, ax_tmp++, data_tmp++) *(data_tmp) = exp(-pow((*(ax_tmp) + centre), 2)/width) + background;
+  for(int i=0; i<=len0/2; i++, ax_tmp++, data_tmp++){
+    *(data_tmp) = exp(-pow((*(ax_tmp) + centre), 2)/width) + background;
+  }
   data_tmp--;
   //we've gone one past our termination condition...
   for(int i=1; i<len0/2; i++) *(data_tmp + i) = *(data_tmp - i);
@@ -520,6 +523,7 @@ calc_type spectrum::check_upper(){
     }
   }
   
+  std::cout<<std::abs(this->get_axis_element(0, index))<<std::endl;
   if(!ax_omega) k_thresh = std::abs(this->get_axis_element(0, index));
   else{
     //get omega value and convert to k...

@@ -25,7 +25,7 @@ diffusion_coeff::diffusion_coeff(int nx, int n_angs):data_array(nx, n_angs){
   my_controller = nullptr;
 
   n_thetas = 100;
-  n_n = 5;
+  n_n = 10;
   tag = LOCAL;
   // FAKENUMBERS
 }
@@ -67,7 +67,7 @@ void diffusion_coeff::make_velocity_axis(){
 */
 
   calc_type res = (V_MAX - V_MIN)/this->get_length(0);
-  int offset = V_MIN/res;
+  int offset = std::abs(V_MIN)/res;
   make_linear_axis(0, res, offset);
   //-2 is for testing so 0th element is > zero...
   // FAKENUMBERS
@@ -174,11 +174,12 @@ Get mu, dmu/domega which are used to:
   for(int i =0; i< dims[0]; ++i){
     //particle parallel velocity
     v_par = get_axis_element(0, i);
- //   n_min = get_min_n(v_par, k_thresh, om_ce_ref);
-//    n_max = get_max_n(v_par, k_thresh, om_ce_ref);
-    n_min = -n_n;
-    n_max = - n_min;
-    std::cout<<n_max<<std::endl;
+    n_min = get_min_n(v_par, k_thresh, om_ce_ref);
+    n_max = get_max_n(v_par, k_thresh, om_ce_ref);
+    std::cout<<n_min<<" "<<n_max<<std::endl;
+    std::cout<<v_par / v0<<std::endl;
+//    n_min = -n_n;
+//    n_max = - n_min;
     if((i-last_report) >= report_interval){
       my_print("i "+mk_str(i), mpi_info.rank);
 
@@ -249,12 +250,14 @@ Get mu, dmu/domega which are used to:
 int diffusion_coeff::get_min_n(calc_type v_par, my_type k_thresh, calc_type om_ce){
 /** \brief Limits on n 
 *
-* Uses the maximum k and the velocity to give min/max n to consider (note signs)
+* Uses the maximum k and the velocity to give min/max n to consider (note signs) \todo Is there a tighter limt? This is quite weak...
 */
 
   calc_type gamma = 1.0;
   /** \todo FIX!!! */
-  return (int)(gamma * k_thresh * v_par / om_ce);
+
+  int sig = v_par/std::abs(v_par);
+  return std::max(sig*(int)(gamma * k_thresh * v_par / om_ce), -n_n);
 
 }
 
@@ -266,7 +269,10 @@ int diffusion_coeff::get_max_n(calc_type v_par, my_type k_thresh, calc_type om_c
 
   calc_type gamma = 1.0;
   /** \todo FIX!!! */
-  return -1*(int)(gamma * k_thresh * v_par / om_ce);
+
+  int sig = v_par/std::abs(v_par);
+
+  return std::min(-1*sig*(int)(gamma * k_thresh * v_par / om_ce), n_n);
 
 
 }

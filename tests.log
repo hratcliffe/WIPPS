@@ -33,12 +33,8 @@ Testing dispersion solver for plasma O mode
 Testing dispersion solver for plasma X mode
 Testing dmu/domega
 Testing dmu/dtheta
-Wrong derivative in get_phi_mu_om
-Wrong derivative in get_root
-Wrong derivative in get_phi_mu_om
-Wrong derivative in get_root
-Wrong derivative in get_phi_mu_om
-Wrong derivative in get_root
+Wrong derivative in get_phi_mu_om at omega = 1.055292e+04 and phi = 3.141593e+00
+Wrong derivative in get_root at omega = 1.055292e+04 and phi = 3.141593e+00
 Error Wrong result, (code 1) on test plasma
 Passed test spectrum checks
 1 total errors

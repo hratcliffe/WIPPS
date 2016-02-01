@@ -814,8 +814,7 @@ int test_entity_plasma::phi_dom(){
   om_pe_local = plas->get_omega_ref("pe");
 
   calc_type d_omega = std::abs(om_ce_local)/1e8;
-  calc_type d_theta = pi/(calc_type)(n_tests)/1e6;
-
+  calc_type d_theta = pi/(calc_type)(n_tests)/1e7;
   //Derivative step size.
 
   mu_dmudom my_mu, my_mu_p;
@@ -824,10 +823,7 @@ int test_entity_plasma::phi_dom(){
 
   calc_type tmp_omega = 0.0, tmp_theta=pi/(calc_type)(n_tests), tmp_omega_n=0.0;
 
-
   test_bed->report_info("Testing dmu/domega", 1);
-
-  //dmu.dom should be as simple as requesting two nearby omegas and doing numerical deriv...
 
   for(size_t i =0; i<n_tests; i++){
     tmp_omega += std::abs(om_ce_local)/(calc_type)(n_tests + 1);
@@ -865,23 +861,22 @@ int test_entity_plasma::phi_dom(){
     my_mu_all = plas->get_root(0.0, tmp_omega, tmp_theta);
     my_mu_p = plas->get_phi_mu_om(tmp_omega, tmp_theta+d_theta, 0.0, 0.0, tmp_omega_n);
     my_mu_all_p = plas->get_root(0.0, tmp_omega, tmp_theta+d_theta);
-    
-    /** Approx numerical derivative*/
+
+    /** Approx numerical derivative. Manually fix signs*/
     mu_tmp1 = -(my_mu.mu - my_mu_p.mu)/d_theta;
-    std::cout<<1.0-(mu_tmp1/my_mu.dmudtheta)<<std::endl;
 
     mu_tmp2 = -(my_mu_all.mu - my_mu_all_p.mu)/d_theta;
-    std::cout<<1.0-(mu_tmp2/my_mu_all.dmudtheta)<<std::endl;
-
+    
     if(std::abs(std::abs(mu_tmp1 /my_mu.dmudtheta) - 1.0) > NUM_PRECISION){
       err|=TEST_WRONG_RESULT;
-      test_bed->report_info("Wrong derivative in get_phi_mu_om", 2);
+      test_bed->report_info("Wrong derivative in get_phi_mu_om at omega = "+mk_str(tmp_omega) +" and phi = "+mk_str(tmp_theta), 2);
+
     }
     if(std::abs(std::abs(mu_tmp2/my_mu_all.dmudtheta) - 1.0) > NUM_PRECISION){
       err|=TEST_WRONG_RESULT;
-      test_bed->report_info("Wrong derivative in get_root", 2);
+      test_bed->report_info("Wrong derivative in get_root at omega = "+mk_str(tmp_omega) +" and phi = "+mk_str(tmp_theta), 2);
+
     }
-    //std::cout<<my_mu_all.dmudtheta<<" "<<my_mu.dmudtheta<<std::endl;
     /**my_mu_all.mu and my_mu.mu should be exactly equal*/
     if(std::abs(my_mu_all.dmudtheta-my_mu.dmudtheta) > PRECISION){
       test_bed->report_info("Inconsistent derivative between get_root and get_phi_mu_om", 2);

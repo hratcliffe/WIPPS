@@ -162,7 +162,7 @@ struct setup_args{
   int time[3];/**< Start and end dump numbers*/
   int space[2];/**< Local space block start and end*/
   std::string block;/**< Block ID to use (ex, bz etc)*/
-  std::string file_prefix;/**< Prifix part of SDF file names*/
+  std::string file_prefix;/**< Prefix part of SDF file names*/
   int n_space;/**< Number of space blocks in global x direction*/
   int per_proc;/**< Resulting number of space blocks per proc*/
   int d[2];/**< Dimensions of D to produce*/

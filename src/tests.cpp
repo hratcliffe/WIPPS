@@ -938,6 +938,7 @@ int test_entity_spectrum::setup(){
   int err = TEST_PASSED;
 
   test_dat_fft = new data_array(file_prefix + "FFT_data.dat", 1);
+  test_contr = new controller(file_prefix);
 
   return err;
 }
@@ -949,7 +950,6 @@ int test_entity_spectrum::basic_tests(){
 */
   int err = TEST_PASSED;
 
-  test_contr = new controller(file_prefix);
   std::fstream outfile;
 
   int len=0;
@@ -1026,8 +1026,40 @@ int test_entity_spectrum::basic_tests(){
 
 int test_entity_spectrum::albertGs_tests(){
 /** \brief Tests of the Albert G functions in spectrum. Also tests the normalisations on the way
+*
+*
 */
   int err = TEST_PASSED;
+  int row_lengths[2];
+
+  calc_type om_ce_local, om_pe_local, G1, G2;
+  om_ce_local = test_contr->get_plasma()->get_omega_ref("ce");
+  om_pe_local = test_contr->get_plasma()->get_omega_ref("pe");
+
+  size_t n_tests = 10;
+  calc_type tmp_omega=0.0, tmp_x;
+
+  row_lengths[0] = test_dat_fft->get_dims(0);
+  row_lengths[1] = DEFAULT_N_ANG;
+  test_contr->add_spectrum(row_lengths, 2);
+
+  test_contr->get_current_spectrum()->make_test_spectrum(tim_in, space_in, FUNCTION_GAUSS);
+
+  //Now we have a test spectrum. Need to know what its normalisations should be. And what the Albert functions should resolve to.
+  
+  for(int i=0; i< n_tests;i++){
+    tmp_omega = std::abs(om_ce_local)/10.0 + 89.0/100.0 * std::abs(om_ce_local) * (1.0 - exp(-i));
+    //Cover range from small to just below om_ce...
+    G1 = test_contr->get_current_spectrum()->get_G1(tmp_omega);
+    std::cout<<G1<<std::endl;
+
+    tmp_x = ANG_MIN + i * (ANG_MAX - ANG_MIN)/(n_tests-1);
+    
+    G2 = test_contr->get_current_spectrum()->get_G2(tmp_omega, tmp_x);
+    std::cout<<"G2 "<<G2<<std::endl;
+    
+    
+  }
 
   return err;
 }

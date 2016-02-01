@@ -411,13 +411,12 @@ calc_type spectrum::get_G1(calc_type omega){
 /** \brief G1 from Albert 2005.
 *
 *Gets the value of B(w) (interpolated if necessary) and the normalising constant from normB
-\todo Does it matter that our k is limited? Do waves really go to low intensity in bit we see
+\todo Does it matter that our k is limited? Do waves really go to low intensity in bit we see \todo Do we need the vg conversion factor?
 */
 
   calc_type B2;
   my_type tmpB2;
   if(normB ==0.0) normaliseB();
-
   int len, offset;
   my_type data_bit[2];
   my_type ax_val;
@@ -428,18 +427,19 @@ calc_type spectrum::get_G1(calc_type omega){
 
   if(ax_omega){
     ax_val = (my_type) omega;
+
   }else{
     //We have k, need to translate via dispersion relation to get the required index and add the v_g factor
     ax_val = get_k((my_type)omega, WAVE_WHISTLER);
-    change_of_vars = get_omega(ax_val, WAVE_WHISTLER, 1);
+    change_of_vars = std::abs(get_omega(ax_val, WAVE_WHISTLER, 1));
+    /** \todo Abs or not???? */
   }
 
   offset = where(axis, len, ax_val);
-
   //Interpolate if possible, else use the end
   if(offset > 0 && offset < len){
-    data_bit[0] = get_element(0, offset-1);
-    data_bit[1] = get_element(0, offset);
+    data_bit[0] = get_element(offset-1, 0);
+    data_bit[1] = get_element(offset, 0);
     tmpB2 = interpolate(axis + offset-1, data_bit, ax_val, 2);
   }else if(offset==0){
     //we're right at end, can't meaningfully interpolate, use raw
@@ -451,6 +451,7 @@ calc_type spectrum::get_G1(calc_type omega){
 
   //Add change_of_vars constant in case we have k axis
   B2 = (calc_type) tmpB2 * change_of_vars;
+//  std::cout<<B2/normB<<" "<<tmpB2<<" "<<change_of_vars<<std::endl;
 
   //Add norm. constant
   return B2/normB;
@@ -478,19 +479,20 @@ calc_type spectrum::get_G2(calc_type omega, calc_type x){
   if(om_ind>=0 && normg[om_ind] == 0.0){
     normaliseg(omega);
   }
-
+  //Bump up to miss B row
   my_type * axis = this->get_axis(1, len);
-//  len=get_length(1);
   offset = where(axis, len, x);
   
   //Interpolate if possible, else use the end
   if(offset > 0 && offset < len){
-    data_bit[0] = get_element(om_ind, offset-1);
-    data_bit[1] = get_element(om_ind, offset);
+    data_bit[0] = get_element(offset-1, om_ind+1);
+    data_bit[1] = get_element(offset, om_ind+1);
     tmpg = interpolate(axis + offset-1, data_bit, (my_type)x, 2);
+
   }else if(offset==0){
     //we're right at end, can't meaningfully interpolate, use raw
-    tmpg = get_element(om_ind, offset);
+    tmpg = get_element(offset, om_ind+1);
+
   }else{
     //offset <0 or > len, value not found
     tmpg = 0.0;

@@ -55,7 +55,7 @@ void tests::setup_tests(){
   outfile = new std::fstream();
   outfile->open(filename.c_str(), std::ios::out);
   if(!outfile->is_open()){
-    std::cout<<"Error opening "<<filename<<std::endl;
+    my_print("Error opening "+filename, mpi_info.rank);
     //can't log so return with empty test list
     return;
   }
@@ -989,7 +989,6 @@ int test_entity_spectrum::basic_tests(){
     
     my_type expected = is_zero ? 2.0 : 3.0;
     //Iso always integrates to 1. Gaussian and delta are always symmetric
-    std::cout<< total_error<<std::endl;
     if(std::abs(total_error - expected)/3.0 > NUM_PRECISION){
     
       err |= TEST_WRONG_RESULT;
@@ -1047,38 +1046,45 @@ int test_entity_spectrum::albertGs_tests(){
   size_t n_tests = 10;
   calc_type tmp_omega=0.0, tmp_x;
 
-  row_lengths[0] = test_dat_fft->get_dims(0);
+  row_lengths[0] = 5000;
   row_lengths[1] = DEFAULT_N_ANG;
   test_contr->add_spectrum(row_lengths, 2);
 
   test_contr->get_current_spectrum()->make_test_spectrum(tim_in, space_in, FUNCTION_GAUSS, true);
   
   my_type om_min, om_max, x_min, x_max, om_peak;
-  om_min = 10000.0;
-  om_max = 20000.0;
+  om_min = 15000.0;
+  om_max = 18000.0;
   x_min = 0.0;
   x_max = 3.0;
   
   test_contr->get_current_spectrum()->truncate_om(om_min, om_max);
   //test_contr->get_current_spectrum()->truncate_x(x_min, x_max);
   om_peak = test_contr->get_current_spectrum()->get_peak_omega();
-  std::cout<<om_peak<<std::endl;
   //Now we have a test spectrum. Need to know what its normalisations should be. And what the Albert functions should resolve to.
+  
+  my_type width=0.1*om_peak;
   
   for(int i=0; i< n_tests;i++){
     tmp_omega = std::abs(om_ce_local)/10.0 + 89.0/100.0 * std::abs(om_ce_local) * (1.0 - exp(-i));
     //Cover range from small to just below om_ce...
     G1 = test_contr->get_current_spectrum()->get_G1(tmp_omega);
-    std::cout<<"G1 "<<G1<<std::endl;
 
     tmp_x = ANG_MIN + i * (ANG_MAX - ANG_MIN)/(n_tests-1);
     
     G2 = test_contr->get_current_spectrum()->get_G2(tmp_omega, tmp_x);
-    std::cout<<"  G2 "<<G2<<std::endl;
+//    std::cout<<"  G2 "<<G2<<std::endl;
     
     //Analytic calculations for truncated Gaussians, see Albert 2005
     
-    G1_analytic = 2.0 / std::sqrt(pi) * std::exp( - std::pow((tmp_omega - om_peak), 2));
+    G1_analytic = 2.0 / std::sqrt(pi) * std::exp( - std::pow((tmp_omega - om_peak)/width, 2));
+    G1_analytic /= (boost::math::erf((om_max - om_peak)/width) +boost::math::erf((om_peak - om_min)/width));
+    G1_analytic /=width;
+    if(std::abs(G1-G1_analytic) > NUM_PRECISION){
+      err |= TEST_WRONG_RESULT;
+      test_bed->report_info("G1 does not match analytic calc, absolute error = "+mk_str(std::abs(G1-G1_analytic)), mpi_info.rank);
+    }
+//    std::cout<<"G1 "<<std::abs(G1-G1_analytic)<<std::endl;
     
     
   }

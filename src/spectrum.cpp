@@ -369,18 +369,18 @@ bool spectrum::truncate_om(my_type om_min, my_type om_max){
 
   if(om_min != 0.0){
     index=where_omega(om_min);
-    std::cout<<index<<std::endl;
     if(index != -1) for(int i=0; i< index; i++) set_element(i, 0, 0.0);
     //Zero up to om_min
   }
 
   if(om_max != 0.0){
     index=where_omega(om_max);
-    std::cout<<index<<std::endl;
     if(index != -1) for(int i = index; i< len; i++) set_element(i, 0, 0.0);
     //Zero after to om_max
   }
 
+  normaliseB();
+  //Re-do normalisation
   return 0;
 
 }
@@ -545,6 +545,7 @@ calc_type spectrum::get_G1(calc_type omega){
     data_bit[0] = get_element(offset-1, 0);
     data_bit[1] = get_element(offset, 0);
     tmpB2 = interpolate(axis + offset-1, data_bit, ax_val, 2);
+    
   }else if(offset==0){
     //we're right at end, can't meaningfully interpolate, use raw
     tmpB2 = get_element(0, offset);
@@ -555,7 +556,6 @@ calc_type spectrum::get_G1(calc_type omega){
 
   //Add change_of_vars constant in case we have k axis
   B2 = (calc_type) tmpB2 * change_of_vars;
-  std::cout<<normB<<" "<<tmpB2<<" "<<change_of_vars<<std::endl;
 
   //Add norm. constant
   return B2/normB;

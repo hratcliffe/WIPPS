@@ -91,8 +91,8 @@ const std::string GLOBAL = "glb";/**< Tag identifying diffusion coefficient proc
 
 const my_type V_MIN = -0.3*v0;/**< Minimum particle velocity for D*/
 const my_type V_MAX = 0.3*v0;/**< Maximum particle velocity for D*/
-const my_type ANG_MIN = 0;/**< Minimum angle (tan theta) for D*/
-const my_type ANG_MAX = 4;/**< Maximum angle (tan theta) for D*/
+const my_type ANG_MIN = -4.0;/**< Minimum angle (tan theta) for D*/
+const my_type ANG_MAX = 4.0;/**< Maximum angle (tan theta) for D*/
 const my_type SPECTRUM_ANG_STDDEV = 0.2;/**< Maximum angle (tan theta) for D*/
 const my_type SPECTRUM_THRESHOLD = 1e-3;/**< Fraction of peak power considered to be "significant" spectral power*/
 /** @} */

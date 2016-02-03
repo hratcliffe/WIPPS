@@ -838,7 +838,7 @@ int data_array::get_total_axis_elements(){
 void data_array::make_linear_axis(int dim, float res, int offset){
 /**\brief Make an axis
 *
-*Generates a linear axis for dimension dim, with resolution res, starting at value of offset*res
+*Generates a linear axis for dimension dim, with resolution res, starting at value of  - offset*res @param dim Dimension to build axis for @param res Axis resolution @param offset Number of grid cells to shift downwards (leftwards) by
 */
 
   int len;

@@ -965,29 +965,37 @@ int test_entity_spectrum::basic_tests(){
 
   test_contr->get_current_spectrum()->make_test_spectrum(tim_in, space_in, FUNCTION_DELTA);
   //Check angle distrib integrates to 1 for each case
+  //NOTE we can only do this if MIN_ANG is either 0 or is - MAX_ANG. otherwise we're into erf and bunk
+  bool is_symmetric=false, is_zero = false;
+  if(std::abs(ANG_MIN + ANG_MAX) < PRECISION) is_symmetric = true;
+  if(std::abs(ANG_MIN) < PRECISION) is_zero = true;
+  
+  if(is_symmetric || is_zero){
+    d_angle = (my_type *) calloc(row_lengths[1], sizeof(my_type));
+    for(int i=0; i<row_lengths[1]-1; ++i){
+      d_angle[i] = std::abs(test_contr->get_current_spectrum()->get_axis_element(1, i) - test_contr->get_current_spectrum()->get_axis_element(1, i+1));
+    }
+    angle_data = test_contr->get_current_spectrum()->get_angle_distrib(len);
+    
+    total_error = integrator(angle_data, len, d_angle);
 
-  d_angle = (my_type *) calloc(row_lengths[1], sizeof(my_type));
-  for(int i=0; i<row_lengths[1]-1; ++i){
-    d_angle[i] = std::abs(test_contr->get_current_spectrum()->get_axis_element(1, i) - test_contr->get_current_spectrum()->get_axis_element(1, i+1));
+    test_contr->get_current_spectrum()->make_test_spectrum(tim_in, space_in, FUNCTION_GAUSS);
+    angle_data = test_contr->get_current_spectrum()->get_angle_distrib(len);
+    total_error += integrator(angle_data, len, d_angle);
+
+    test_contr->get_current_spectrum()->make_test_spectrum(tim_in, space_in, FUNCTION_ISO);
+    angle_data = test_contr->get_current_spectrum()->get_angle_distrib(len);
+    total_error += integrator(angle_data, len, d_angle);
+    
+    my_type expected = is_zero ? 2.0 : 3.0;
+    //Iso always integrates to 1. Gaussian and delta are always symmetric
+    std::cout<< total_error<<std::endl;
+    if(std::abs(total_error - expected)/3.0 > NUM_PRECISION){
+    
+      err |= TEST_WRONG_RESULT;
+      test_bed->report_info("Error in angular distribution integrals");
+    }
   }
-  angle_data = test_contr->get_current_spectrum()->get_angle_distrib(len);
-  
-  total_error = integrator(angle_data, len, d_angle);
-
-  test_contr->get_current_spectrum()->make_test_spectrum(tim_in, space_in, FUNCTION_GAUSS);
-  angle_data = test_contr->get_current_spectrum()->get_angle_distrib(len);
-  total_error += integrator(angle_data, len, d_angle);
-
-  test_contr->get_current_spectrum()->make_test_spectrum(tim_in, space_in, FUNCTION_ISO);
-  angle_data = test_contr->get_current_spectrum()->get_angle_distrib(len);
-  total_error += integrator(angle_data, len, d_angle);
-  
-  if(std::abs(total_error - 1.5)/3.0 > NUM_PRECISION){
-  
-    err |= TEST_WRONG_RESULT;
-    test_bed->report_info("Error in angular distribution integrals");
-  }
-  
   outfile.open("spect_testy.dat", std::ios::out|std::ios::binary);
   test_contr->get_current_spectrum()->write_to_file(outfile);
   outfile.close();
@@ -1047,12 +1055,12 @@ int test_entity_spectrum::albertGs_tests(){
   
   my_type om_min, om_max, x_min, x_max, om_peak;
   om_min = 10000.0;
-  om_max = 17000.0;
-  x_min = 1.0;
+  om_max = 20000.0;
+  x_min = 0.0;
   x_max = 3.0;
   
   test_contr->get_current_spectrum()->truncate_om(om_min, om_max);
-  test_contr->get_current_spectrum()->truncate_x(x_min, x_max);
+  //test_contr->get_current_spectrum()->truncate_x(x_min, x_max);
   om_peak = test_contr->get_current_spectrum()->get_peak_omega();
   std::cout<<om_peak<<std::endl;
   //Now we have a test spectrum. Need to know what its normalisations should be. And what the Albert functions should resolve to.

@@ -177,7 +177,7 @@ bool spectrum::make_angle_distrib(){
   
   calc_type res = (ANG_MAX - ANG_MIN)/this->get_length(1);
   int len;
-  int offset = ANG_MIN/res;
+  int offset = -ANG_MIN/res;
   make_linear_axis(1, res, offset);
   len = get_length(0);
   my_type val;
@@ -204,7 +204,7 @@ bool spectrum::make_angle_distrib(){
 
   }else if(function_type ==FUNCTION_ISO){
 
-    val = 0.5/ (ANG_MAX - ANG_MIN)*get_length(1)/(get_length(1)-1);
+    val = 1.0/ (ANG_MAX - ANG_MIN)*get_length(1)/(get_length(1)-1);
     for(int i=0; i<len; ++i) this->set_element(i,1,val);
 
   }else{

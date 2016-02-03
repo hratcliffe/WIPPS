@@ -43,21 +43,24 @@ public:
   void set_ids(float time1, float time2, int space1, int space2, int wave_id, char block_id[10], int function_type=FUNCTION_DELTA);
 
   bool generate_spectrum(data_array * parent, int om_fuzz=10, int angle_type=FUNCTION_DELTA);
+  bool truncate_om(my_type om_min, my_type om_max);
+  bool truncate_x(my_type x_min, my_type x_max);
 
   my_type get_omega(my_type k, int wave_type, bool deriv=0);
   my_type get_k(my_type omega, int wave_type, bool deriv =0);
   bool make_angle_distrib();
   my_type * get_angle_distrib(int &len, my_type omega=0.0);
-
+  int where_omega(my_type value);
   std::vector<int> all_where(my_type * ax_ptr, int len, my_type target, std::function<bool(my_type,my_type)> func = std::greater<my_type>());
   
   bool write_to_file(std::fstream &file);
 
-  void make_test_spectrum(int time[2], int space[2],int angle_type=FUNCTION_DELTA);
+  void make_test_spectrum(int time[2], int space[2],int angle_type=FUNCTION_DELTA, bool ax_om=false);
 
   calc_type get_G1(calc_type omega);
   calc_type get_G2(calc_type omega, calc_type x);
   calc_type check_upper();
+  calc_type get_peak_omega();
 
 };
 

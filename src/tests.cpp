@@ -1032,7 +1032,7 @@ int test_entity_spectrum::albertGs_tests(){
   int err = TEST_PASSED;
   int row_lengths[2];
 
-  calc_type om_ce_local, om_pe_local, G1, G2;
+  calc_type om_ce_local, om_pe_local, G1, G2, G1_analytic, G2_analytic;
   om_ce_local = test_contr->get_plasma()->get_omega_ref("ce");
   om_pe_local = test_contr->get_plasma()->get_omega_ref("pe");
 
@@ -1043,23 +1043,43 @@ int test_entity_spectrum::albertGs_tests(){
   row_lengths[1] = DEFAULT_N_ANG;
   test_contr->add_spectrum(row_lengths, 2);
 
-  test_contr->get_current_spectrum()->make_test_spectrum(tim_in, space_in, FUNCTION_GAUSS);
-
+  test_contr->get_current_spectrum()->make_test_spectrum(tim_in, space_in, FUNCTION_GAUSS, true);
+  
+  my_type om_min, om_max, x_min, x_max, om_peak;
+  om_min = 10000.0;
+  om_max = 17000.0;
+  x_min = 1.0;
+  x_max = 3.0;
+  
+  test_contr->get_current_spectrum()->truncate_om(om_min, om_max);
+  test_contr->get_current_spectrum()->truncate_x(x_min, x_max);
+  om_peak = test_contr->get_current_spectrum()->get_peak_omega();
+  std::cout<<om_peak<<std::endl;
   //Now we have a test spectrum. Need to know what its normalisations should be. And what the Albert functions should resolve to.
   
   for(int i=0; i< n_tests;i++){
     tmp_omega = std::abs(om_ce_local)/10.0 + 89.0/100.0 * std::abs(om_ce_local) * (1.0 - exp(-i));
     //Cover range from small to just below om_ce...
     G1 = test_contr->get_current_spectrum()->get_G1(tmp_omega);
-    std::cout<<G1<<std::endl;
+    std::cout<<"G1 "<<G1<<std::endl;
 
     tmp_x = ANG_MIN + i * (ANG_MAX - ANG_MIN)/(n_tests-1);
     
     G2 = test_contr->get_current_spectrum()->get_G2(tmp_omega, tmp_x);
-    std::cout<<"G2 "<<G2<<std::endl;
+    std::cout<<"  G2 "<<G2<<std::endl;
+    
+    //Analytic calculations for truncated Gaussians, see Albert 2005
+    
+    G1_analytic = 2.0 / std::sqrt(pi) * std::exp( - std::pow((tmp_omega - om_peak), 2));
     
     
   }
+
+  std::fstream outfile;
+  outfile.open("spect_truncated.dat", std::ios::out|std::ios::binary);
+  test_contr->get_current_spectrum()->write_to_file(outfile);
+  outfile.close();
+
 
   return err;
 }

@@ -282,17 +282,17 @@ bool spectrum::write_to_file(std::fstream &file){
 
 }
 
-void spectrum::make_test_spectrum(int time[2], int space[2],int angle_type){
+void spectrum::make_test_spectrum(int time[2], int space[2],int angle_type, bool ax_om){
 /** \brief Generate dummy spectrum
 *
-*Makes a basic spectrum object with suitable number of points, and twin, symmetric Gaussians centred at fixed x value
+*Makes a basic spectrum object with suitable number of points, and twin, symmetric Gaussians centred at fixed k/freq and x value \todo Should we use negative freqs?? @param time Time range (number of points) @param space Space range (number of points) @param angle_type Function to use for angular distrib @param ax_om Whether x axis is frequency (true) or wavenumber (false). Default is false
 */
 
   char id[10] = "ex";
 
   this->set_ids(time[0], time[1], space[0], space[1], WAVE_WHISTLER, id, angle_type);
   
-  ax_omega = false;
+  this->ax_omega = ax_om;
 
   //setup axes
   int len0, len1;
@@ -303,30 +303,134 @@ void spectrum::make_test_spectrum(int time[2], int space[2],int angle_type){
   for(int i=0; i<len1; i++) *(ax_ptr+i) = (my_type)i*res_x;
 
   ax_ptr = get_axis(0, len0);
-  my_type res_k = 1e-2*1.0/(my_type)len0;
+  my_type res;
+  bool offset = true;
+  //whether to have even ±pm axes or start from 0;
+  if(!ax_omega){
+    res = 1e-2*1.0/(my_type)len0;
+  }
+  else{
+    res = 20000.0*1.0/(my_type)len0;
+    offset= false;
+  }
+  //res to cover range from offset to max in len0 steps
+
   //Rough value for length of
-  for(int i=0; i<len0; i++) *(ax_ptr+i) = res_k*((my_type)i - (my_type)len0/2.0);
-  
+  for(int i=0; i<len0; i++) *(ax_ptr+i) = res*((my_type)i - offset* (my_type)len0/2.);
+
   make_angle_distrib();
 
   //Generate the negative k data
   
-  my_type centre = 0.0005, width=0.2e-6, background = 0.0;
+  my_type centre, width, background = 0.0;
+  if(!ax_omega) centre = 0.0005, width=centre;
+  else centre = 16000, width=0.1*centre;
+  
   my_type * data_ptr = data;
   my_type * data_tmp, *ax_tmp;
   data_tmp = data_ptr;
   ax_tmp = ax_ptr;
 
-  for(int i=0; i<=len0/2; i++, ax_tmp++, data_tmp++){
-    *(data_tmp) = exp(-pow((*(ax_tmp) + centre), 2)/width) + background;
+  if(offset){
+    for(int i=0; i<=len0/2; i++, ax_tmp++, data_tmp++){
+      *(data_tmp) = exp(-pow((*(ax_tmp) + centre), 2)/width/width) + background;
+    }
+    data_tmp--;
+    //we've gone one past our termination condition...
+    for(int i=1; i<len0/2; i++) *(data_tmp + i) = *(data_tmp - i);
+  }else{
+  
+    for(int i=0; i<=len0; i++, ax_tmp++, data_tmp++){
+      *(data_tmp) = exp(-pow((*(ax_tmp) - centre), 2)/width/width) + background;
+    }
   }
-  data_tmp--;
-  //we've gone one past our termination condition...
-  for(int i=1; i<len0/2; i++) *(data_tmp + i) = *(data_tmp - i);
-  //reflect onto +ve k
+  //reflect onto +ve axis
 //+ 0.25*exp(-pow((*(ax_tmp) + centre), 2)/width*50.0)
   max_power = 1.0;
   //Store value of maximum
+}
+
+bool spectrum::truncate_om(my_type om_min, my_type om_max){
+/** \brief Truncate omega distribution at om_min and om_max.
+*
+*Zeros all elements outside the range [abs(om_min), abs(om_max)]. Zeros are ignored. om_min must be < om_max.
+*/
+
+  if(om_min < 0) om_min = std::abs(om_min);
+  if(om_max < 0) om_max = std::abs(om_max);
+  if(om_min >= om_max){
+    my_print("Invalid omega range, aborting truncate", mpi_info.rank);
+    return 1;
+  
+  }
+
+  int index = -1;
+  int len = get_length(0);
+
+  if(om_min != 0.0){
+    index=where_omega(om_min);
+    std::cout<<index<<std::endl;
+    if(index != -1) for(int i=0; i< index; i++) set_element(i, 0, 0.0);
+    //Zero up to om_min
+  }
+
+  if(om_max != 0.0){
+    index=where_omega(om_max);
+    std::cout<<index<<std::endl;
+    if(index != -1) for(int i = index; i< len; i++) set_element(i, 0, 0.0);
+    //Zero after to om_max
+  }
+
+  return 0;
+
+}
+
+bool spectrum::truncate_x(my_type x_min, my_type x_max){
+/** \brief Truncate angle distribution at x_min and x_max.
+*
+*Zeros all elements outside the range [abs(x_min), abs(x_max)]. Zeros are ignored. x_min must be < x_max.
+*/
+
+  if(x_min >= x_max){
+    my_print("Invalid x range, aborting truncate", mpi_info.rank);
+    return 1;
+  }
+
+  int index = -1;
+  int len = get_length(1);
+
+  if(x_min > ANG_MIN){
+    index = where(get_axis(1, len), len, x_min);
+    if(index != -1) for(int i=0; i< index; i++) set_element(i, 1, 0.0);
+  
+  }
+  if(x_max < ANG_MAX){
+    index = where(get_axis(1, len), len, x_max);
+    if(index != -1) for(int i=index; i< len; i++) set_element(i, 1, 0.0);
+  
+  }
+
+  return 0;
+
+}
+
+int spectrum::where_omega(my_type omega){
+/** \brief Gets where omega axis exceeds passed value
+*
+*Finds where frequency or wavenumber axis exceeds passed omega, using dispersion relation to transform k to omega if necessary.
+*/
+  int len, index;
+  get_axis(0, len);
+
+  if(ax_omega){
+    index = where(get_axis(0, len), len, omega);
+  }else{
+    my_type k = get_k(omega, WAVE_WHISTLER);
+    index = where(get_axis(0, len), len, k);
+  }
+  
+  return index;
+
 }
 
 bool spectrum::normaliseB(){
@@ -338,8 +442,8 @@ bool spectrum::normaliseB(){
   int len = get_length(0);
   my_type * d_axis = (my_type *) calloc(len, sizeof(my_type));
   for(int i=0; i<len-1; i++) d_axis[i] = get_axis_element(0, i+1) - get_axis_element(0, i);
-  normB = integrator(data, len, d_axis);
   
+  normB = integrator(data, len, d_axis);
   free(d_axis);
   return 0;
 }
@@ -451,7 +555,7 @@ calc_type spectrum::get_G1(calc_type omega){
 
   //Add change_of_vars constant in case we have k axis
   B2 = (calc_type) tmpB2 * change_of_vars;
-//  std::cout<<B2/normB<<" "<<tmpB2<<" "<<change_of_vars<<std::endl;
+  std::cout<<normB<<" "<<tmpB2<<" "<<change_of_vars<<std::endl;
 
   //Add norm. constant
   return B2/normB;
@@ -541,5 +645,27 @@ calc_type spectrum::check_upper(){
   }
   
   return k_thresh;
+}
+
+calc_type spectrum::get_peak_omega(){
+/** Find position of spectral peak
+*
+*Finds location of highest peak in spectrum.
+*/
+
+  calc_type value = -1.0, tmp;
+  int index;
+  for(int i=0; i<this->get_length(0); ++i){
+    tmp = get_element(i, 0);
+    if(tmp > value){
+      index = i;
+      value = tmp;
+    }
+
+  }
+
+  if(ax_omega) return get_axis_element(0, index);
+  else return get_omega(get_axis_element(0, index), WAVE_WHISTLER);
+
 }
 

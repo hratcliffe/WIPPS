@@ -5,6 +5,7 @@ obj/
 .DS_Store
 main
 read_test
+test_reading_code.cpp
 Code.xcworkspace
 *.txt
 Derivations.*

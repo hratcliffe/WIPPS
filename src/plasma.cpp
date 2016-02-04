@@ -595,7 +595,7 @@ calc_type plasma::get_omega_ref(std::string code){
 calc_type plasma::get_dispersion(my_type in, int wave_type, bool reverse, bool deriv){
 /** \brief Gets omega for given k
 *
-* Uses local refernce cyclotron and plasma frequencies and works with UNNORMALISED quantitites. Assumes parallel prop, and Em in unmagentised \todo Fix to take angle also @param k Wavenumber @param wave_type wave species (see support.h) @param deriv Whether to instead return anayltic v_g \todo Finish cases in this function \todo What should signs be. Vg??
+* Uses local refernce cyclotron and plasma frequencies and works with UNNORMALISED quantitites. Assumes parallel prop, and Em in unmagentised \todo Fix to take angle also @param k Wavenumber @param wave_type wave species (see support.h) @param deriv Whether to instead return anayltic v_g \todo Finish cases in this function \todo What should signs be. Vg?? \todo Sensible outof range error??? \todo K and omega use different eqns....\todo Seems k and omega give different derivs?
 */
   calc_type ret = 0.0;
   calc_type om_ce_loc, om_pe_loc;
@@ -613,8 +613,10 @@ calc_type plasma::get_dispersion(my_type in, int wave_type, bool reverse, bool d
         else ret *= (2.0*in) * (csq_ksq / (csq_ksq + om_pe_loc*om_pe_loc) - 1.0);
         // FAKENUMBERS THIS IS WRONG. WHY????? IS IT RIGHT NOW?
       }else{
-        if(!deriv) ret = in/v0*std::sqrt(1.0 - std::pow(om_pe_loc, 2)/(in*(in - std::abs(om_ce_loc))) );
-        else ret = 0.0;
+
+        ret = in/v0*std::sqrt(0.0 - std::pow(om_pe_loc, 2)/(in*(in - std::abs(om_ce_loc))) );
+        calc_type csq_ksq = v0*v0*ret*ret;
+        if(deriv) ret = 1.0/( v0*v0*std::abs(om_ce_loc)/(csq_ksq + om_pe_loc*om_pe_loc) * (2.0*in) * (csq_ksq / (csq_ksq + om_pe_loc*om_pe_loc) - 1.0));
       }
       //here goes dispersion in suitable normed units.
       break;

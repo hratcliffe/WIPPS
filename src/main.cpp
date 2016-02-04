@@ -520,10 +520,11 @@ std::string mk_str(int i){
   
 }
 
-std::string mk_str(double i){
+std::string mk_str(double i, bool noexp){
 
   char buffer[25];
-  std::snprintf(buffer, 25, "%e", i);
+  if(noexp) std::snprintf(buffer, 25, "%f", i);
+  else std::snprintf(buffer, 25, "%e", i);
   std::string ret = buffer;
   return ret;
   
@@ -536,8 +537,8 @@ std::string mk_str(bool b){
 
 }
 
-std::string mk_str(long double i){return mk_str((double) i);};
-std::string mk_str(float i){return mk_str((double) i);};
+std::string mk_str(long double i, bool noexp){return mk_str((double) i, noexp);};
+std::string mk_str(float i, bool noexp){return mk_str((double) i, noexp);};
 
 template<typename T> T integrator(T * start, int len, T * increment){
 /** \brief Basic numerical integrator

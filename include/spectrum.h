@@ -15,7 +15,7 @@ class controller;
 
 /** \brief Specialised data_array to hold spectrum
 *
-*Specialises shape and adds functions to process spectrum, normalise it etc. Can be created/destroyed only by controllers The "angle" axis is stored as tan(theta) for theta the wave normal angle. We seperate forwards and backwards wave modes by \author Heather Ratcliffe \date 24/09/2015
+*Specialises shape and adds functions to process spectrum, normalise it etc. Can be created/destroyed only by controllers. IMPORTANT: because we are working with FFT data, we assume the angle/frequency axis either covers some small cutout in +ve domain, or is symmetrical in positive and negative values. A few of the specific routines here use this to simplify things. The "angle" axis is stored as tan(theta) for theta the wave normal angle. We seperate forwards and backwards wave modes by \author Heather Ratcliffe \date 24/09/2015 
 */
 class spectrum : public data_array{
   friend void controller::add_spectrum(int nx, int n_ang);
@@ -48,6 +48,7 @@ public:
 
   my_type get_omega(my_type k, int wave_type, bool deriv=0);
   my_type get_k(my_type omega, int wave_type, bool deriv =0);
+
   bool make_angle_distrib();
   my_type * get_angle_distrib(int &len, my_type omega=0.0);
   int where_omega(my_type value);
@@ -61,6 +62,10 @@ public:
   calc_type get_G2(calc_type omega, calc_type x);
   calc_type check_upper();
   calc_type get_peak_omega();
+
+#ifdef RUN_TESTS_AND_EXIT
+  void invert_x_axis();
+#endif
 
 };
 

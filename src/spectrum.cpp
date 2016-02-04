@@ -310,7 +310,7 @@ void spectrum::make_test_spectrum(int time[2], int space[2],int angle_type, bool
     res = 1e-2*1.0/(my_type)len0;
   }
   else{
-    res = 20000.0*1.0/(my_type)len0;
+    res = 17000.0*1.0/(my_type)len0;
     offset= false;
   }
   //res to cover range from offset to max in len0 steps
@@ -324,7 +324,7 @@ void spectrum::make_test_spectrum(int time[2], int space[2],int angle_type, bool
   
   my_type centre, width, background = 0.0;
   if(!ax_omega) centre = 0.0005, width=centre;
-  else centre = 16000, width=0.1*centre;
+  else centre = 14000, width=0.1*centre;
   
   my_type * data_ptr = data;
   my_type * data_tmp, *ax_tmp;
@@ -373,7 +373,7 @@ bool spectrum::truncate_om(my_type om_min, my_type om_max){
     //Zero up to om_min
   }
 
-  if(om_max != 0.0){
+  if(om_max != 0.0 && om_max < this->get_axis_element(0, len-1)){
     index=where_omega(om_max);
     if(index != -1) for(int i = index; i< len; i++) set_element(i, 0, 0.0);
     //Zero after to om_max
@@ -466,6 +466,8 @@ bool spectrum::normaliseg(my_type omega){
   mu my_mu;
 
   int om_ind = 1;
+  //skip over B data
+  
   int lena=get_length(0);
   if(!angle_is_function){
     if(ax_omega){
@@ -488,12 +490,12 @@ bool spectrum::normaliseg(my_type omega){
   for(int i=0; i<len; i++){
     x = get_axis_element(1, i);
     psi = atan(x);
-    my_mu = plas->get_root(0, omega, psi);
+    my_mu = plas->get_root(0.0, omega, psi);
 
     angle_is_function ? inda=i: indb=i;
 
     if(!my_mu.err){
-      integrand[i] = get_element(inda, indb) * x * std::pow((std::pow(x, 2)+1), -1.5)*std::pow(my_mu.mu, 2) * std::abs( my_mu.mu + omega*my_mu.dmudom);
+      integrand[i] = get_element(inda, indb) * x * std::pow((std::pow(x, 2)+1.0), -1.5)*std::pow(my_mu.mu, 2) * std::abs( my_mu.mu + omega*my_mu.dmudom);
     }
     //product of g(theta) * x (x^2+1)^-(3/2) * mu^2 |mu+omega dmu/domega|
   }
@@ -535,7 +537,7 @@ calc_type spectrum::get_G1(calc_type omega){
   }else{
     //We have k, need to translate via dispersion relation to get the required index and add the v_g factor
     ax_val = get_k((my_type)omega, WAVE_WHISTLER);
-    change_of_vars = std::abs(get_omega(ax_val, WAVE_WHISTLER, 1));
+    change_of_vars = std::abs(get_k(ax_val, WAVE_WHISTLER, 1));
     /** \todo Abs or not???? */
   }
 
@@ -545,10 +547,10 @@ calc_type spectrum::get_G1(calc_type omega){
     data_bit[0] = get_element(offset-1, 0);
     data_bit[1] = get_element(offset, 0);
     tmpB2 = interpolate(axis + offset-1, data_bit, ax_val, 2);
-    
-  }else if(offset==0){
+    //tmpB2 = data_bit[0];
+  }else if(offset == 0){
     //we're right at end, can't meaningfully interpolate, use raw
-    tmpB2 = get_element(0, offset);
+    tmpB2 = get_element(0, 0);
   }else{
     //offset <0 or > len, value not found
     tmpB2 = 0.0;
@@ -583,6 +585,8 @@ calc_type spectrum::get_G2(calc_type omega, calc_type x){
   if(om_ind>=0 && normg[om_ind] == 0.0){
     normaliseg(omega);
   }
+ // std::cout<< normg[0]<<" "<<std::endl;
+  
   //Bump up to miss B row
   my_type * axis = this->get_axis(1, len);
   offset = where(axis, len, x);
@@ -611,7 +615,7 @@ calc_type spectrum::get_G2(calc_type omega, calc_type x){
 calc_type spectrum::check_upper(){
 /** \brief Check upper k limit of spectral power
 *
-* Checks the upper bound of region of significant spectral power, i.e. above SPECTRUM_THRESHOLD*peak_power
+* Checks the upper bound of region of significant spectral power, i.e. above SPECTRUM_THRESHOLD*peak_power \todo This wont work with +ve only spectrum
 */
 
 //First move up from bottom in strides and find where _first_ rises above threshold. Specifcally upwards.
@@ -622,14 +626,29 @@ calc_type spectrum::check_upper(){
   my_type threshold = SPECTRUM_THRESHOLD*this->max_power, k_thresh;
   size_t index=0;
 
-  for(size_t i=0; i< len; i+=stride){
-    if((get_element(i, 0) < threshold && get_element(i+stride, 0) > threshold) ||(get_element(ax_len - i, 0) < threshold && get_element(ax_len - i - stride, 0) > threshold)){
-      index = i;
-      break;
+  //Naive check for symmetric or +ve only. Allow up to 2 d ax mismatch for odd/even lengths
+  my_type d_axis = std::abs(get_axis_element(0, 1) - get_axis_element(0, 2));
+  if(std::abs(get_axis_element(0, 1) + get_axis_element(0, ax_len-1)) > 2.0 * d_axis){
+
+  //Axis presumed to be +ve only, move in from top
+    for(size_t i=0; i< len; i+=stride){
+      if((get_element(ax_len - i, 0) < threshold && get_element(ax_len - i - stride, 0) > threshold)){
+        index = i;
+        break;
+      }
+    }
+  
+  
+  }else{
+  //Axis presumed to be symmetrical
+
+    for(size_t i=0; i< len; i+=stride){
+      if((get_element(i, 0) < threshold && get_element(i+stride, 0) > threshold) ||(get_element(ax_len - i, 0) < threshold && get_element(ax_len - i - stride, 0) > threshold)){
+        index = i;
+        break;
+      }
     }
   }
-  
-  std::cout<<std::abs(this->get_axis_element(0, index))<<std::endl;
   if(!ax_omega) k_thresh = std::abs(this->get_axis_element(0, index));
   else{
     //get omega value and convert to k...
@@ -668,4 +687,33 @@ calc_type spectrum::get_peak_omega(){
   else return get_omega(get_axis_element(0, index), WAVE_WHISTLER);
 
 }
+
+#ifdef RUN_TESTS_AND_EXIT
+void spectrum::invert_x_axis(){
+/** Temporary routine to swap an omega axis for the corresponding k, or vice versa
+*
+*/
+
+  my_type old_val, new_val, change_of_vars= 1.0;
+  int len = get_length(0);
+  
+  for(int i=0; i< len; i++){
+    old_val = get_axis_element(0, i);
+    if(ax_omega) new_val = get_k(old_val, WAVE_WHISTLER);
+    else new_val = get_omega(old_val, WAVE_WHISTLER);
+    set_axis_element(0, i, new_val);
+    
+    if(ax_omega) change_of_vars = 1.0/std::abs(get_k(new_val, WAVE_WHISTLER, 1));
+    else change_of_vars = std::abs(get_k(old_val, WAVE_WHISTLER, 1));
+//    std::cout<< get_element(i, 0)*change_of_vars<<std::endl;
+//    set_element(i, 0, change_of_vars);
+    set_element(i, 0, change_of_vars*get_element(i, 0));
+
+  }
+
+  this->ax_omega = !(this->ax_omega);
+
+}
+#endif
+
 

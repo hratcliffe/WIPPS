@@ -1032,7 +1032,7 @@ int test_entity_spectrum::basic_tests(){
 }
 
 int test_entity_spectrum::albertGs_tests(){
-/** \brief Tests of the Albert G functions in spectrum. Also tests the normalisations on the way
+/** \brief Tests of the Albert G functions in spectrum. Also tests the normalisations on the way. NOTE: since we're comparing the values of an analytic function with a numerical integral, we can get mismatches at the cutoffs. More points should help this. If that doesn't there may be something wrong.
 *
 *
 */
@@ -1042,6 +1042,8 @@ int test_entity_spectrum::albertGs_tests(){
   calc_type om_ce_local, om_pe_local, G1, G2, G1_analytic, G2_analytic;
   om_ce_local = test_contr->get_plasma()->get_omega_ref("ce");
   om_pe_local = test_contr->get_plasma()->get_omega_ref("pe");
+
+  calc_type mass_ratio = 1836.2;
 
   size_t n_tests = 10;
   calc_type tmp_omega=0.0, tmp_x;
@@ -1053,41 +1055,101 @@ int test_entity_spectrum::albertGs_tests(){
   test_contr->get_current_spectrum()->make_test_spectrum(tim_in, space_in, FUNCTION_GAUSS, true);
   
   my_type om_min, om_max, x_min, x_max, om_peak;
-  om_min = 15000.0;
-  om_max = 18000.0;
+  om_min = 12000.0;
+  om_max = 16500.0;
+  //make sure this is lower than the test spectrum axis range
   x_min = 0.0;
   x_max = 3.0;
   
   test_contr->get_current_spectrum()->truncate_om(om_min, om_max);
-  //test_contr->get_current_spectrum()->truncate_x(x_min, x_max);
+  test_contr->get_current_spectrum()->truncate_x(x_min, x_max);
   om_peak = test_contr->get_current_spectrum()->get_peak_omega();
   //Now we have a test spectrum. Need to know what its normalisations should be. And what the Albert functions should resolve to.
   
   my_type width=0.1*om_peak;
   
   for(int i=0; i< n_tests;i++){
-    tmp_omega = std::abs(om_ce_local)/10.0 + 89.0/100.0 * std::abs(om_ce_local) * (1.0 - exp(-i));
+    tmp_omega = std::abs(om_ce_local)/10.0 + 89.0/100.0 * om_max * (1.0 - exp(-i));
     //Cover range from small to just below om_ce...
     G1 = test_contr->get_current_spectrum()->get_G1(tmp_omega);
+
+    //Analytic calculations for truncated Gaussians, see Albert 2005
+    
+    if(tmp_omega > om_min && tmp_omega < om_max){
+      G1_analytic = 2.0 / std::sqrt(pi) * std::exp( - std::pow((tmp_omega - om_peak)/width, 2));
+      G1_analytic /= (boost::math::erf((om_max - om_peak)/width) +boost::math::erf((om_peak - om_min)/width));
+      G1_analytic /=width;
+    }else{
+      G1_analytic = 0.0;
+    }
+
+    if( (G1 != 0.0 && std::abs(G1-G1_analytic)/(G1) > LOW_PRECISION)|| (G1 == 0.0 && G1_analytic != 0.0)){
+      err |= TEST_WRONG_RESULT;
+      std::cout<<G1<<" "<<G1_analytic<<std::endl;
+      test_bed->report_info("G1 does not match analytic calc, relative error = "+mk_str((std::abs(G1/G1_analytic)-1.0)*100, true)+" at "+mk_str(tmp_omega, true), mpi_info.rank);
+    }
+  }
+
+  //swap x axis to work in k but keep the same corresponding omega values and repeat. This probably works????
+
+/*  my_type axis_orig[row_lengths[0]], axis_k[row_lengths[0]], axis_new[row_lengths[0]], dat_orig[row_lengths[0]];
+
+  for(int i=0; i< row_lengths[0]; i++) dat_orig[i] = test_contr->get_current_spectrum()->get_element(i, 0);
+
+
+  for(int i=0; i< row_lengths[0]; i++) axis_orig[i] = test_contr->get_current_spectrum()->get_axis_element(0, i);
+*/
+  test_contr->get_current_spectrum()->invert_x_axis();
+  
+/* for(int i=0; i< row_lengths[0]; i++) axis_k[i] = test_contr->get_current_spectrum()->get_axis_element(0, i);
+
+//  test_contr->get_current_spectrum()->invert_x_axis();
+  for(int i=0; i< row_lengths[0]; i++) axis_new[i] = test_contr->get_current_spectrum()->get_axis_element(0, i);
+  
+  
+  for(int i=0; i< row_lengths[0]; i++){
+  
+    //std::cout<< axis_orig[i]<<" "<<axis_new[i]<<std::endl;
+    //std::cout<<"a "<< dat_orig[i] - test_contr->get_current_spectrum()->get_element(i, 0)<<std::endl;
+  
+  }
+  */
+  
+  for(int i=0; i< n_tests;i++){
+    tmp_omega = std::abs(om_ce_local)/10.0 + 89.0/100.0 * om_max * (1.0 - exp(-i));
+    //Cover range from small to just below om_ce...
+    G1 = test_contr->get_current_spectrum()->get_G1(tmp_omega);
+
+    //Analytic calculations for truncated Gaussians, see Albert 2005
+
+    if(tmp_omega > om_min && tmp_omega < om_max){
+      G1_analytic = 2.0 / std::sqrt(pi) * std::exp( - std::pow((tmp_omega - om_peak)/width, 2));
+      G1_analytic /= (boost::math::erf((om_max - om_peak)/width) +boost::math::erf((om_peak - om_min)/width));
+      G1_analytic /=width;
+    }else{
+      G1_analytic = 0.0;
+    }
+
+    if( (G1 != 0.0 && std::abs(G1-G1_analytic)/(G1) > LOW_PRECISION)|| (G1 == 0.0 && G1_analytic != 0.0)){
+      err |= TEST_WRONG_RESULT;
+      std::cout<<G1<<" "<<G1_analytic<<std::endl;
+      test_bed->report_info("Alternate G1 does not match analytic calc, relative error = "+mk_str((std::abs(G1/G1_analytic)-1.0)*100, true)+" at "+mk_str(tmp_omega, true), mpi_info.rank);
+    }
+  }
+
+  tmp_omega = 0.6 * std::abs(om_ce_local);
+  for(int i=0; i< n_tests;i++){
 
     tmp_x = ANG_MIN + i * (ANG_MAX - ANG_MIN)/(n_tests-1);
     
     G2 = test_contr->get_current_spectrum()->get_G2(tmp_omega, tmp_x);
-//    std::cout<<"  G2 "<<G2<<std::endl;
     
-    //Analytic calculations for truncated Gaussians, see Albert 2005
+  //  std::cout<<"  G2 "<<G2<<std::endl;
+    G2_analytic = std::pow((( mass_ratio / (1.0 + mass_ratio))*om_ce_local*om_ce_local/om_pe_local/om_pe_local), 1.5);
+    G2_analytic *= exp(- (tmp_x*tmp_x)/std::pow(SPECTRUM_ANG_STDDEV, 2));
     
-    G1_analytic = 2.0 / std::sqrt(pi) * std::exp( - std::pow((tmp_omega - om_peak)/width, 2));
-    G1_analytic /= (boost::math::erf((om_max - om_peak)/width) +boost::math::erf((om_peak - om_min)/width));
-    G1_analytic /=width;
-    if(std::abs(G1-G1_analytic) > NUM_PRECISION){
-      err |= TEST_WRONG_RESULT;
-      test_bed->report_info("G1 does not match analytic calc, absolute error = "+mk_str(std::abs(G1-G1_analytic)), mpi_info.rank);
     }
-//    std::cout<<"G1 "<<std::abs(G1-G1_analytic)<<std::endl;
-    
-    
-  }
+
 
   std::fstream outfile;
   outfile.open("spect_truncated.dat", std::ios::out|std::ios::binary);

@@ -183,9 +183,9 @@ void my_print(std::fstream * handle, std::string text, int rank, int rank_to_wri
 std::string mk_str(int i);/**<Converts int to string*/
 std::string mk_str(bool b);/**<Converts bool to string*/
 //std::string mk_str(size_t i){ return mk_str((int) i);} /**<Converts size_t to string*/
-std::string mk_str(double i);/**<Converts double to string*/
-std::string mk_str(float i);/**<Converts float to string*/
-std::string mk_str(long double i);/**<Converts long double to string*/
+std::string mk_str(double i, bool noexp=0);/**<Converts double to string*/
+std::string mk_str(float i, bool noexp=0);/**<Converts float to string*/
+std::string mk_str(long double i, bool noexp=0);/**<Converts long double to string*/
 void trim_string(std::string &str, char ch=' '); /**< Trim all leading/trailing ch's from str*/
 
 bool parse_name_val(std::string in, std::string &name, std::string &val);

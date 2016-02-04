@@ -43,7 +43,7 @@ END
 
 ;Calculate whistler dispersion, omega as function of k
 dispersion = fltarr(sz[1])
-dispersion = axes[0]*axes[0]*float(v0*v0)*om_ce/(axes[0]*axes[0]*float(v0*v0) + om_pe*om_pe);
+dispersion = axes[0]*axes[0]*float(v0*v0)*om_ce/(axes[0]*axes[0]*float(v0*v0) + om_pe*om_pe)
 
 ;Fill the data. Based on calculate_energy_density but in reverse
 

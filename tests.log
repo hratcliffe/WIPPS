@@ -36,6 +36,7 @@ Testing dmu/dtheta
 Wrong derivative in get_phi_mu_om at omega = 10552.920703 and phi = 3.141593
 Wrong derivative in get_root at omega = 10552.920703 and phi = 3.141593
 Error Wrong result, (code 1) on test plasma
-Passed test spectrum checks
-1 total errors
+Error in angular distribution integrals, value 1.455056
+Error Wrong result, (code 1) on test spectrum checks
+2 total errors
 Testing complete and logged in tests.log

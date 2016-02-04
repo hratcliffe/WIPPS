@@ -23,7 +23,6 @@ class spectrum : public data_array{
   friend controller::~controller();
 
   controller * my_controller;/**< Links this to a plasma object*/
-  bool ax_omega;/**< Flag whether we derived in k or omega*/
   void construct();
   spectrum(int nx, int n_ang);/**< Private because only controllers can create/destroy*/
   spectrum(int * row_lengths, int ny);/**< Private because only controllers can create/destroy*/
@@ -56,16 +55,12 @@ public:
   
   bool write_to_file(std::fstream &file);
 
-  void make_test_spectrum(int time[2], int space[2],int angle_type=FUNCTION_DELTA, bool ax_om=false);
+  void make_test_spectrum(int time[2], int space[2],int angle_type=FUNCTION_DELTA);
 
   calc_type get_G1(calc_type omega);
   calc_type get_G2(calc_type omega, calc_type x);
   calc_type check_upper();
   calc_type get_peak_omega();
-
-#ifdef RUN_TESTS_AND_EXIT
-  void invert_x_axis();
-#endif
 
 };
 

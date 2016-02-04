@@ -28,7 +28,6 @@ void spectrum::construct(){
   function_type = 0;
   wave_id = 0;
   my_controller = nullptr;
-  ax_omega = true;
   normB = 0;
   normg = nullptr;
   max_power=0.0;
@@ -88,7 +87,7 @@ spectrum::~spectrum(){
 bool spectrum::generate_spectrum(data_array * parent, int om_fuzz, int angle_type){
 /**\brief Generate spectrum from data
 *
-*Takes a parent data array and uses the specified ids to generate a spectrum. Windows using the specified wave dispersion and integrates over frequency. Also adopts axes from parent. \todo Ensure !angle_is_function forces all other rows to be equal length... \todo Fill in the rest of logic etc @param parent Data array to read from @param om_fuzz Band width around dispersion curve in percent of central frequency
+*Takes a parent data array and uses the specified ids to generate a spectrum. Windows using the specified wave dispersion and integrates over frequency. Also adopts axes from parent. \todo Ensure !angle_is_function forces all other rows to be equal length... \todo Fill in the rest of logic etc @param parent Data array to read from @param om_fuzz Band width around dispersion curve in percent of central frequency \todo omega vs k, is there some normalising to do?
 */
 
   if(parent && angle_is_function){
@@ -96,7 +95,6 @@ bool spectrum::generate_spectrum(data_array * parent, int om_fuzz, int angle_typ
     this->copy_ids(parent);
     this->function_type = angle_type;
     int len;
-    ax_omega = false;
 
     my_type * ax_ptr = parent->get_axis(0, len);
     memcpy ((void *)this->axes, (void *)ax_ptr, len*sizeof(my_type));
@@ -136,7 +134,6 @@ bool spectrum::generate_spectrum(data_array * parent, int om_fuzz, int angle_typ
 
     //First we read axes from parent
     int len;
-    ax_omega = false;
 
     my_type * ax_ptr = parent->get_axis(0, len);
     memcpy ((void *)this->axes, (void *)ax_ptr, len*sizeof(my_type));
@@ -282,18 +279,16 @@ bool spectrum::write_to_file(std::fstream &file){
 
 }
 
-void spectrum::make_test_spectrum(int time[2], int space[2],int angle_type, bool ax_om){
+void spectrum::make_test_spectrum(int time[2], int space[2],int angle_type){
 /** \brief Generate dummy spectrum
 *
-*Makes a basic spectrum object with suitable number of points, and twin, symmetric Gaussians centred at fixed k/freq and x value \todo Should we use negative freqs?? @param time Time range (number of points) @param space Space range (number of points) @param angle_type Function to use for angular distrib @param ax_om Whether x axis is frequency (true) or wavenumber (false). Default is false
+*Makes a basic spectrum object with suitable number of points, and twin, symmetric Gaussians centred at fixed k/freq and x value \todo Should we use negative freqs?? @param time Time range (number of points) @param space Space range (number of points) @param angle_type Function to use for angular distrib @param 
 */
 
   char id[10] = "ex";
 
   this->set_ids(time[0], time[1], space[0], space[1], WAVE_WHISTLER, id, angle_type);
   
-  this->ax_omega = ax_om;
-
   //setup axes
   int len0, len1;
   my_type * ax_ptr;
@@ -306,13 +301,8 @@ void spectrum::make_test_spectrum(int time[2], int space[2],int angle_type, bool
   my_type res;
   bool offset = true;
   //whether to have even ±pm axes or start from 0;
-  if(!ax_omega){
-    res = 1e-2*1.0/(my_type)len0;
-  }
-  else{
     res = 17000.0*1.0/(my_type)len0;
     offset= false;
-  }
   //res to cover range from offset to max in len0 steps
 
   //Rough value for length of
@@ -323,8 +313,7 @@ void spectrum::make_test_spectrum(int time[2], int space[2],int angle_type, bool
   //Generate the negative k data
   
   my_type centre, width, background = 0.0;
-  if(!ax_omega) centre = 0.0005, width=centre;
-  else centre = 14000, width=0.1*centre;
+  centre = 14000, width=0.1*centre;
   
   my_type * data_ptr = data;
   my_type * data_tmp, *ax_tmp;
@@ -422,13 +411,7 @@ int spectrum::where_omega(my_type omega){
   int len, index;
   get_axis(0, len);
 
-  if(ax_omega){
-    index = where(get_axis(0, len), len, omega);
-  }else{
-    my_type k = get_k(omega, WAVE_WHISTLER);
-    index = where(get_axis(0, len), len, k);
-  }
-  
+  index = where(get_axis(0, len), len, omega);
   return index;
 
 }
@@ -470,13 +453,7 @@ bool spectrum::normaliseg(my_type omega){
   
   int lena=get_length(0);
   if(!angle_is_function){
-    if(ax_omega){
-      om_ind = where(get_axis(0, lena), lena, omega);
-    }else{
-      my_type k = get_k(omega, WAVE_WHISTLER);
-      om_ind = where(get_axis(0, lena), lena, k);
-      
-    }
+    om_ind = where(get_axis(0, lena), lena, omega);
   }
   if(om_ind<0) return 1;
   //break if Omega is out of range
@@ -531,16 +508,8 @@ calc_type spectrum::get_G1(calc_type omega){
   //If we have B(k) we need to change to B(w)
   my_type change_of_vars = 1.0;
 
-  if(ax_omega){
-    ax_val = (my_type) omega;
-
-  }else{
-    //We have k, need to translate via dispersion relation to get the required index and add the v_g factor
-    ax_val = get_k((my_type)omega, WAVE_WHISTLER);
-    change_of_vars = std::abs(get_k(ax_val, WAVE_WHISTLER, 1));
-    /** \todo Abs or not???? */
-  }
-
+  ax_val = (my_type) omega;
+  
   offset = where(axis, len, ax_val);
   //Interpolate if possible, else use the end
   if(offset > 0 && offset < len){
@@ -578,8 +547,7 @@ calc_type spectrum::get_G2(calc_type omega, calc_type x){
   len=get_length(0);
 
   if(!angle_is_function){
-    if(ax_omega) om_ind = where(get_axis(0, len), len, omega);
-    else om_ind = where(get_axis(0, len), len, this->get_k(omega, WAVE_WHISTLER));
+    om_ind = where(get_axis(0, len), len, omega);
   }
   else om_ind = 0;
   if(om_ind>=0 && normg[om_ind] == 0.0){
@@ -649,19 +617,9 @@ calc_type spectrum::check_upper(){
       }
     }
   }
-  if(!ax_omega) k_thresh = std::abs(this->get_axis_element(0, index));
-  else{
-    //get omega value and convert to k...
-    my_type tmp = std::abs(this->get_axis_element(0, index));
-    k_thresh = get_k(tmp, WAVE_WHISTLER);
-  }
-  
-  //TEMPORARY check:
-  if(k_thresh > get_axis_element(0, ax_len-1)){
-    my_print("Error getting k", mpi_info.rank);
-    k_thresh =get_axis_element(0, ax_len-1);
-  
-  }
+  //get omega value and convert to k...
+  my_type tmp = std::abs(this->get_axis_element(0, index));
+  k_thresh = get_k(tmp, WAVE_WHISTLER);
   
   return k_thresh;
 }
@@ -683,37 +641,6 @@ calc_type spectrum::get_peak_omega(){
 
   }
 
-  if(ax_omega) return get_axis_element(0, index);
-  else return get_omega(get_axis_element(0, index), WAVE_WHISTLER);
+  return get_axis_element(0, index);
 
 }
-
-#ifdef RUN_TESTS_AND_EXIT
-void spectrum::invert_x_axis(){
-/** Temporary routine to swap an omega axis for the corresponding k, or vice versa
-*
-*/
-
-  my_type old_val, new_val, change_of_vars= 1.0;
-  int len = get_length(0);
-  
-  for(int i=0; i< len; i++){
-    old_val = get_axis_element(0, i);
-    if(ax_omega) new_val = get_k(old_val, WAVE_WHISTLER);
-    else new_val = get_omega(old_val, WAVE_WHISTLER);
-    set_axis_element(0, i, new_val);
-    
-    if(ax_omega) change_of_vars = 1.0/std::abs(get_k(new_val, WAVE_WHISTLER, 1));
-    else change_of_vars = std::abs(get_k(old_val, WAVE_WHISTLER, 1));
-//    std::cout<< get_element(i, 0)*change_of_vars<<std::endl;
-//    set_element(i, 0, change_of_vars);
-    set_element(i, 0, change_of_vars*get_element(i, 0));
-
-  }
-
-  this->ax_omega = !(this->ax_omega);
-
-}
-#endif
-
-

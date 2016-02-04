@@ -1052,7 +1052,7 @@ int test_entity_spectrum::albertGs_tests(){
   row_lengths[1] = DEFAULT_N_ANG;
   test_contr->add_spectrum(row_lengths, 2);
 
-  test_contr->get_current_spectrum()->make_test_spectrum(tim_in, space_in, FUNCTION_GAUSS, true);
+  test_contr->get_current_spectrum()->make_test_spectrum(tim_in, space_in, FUNCTION_GAUSS);
   
   my_type om_min, om_max, x_min, x_max, om_peak;
   om_min = 12000.0;
@@ -1090,52 +1090,6 @@ int test_entity_spectrum::albertGs_tests(){
     }
   }
 
-  //swap x axis to work in k but keep the same corresponding omega values and repeat. This probably works????
-
-/*  my_type axis_orig[row_lengths[0]], axis_k[row_lengths[0]], axis_new[row_lengths[0]], dat_orig[row_lengths[0]];
-
-  for(int i=0; i< row_lengths[0]; i++) dat_orig[i] = test_contr->get_current_spectrum()->get_element(i, 0);
-
-
-  for(int i=0; i< row_lengths[0]; i++) axis_orig[i] = test_contr->get_current_spectrum()->get_axis_element(0, i);
-*/
-  test_contr->get_current_spectrum()->invert_x_axis();
-  
-/* for(int i=0; i< row_lengths[0]; i++) axis_k[i] = test_contr->get_current_spectrum()->get_axis_element(0, i);
-
-//  test_contr->get_current_spectrum()->invert_x_axis();
-  for(int i=0; i< row_lengths[0]; i++) axis_new[i] = test_contr->get_current_spectrum()->get_axis_element(0, i);
-  
-  
-  for(int i=0; i< row_lengths[0]; i++){
-  
-    //std::cout<< axis_orig[i]<<" "<<axis_new[i]<<std::endl;
-    //std::cout<<"a "<< dat_orig[i] - test_contr->get_current_spectrum()->get_element(i, 0)<<std::endl;
-  
-  }
-  */
-  
-  for(int i=0; i< n_tests;i++){
-    tmp_omega = std::abs(om_ce_local)/10.0 + 89.0/100.0 * om_max * (1.0 - exp(-i));
-    //Cover range from small to just below om_ce...
-    G1 = test_contr->get_current_spectrum()->get_G1(tmp_omega);
-
-    //Analytic calculations for truncated Gaussians, see Albert 2005
-
-    if(tmp_omega > om_min && tmp_omega < om_max){
-      G1_analytic = 2.0 / std::sqrt(pi) * std::exp( - std::pow((tmp_omega - om_peak)/width, 2));
-      G1_analytic /= (boost::math::erf((om_max - om_peak)/width) +boost::math::erf((om_peak - om_min)/width));
-      G1_analytic /=width;
-    }else{
-      G1_analytic = 0.0;
-    }
-
-    if( (G1 != 0.0 && std::abs(G1-G1_analytic)/(G1) > LOW_PRECISION)|| (G1 == 0.0 && G1_analytic != 0.0)){
-      err |= TEST_WRONG_RESULT;
-      std::cout<<G1<<" "<<G1_analytic<<std::endl;
-      test_bed->report_info("Alternate G1 does not match analytic calc, relative error = "+mk_str((std::abs(G1/G1_analytic)-1.0)*100, true)+" at "+mk_str(tmp_omega, true), mpi_info.rank);
-    }
-  }
 
   tmp_omega = 0.6 * std::abs(om_ce_local);
   for(int i=0; i< n_tests;i++){

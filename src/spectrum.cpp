@@ -110,7 +110,7 @@ bool spectrum::generate_spectrum(data_array * parent, int om_fuzz, int angle_typ
 
       om_disp = get_omega(parent->get_axis_element(0,i), WAVE_WHISTLER);
       
-      this->axes[i] = om_disp;
+      this->set_axis_element(0, i, om_disp);
       low_bnd = where(ax_ptr, len, om_disp *(1.0-tolerance));
       high_bnd = where(ax_ptr, len, om_disp *(1.0+tolerance));
       if(low_bnd < 0 || high_bnd< 0){
@@ -291,10 +291,6 @@ void spectrum::make_test_spectrum(int time[2], int space[2],int angle_type){
   //setup axes
   int len0, len1;
   my_type * ax_ptr;
-
-  ax_ptr = get_axis(1, len1);
-  my_type res_x = 4.0/len1;
-  for(int i=0; i<len1; i++) *(ax_ptr+i) = (my_type)i*res_x;
 
   ax_ptr = get_axis(0, len0);
   my_type res;

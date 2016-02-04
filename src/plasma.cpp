@@ -513,7 +513,7 @@ mu_dmudom plasma::get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int
   return my_mu;
 }
 
-std::vector<calc_type> plasma::get_omega(calc_type x, calc_type v_par, calc_type n){
+std::vector<calc_type> plasma::get_resonant_omega(calc_type x, calc_type v_par, calc_type n){
 /**Get resonant frequency for particular x, v_parallel, n
 *
 *Solve high density approx to get omega. for pure electron proton plasma....

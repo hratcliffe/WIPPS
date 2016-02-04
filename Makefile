@@ -22,6 +22,8 @@ CFLAGS += -g
 DEBUG = -g -W -Wall -pedantic -D_GLIBCXX_DEBUG -Wextra
 PROFILE = -g
 LFLAGS = -g
+DEPSFLAGS = -DRUN_TESTS_AND_EXIT
+#These should be always on for dependency generation as we want allllll the code considered.
 
 #DEBUG+= -Wno-sign-compare
 #DEBUG+= -Wno-unused-parameter
@@ -104,8 +106,9 @@ echo_deps :
 	@touch dependencies.log
 	@rm dependencies.log
  #touch so must exist before rm
-	@for var in $(SOURCE); do $(CC) $(INCLUDE) -MM $$var |fmt -1 >> dependencies.log 2>&1;\
+	@for var in $(SOURCE); do $(CC) $(INCLUDE) $(DEPSFLAGS) -MM $$var |fmt -1 >> dependencies.log 2>&1;\
     done
+	cp dependencies.log dependencies.log.bak
   #post processing to fix up lines and remove irrelevant deps
 	@./process_deps.sh
   #prepend OBJDIR string

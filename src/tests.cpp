@@ -639,13 +639,13 @@ int test_entity_plasma::resonant_freq(){
   
   gamma = std::sqrt(gamma2);
   
-  results = plas->get_omega(x, v_par, n);
+  results = plas->get_resonant_omega(x, v_par, n);
   /**Now check each element of the resonant frequency solution set satisfies Stix 2.45 and the resonance condition together*/
   test_bed->report_info("Testing resonant frequency solver", 1);
   test_bed->report_info(mk_str((int)results.size())+" frequency solutions found", 2);
   
   for(int i=0; i<(int)results.size(); ++i){
-    test_bed->report_info("Freq is "+mk_str(results[i])+" = "+mk_str(results[i]/my_const.omega_ce)+" om_ce", 2);
+    test_bed->report_info("Freq is "+mk_str(results[i], true)+" = "+mk_str(results[i]/my_const.omega_ce, true)+" om_ce", 2);
     
     mu_tmp1 = std::pow(v0 * (gamma*results[i] - n*om_ce_local)/(gamma*results[i] * v_par *cos_theta), 2);
     mu_tmp2 = (1.0 - (std::pow(om_pe_local,2)/(results[i]*(results[i] + om_ce_local*cos_theta))));
@@ -869,12 +869,12 @@ int test_entity_plasma::phi_dom(){
     
     if(std::abs(std::abs(mu_tmp1 /my_mu.dmudtheta) - 1.0) > NUM_PRECISION){
       err|=TEST_WRONG_RESULT;
-      test_bed->report_info("Wrong derivative in get_phi_mu_om at omega = "+mk_str(tmp_omega) +" and phi = "+mk_str(tmp_theta), 2);
+      test_bed->report_info("Wrong derivative in get_phi_mu_om at omega = "+mk_str(tmp_omega, true) +" and phi = "+mk_str(tmp_theta, true), 2);
 
     }
     if(std::abs(std::abs(mu_tmp2/my_mu_all.dmudtheta) - 1.0) > NUM_PRECISION){
       err|=TEST_WRONG_RESULT;
-      test_bed->report_info("Wrong derivative in get_root at omega = "+mk_str(tmp_omega) +" and phi = "+mk_str(tmp_theta), 2);
+      test_bed->report_info("Wrong derivative in get_root at omega = "+mk_str(tmp_omega, true) +" and phi = "+mk_str(tmp_theta, true), 2);
 
     }
     /**my_mu_all.mu and my_mu.mu should be exactly equal*/
@@ -979,20 +979,23 @@ int test_entity_spectrum::basic_tests(){
     
     total_error = integrator(angle_data, len, d_angle);
 
+    std::cout<<total_error<<std::endl;
     test_contr->get_current_spectrum()->make_test_spectrum(tim_in, space_in, FUNCTION_GAUSS);
     angle_data = test_contr->get_current_spectrum()->get_angle_distrib(len);
     total_error += integrator(angle_data, len, d_angle);
+    std::cout<<total_error<<std::endl;
 
     test_contr->get_current_spectrum()->make_test_spectrum(tim_in, space_in, FUNCTION_ISO);
     angle_data = test_contr->get_current_spectrum()->get_angle_distrib(len);
     total_error += integrator(angle_data, len, d_angle);
+    std::cout<<total_error<<std::endl;
     
     my_type expected = is_zero ? 2.0 : 3.0;
     //Iso always integrates to 1. Gaussian and delta are always symmetric
     if(std::abs(total_error - expected)/3.0 > NUM_PRECISION){
     
       err |= TEST_WRONG_RESULT;
-      test_bed->report_info("Error in angular distribution integrals");
+      test_bed->report_info("Error in angular distribution integrals, value " + mk_str(total_error, true));
     }
   }
   outfile.open("spect_testy.dat", std::ios::out|std::ios::binary);

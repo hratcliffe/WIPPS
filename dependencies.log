@@ -28,6 +28,14 @@ src/plasma.cpp\
 
 obj/tests.o:\
 src/tests.cpp\
+include/tests.h\
+include/support.h\
+include/reader.h\
+  include/plasma.h\
+  include/controller.h\
+  include/my_array.h\
+  include/spectrum.h\
+  include/d_coeff.h\
 
 obj/reader.o:\
 src/reader.cpp\

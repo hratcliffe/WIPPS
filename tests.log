@@ -12,7 +12,7 @@ Bessel functions OK
 Passed test external maths routines
 Testing resonant frequency solver
 1 frequency solutions found
-Freq is 1.087984e+04 = 6.185876e-01 om_ce
+Freq is 10879.843619 = 0.618588 om_ce
 Testing whistler high density approx.
 Mismatch in high density approx or dispersion solver at 4.545455e-01 3.141593e-01
 Mu 4.349346e+00 difference 2.226037e-02 relative error 5.118096e-03
@@ -33,9 +33,10 @@ Testing dispersion solver for plasma O mode
 Testing dispersion solver for plasma X mode
 Testing dmu/domega
 Testing dmu/dtheta
-Wrong derivative in get_phi_mu_om at omega = 1.055292e+04 and phi = 3.141593e+00
-Wrong derivative in get_root at omega = 1.055292e+04 and phi = 3.141593e+00
+Wrong derivative in get_phi_mu_om at omega = 10552.920703 and phi = 3.141593
+Wrong derivative in get_root at omega = 10552.920703 and phi = 3.141593
 Error Wrong result, (code 1) on test plasma
-Passed test spectrum checks
-1 total errors
+Error in angular distribution integrals, value 2.994950
+Error Wrong result, (code 1) on test spectrum checks
+2 total errors
 Testing complete and logged in tests.log

@@ -203,7 +203,7 @@ Get mu, dmu/domega which are used to:
         D_tmp = 0.0;
         for(int n=n_min; n<n_max; ++n){
           // n is resonant number
-          omega_calc = plas->get_omega(x[j], v_par, (calc_type) n);
+          omega_calc = plas->get_resonant_omega(x[j], v_par, (calc_type) n);
 
           for(size_t ii =0; ii< omega_calc.size(); ++ii){
           //each solution

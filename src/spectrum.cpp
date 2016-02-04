@@ -96,9 +96,7 @@ bool spectrum::generate_spectrum(data_array * parent, int om_fuzz, int angle_typ
     this->function_type = angle_type;
     int len;
 
-    my_type * ax_ptr = parent->get_axis(0, len);
-    memcpy ((void *)this->axes, (void *)ax_ptr, len*sizeof(my_type));
-    ax_ptr = parent->get_axis(1, len);
+    my_type *ax_ptr = parent->get_axis(1, len);
     //y-axis to work with
 
     //Now we loop across x, calculate the wave cutout bounds, and total, putting result into data
@@ -110,8 +108,9 @@ bool spectrum::generate_spectrum(data_array * parent, int om_fuzz, int angle_typ
     my_type total;
     for(int i=0; i<this->get_length(0); ++i){
 
-      om_disp = get_omega(this->get_axis_element(0,i), WAVE_WHISTLER);
-
+      om_disp = get_omega(parent->get_axis_element(0,i), WAVE_WHISTLER);
+      
+      this->axes[i] = om_disp;
       low_bnd = where(ax_ptr, len, om_disp *(1.0-tolerance));
       high_bnd = where(ax_ptr, len, om_disp *(1.0+tolerance));
       if(low_bnd < 0 || high_bnd< 0){
@@ -301,8 +300,8 @@ void spectrum::make_test_spectrum(int time[2], int space[2],int angle_type){
   my_type res;
   bool offset = true;
   //whether to have even ±pm axes or start from 0;
-    res = 17000.0*1.0/(my_type)len0;
-    offset= false;
+  res = 17000.0*1.0/(my_type)len0;
+  offset= false;
   //res to cover range from offset to max in len0 steps
 
   //Rough value for length of

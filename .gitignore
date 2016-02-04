@@ -1,6 +1,5 @@
 SDF/
 SDF_old/
-*.sdf
 obj/
 .DS_Store
 main

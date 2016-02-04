@@ -301,7 +301,7 @@ void spectrum::make_test_spectrum(int time[2], int space[2],int angle_type){
   //res to cover range from offset to max in len0 steps
 
   //Rough value for length of
-  for(int i=0; i<len0; i++) *(ax_ptr+i) = res*((my_type)i - offset* (my_type)len0/2.);
+  for(int i=0; i<len0; i++) *(ax_ptr+i) = res*((my_type)i - (my_type)offset *(my_type)len0/2.);
 
   make_angle_distrib();
 
@@ -310,7 +310,7 @@ void spectrum::make_test_spectrum(int time[2], int space[2],int angle_type){
   my_type centre, width, background = 0.0;
   centre = 14000, width=0.1*centre;
   
-  my_type * data_ptr = data;
+  my_type * data_ptr = this->data;
   my_type * data_tmp, *ax_tmp;
   data_tmp = data_ptr;
   ax_tmp = ax_ptr;
@@ -324,7 +324,7 @@ void spectrum::make_test_spectrum(int time[2], int space[2],int angle_type){
     for(int i=1; i<len0/2; i++) *(data_tmp + i) = *(data_tmp - i);
   }else{
   
-    for(int i=0; i<=len0; i++, ax_tmp++, data_tmp++){
+    for(int i=0; i<len0; i++, ax_tmp++, data_tmp++){
       *(data_tmp) = exp(-pow((*(ax_tmp) - centre), 2)/width/width) + background;
     }
   }

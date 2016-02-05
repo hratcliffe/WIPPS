@@ -152,8 +152,8 @@ Get mu, dmu/domega which are used to:
     dx[i] = x[i+1] - x[i];
   }
   
+  
   k_thresh = spect->check_upper();
-  std::cout<<k_thresh<<std::endl;
   //*******************************************************************
 
   
@@ -166,6 +166,7 @@ Get mu, dmu/domega which are used to:
   if(report_interval > 20) report_interval = 20;
   if(report_interval < 1) report_interval = 1;
 
+  int counter = 0, non_counter = 0;
 
 //-------------------Main loops here----------------------------
 //We have deep nested loops. Move ANYTHING that can be as far up tree as possible
@@ -174,22 +175,20 @@ Get mu, dmu/domega which are used to:
   for(int i =0; i< dims[0]; ++i){
     //particle parallel velocity
     v_par = get_axis_element(0, i);
+    //Get limits on n for each velocity
     n_min = get_min_n(v_par, k_thresh, om_ce_ref);
     n_max = get_max_n(v_par, k_thresh, om_ce_ref);
-    std::cout<<n_min<<" "<<n_max<<std::endl;
-    std::cout<<v_par / v0<<std::endl;
-//    n_min = -n_n;
-//    n_max = - n_min;
+    my_print("Velocity "+mk_str(v_par/v0, true)+" c", mpi_info.rank);
+
     if((i-last_report) >= report_interval){
       my_print("i "+mk_str(i), mpi_info.rank);
-
+  
       last_report = i;
     }
 
 //    for(int k =0; k< ((1 <dims[1]) ? 1: dims[1]); k++){
     for(int k =0; k< dims[1]; k++){
       //particle pitch angle
-      //std::cout<<k<<std::endl;
       alpha = get_axis_element(1, k);
       s2alpha = std::pow(std::sin(alpha), 2);
 
@@ -197,8 +196,6 @@ Get mu, dmu/domega which are used to:
       //theta loop for wave angle or x=tan theta
         theta = atan(x[j]);
         c2th = std::pow(cos(theta), 2);
-        //std::cout<<j<<" "<<theta/pi<<"+++++++++++++++++++++++++"<<std::endl;
-        //std::cout<< v_par<<std::endl;
 
         D_tmp = 0.0;
         for(int n=n_min; n<n_max; ++n){
@@ -210,9 +207,16 @@ Get mu, dmu/domega which are used to:
             //std::cout<<"Freq is "<<omega_calc[ii]/my_const.omega_ce<<std::endl;
 
             my_mu = plas->get_phi_mu_om(omega_calc[ii], theta, alpha, n, omega_n);
-
-            //if(!my_mu.err) std::cout<<"YAY!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! "<<n<<" "<<j<<std::endl;
-
+            if(my_mu.err){
+              //Once angle is included we have no solution
+              non_counter++;
+              continue;
+              
+            }else{
+              counter ++;
+            }
+            //No solution
+            
             mu_dom_mu = my_mu.mu + omega_calc[ii] * my_mu.dmudom;
             dmudx = my_mu.dmudtheta *c2th;
             //Chain rule...
@@ -245,6 +249,9 @@ Get mu, dmu/domega which are used to:
   free(dx);
   free(x);
   free(D_theta);
+  
+  my_print(mk_str(counter) + " solutions vs "+ mk_str(non_counter), mpi_info.rank);
+  
 }
 
 int diffusion_coeff::get_min_n(calc_type v_par, my_type k_thresh, calc_type om_ce){
@@ -256,8 +263,7 @@ int diffusion_coeff::get_min_n(calc_type v_par, my_type k_thresh, calc_type om_c
   calc_type gamma = 1.0;
   /** \todo FIX!!! */
 
-  int sig = v_par/std::abs(v_par);
-  return std::max(sig*(int)(gamma * k_thresh * v_par / om_ce), -n_n);
+  return std::max(-(int)(gamma * k_thresh * std::abs(v_par / om_ce)), -n_n);
 
 }
 
@@ -270,9 +276,7 @@ int diffusion_coeff::get_max_n(calc_type v_par, my_type k_thresh, calc_type om_c
   calc_type gamma = 1.0;
   /** \todo FIX!!! */
 
-  int sig = v_par/std::abs(v_par);
-
-  return std::min(-1*sig*(int)(gamma * k_thresh * v_par / om_ce), n_n);
+  return std::min((int)(gamma * k_thresh * std::abs(v_par / om_ce)), n_n);
 
 
 }

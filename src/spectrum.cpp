@@ -591,10 +591,11 @@ calc_type spectrum::check_upper(){
 
   //Naive check for symmetric or +ve only. Allow up to 2 d ax mismatch for odd/even lengths
   my_type d_axis = std::abs(get_axis_element(0, 1) - get_axis_element(0, 2));
+
   if(std::abs(get_axis_element(0, 1) + get_axis_element(0, ax_len-1)) > 2.0 * d_axis){
 
   //Axis presumed to be +ve only, move in from top
-    for(size_t i=0; i< len; i+=stride){
+    for(size_t i=0; i< ax_len; i+=stride){
       if((get_element(ax_len - i, 0) < threshold && get_element(ax_len - i - stride, 0) > threshold)){
         index = i;
         break;
@@ -613,9 +614,15 @@ calc_type spectrum::check_upper(){
     }
   }
   //get omega value and convert to k...
-  my_type tmp = std::abs(this->get_axis_element(0, index));
-  k_thresh = get_k(tmp, WAVE_WHISTLER);
+  if(index != 0){
+    my_type tmp = std::abs(this->get_axis_element(0, index));
+    k_thresh = get_k(tmp, WAVE_WHISTLER);
+  }else{
+  //there either isn't a peak, or isn't waves or whatever. So we pick something arbitrary...
+    my_type tmp = my_const.omega_ce * 0.999;
+    k_thresh = get_k(tmp, WAVE_WHISTLER);
   
+  }
   return k_thresh;
 }
 

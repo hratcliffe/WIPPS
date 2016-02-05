@@ -424,7 +424,8 @@ mu_dmudom plasma::get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int
     }
 
     my_mu.mu = std::sqrt(mu2);
-    
+    my_mu.err = 0;
+
     F = 2.0*(A - B + C);
     G = 2.0*A - B + smu*J;
     dHdF = -1.0/G;
@@ -479,7 +480,6 @@ mu_dmudom plasma::get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int
     for(int i=0; i<ncomps; i++) dmudw += dmudX[i]*dXdw[i] + dmudY[i]*dYdw[i];
     
     my_mu.dmudom = dmudw;
-    my_mu.err = 0;
   
     D_mu2S = D / (mu2 - S);
     gamma = 1;// FAKENUMBERS /** \todo FIX!!!! */
@@ -528,7 +528,7 @@ Return empty vector if no valid solutions \todo Extend to general case?
   calc_type om_ref_ce = my_const.omega_ce;
 
   if(std::abs(v_par) < tiny_calc_type){
-    if( std::abs(n)-1.0 < tiny_calc_type ) ret_vec.push_back(wc* n);
+    if( std::abs(n)-1.0 < tiny_calc_type && std::abs(n) == 1.0) ret_vec.push_back(wc*n);
     return ret_vec;
   }
   else if(std::abs(n) < tiny_calc_type){
@@ -573,8 +573,7 @@ Return empty vector if no valid solutions \todo Extend to general case?
       --i;
     }
   }
-//  ret_vec.push_back(10.0);
-//  ret_vec.pop_back();
+  //Discard any larger than omega_ce because they can't be whistlers
   return ret_vec;
 
 }

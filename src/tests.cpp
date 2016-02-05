@@ -326,7 +326,7 @@ int test_entity_get_and_fft::run(){
   test_rdr->read_dims(n_dims, dims);
 
   space_in[1]=dims[0];
-//  std::cout<<dims[0]<<std::endl;
+
   if(n_dims !=1){
     err |= TEST_WRONG_RESULT;
     test_bed->report_info("Array dims wrong", 1);
@@ -625,36 +625,49 @@ int test_entity_plasma::resonant_freq(){
 */
 
   int err=TEST_PASSED;
-
+  int n_tests = 5;
   std::vector<calc_type> results;
-  calc_type x=1.0, v_par, n=-1, om_ce_local, om_pe_local;
+  calc_type x, v_par, n, om_ce_local, om_pe_local;
   om_ce_local = plas->get_omega_ref("ce");
   om_pe_local = plas->get_omega_ref("pe");
-  
-  v_par = 0.1* v0;
+
+
   calc_type cos_theta, mu_tmp1, mu_tmp2;
-  cos_theta = std::cos(std::atan(x));
   calc_type gamma, gamma2;
-  gamma2 = 1.0/( 1.0 - std::pow(v_par/v0, 2));
-  
-  gamma = std::sqrt(gamma2);
-  
-  results = plas->get_resonant_omega(x, v_par, n);
-  /**Now check each element of the resonant frequency solution set satisfies Stix 2.45 and the resonance condition together*/
+
   test_bed->report_info("Testing resonant frequency solver", 1);
-  test_bed->report_info(mk_str((int)results.size())+" frequency solutions found", 2);
-  
-  for(int i=0; i<(int)results.size(); ++i){
-    test_bed->report_info("Freq is "+mk_str(results[i], true)+" = "+mk_str(results[i]/my_const.omega_ce, true)+" om_ce", 2);
-    
-    mu_tmp1 = std::pow(v0 * (gamma*results[i] - n*om_ce_local)/(gamma*results[i] * v_par *cos_theta), 2);
-    mu_tmp2 = (1.0 - (std::pow(om_pe_local,2)/(results[i]*(results[i] + om_ce_local*cos_theta))));
-    if(std::abs(mu_tmp1 - mu_tmp2) > PRECISION){
-      err|=TEST_WRONG_RESULT;
-      test_bed->report_info("refractive index mismatch of "+mk_str(mu_tmp1-mu_tmp2), 2);
+
+
+  for(int ii=0; ii<n_tests; ii++){
+    v_par = (0.01 + 0.5*(float)ii/ (float)(n_tests+1))* v0;
+
+    for(int j=0; j< n_tests; j++){
+      x = 4.0* (float) j / (float)(n_tests+1);
+      cos_theta = std::cos(std::atan(x));
+
+      for(int k=0; k< n_tests; k++){
+        n = -n_tests/2 + k*n_tests/2;
+        
+        gamma2 = 1.0/( 1.0 - std::pow(v_par/v0, 2));
+        
+        gamma = std::sqrt(gamma2);
+        
+        results = plas->get_resonant_omega(x, v_par, n);
+        /**Now check each element of the resonant frequency solution set satisfies Stix 2.45 and the resonance condition together*/
+        for(int i=0; i<(int)results.size(); ++i){
+          //test_bed->report_info("Freq is "+mk_str(results[i], true)+" = "+mk_str(results[i]/my_const.omega_ce, true)+" om_ce", 2);
+          
+          mu_tmp1 = std::pow(v0 * (gamma*results[i] - n*om_ce_local)/(gamma*results[i] * v_par *cos_theta), 2);
+          mu_tmp2 = (1.0 - (std::pow(om_pe_local,2)/(results[i]*(results[i] + om_ce_local*cos_theta))));
+
+          if(std::abs((mu_tmp1 - mu_tmp2)/mu_tmp1) > NUM_PRECISION){
+            err|=TEST_WRONG_RESULT;
+            test_bed->report_info("refractive index mismatch of "+mk_str((mu_tmp1-mu_tmp2)/mu_tmp1), 2);
+          }
+        }
+      }
     }
   }
-
   return err;
 
 }
@@ -979,16 +992,13 @@ int test_entity_spectrum::basic_tests(){
     
     total_error = integrator(angle_data, len, d_angle);
 
-    std::cout<<total_error<<std::endl;
     test_contr->get_current_spectrum()->make_test_spectrum(tim_in, space_in, FUNCTION_GAUSS);
     angle_data = test_contr->get_current_spectrum()->get_angle_distrib(len);
     total_error += integrator(angle_data, len, d_angle);
-    std::cout<<total_error<<std::endl;
 
     test_contr->get_current_spectrum()->make_test_spectrum(tim_in, space_in, FUNCTION_ISO);
     angle_data = test_contr->get_current_spectrum()->get_angle_distrib(len);
     total_error += integrator(angle_data, len, d_angle);
-    std::cout<<total_error<<std::endl;
     
     my_type expected = is_zero ? 2.0 : 3.0;
     //Iso always integrates to 1. Gaussian and delta are always symmetric
@@ -1088,7 +1098,6 @@ int test_entity_spectrum::albertGs_tests(){
 
     if( (G1 != 0.0 && std::abs(G1-G1_analytic)/(G1) > LOW_PRECISION)|| (G1 == 0.0 && G1_analytic != 0.0)){
       err |= TEST_WRONG_RESULT;
-      std::cout<<G1<<" "<<G1_analytic<<std::endl;
       test_bed->report_info("G1 does not match analytic calc, relative error = "+mk_str((std::abs(G1/G1_analytic)-1.0)*100, true)+" at "+mk_str(tmp_omega, true), mpi_info.rank);
     }
   }

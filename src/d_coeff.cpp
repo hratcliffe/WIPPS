@@ -206,7 +206,7 @@ Get mu, dmu/domega which are used to:
           //each solution
             //std::cout<<"Freq is "<<omega_calc[ii]/my_const.omega_ce<<std::endl;
 
-            my_mu = plas->get_phi_mu_om(omega_calc[ii], theta, alpha, n, omega_n);
+            my_mu = plas->get_high_dens_phi_mu_om(omega_calc[ii], theta, alpha, n, omega_n);
             if(my_mu.err){
               //Once angle is included we have no solution
               non_counter++;

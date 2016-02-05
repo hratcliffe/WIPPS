@@ -71,6 +71,10 @@ int main(int argc, char *argv[]){
 
 #ifdef RUN_TESTS_AND_EXIT
   my_print("Running basic tests", mpi_info.rank);
+
+  if(mpi_info.rank == 0) get_deck_constants("./files/test");
+  share_consts();
+
   test_bed = new tests();
   test_bed->set_verbosity(2);
   test_bed->run_tests();

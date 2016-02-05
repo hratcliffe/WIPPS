@@ -11,22 +11,53 @@ Passed test basic maths helpers
 Bessel functions OK
 Passed test external maths routines
 Testing resonant frequency solver
+refractive index mismatch of -1.133203e-06
+refractive index mismatch of -1.378875e-06
+refractive index mismatch of -1.234168e-06
+refractive index mismatch of -2.286510e-06
+refractive index mismatch of -1.141554e-06
+refractive index mismatch of -2.146928e-06
+refractive index mismatch of -2.860021e-06
+refractive index mismatch of -1.206540e-06
+refractive index mismatch of -1.912865e-06
+refractive index mismatch of -2.786994e-06
+Error count: 0
 Testing whistler high density approx.
+Mismatch in alternate dispersion solver at 9.090909e-02 3.141593e-01
+Mu 7.152204e+00 difference -6.957003e-02 relative error -9.727076e-03
+Mismatch in alternate dispersion solver at 1.818182e-01 3.141593e-01
+Mu 5.347871e+00 difference -9.269177e-02 relative error -1.733246e-02
+Mismatch in alternate dispersion solver at 2.727273e-01 3.141593e-01
+Mu 4.649920e+00 difference -1.063133e-01 relative error -2.286347e-02
+Mismatch in alternate dispersion solver at 3.636364e-01 3.141593e-01
+Mu 4.327349e+00 difference -1.140414e-01 relative error -2.635364e-02
 Mismatch in high density approx or dispersion solver at 4.545455e-01 3.141593e-01
 Mu 4.349346e+00 difference 2.226037e-02 relative error 5.118096e-03
+Mismatch in alternate dispersion solver at 4.545455e-01 3.141593e-01
+Mu 4.209949e+00 difference -1.171366e-01 relative error -2.782376e-02
 Mismatch in high density approx or dispersion solver at 5.454545e-01 3.141593e-01
 Mu 4.403197e+00 difference 3.511681e-02 relative error 7.975298e-03
+Mismatch in alternate dispersion solver at 5.454545e-01 3.141593e-01
+Mu 4.252073e+00 difference -1.160071e-01 relative error -2.728249e-02
 Mismatch in high density approx or dispersion solver at 6.363636e-01 3.141593e-01
 Mu 4.638331e+00 difference 5.857974e-02 relative error 1.262949e-02
+Mismatch in alternate dispersion solver at 6.363636e-01 3.141593e-01
+Mu 4.469242e+00 difference -1.105094e-01 relative error -2.472666e-02
 Mismatch in high density approx or dispersion solver at 7.272727e-01 3.141593e-01
 Mu 5.168298e+00 difference 1.108980e-01 relative error 2.145735e-02
+Mismatch in alternate dispersion solver at 7.272727e-01 3.141593e-01
+Mu 4.957549e+00 difference -9.985064e-02 relative error -2.014113e-02
 Mismatch in high density approx or dispersion solver at 8.181818e-01 3.141593e-01
 Mu 6.427527e+00 difference 2.799077e-01 relative error 4.354827e-02
+Mismatch in alternate dispersion solver at 8.181818e-01 3.141593e-01
+Mu 6.065742e+00 difference -8.187743e-02 relative error -1.349834e-02
 Mismatch in high density approx or dispersion solver at 9.090909e-01 3.141593e-01
 Mu 1.248019e+01 difference 2.191954e+00 relative error 1.756347e-01
+Mismatch in alternate dispersion solver at 9.090909e-01 3.141593e-01
+Mu 1.023952e+01 difference -4.871435e-02 relative error -4.757483e-03
 Mismatch in high density approx or dispersion solver at 6.000000e-01 6.283185e-01
 Mu 6.146580e+00 difference 4.111352e-01 relative error 6.688844e-02
-Total 7 out of 20 issues in high density approx or dispersion solver at precision: 5.000000e-03
+Total 17 out of 20 issues in high density approx or dispersion solver at precision: 5.000000e-03
 Testing dispersion solver for plasma O mode
 Testing dispersion solver for plasma X mode
 Testing dmu/domega
@@ -35,5 +66,5 @@ Wrong derivative in get_phi_mu_om at omega = 10552.920703 and phi = 3.141593
 Wrong derivative in get_root at omega = 10552.920703 and phi = 3.141593
 Error Wrong result, (code 1) on test plasma
 Passed test spectrum checks
-1 total errors
+1 failed tests
 Testing complete and logged in tests.log

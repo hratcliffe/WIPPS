@@ -164,7 +164,7 @@ void tests::run_tests(){
     //Add one if is any error returned
   }
 
-  test_bed->report_info(mk_str(total_errs)+" total errors", mpi_info.rank);
+  test_bed->report_info(mk_str(total_errs)+" failed tests", mpi_info.rank);
 
 }
 
@@ -625,14 +625,16 @@ int test_entity_plasma::resonant_freq(){
 */
 
   int err=TEST_PASSED;
-  int n_tests = 5;
+  int n_tests = 10;
   std::vector<calc_type> results;
+  mu_dmudom my_mu;
+  int err_count = 0;
   calc_type x, v_par, n, om_ce_local, om_pe_local;
   om_ce_local = plas->get_omega_ref("ce");
   om_pe_local = plas->get_omega_ref("pe");
 
 
-  calc_type cos_theta, mu_tmp1, mu_tmp2;
+  calc_type cos_theta, mu_tmp1, mu_tmp2, tmp_omega_n;
   calc_type gamma, gamma2;
 
   test_bed->report_info("Testing resonant frequency solver", 1);
@@ -664,10 +666,19 @@ int test_entity_plasma::resonant_freq(){
             err|=TEST_WRONG_RESULT;
             test_bed->report_info("refractive index mismatch of "+mk_str((mu_tmp1-mu_tmp2)/mu_tmp1), 2);
           }
+        
+          //Also check there is a valid full mu solution
+          my_mu = plas->get_high_dens_phi_mu_om(results[i], std::atan(x), 0.0, 0.0, tmp_omega_n);
+          if(my_mu.err){
+            err|=TEST_WRONG_RESULT;
+            test_bed->report_info("No full mu solution for resonant frequency", 2);
+            err_count++;
+          }
         }
       }
     }
   }
+  test_bed->report_info("Mu error count: "+mk_str(err_count), 2);
   return err;
 
 }
@@ -690,12 +701,14 @@ int test_entity_plasma::high_density(){
   calc_type tmp_omega=0.0, tmp_theta=pi/(calc_type)(n_tests), tmp_omega_n=0.0;
   mu_dmudom my_mu;
   mu my_mu_all;
+  mu_dmudom my_mu_dens;
   int err_cnt=0;
   test_bed->report_info("Testing whistler high density approx.", 1);
 
   for(size_t i =0; i<n_tests; i++){
     tmp_omega += std::abs(om_ce_local)/(calc_type)(n_tests + 1);
     my_mu = plas->get_phi_mu_om(tmp_omega, tmp_theta, 0.0, 0.0, tmp_omega_n);
+    my_mu_dens = plas->get_high_dens_phi_mu_om(tmp_omega, tmp_theta, 0.0, 0.0, tmp_omega_n);
     my_mu_all = plas->get_root(0.0, tmp_omega, tmp_theta);
 
     /** my_mu.mu should roughly equal Stix 2.45*/
@@ -705,6 +718,13 @@ int test_entity_plasma::high_density(){
       test_bed->report_info("Mismatch in high density approx or dispersion solver at "+mk_str(tmp_omega/std::abs(om_ce_local))+" "+mk_str(tmp_theta), 1);
       test_bed->report_info("Mu "+mk_str(my_mu.mu)+" difference "+mk_str(my_mu.mu - mu_tmp2)+" relative error "+mk_str((my_mu.mu-mu_tmp2)/my_mu.mu), 2);
     }
+    /** my_mu_dens should EXACTLY equal Stix 2.45*/
+    if(std::abs(my_mu_dens.mu-mu_tmp2)/my_mu_dens.mu > NUM_PRECISION){
+      err_cnt++;
+      test_bed->report_info("Mismatch in alternate dispersion solver at "+mk_str(tmp_omega/std::abs(om_ce_local))+" "+mk_str(tmp_theta), 1);
+      test_bed->report_info("Mu "+mk_str(my_mu_dens.mu)+" difference "+mk_str(my_mu_dens.mu - mu_tmp2)+" relative error "+mk_str((my_mu_dens.mu-mu_tmp2)/my_mu_dens.mu), 2);
+    }
+
     /**my_mu_all.mu and my_mu.mu should be exactly equal*/
     if(std::abs(my_mu_all.mu-my_mu.mu) > PRECISION){
       test_bed->report_info("Inconsistent root between get_root and get_phi_mu_om", 2);

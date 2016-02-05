@@ -513,6 +513,180 @@ mu_dmudom plasma::get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int
   return my_mu;
 }
 
+mu_dmudom plasma::get_high_dens_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int n, calc_type omega_n, bool Righthand){
+  calc_type term1, term2, term3, denom, tmp_bes, tmp_besp, tmp_besm, bessel_arg, D_mu2S, gamma, w2, w3;
+/**Gets the Phi defined by Lyons 1974, and mu, dmu/dom i.e. the set needed for D, using high-density approx to the dispersion relation to match resonant frequency cubic solver. We change as little as possible from get_phi_mu_omega, simply reduce the expressions for the original Stix params
+*Also needs particle pitch angle alpha \todo Fix relativistic gamma... \todo Multispecies???? */
+
+  mu_dmudom my_mu;
+
+  calc_type dndr[ncomps], dndth[ncomps];
+  calc_type dB0dr, dB0dth;
+  
+  w2 = w*w;
+  w3 = w2*w;
+  
+  /** \todo get or calc these...*/
+  // FAKENUMBERS
+  for(int i=0;i<ncomps; i++){
+    dndr[i] = 0.0;
+    dndth[i] = 0.0;
+  }
+  dB0dr = 0.0;
+  dB0dth = 0.0;
+  
+  calc_type R=1.0, L=1.0, P=1.0, J, S, D, A, B, C, s2psi, c2psi, mua2, mub2, mu2, scpsi;
+  calc_type F, G, smu;
+  calc_type dHdF, dHdG, dmudw, dFdpsi,dGdpsi, dAdpsi,dBdpsi;
+  calc_type wp[ncomps], wp2[ncomps], wc[ncomps], X[ncomps], Y[ncomps];
+  
+  calc_type dmudX[ncomps], dmudY[ncomps];
+  calc_type dPdX[ncomps], dLdX[ncomps], dRdX[ncomps], dSdX[ncomps];
+  calc_type dAdX[ncomps], dBdX[ncomps], dCdX[ncomps], dFdX[ncomps], dGdX[ncomps];
+  calc_type dLdY[ncomps], dRdY[ncomps], dSdY[ncomps];
+  calc_type dAdY[ncomps], dBdY[ncomps], dCdY[ncomps], dFdY[ncomps], dGdY[ncomps], dXdw[ncomps], dYdw[ncomps];
+  
+  //These will hold suitably calc'd plasma frequency, square and cyclotron freq. If we have to derive from position, we do...
+  for(int i=0; i<ncomps; ++i){
+    wp[i] = sqrt(pdens[i] * pcharge[i]*pcharge[i]/(eps0 * pmass[i]));
+    wp2[i] = wp[i]*wp[i];
+    wc[i] =  (pcharge[i]) * this->B0 / pmass[i];
+
+    X[i] = wp2[i]/w2;
+    Y[i] = wc[i]/w;
+  }
+  
+//We loop over components and trust compiler to unroll for us :) most of these will trivially vectorise anyway.
+
+  scpsi = std::sin(psi);
+  s2psi = std::pow(scpsi, 2);
+  c2psi = 1.0 - s2psi;
+  scpsi *= std::sqrt(c2psi);
+  //To make it smokin'
+
+  for(int i=0; i<1; ++i){
+    //consider electron component only...
+    R = 0.0 - wp2[i]/(w*(w + wc[i]));
+    L = 0.0 - wp2[i]/(w*(w - wc[i]));
+    P = 0.0 - wp2[i]/w2;
+  }
+  
+  S = 0.5*(R + L);
+  D = 0.5*(R - L);
+  A = S*s2psi + P*c2psi;
+  B = R*L*s2psi + P*S*(1.0+c2psi);
+  C = P*R*L;
+  J = std::sqrt(B*B - 4.0*A*C);
+
+
+  mua2 = 1.0 - 2.0*(A - B + C)/(2.0*A - B + J);
+  mub2 = 1.0 - 2.0*(A - B + C)/(2.0*A - B - J);
+
+  //placeholder values if we can't fill...
+  my_mu.mu = 1.0;
+  my_mu.dmudom = 0.0;
+  my_mu.dmudtheta = 0.0;
+  my_mu.err = 1;
+
+  if( (mua2 > 0.0) || (mub2 > 0.0) ){
+    if(Righthand){//Select Mode
+      if(D < 0.0 ){ smu = 1.0; mu2 = mua2;} //see Albert [2005]
+      else{smu = -1.0; mu2 = mub2;}
+    }else{
+      if(D < 0.0 ){ smu = -1.0; mu2 = mub2;}
+      else{smu = 1.0; mu2 = mua2;}
+    }
+
+    my_mu.mu = std::sqrt(mu2);
+    my_mu.err = 0;
+
+    F = 2.0*(A - B + C);
+    G = 2.0*A - B + smu*J;
+    dHdF = -1.0/G;
+    dHdG = F/(G*G);
+
+    for(int i=0; i<1; i++){
+      dPdX[i] = -1.0;
+      dLdX[i] = -1.0/(1.0 - Y[i]);
+
+      dRdX[i] = -1.0/(1.0 + Y[i]);
+      dSdX[i] = 0.5*(dRdX[i] + dLdX[i]);
+//      dDdX[i] = 0.5*(dRdX[i] - dLdX[i]);
+      dAdX[i] = 0.5*(dRdX[i] + dLdX[i])*s2psi + dPdX[i]*c2psi;
+      dBdX[i] = (L*dRdX[i] + R*dLdX[i])*s2psi + (P*dSdX[i] + S*dPdX[i])*(1.0 + c2psi);
+      dCdX[i] = P*R*dLdX[i] + P*L*dRdX[i] + R*L*dPdX[i];
+      dFdX[i] = 2.0*(dAdX[i] - dBdX[i] + dCdX[i]);
+      dGdX[i] = 2.0*dAdX[i] - dBdX[i] + (smu/J)*(B*dBdX[i] - 2.0*(A*dCdX[i] + C*dAdX[i]));
+      dmudX[i] = (0.5/my_mu.mu)*(dHdF*dFdX[i] + dHdG*dGdX[i]);
+
+      dRdY[i] = X[i]/( pow(1.0 + Y[i], 2) );
+      dLdY[i] = -X[i]/( pow(1.0 - Y[i], 2) );
+      dSdY[i] = 0.5*(dRdY[i] + dLdY[i]);
+
+      dAdY[i] = dSdY[i]*s2psi;
+      dBdY[i] = (L*dRdY[i] + R*dLdY[i])*s2psi + P*dSdY[i]*(1.0 + c2psi);
+      dCdY[i] = P*(L*dRdY[i] + R*dLdY[i]);
+
+      dFdY[i] = 2.0*(dAdY[i] - dBdY[i] + dCdY[i]);
+      dGdY[i] = 2.0*dAdY[i] - dBdY[i] + (smu/J)*(B*dBdY[i] - 2.0*(A*dCdY[i] + C*dAdY[i]));
+
+      dmudY[i] = (0.5/my_mu.mu)*(dHdF*dFdY[i] + dHdG*dGdY[i]);
+
+
+      dXdw[i] = -2.0*wp2[i]/w3;
+      dYdw[i] = -wc[i]/w2;
+
+    }
+
+    dAdpsi = sin(2.0*psi)*(S - P);
+    dBdpsi = sin(2.0*psi)*(R*L - P*S);
+
+//    dAdpsi = 2.0*scpsi;
+//    dBdpsi = dAdpsi*(R*L - P*S);
+//    dAdpsi *=(S - P);
+
+    dFdpsi = 2.0*(dAdpsi - dBdpsi);
+    dGdpsi = 2.0*dAdpsi - dBdpsi + (smu/J)*(B*dBdpsi - 2.0*C*dAdpsi);
+
+    my_mu.dmudtheta = (0.5/my_mu.mu)*(dHdF*dFdpsi + dHdG*dGdpsi);
+
+    dmudw = 0.0;
+    for(int i=0; i<1; i++) dmudw += dmudX[i]*dXdw[i] + dmudY[i]*dYdw[i];
+    
+    my_mu.dmudom = dmudw;
+  
+    D_mu2S = D / (mu2 - S);
+    gamma = 1;// FAKENUMBERS /** \todo FIX!!!! */
+    calc_type calc_n = (calc_type) n;
+    omega_n = -1.0 * calc_n * my_const.omega_ce/gamma;
+    //temporaries for simplicity
+
+    term1 = (mu2* s2psi - P)/(mu2);
+    
+    denom = pow(D_mu2S*term1, 2) + c2psi*pow((P/mu2), 2);
+    
+    bessel_arg = calc_n* std::tan(psi)*tan(alpha) * (w - omega_n)/omega_n;// n x tan alpha (om - om_n)/om_n
+    
+    tmp_besp = boost::math::cyl_bessel_j(abs(n)+1, bessel_arg);
+    tmp_besm = boost::math::cyl_bessel_j(abs(n)-1, bessel_arg);
+
+    term2 = (1 + D_mu2S)*tmp_besp;
+    term2 += (1 - D_mu2S)*tmp_besm;
+    
+    //tmp_bes = boost::math::cyl_bessel_j(abs(n), bessel_arg);
+    tmp_bes = 0.5*bessel_arg *(tmp_besp + tmp_besm)/calc_n;
+    //Use bessel identity to save time.
+    // J_(n-1) + J_(n+1) = (2 n / arg) J_n
+    term3 = scpsi*tmp_bes/std::tan(alpha);
+
+    my_mu.phi = std::pow((0.5*term1*term2 + term3), 2)/denom;
+
+  }
+
+  
+  return my_mu;
+}
+
 std::vector<calc_type> plasma::get_resonant_omega(calc_type x, calc_type v_par, calc_type n){
 /**Get resonant frequency for particular x, v_parallel, n
 *

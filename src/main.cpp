@@ -51,6 +51,28 @@ int main(int argc, char *argv[]){
 *
 */
 
+
+  my_array *testy = new my_array(10000,10000);
+
+  my_type * row = (my_type *) calloc(10000, sizeof(my_type));
+//  for(int i=0; i<10000;i++) row[i] = (float) i;
+
+  for(int i=0; i<10000;i++){
+//    for(int j=0; j<10000; j++){
+  //    testy->set_element(i, j, 1.0);
+  for(int j=0; j<10000;j++) row[j] = (float)(i+ j);
+    
+    //}
+    testy->populate_row(row, 10000, i);
+  
+  
+  }
+  
+  
+  return 0;
+
+
+
   int err;
   
   int ierr = local_MPI_setup(argc, argv);

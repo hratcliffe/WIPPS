@@ -189,18 +189,18 @@ A 3-d 5x3x2 is
 Etc
 */
 
-  if(n_dims != 2){
+/*  if(n_dims != 2){
     my_print("Wrong array dimension, check get_index calls", mpi_info.rank);
     return -1;
 
   }
-  if(!ragged){
+  if(!ragged){*/
     if((nx < dims[0]) && (ny<dims[1])){
       return ny*dims[0] + nx;
     }else{
       return -1;
     }
-  }else{
+/*  }else{
     //have to check specific row length...
     if((ny<dims[1]) && (nx < row_lengths[ny])){
       return cumulative_row_lengths[ny] + nx;
@@ -208,7 +208,7 @@ Etc
       return -1;
     }
   
-  }
+  }*/
 }
 int my_array::get_index(int nx, int ny, int nz){
 /** \brief Get index for location
@@ -547,9 +547,6 @@ bool my_array::resize(int dim, int sz){
     
     if(new_els > 0) memset((void*)(new_data + part_sz*dims[n_dims-1]), 0.0, new_els*sizeof(my_type));
     //zero new elements
-
-    data = new_data;
-    dims[dim] = sz;
   }
   else{
     //have to allocate a new block and copy across.
@@ -557,31 +554,21 @@ bool my_array::resize(int dim, int sz){
     for(int i=dim+1; i<n_dims; ++i) part_sz*= dims[i];
 
     new_data=(my_type*)calloc(part_sz*sz,sizeof(my_type));
-    int els_to_copy = 1;
-    int n_segments = 1;
-    if(dim == 0){
-      for(int i=1; i< n_dims; ++i) n_segments *=dims[i];
-      //number of segments to copy i.e. total number of "rows"
+    int els_to_copy = 1, n_segments = 1;
 
-      (sz> dims[0])? els_to_copy = dims[0] : els_to_copy = sz;
-      
-      
-      for(int i=0; i< n_segments; ++i) memcpy((void*)(data + i*dims[0]), (void*)(new_data + i*sz), els_to_copy);
-      //memcpy not std::copy because lets' stick with one style eh?
-    }else{
-      // Now we know n_dims is 3 or 4 and dim is a middle dimension. (1 for n_dims==3, 1 or 2 for n_dims==4.So we copy in chunks
-      for(int i=0; i<dim; ++i) els_to_copy *= dims[i];
-      int chunk_sz = els_to_copy;
-      (sz> dims[dim])? els_to_copy *= dims[dim] : els_to_copy *= sz;
-      for(int i=dim+1; i< n_dims; ++i) n_segments *= dims[i];
-      for(int i=0; i< n_segments; ++i) memcpy((void*)(data + i*chunk_sz*dims[1]), (void*)(new_data + i*chunk_sz*sz), els_to_copy);
-    }
-    dims[dim] = sz;
+    // Now we know dim is zeroth or a middle dimension. (1 for n_dims==3, 1 or 2 for n_dims==4.So we copy in chunks
+    for(int i=0; i<dim; ++i) els_to_copy *= dims[i];
+    int chunk_sz = els_to_copy;
+    (sz> dims[dim])? els_to_copy *= dims[dim] : els_to_copy *= sz;
+    for(int i=dim+1; i< n_dims; ++i) n_segments *= dims[i];
+    for(int i=0; i< n_segments; ++i) memcpy((void*)(data + i*chunk_sz*dims[dim]), (void*)(new_data + i*chunk_sz*sz), els_to_copy);
+
     free(data);
-    data = new_data;
-
   }
-  
+
+  data = new_data;
+  dims[dim] = sz;
+
   my_print("New size of dim "+mk_str(dim)+  " is " + mk_str(dims[dim]), mpi_info.rank);
 
   return 0;

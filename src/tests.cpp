@@ -716,7 +716,7 @@ int test_entity_plasma::high_density(){
     if(std::abs(my_mu.mu-mu_tmp2)/my_mu.mu > LOW_PRECISION){
       err_cnt++;
       test_bed->report_info("Mismatch in high density approx or dispersion solver at "+mk_str(tmp_omega/std::abs(om_ce_local))+" "+mk_str(tmp_theta), 1);
-      test_bed->report_info("Mu "+mk_str(my_mu.mu)+" difference "+mk_str(my_mu.mu - mu_tmp2)+" relative error "+mk_str((my_mu.mu-mu_tmp2)/my_mu.mu), 2);
+      test_bed->report_info("Mu "+mk_str(my_mu.mu)+" difference "+mk_str(my_mu.mu - mu_tmp2)+" relative error "+mk_str((my_mu.mu-mu_tmp2)/my_mu.mu, true), 2);
     }
     /** my_mu_dens should EXACTLY equal Stix 2.45 without the 1.0 term*/
     mu_tmp2 = sqrt( - (std::pow(om_pe_local,2)/(tmp_omega*(tmp_omega + om_ce_local*std::cos(tmp_theta)))));

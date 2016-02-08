@@ -1,0 +1,16 @@
+PROGRAM TEST
+
+INTEGER :: ix,iy
+REAL(8), DIMENSION(:,:),ALLOCATABLE :: data
+
+ALLOCATE(data(-10000:10000,-10000:10000))
+
+DO iy=-10000,10000
+  DO ix=-10000,10000
+    data(ix,iy)=ix
+  ENDDO
+ENDDO
+
+PRINT*, data(0,0)
+
+END PROGRAM TEST

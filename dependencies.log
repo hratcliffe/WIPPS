@@ -63,3 +63,13 @@ src/main.cpp\
   include/d_coeff.h\
   include/spectrum.h\
   include/tests.h\
+
+obj/main_growth.o:\
+src/main_growth.cpp\
+  include/support.h\
+  include/reader.h\
+  include/controller.h\
+  include/plasma.h\
+  include/my_array.h\
+  include/d_coeff.h\
+  include/spectrum.h\

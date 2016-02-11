@@ -1,16 +1,16 @@
-/** \file main.cpp \brief Main program
+/** \file main_growth.cpp \brief Helper program to get expected and/or actual growth rates of waves
 *
-* This should: open a sequence of SDF files using the SDF library and read E and B field data. Fourier transform it. Extract frequency/wavenumber and angular spectra (if possible). Calculate the resulting particle diffusion coefficients using Lyons 1974 a, b, Albert 2005 and such.
-* Depends on the SDF file libraries, the FFTW library, and boost's math for special functions. A set of test arguments is supplied. Call using ./main `<test_pars` to use these.
-  \author Heather Ratcliffe \date 18/09/2015.
+* Can take sdf files or derived spectrum files, extract the approximate wave growth rates (peak or integrated) and output these, plus a theoretical rate, OR just the theoretical rate. Parameters are obtained as in Main, so requires a plasma.conf file and deck.status file.
+* Depends on the SDF file libraries, the FFTW library. A set of test arguments is supplied. Call using ./growth `<growth_test_pars` to use these.
+  \author Heather Ratcliffe \date 11/02/2016.
 */
 
 
 #include <math.h>
 #include <cmath>
+#include <fstream>
 #include <boost/math/special_functions.hpp>
 //Provides Bessel functions, erf, and many more
-#include <fstream>
 #include <iostream>
 #include <stdio.h>
 #include "sdf.h"
@@ -20,7 +20,6 @@
 #include <fftw3.h>
 //FFTW3 Fourier transform libs
 
-#include "main.h"
 #include "support.h"
 #include "reader.h"
 #include "controller.h"
@@ -28,19 +27,21 @@
 #include "my_array.h"
 #include "d_coeff.h"
 #include "spectrum.h"
-#include "tests.h"
 
 deck_constants my_const;/**< Physical constants*/
 mpi_info_struc mpi_info;/**< MPI data */
 
-#ifdef RUN_TESTS_AND_EXIT
-tests* test_bed;/**<Test bed for testing */
-#endif
-//We wrap in ifdef for nice Doxygen docs
+struct g_args{
+
+  int src;/**<Whether to process no files (analytic only), sdf or spectrum 0, 1,2, respectively*/
+  std::string spect_file;/**<File listing spectra if using this option*/
+};
 
 void get_deck_constants(std::string file_prefix);
 int local_MPI_setup(int argc, char *argv[]);
 setup_args process_command_line(int argc, char *argv[]);
+g_args g_command_line(int argc, char* argv[]);
+
 void share_consts();
 void print_help();
 void divide_domain(std::vector<int>, int space[2], int per_proc, int block_num);
@@ -65,123 +66,45 @@ int main(int argc, char *argv[]){
   MPI_Barrier(MPI_COMM_WORLD);
 
   setup_args cmd_line_args = process_command_line(argc, argv);
+  g_args extra_args = g_command_line(argc, argv);
+
   if(mpi_info.rank == 0) get_deck_constants(cmd_line_args.file_prefix);
   share_consts();
   /** Get constants from deck and share to other procs*/
 
-#ifdef RUN_TESTS_AND_EXIT
-  my_print("Running basic tests", mpi_info.rank);
 
-  if(mpi_info.rank == 0) get_deck_constants("./files/test");
-  share_consts();
 
-  test_bed = new tests();
-  test_bed->set_verbosity(2);
-  test_bed->run_tests();
-  delete test_bed;
 
-  MPI_Finalize();
-
-  return 0;
-#else
-
-  //Actually do the code...
-  my_print("Processing "+mk_str(cmd_line_args.per_proc)+" blocks per core", mpi_info.rank);
-
-  char block_id[ID_SIZE];
-  strcpy(block_id, cmd_line_args.block.c_str());
-
-  reader * my_reader = new reader(cmd_line_args.file_prefix, block_id);
-
-  int n_tims = std::max(cmd_line_args.time[1]-cmd_line_args.time[0], 1);
-
-  int my_space[2];
-  my_space[0] = cmd_line_args.space[0];
-  my_space[1] = cmd_line_args.space[1];
-
-  int n_dims;
-  std::vector<int> dims;
-  err = my_reader->read_dims(n_dims, dims);
-  if(err) safe_exit();
-  int space_dim = dims[0];
+  if(extra_args.src == 1){
+    //Read SDF files and derive...
+    my_print("Processing sdf files", mpi_info.rank);
   
-  if(n_dims !=1) return 1;
-  /**for now abort if data file wrong size... \todo FIX*/
-
-  controller * contr;
-  contr = new controller(cmd_line_args.file_prefix);
-
-
-  //---------------- Now we loop over blocks per proc-------
-  for(int block_num = 0; block_num<cmd_line_args.per_proc; block_num++){
-
-    divide_domain(dims, my_space, cmd_line_args.per_proc, block_num);
-    space_dim = my_space[1]-my_space[0];
-    
-    MPI_Barrier(MPI_COMM_WORLD);
-    //--------------THIS will slightly slow down some cores to match the slowest. But it makes output easier. Consider removing if many blocks
-
-    data_array  * dat = new data_array(space_dim, n_tims);
-
-    if(!dat->is_good()){
-      my_print("Bugger, data array allocation failed. Aborting.", mpi_info.rank);
-      return 0;
-    }
-
-    err = my_reader->read_data(dat, cmd_line_args.time, my_space);
-    if(err == 1) safe_exit();
-
-    if(err == 2) n_tims = dat->get_dims(1);
-    //Check if we had to truncate data array...
-    data_array * dat_fft = new data_array(space_dim, n_tims);
-
-    if(!dat_fft->is_good()){
-      my_print("Bugger, data array allocation failed. Aborting.", mpi_info.rank);
-      return 0;
-    }
-
-    err = dat->fft_me(dat_fft);
-    
-    if(mpi_info.rank ==0) MPI_Reduce(MPI_IN_PLACE, &err, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
-    else MPI_Reduce(&err, NULL, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
-
-    my_print("FFT returned err_state " + mk_str(err), mpi_info.rank);
-
-    int row_lengths[2];
-    row_lengths[0] = space_dim;
-    row_lengths[1] = DEFAULT_N_ANG;
-    
-    contr->add_spectrum(row_lengths, 2);
-    contr->get_current_spectrum()->make_test_spectrum(cmd_line_args.time, my_space);
-
-    //Now we have some test spectral data we can work with...
-
-    contr->add_d(cmd_line_args.d[0], cmd_line_args.d[1]);
-    contr->get_current_d()->calculate();
-
-    delete dat;
-    delete dat_fft;
-
+  
+  
+  }else if(extra_args.src == 2){
+    //Read spectrum files and derive...
+    my_print("Processing spectrum files", mpi_info.rank);
+  
+  
+  
+  
   }
-  //-----------------end of per_proc loop---- Now controller holds one spectrum and d per block
-  MPI_Barrier(MPI_COMM_WORLD);
   
-  contr->bounce_average();
-  
-  contr->save_spectra(cmd_line_args.file_prefix);
-  contr->save_D(cmd_line_args.file_prefix);
+  //Now we do the analytics.
+  my_print("Calculating growth rates", mpi_info.rank);
 
-  //Cleanup objects etc
-  delete my_reader;
-  delete contr;
+  plasma * my_plas = new plasma(my_const.omega_ce * me/std::abs(q0), cmd_line_args.file_prefix);
+
+
+
+
+
 
   std::cout<<"Grep for FAKENUMBERS !!!!"<<std::endl;
 
   ADD_FFTW(cleanup());
   MPI_Finalize();
   //call these last...
-#endif
-
   exit(0);
 }
 
@@ -309,6 +232,26 @@ setup_args process_command_line(int argc, char *argv[]){
   //Protect from invalid user input
   
   return values;
+}
+
+g_args g_command_line(int argc, char * argv[]){
+/** Check whether to process no files (analytic only), sdf or spectrum 0, 1,2, respectively. Looping through again is silly, but we're stealing from main in chunks here... But if we have a -f arg we use sdf files, if a -s we use the spectra listed in that file, if neither, we output analytic only and if both the last one is used*/
+
+  g_args extra_cmd_line;
+
+  extra_cmd_line.src = 0;
+  extra_cmd_line.spect_file = "";
+  
+  for(int i=1; i< argc; i++){
+    if(strcmp(argv[i], "-s")==0 && i < argc-1){
+      extra_cmd_line.spect_file = atoi(argv[i+1]);
+      extra_cmd_line.src = 2;
+    }
+    if(strcmp(argv[i], "-f")==0 && i < argc-1) extra_cmd_line.src = 1;
+  }
+  return extra_cmd_line;
+
+
 }
 
 void print_help(){
@@ -703,4 +646,5 @@ template<typename T> T interpolate(T* axis, T* vals, T target, int pts){
 }
 template float interpolate(float*, float*, float, int);
 template double interpolate(double*, double*, double, int);
+
 

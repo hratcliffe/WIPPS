@@ -62,8 +62,9 @@ INCLS = my_array.h d_coeff.h spectrum.h  plasma.h tests.h reader.h controller.h
 
 #make lists of source and object files, all headers plus main
 SOURCE := $(INCLS:.h=.cpp)
-SOURCE += main.cpp
 OBJS := $(SOURCE:.cpp=.o)
+SOURCE += main.cpp
+SOURCE += main_growth.cpp
 
 #header files only (no .cpp)
 INCLS += support.h
@@ -76,8 +77,9 @@ INCLS := $(addprefix include/, $(INCLS))
 WARN_STR = "**************Run make clean before changing MODE or TYPE. Run echo_deps if \#include's change or new files added***********"
 #reminder about -D options
 
-main : echo_warning $(OBJS)
-	$(CC) $(LFLAGS) $(INCLUDE) $(OBJS) $(LIB) -o main
+#Yes we have multiple "main"s we can compile. They aren't in OBJS but are in SOURCE (for the dependency gen, and tarball). Deal with it and add to these compile lines explicitly
+main : echo_warning $(OBJS) $(OBJDIR)/main.o
+	$(CC) $(LFLAGS) $(INCLUDE) $(OBJS) $(OBJDIR)/main.o $(LIB) -o main
 	@echo $(WARN_STR)
 	@$(SED_STR)
 	@$(SED_STR_Test)
@@ -86,6 +88,9 @@ echo_warning:
 
 read_test : $(OBJDIR)/read_test.o
 	$(CC) $(INCLUDE) $(SRCDIR)/read_test.cpp $(LIBSDF) -o read_test
+
+growth : $(OBJDIR)/main_growth.o $(OBJS)
+	$(CC) $(LFLAGS) $(INCLUDE) $(OBJS) $(OBJDIR)/main_growth.o $(LIB) -o growth
 
 #testing makefile commands ;)
 debug :
@@ -126,6 +131,7 @@ $(OBJDIR)/%.o:./$(SRCDIR)/%.cpp
 
 $(OBJDIR)/read_test.o:./$(SRCDIR)/read_test.cpp
 	$(CC) $(CFLAGS)  $< -o $@
+
 
 .PHONY : tar tartest clean veryclean docs
 

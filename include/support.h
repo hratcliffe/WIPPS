@@ -79,7 +79,11 @@ const int FUNCTION_ISO = 3; /**< Code to id spectral angular distribution as iso
 const std::string OMEGA_CE = "wCe";/**< String specifying  omega_ce in deck.status*/
 const std::string OMEGA_PE = "wpe";/**< String specifying  omega_pe in deck.status*/
 const std::string DENS_RAT = "dens_rat";/**< String specifying  density ratio in deck.status*/
+const std::string DENS = "dens";/**< String specifying  density in deck.status*/
 const std::string PPC = "ppc";/**< String specifying ppc in deck.status*/
+const std::string VPAR = "vtherm_par";
+const std::string VPERP = "vtherm_perp";
+
 const std::string CONSTANTS = " Constant block values after";/**< String denoting start of constant value dump in deck.status*/
 const std::string CONSTANTS_END = "Deck state:";/**< String denoting end of constant value dump in deck.status*/
 

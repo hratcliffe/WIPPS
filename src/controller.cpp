@@ -17,7 +17,7 @@
 #include "spectrum.h"
 
 extern deck_constants my_const;
-extern mpi_info_struc mpi_info;
+extern const mpi_info_struc mpi_info;
 
 controller::controller(std::string file_prefix){
 /** \brief Setup

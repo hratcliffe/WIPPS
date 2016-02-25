@@ -17,7 +17,7 @@
 #include <mpi.h>
 
 
-extern mpi_info_struc mpi_info;
+extern const mpi_info_struc mpi_info;
 
 reader::reader(std::string file_prefix_in,  char * block_id_in, int first){
 /** \brief Create reader

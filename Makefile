@@ -58,7 +58,7 @@ ifeq ($(strip $(MODE)),profile)
 endif
 
 #list of all header and cpp pairs. 
-INCLS = my_array.h d_coeff.h spectrum.h  plasma.h tests.h reader.h controller.h
+INCLS = my_array.h d_coeff.h spectrum.h  plasma.h tests.h reader.h controller.h non_thermal.h main_support.h
 
 #make lists of source and object files, all headers plus main
 SOURCE := $(INCLS:.h=.cpp)

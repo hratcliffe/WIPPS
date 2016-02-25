@@ -18,7 +18,7 @@
 #include "spectrum.h"
 
 extern deck_constants my_const;
-extern mpi_info_struc mpi_info;
+extern const mpi_info_struc mpi_info;
 
 void spectrum::construct(){
 /** \brief Generic specturm contruction actions

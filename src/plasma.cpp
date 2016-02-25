@@ -13,7 +13,7 @@
 #include "plasma.h"
 
 extern deck_constants my_const;
-extern mpi_info_struc mpi_info;
+extern const mpi_info_struc mpi_info;
 
 plasma::plasma( calc_type ref_B, std::string file_prefix){
 

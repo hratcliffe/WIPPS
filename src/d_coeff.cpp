@@ -13,7 +13,7 @@
 #include "plasma.h"
 #include "d_coeff.h"
 
-extern mpi_info_struc mpi_info;
+extern const mpi_info_struc mpi_info;
 
 extern deck_constants my_const;
 

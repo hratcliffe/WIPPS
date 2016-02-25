@@ -52,6 +52,11 @@ src/controller.cpp\
   include/d_coeff.h\
   include/spectrum.h\
 
+obj/non_thermal.o:\
+src/non_thermal.cpp\
+  include/support.h\
+  include/non_thermal.h\
+
 obj/main.o:\
 src/main.cpp\
   include/main.h\
@@ -73,3 +78,4 @@ src/main_growth.cpp\
   include/my_array.h\
   include/d_coeff.h\
   include/spectrum.h\
+  include/non_thermal.h\

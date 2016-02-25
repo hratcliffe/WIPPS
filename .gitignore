@@ -4,6 +4,7 @@ obj/
 .DS_Store
 main
 read_test
+growth
 test_reading_code.cpp
 Code.xcworkspace
 *.txt

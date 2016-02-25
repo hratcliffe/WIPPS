@@ -18,8 +18,7 @@
 #include "support.h"
 #include "my_array.h"
 
-extern mpi_info_struc mpi_info;
-
+extern const mpi_info_struc mpi_info;
 
 my_array::my_array(){
 /** Default constructor*/
@@ -794,8 +793,7 @@ bool data_array::populate_axis(int dim, my_type * dat_in, int n_tot){
 
   return 0;
 
-}
-
+}   
 float data_array::get_res(int i){
 /**Return resolution of axis on dimension i. Assumes linear etc etc. If axis is undefined or zero or one in length, return 1.0 */
   int len;

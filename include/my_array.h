@@ -61,7 +61,9 @@ public:
   virtual bool write_to_file(std::fstream &file);
   bool read_from_file(std::fstream &file, bool no_version_check=0);
   virtual bool resize(int dim, int sz);
-    
+  
+  //void tmp_function();
+  
 };
 
 /** \brief Extended my_array class including axes

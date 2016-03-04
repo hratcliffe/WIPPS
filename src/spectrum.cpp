@@ -94,10 +94,11 @@ bool spectrum::generate_spectrum(data_array * parent, int om_fuzz, int angle_typ
     //First we read axes from parent
     this->copy_ids(parent);
     this->function_type = angle_type;
-    int len;
+    int len, lenk;
 
     my_type *ax_ptr = parent->get_axis(1, len);
     //y-axis to work with
+//    my_type *k_ax_ptr = parent->get_axis(0, lenk);
 
     //Now we loop across x, calculate the wave cutout bounds, and total, putting result into data
 
@@ -106,16 +107,20 @@ bool spectrum::generate_spectrum(data_array * parent, int om_fuzz, int angle_typ
     my_type om_disp, max=0.0;
     my_type tolerance = om_fuzz/100.0;
     my_type total;
-    for(int i=0; i<this->get_length(0); ++i){
+/*    my_type max_om = parent->get_axis_element(1, len-1);
+    max_om /= this->get_length(0);*/
+    //for(int i=0; i<this->get_length(0); ++i) this->set_axis_element(0, i, )
 
+    for(int i=0; i<this->get_length(0); ++i){
       om_disp = get_omega(parent->get_axis_element(0,i), WAVE_WHISTLER);
       
       this->set_axis_element(0, i, om_disp);
+      
       low_bnd = where(ax_ptr, len, om_disp *(1.0-tolerance));
       high_bnd = where(ax_ptr, len, om_disp *(1.0+tolerance));
       if(low_bnd < 0 || high_bnd< 0){
         this->set_element(i,0,0.0);
-        break;
+        continue;
       }
       //now total the part of the array between these bnds
       total=0.0;
@@ -194,7 +199,6 @@ bool spectrum::make_angle_distrib(){
       ax_el = this->get_axis_element(1, i);
       val = std::exp( -0.5 * std::pow(ax_el/SPECTRUM_ANG_STDDEV, 2)) * norm;
       this->set_element(i,1,val);
-      
     }
 
 
@@ -209,7 +213,7 @@ bool spectrum::make_angle_distrib(){
     return 1;
 
   }
-
+  
   return 0;
 
 }
@@ -243,7 +247,6 @@ my_type * spectrum::get_angle_distrib(int &len, my_type omega){
   if(angle_is_function){
 
     ret = data + get_length(0);
-
   }else if(omega !=0.0){
   //select row by omega...
     int offset = where(axes + get_length(0), n_angs, omega);

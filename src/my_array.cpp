@@ -20,6 +20,17 @@
 
 extern const mpi_info_struc mpi_info;
 
+
+/*void my_array::tmp_function(){
+
+  std::cout<< mpi_info.rank<<std::endl;
+    mpi_info.rank +=1;
+    std::cout<< mpi_info.rank<<std::endl;
+  if(mpi_info.rank ==0) std::cout<< &mpi_info<<std::endl;
+
+}*/
+
+
 my_array::my_array(){
 /** Default constructor*/
   construct();
@@ -188,18 +199,18 @@ A 3-d 5x3x2 is
 Etc
 */
 
-/*  if(n_dims != 2){
+  if(n_dims != 2){
     my_print("Wrong array dimension, check get_index calls", mpi_info.rank);
     return -1;
 
   }
-  if(!ragged){*/
+  if(!ragged){
     if((nx < dims[0]) && (ny<dims[1])){
       return ny*dims[0] + nx;
     }else{
       return -1;
     }
-/*  }else{
+  }else{
     //have to check specific row length...
     if((ny<dims[1]) && (nx < row_lengths[ny])){
       return cumulative_row_lengths[ny] + nx;
@@ -207,7 +218,7 @@ Etc
       return -1;
     }
   
-  }*/
+  }
 }
 int my_array::get_index(int nx, int ny, int nz){
 /** \brief Get index for location

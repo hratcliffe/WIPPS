@@ -99,6 +99,7 @@ const my_type ANG_MIN = 0.0;/**< Minimum angle (tan theta) for D*/
 const my_type ANG_MAX = 4.0;/**< Maximum angle (tan theta) for D*/
 const my_type SPECTRUM_ANG_STDDEV = 0.2;/**< Maximum angle (tan theta) for D*/
 const my_type SPECTRUM_THRESHOLD = 1e-3;/**< Fraction of peak power considered to be "significant" spectral power*/
+
 /** @} */
 //----------- END CONSTANTS ---------------------------------
 

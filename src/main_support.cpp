@@ -12,10 +12,13 @@
 #include <cmath>
 #include <boost/math/special_functions.hpp>
 
+
+#include "support.h"
 #include "main_support.h"
 
 mpi_info_struc mpi_info;/**< MPI data Not const as defined from output of MPI_Init. Use "extern const mpi_info_struc mpi_info;
-" to access elsewhere.*/
+" to access elsewhere. This may be terrible, but this doesn't warrant a class, really, come on.*/
+
 extern deck_constants my_const;
 
 /** \defgroup main Main Helper Functions
@@ -35,6 +38,10 @@ int local_MPI_setup(int argc, char *argv[]){
   ierr = MPI_Comm_size(MPI_COMM_WORLD, &n_procs);
   mpi_info.rank = rank;
   mpi_info.n_procs = n_procs;
+  
+  //if(rank ==0) std::cout<< &mpi_info<<std::endl;
+
+  
   return ierr;
 }
 

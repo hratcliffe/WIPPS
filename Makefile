@@ -17,7 +17,7 @@ LIBSDF = -L /usr/local/lib/ $(SDFPATH)/C/lib/libsdfc.a
 LIB := $(LIBSDF)
 #LIB += ./matplotpp/matplotpp.a -lglut
 #Add the libraries for glut (openGL) and the matplot library
-CFLAGS = -O0 -c $(INCLUDE) -DVERSION=\"$(GIT_VERSION)\" -std=c++11
+CFLAGS = -O0 -c $(INCLUDE) -DVERSION=\"$(GIT_VERSION)\" -std=c++11 -pedantic
 CFLAGS += -g
 DEBUG = -g -W -Wall -pedantic -D_GLIBCXX_DEBUG -Wextra
 PROFILE = -g
@@ -63,22 +63,22 @@ INCLS = my_array.h d_coeff.h spectrum.h  plasma.h tests.h reader.h controller.h 
 #make lists of source and object files, all headers plus main
 SOURCE := $(INCLS:.h=.cpp)
 OBJS := $(SOURCE:.cpp=.o)
-SOURCE += main.cpp
-SOURCE += main_growth.cpp
-
+MAINOBJS := main.o main_growth.o
+#multiple mains, only onne can be included in linker calls
 #header files only (no .cpp)
 INCLS += support.h
 
 #add directory prefixes
 SOURCE := $(addprefix $(SRCDIR)/, $(SOURCE))
 OBJS := $(addprefix $(OBJDIR)/, $(OBJS))
+MAINOBJS := $(addprefix $(OBJDIR)/, $(MAINOBJS))
 INCLS := $(addprefix include/, $(INCLS))
 
 WARN_STR = "**************Run make clean before changing MODE or TYPE. Run echo_deps if \#include's change or new files added***********"
 #reminder about -D options
 
 #Yes we have multiple "main"s we can compile. They aren't in OBJS but are in SOURCE (for the dependency gen, and tarball). Deal with it and add to these compile lines explicitly
-main : echo_warning $(OBJS) $(OBJDIR)/main.o
+main : echo_warning $(OBJDIR)/main.o $(OBJS)
 	$(CC) $(LFLAGS) $(INCLUDE) $(OBJS) $(OBJDIR)/main.o $(LIB) -o main
 	@echo $(WARN_STR)
 	@$(SED_STR)
@@ -97,6 +97,8 @@ debug :
 	@echo $(SOURCE)
 	@echo " "
 	@echo $(OBJS)
+	@echo " "
+	@echo $(MAINOBJS)
 	@echo " "
 	@echo $(INCLS)
 	@echo " "
@@ -129,9 +131,12 @@ $(OBJDIR):
 $(OBJDIR)/%.o:./$(SRCDIR)/%.cpp
 	$(CC) $(CFLAGS)  $< -o $@
 
-$(OBJDIR)/read_test.o:./$(SRCDIR)/read_test.cpp
+$(OBJDIR)/main.o:./$(SRCDIR)/main.cpp
 	$(CC) $(CFLAGS)  $< -o $@
 
+
+$(OBJDIR)/read_test.o:./$(SRCDIR)/read_test.cpp
+	$(CC) $(CFLAGS)  $< -o $@
 
 .PHONY : tar tartest clean veryclean docs
 
@@ -139,7 +144,7 @@ tar:
 	tar -cvzf Source.tgz $(SOURCE) $(INCLS) ./files/* Makefile redox.sh process_deps.sh
 
 clean:
-	@rm main $(OBJS)
+	@rm main $(OBJS) $(MAINOBJS)
 
 veryclean:
 	@rm main dependencies.log*

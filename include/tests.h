@@ -87,6 +87,7 @@ public:
   void cleanup_tests();
   void run_tests();
   void set_verbosity(int verb);
+  void set_colour(char col=0);
   
 };
 

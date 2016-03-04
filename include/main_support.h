@@ -9,7 +9,6 @@
 #ifndef _main_support_h
 #define _main_support_h
 
-#include "support.h"
 
 void get_deck_constants(std::string file_prefix);
 int local_MPI_setup(int argc, char *argv[]);

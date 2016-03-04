@@ -1,59 +1,63 @@
- EPOCH1D v4.5.2   v4.5.2-0-g16e6360-clean 1438102671.604               
-
+ EPOCH1D v4.6.0   v4.6.0-5-g7633740-dirty 1456428039.78                
+ 
 Deck state:  1
-
+ 
  Beginning "constant" block
-
+ 
  	Element vtherm_par=0.15*c handled OK
- 	Element vtherm_perp=0.4*c handled OK
+ 	Element vtherm_perp=0.3*c handled OK
  	Element temp_par=me*vtherm_par^2/kb handled OK
  	Element temp_perp=me*vtherm_perp^2/kb handled OK
- 	Element modB=100e-9 handled OK
+ 	Element modB=300e-9 handled OK
  	Element wCe=qe *modB /me handled OK
- 	Element wpe=wCe*2.0 handled OK
+ 	Element a_mag=1.385e-15 handled OK
+ 	Element wpe=wCe*3.0 handled OK
  	Element dens=wpe*wpe*me*epsilon0/qe^2 handled OK
  	Element dens_rat=0.001 handled OK
- 	Element ppc=1000 handled OK
+ 	Element dens_sigma=1e6 handled OK
+ 	Element ppcb=200 handled OK
+ 	Element ppc=2000 handled OK
  	Element deltax=0.06*c/wCe handled OK
-
+ 	Element t0=6.28/wCe handled OK
+ 
  Ending "constant" block
-
+ 
  Beginning "control" block
-
- 	Element nx=4096 handled OK
- 	Element t_end=0.3 handled OK
+ 
+ 	Element nx=16384*4 handled OK
+ 	Element t_end=1.0 handled OK
  	Element print_constants=T handled OK
 x_min =   0.0000000000    
  	Element x_min=0 handled OK
-x_max =   4189001.1939    
+x_max =   22341339.701    
  	Element x_max=nx*deltax handled OK
-
+ 
  Ending "control" block
-
+ 
  Beginning "boundaries" block
-
-bc_x_min =         1
- 	Element bc_x_min=periodic handled OK
-bc_x_max =         1
- 	Element bc_x_max=periodic handled OK
-
+ 
+bc_x_min =         9
+ 	Element bc_x_min=reflect handled OK
+bc_x_max =         5
+ 	Element bc_x_max=open handled OK
+ 
  Ending "boundaries" block
-
+ 
  Beginning "species" block
-
+ 
  	Element name=Background handled OK
 charge =  -1.0000000000    
  	Element charge=-1 handled OK
 mass =   1.0000000000    
  	Element mass=1.0 handled OK
- 	Element npart=ppc*nx handled OK
+ 	Element npart=ppcb*nx handled OK
  	Element temp=1e4 handled OK
  	Element density=dens handled OK
-
+ 
  Ending "species" block
-
+ 
  Beginning "species" block
-
+ 
  	Element name=EnergeticE handled OK
 charge =  -1.0000000000    
  	Element charge=-1 handled OK
@@ -63,35 +67,43 @@ mass =   1.0000000000
  	Element temp_x=temp_par handled OK
  	Element temp_y=temp_perp handled OK
  	Element temp_z=temp_perp handled OK
- 	Element density=dens*dens_rat handled OK
-
+ 	Element density=
+ dens*dens_rat*gauss(x/length_x, x_min/length_x, dens_sigma/length_x) handled OK
+ 
  Ending "species" block
-
+ 
  Beginning "species" block
-
+ 
  	Element name=Ion handled OK
 charge =   1.0000000000    
  	Element charge=1 handled OK
 mass =   1836.2000000    
  	Element mass=1836.2 handled OK
- 	Element npart=ppc*nx handled OK
+ 	Element npart=ppcb*nx handled OK
  	Element temp=1e4 handled OK
  	Element density=dens*(1+dens_rat) handled OK
-
+ 
  Ending "species" block
-
+ 
  Beginning "fields" block
-
+ 
  	Element bz=0.0 handled OK
  	Element by=0.0 handled OK
- 	Element bx=modB handled OK
-
+ 	Element bx=modB*(1 + a_mag*x*x) handled OK
+ 
  Ending "fields" block
-
+ 
+ Beginning "accumulator" block
+ 
+ 	Element dt_accumulate=t0/10.0 handled OK
+ 
+ Ending "accumulator" block
+ 
  Beginning "output" block
-
- 	Element dt_snapshot=5e-5 handled OK
- 	Element full_dump_every=100 handled OK
+ 
+ 	Element dt_snapshot=t0*20.0 handled OK
+ 	Element full_dump_every=10 handled OK
+ 	Element restart_dump_every=30 handled OK
  	Element particles=never handled OK
  	Element px=never handled OK
  	Element grid=full + single handled OK
@@ -108,11 +120,11 @@ mass =   1836.2000000
  	Element number_density=never + species handled OK
  	Element temperature=never handled OK
  	Element distribution_functions=full+single handled OK
-
+ 
  Ending "output" block
-
+ 
  Beginning "dist_fn" block
-
+ 
  	Element name=x_px handled OK
  	Element ndims=2 handled OK
  	Element direction1=dir_x handled OK
@@ -121,118 +133,147 @@ mass =   1836.2000000
  	Element range2=(1,1) handled OK
  	Element resolution1=1 handled OK
  	Element resolution2=500 handled OK
- 	Element include_species=Background handled OK
  	Element include_species=EnergeticE handled OK
- 	Element include_species=Ion handled OK
-
+ 
  Ending "dist_fn" block
-
+ 
+ Beginning "dist_fn" block
+ 
+ 	Element name=x_py handled OK
+ 	Element ndims=2 handled OK
+ 	Element direction1=dir_x handled OK
+ 	Element direction2=dir_py handled OK
+ 	Element range1=(1, 1) handled OK
+ 	Element range2=(1, 1) handled OK
+ 	Element resolution1=1 handled OK
+ 	Element resolution2=500 handled OK
+ 	Element include_species=EnergeticE handled OK
+ 
+ Ending "dist_fn" block
+ 
  Constant block values after first pass:
-
+ 
   vtherm_par =   44968868.700    
-  vtherm_perp =   119916983.20    
+  vtherm_perp =   89937737.400    
   temp_par =   133422680.68    
-  temp_perp =   948783507.05    
-  modB =  0.10000000000E-06
-  wCe =   17588.200878    
-  wpe =   35176.401757    
-  dens =   388794.18749    
+  temp_perp =   533690722.72    
+  modB =  0.30000000000E-06
+  wCe =   52764.602635    
+  a_mag =  0.13850000000E-14
+  wpe =   158293.80791    
+  dens =   7873082.2967    
   dens_rat =  0.10000000000E-02
-  ppc =   1000.0000000    
-  deltax =   1022.7053696    
+  dens_sigma =   1000000.0000    
+  ppcb =   200.00000000    
+  ppc =   2000.0000000    
+  deltax =   340.90178987    
+  t0 =  0.11901918495E-03
 Deck state:  2
-
+ 
  Beginning "constant" block
-
+ 
  	Element vtherm_par=0.15*c handled OK
- 	Element vtherm_perp=0.4*c handled OK
+ 	Element vtherm_perp=0.3*c handled OK
  	Element temp_par=me*vtherm_par^2/kb handled OK
  	Element temp_perp=me*vtherm_perp^2/kb handled OK
- 	Element modB=100e-9 handled OK
+ 	Element modB=300e-9 handled OK
  	Element wCe=qe *modB /me handled OK
- 	Element wpe=wCe*2.0 handled OK
+ 	Element a_mag=1.385e-15 handled OK
+ 	Element wpe=wCe*3.0 handled OK
  	Element dens=wpe*wpe*me*epsilon0/qe^2 handled OK
  	Element dens_rat=0.001 handled OK
- 	Element ppc=1000 handled OK
+ 	Element dens_sigma=1e6 handled OK
+ 	Element ppcb=200 handled OK
+ 	Element ppc=2000 handled OK
  	Element deltax=0.06*c/wCe handled OK
-
+ 	Element t0=6.28/wCe handled OK
+ 
  Ending "constant" block
-
+ 
  Beginning "control" block
-
- 	Element nx=4096 handled OK
- 	Element t_end=0.3 handled OK
+ 
+ 	Element nx=16384*4 handled OK
+ 	Element t_end=1.0 handled OK
  	Element print_constants=T handled OK
  	Element x_min=0 handled OK
  	Element x_max=nx*deltax handled OK
-
+ 
  Ending "control" block
-
+ 
  Beginning "boundaries" block
-
- 	Element bc_x_min=periodic handled OK
- 	Element bc_x_max=periodic handled OK
-
+ 
+ 	Element bc_x_min=reflect handled OK
+ 	Element bc_x_max=open handled OK
+ 
  Ending "boundaries" block
-
+ 
  Beginning "species" block
-
+ 
  	Element name=Background handled OK
 charge =  -1.0000000000    
  	Element charge=-1 handled OK
 mass =   1.0000000000    
  	Element mass=1.0 handled OK
-npart =   4096000
- 	Element npart=ppc*nx handled OK
+npart =  13107200
+ 	Element npart=ppcb*nx handled OK
  	Element temp=1e4 handled OK
  	Element density=dens handled OK
-
+ 
  Ending "species" block
-
+ 
  Beginning "species" block
-
+ 
  	Element name=EnergeticE handled OK
 charge =  -1.0000000000    
  	Element charge=-1 handled OK
 mass =   1.0000000000    
  	Element mass=1.0 handled OK
-npart =   4096000
+npart = 131072000
  	Element npart=ppc*nx handled OK
  	Element temp_x=temp_par handled OK
  	Element temp_y=temp_perp handled OK
  	Element temp_z=temp_perp handled OK
- 	Element density=dens*dens_rat handled OK
-
+ 	Element density=
+ dens*dens_rat*gauss(x/length_x, x_min/length_x, dens_sigma/length_x) handled OK
+ 
  Ending "species" block
-
+ 
  Beginning "species" block
-
+ 
  	Element name=Ion handled OK
 charge =   1.0000000000    
  	Element charge=1 handled OK
 mass =   1836.2000000    
  	Element mass=1836.2 handled OK
-npart =   4096000
- 	Element npart=ppc*nx handled OK
+npart =  13107200
+ 	Element npart=ppcb*nx handled OK
  	Element temp=1e4 handled OK
  	Element density=dens*(1+dens_rat) handled OK
-
+ 
  Ending "species" block
-
+ 
  Beginning "fields" block
-
+ 
  	Element bz=0.0 handled OK
  	Element by=0.0 handled OK
- 	Element bx=modB handled OK
-
+ 	Element bx=modB*(1 + a_mag*x*x) handled OK
+ 
  Ending "fields" block
-
+ 
+ Beginning "accumulator" block
+ 
+ 	Element dt_accumulate=t0/10.0 handled OK
+ 
+ Ending "accumulator" block
+ 
  Beginning "output" block
-
-dt_snapshot =  0.50000000000E-04
- 	Element dt_snapshot=5e-5 handled OK
-full_dump_every =       100
- 	Element full_dump_every=100 handled OK
+ 
+dt_snapshot =  0.23803836990E-02
+ 	Element dt_snapshot=t0*20.0 handled OK
+full_dump_every =        10
+ 	Element full_dump_every=10 handled OK
+restart_dump_every =        30
+ 	Element restart_dump_every=30 handled OK
  	Element particles=never handled OK
  	Element px=never handled OK
  	Element grid=full + single handled OK
@@ -249,11 +290,11 @@ full_dump_every =       100
  	Element number_density=never + species handled OK
  	Element temperature=never handled OK
  	Element distribution_functions=full+single handled OK
-
+ 
  Ending "output" block
-
+ 
  Beginning "dist_fn" block
-
+ 
  	Element name=x_px handled OK
 ndims =         2
  	Element ndims=2 handled OK
@@ -267,27 +308,47 @@ resolution1 =         1
  	Element resolution1=1 handled OK
 resolution2 =       500
  	Element resolution2=500 handled OK
-include_species =         1
- 	Element include_species=Background handled OK
 include_species =         2
  	Element include_species=EnergeticE handled OK
-include_species =         3
- 	Element include_species=Ion handled OK
-
+ 
  Ending "dist_fn" block
-
+ 
+ Beginning "dist_fn" block
+ 
+ 	Element name=x_py handled OK
+ndims =         2
+ 	Element ndims=2 handled OK
+direction1 =         1
+ 	Element direction1=dir_x handled OK
+direction2 =         3
+ 	Element direction2=dir_py handled OK
+ 	Element range1=(1, 1) handled OK
+ 	Element range2=(1, 1) handled OK
+resolution1 =         1
+ 	Element resolution1=1 handled OK
+resolution2 =       500
+ 	Element resolution2=500 handled OK
+include_species =         2
+ 	Element include_species=EnergeticE handled OK
+ 
+ Ending "dist_fn" block
+ 
  Initial conditions complete and valid. Attempting to load particles
-
+ 
  Constant block values after second pass:
-
+ 
   vtherm_par =   44968868.700    
-  vtherm_perp =   119916983.20    
+  vtherm_perp =   89937737.400    
   temp_par =   133422680.68    
-  temp_perp =   948783507.05    
-  modB =  0.10000000000E-06
-  wCe =   17588.200878    
-  wpe =   35176.401757    
-  dens =   388794.18749    
+  temp_perp =   533690722.72    
+  modB =  0.30000000000E-06
+  wCe =   52764.602635    
+  a_mag =  0.13850000000E-14
+  wpe =   158293.80791    
+  dens =   7873082.2967    
   dens_rat =  0.10000000000E-02
-  ppc =   1000.0000000    
-  deltax =   1022.7053696    
+  dens_sigma =   1000000.0000    
+  ppcb =   200.00000000    
+  ppc =   2000.0000000    
+  deltax =   340.90178987    
+  t0 =  0.11901918495E-03

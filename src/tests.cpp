@@ -14,6 +14,7 @@
 #include "tests.h"
 #include "reader.h"
 #include "support.h"
+#include "main_support.h"
 #include "plasma.h"
 #include "controller.h"
 #include "my_array.h"
@@ -90,9 +91,11 @@ void tests::report_err(int err, int test_id){
 *
 * Logs error text corresponding to code err for test defined by test_id. Errors are always recorded.*/
   if(test_id == -1) test_id = current_test_id;
-
+  if(err ==TEST_PASSED) set_colour('b');
+  else set_colour('r');
   my_print(outfile, get_printable_error(err, test_id), mpi_info.rank);
   my_print(nullptr, get_printable_error(err, test_id), mpi_info.rank);
+  set_colour();
 
 }
 
@@ -131,6 +134,47 @@ std::string tests::get_printable_error(int err, int test_id){
 
 }
 
+void tests::set_colour(char col){
+/** \brief Set output text colour
+*
+*Set terminal output colour using std escape sequences. Accepts no argument to return to default, or rgb, cmyk and white to test text colour. NB technically not MPI safe. Use sparingly to highlight important information.
+*/
+
+  switch (col) {
+    case 0:
+      std::cout<<"\033[0m";
+      break;
+    case 'r':
+      std::cout<<"\033[31m";
+      break;
+    case 'g':
+      std::cout<<"\033[32m";
+      break;
+    case 'b':
+      std::cout<<"\033[34m";
+      break;
+    case 'c':
+      std::cout<<"\033[36m";
+      break;
+    case 'm':
+      std::cout<<"\033[35m";
+      break;
+    case 'y':
+      std::cout<<"\033[33m";
+      break;
+    case 'w':
+      std::cout<<"\033[37m";
+      break;
+    case 'k':
+      std::cout<<"\033[30m";
+      break;
+
+    default:
+      break;
+  }
+
+}
+
 void tests::cleanup_tests(){
 /** \brief Delete test objects
 *
@@ -163,8 +207,9 @@ void tests::run_tests(){
     total_errs += (bool) test_list[current_test_id]->run();
     //Add one if is any error returned
   }
-
+  test_bed->set_colour('r');
   test_bed->report_info(mk_str(total_errs)+" failed tests", mpi_info.rank);
+  test_bed->set_colour();
 
 }
 
@@ -375,7 +420,7 @@ int test_entity_get_and_fft::run(){
 }
 
 test_entity_basic_maths::test_entity_basic_maths(){
-
+/** \todo Add setup and teardown so these are alloced before run but not on construction*/
   name = "basic maths helpers";
   size = 256;
   data_square=(calc_type*)calloc(size,sizeof(calc_type));
@@ -936,8 +981,7 @@ test_entity_spectrum::test_entity_spectrum(){
   name = "spectrum checks";
   char block_id[10]= "ex";
   file_prefix = "./files/";
-
-
+  
 }
 test_entity_spectrum::~test_entity_spectrum(){
 
@@ -955,11 +999,20 @@ int test_entity_spectrum::run(){
 
   int err = TEST_PASSED;
 
+  //Use a different deck.status file...
+  deck_constants const_tmp = my_const;
+  if(mpi_info.rank == 0) get_deck_constants(file_prefix);
+  share_consts();
+
   err|= setup();
   err|= basic_tests();
   err|= albertGs_tests();
   
   test_bed->report_err(err);
+
+  my_const = const_tmp;
+  share_consts();
+
   return err;
 
 }
@@ -1013,7 +1066,6 @@ int test_entity_spectrum::basic_tests(){
     angle_data = test_contr->get_current_spectrum()->get_angle_distrib(len);
     
     total_error = integrator(angle_data, len, d_angle);
-
     test_contr->get_current_spectrum()->make_test_spectrum(tim_in, space_in, FUNCTION_GAUSS);
     angle_data = test_contr->get_current_spectrum()->get_angle_distrib(len);
     total_error += integrator(angle_data, len, d_angle);
@@ -1029,6 +1081,8 @@ int test_entity_spectrum::basic_tests(){
       err |= TEST_WRONG_RESULT;
       test_bed->report_info("Error in angular distribution integrals, value " + mk_str(total_error, true));
     }
+  }else{
+    test_bed->report_info("Cannot test assymmetric spectrum");
   }
   outfile.open("spect_testy.dat", std::ios::out|std::ios::binary);
   test_contr->get_current_spectrum()->write_to_file(outfile);
@@ -1038,6 +1092,7 @@ int test_entity_spectrum::basic_tests(){
   /** Now make the real spectrum from data and check the result matches the plain text test file*/
 
   test_contr->get_current_spectrum()->generate_spectrum(test_dat_fft ,10, FUNCTION_GAUSS);
+
 
   test_spect = new data_array(file_prefix + "spectrum.dat", 1);
 
@@ -1055,7 +1110,7 @@ int test_entity_spectrum::basic_tests(){
   }
   if(total_error > LOW_PRECISION){
     err |= TEST_WRONG_RESULT;
-    test_bed->report_info("Mismatch between generated spectrum and test spectrum");
+    test_bed->report_info("Mismatch between generated spectrum and test spectrum of "+mk_str(total_error));
   }
   /* Preserve the spectrum*/
   outfile.open("spect_out.dat", std::ios::out|std::ios::binary);

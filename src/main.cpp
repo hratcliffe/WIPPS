@@ -32,7 +32,7 @@
 #include "main_support.h"
 
 deck_constants my_const;/**< Physical constants*/
-extern const mpi_info_struc mpi_info;
+extern const mpi_info_struc mpi_info;/**< Link to mpi_info as const*/
 
 #ifdef RUN_TESTS_AND_EXIT
 tests* test_bed;/**<Test bed for testing */
@@ -57,6 +57,11 @@ int main(int argc, char *argv[]){
   my_print(std::string("Code Version: ")+ VERSION, mpi_info.rank);
   my_print("Code is running on "+mk_str(mpi_info.n_procs)+" processing elements.", mpi_info.rank);
 
+  //if(mpi_info.rank ==0) std::cout<< &mpi_info<<std::endl;
+  
+  //my_array tmp_array;
+  //tmp_array.tmp_function();
+  
   MPI_Barrier(MPI_COMM_WORLD);
 
   setup_args cmd_line_args = process_command_line(argc, argv);

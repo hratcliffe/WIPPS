@@ -24,7 +24,7 @@ controller::controller(std::string file_prefix){
 *
 * Create plasma object and initialise
 */
-  my_plas = new plasma(my_const.omega_ce * me/std::abs(q0), file_prefix);
+  my_plas = new plasma(-1, file_prefix);
   current_spect=0;
   current_d=0;
 

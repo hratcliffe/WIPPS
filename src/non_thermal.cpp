@@ -92,3 +92,12 @@ bool non_thermal::configure_from_file(std::string file_prefix){
 
 }
 
+void non_thermal::write(std::ofstream &outfile){
+//Tagged names so we can use as source for a redo...
+  outfile<<DENS<<" "<<ref_dens<<"\n";
+  outfile<<"B_ref "<<ref_B<<"\n";
+  outfile<<DENS_RAT<<" "<<fraction<<"\n";
+  outfile<<VPAR<<" "<<v_par<<"\n";
+  outfile<<VPERP<<" "<<v_perp<<"\n";
+
+}

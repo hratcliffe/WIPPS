@@ -30,6 +30,14 @@ plasma::~plasma(){
 
 }
 
+void plasma::write(std::ofstream &outfile){
+/** \todo COmplete*/
+
+
+
+}
+
+
 bool plasma::configure_from_file(std::string file_prefix){
 /** \brief Setup plasma from file
 *

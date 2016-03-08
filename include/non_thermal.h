@@ -22,7 +22,6 @@ public:
   calc_type v_par;
   calc_type v_perp;
 
-
 };
 
 

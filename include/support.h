@@ -63,6 +63,8 @@ const calc_type eps0 =8.85418782e-12; /**< Epsilon_0 permittivity of free space 
 //epsilon0 = 8.8541878176203899d-12 ; F/m
 //h_planck = 6.62606957d-34 ; J s
 
+const calc_type GEN_PRECISION = 1e-6;/**< General precision for equality etc*/
+
 const int DEFAULT_N_ANG = 100;/**< Default number of wave normal angles to consider*/
 const int ID_SIZE = 10;/**< Length of block ids*/
 

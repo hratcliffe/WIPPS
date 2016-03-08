@@ -46,7 +46,7 @@ calc_type * make_momentum_axis(int n_momenta, calc_type v_max_over_c);
 calc_type get_growth_rate(plasma * my_plas, non_thermal * my_elec, int n_momenta, calc_type * p_axis, calc_type omega_in);
 g_args g_command_line(int argc, char * argv[]);
 
-void write_growth_header(std::string in_file, plasma * my_plas, non_thermal * my_elec, int n_momenta, calc_type min_v, calc_type max_v, std::ofstream &outfile);
+void write_growth_header(std::string in_file, plasma * my_plas, non_thermal * my_elec, int n_momenta, calc_type min_v, calc_type max_v, int n_trials, std::ofstream &outfile);
 
 void write_growth(calc_type omega, calc_type growth, std::ofstream &outfile);
 
@@ -136,13 +136,10 @@ int main(int argc, char *argv[]){
   
   }
 
-  if(mpi_info.rank ==0) write_growth_header(cmd_line_args.file_prefix, my_plas, my_elec, n_momenta, min_v, max_v, outfile);
+  if(mpi_info.rank ==0) write_growth_header(cmd_line_args.file_prefix, my_plas, my_elec, n_momenta, min_v, max_v, n_trials, outfile);
   for(int i=0; i<n_trials; ++i){
     
     growth_rate[i] = get_growth_rate(my_plas, my_elec, n_momenta, p_axis, omega);
-//    std::cout<<my_plas<<" "<<my_elec<<std::endl;
-//    std::cout<<n_momenta<<" "<<omega<<std::endl;
-//     std::cout<<p_axis<<std::endl;
     if(mpi_info.rank ==0) write_growth(omega, growth_rate[i], outfile);
     omega += d_om;
   }
@@ -171,59 +168,43 @@ calc_type get_growth_rate(plasma * my_plas, non_thermal * my_elec, int n_momenta
   //Get RMS momenta from velocities...
   // a_x = RMS p_x (Note factor of 2 in perp, not in par...)
   v_tmp = my_elec->v_par;
-  //std::cout<<std::sqrt(1.0 - (v_tmp/v0)*(v_tmp/v0))<<std::endl;
   a_par = 2.0*v_tmp / std::sqrt(1.0 - (v_tmp/v0)*(v_tmp/v0));
-  //std::cout<<a_par<<std::endl;
 
   v_tmp = my_elec->v_perp;
-  //std::cout<<v_tmp<<std::endl;
-  //std::cout<<std::sqrt(1.0 - (v_tmp/v0)*(v_tmp/v0))<<std::endl;
-
   a_perp = v_tmp / std::sqrt(1.0 - (v_tmp/v0)*(v_tmp/v0));
   //These aren't right for high gamma, but nor is a damn Maxwellian...
-//  std::cout<<a_perp<<std::endl;
 
   norm_f = 1.0/(a_perp*a_perp*a_par * pi * std::sqrt(pi));
-  
-  //std::cout<<norm_f<<std::endl;
   
   for(int j=0; j< n_momenta; ++j){
   
     gamma = - 1.0 + ck_om * std::sqrt( (ck_om*ck_om -1.0 )*(1.0 + p_axis[j]*p_axis[j]/v0/v0)*(omega_in*omega_in/om_ce/om_ce) + 1 );
     gamma /= ((ck_om*ck_om -1)*omega_in/om_ce);
     //14 in Xiao resonant gamma factor
-//    std::cout<<gamma[j]<<std::endl;
-    p_res = (gamma * om_diff)/k;
-//    std::cout<<p_res[j]<<std::endl;
 
+    p_res = (gamma * om_diff)/k;
     //Resonant momentum
+
     Delta_res = 1.0 - (omega_in*p_res / (v0*v0*k*gamma));
     //Xiao 15, no meaning given
     
     //For f Maxwellian as Xiao 28: d f/ dp_x = 2 p_x a_x
     //Now p_par = p_res and p_perp is p_axis[j]
+
     f_tmp = norm_f * std::exp(- (p_res*p_res/(a_par*a_par)) - (p_axis[j]*p_axis[j]/(a_perp*a_perp)));
     S[j] = std::pow(p_axis[j], 3) * f_tmp / Delta_res;
-    //Arrays in case p_axis is not uniform...
     S_full[j] = (om_ce/gamma - omega_in)*S[j];
     
-//    S_tot += S[j];
-  //  S_full_tot += S_full[j];
-  
   }
 
   dp_ax[0] = 0.0;
   for(int j=1; j<n_momenta; j++) dp_ax[j] = p_axis[j] - p_axis[j-1];
 
-  //dp = std::abs(p_axis[0] - p_axis[1]);
-  //S_tot *=dp;
-  //S_full_tot *=dp;
-  //Assume for now linear grid.
-
   S_tot = integrator(S, n_momenta, dp_ax);
   S_full_tot = integrator(S_full, n_momenta, dp_ax);
 
   calc_type ret = 0.0;
+  
   if(std::abs(S_tot) > GEN_PRECISION){
     A_crit = omega_in /om_diff;
     A_rel = ((a_perp*a_perp/(a_par*a_par)) - 1.0)*S_full_tot/om_diff/S_tot;
@@ -283,10 +264,11 @@ g_args g_command_line(int argc, char * argv[]){
 
 }
 
-void write_growth_header(std::string in_file, plasma * my_plas, non_thermal * my_elec, int n_momenta, calc_type min_v, calc_type max_v, std::ofstream &outfile){
+void write_growth_header(std::string in_file, plasma * my_plas, non_thermal * my_elec, int n_momenta, calc_type min_v, calc_type max_v, int n_trials, std::ofstream &outfile){
 
   /** Write general parameters for the growth calcs...*/
 
+  outfile<<n_trials<<"\n";
   outfile<<"Source: "<<in_file<<"\n";
   
   outfile<<"Number of momentum points "<<n_momenta<<"\n";

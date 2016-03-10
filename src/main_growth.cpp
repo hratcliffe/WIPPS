@@ -12,6 +12,7 @@
 #include <boost/math/special_functions.hpp>
 //Provides Bessel functions, erf, and many more
 #include <iostream>
+#include <limits>
 #include <stdio.h>
 #include "sdf.h"
 //SDF file libraries
@@ -103,11 +104,11 @@ int main(int argc, char *argv[]){
 
   non_thermal * my_elec = new non_thermal(cmd_line_args.file_prefix);
 
-  const int n_momenta = 1000;
-  const int n_trials = 100;
+  const int n_momenta = 10000;
+  const int n_trials = 2000;
 
   calc_type * p_axis, *growth_rate;
-  calc_type min_v = 0.0, max_v = 0.9;
+  calc_type min_v = 0.0, max_v = 0.95;
   p_axis = make_momentum_axis(n_momenta, max_v);
   growth_rate = (calc_type*) malloc(n_trials* sizeof(calc_type));
 
@@ -122,8 +123,12 @@ int main(int argc, char *argv[]){
   }
 
   calc_type omega;
-  calc_type d_om = std::abs(my_plas->get_omega_ref("ce")) / (float) n_trials;
-  omega = d_om;
+  calc_type d_om = std::abs(my_plas->get_omega_ref("ce")) / (float) (n_trials-1);
+  omega = 0.0;
+  int om_orders = 3;
+  calc_type d_i = (calc_type) (n_trials -1)/(calc_type) om_orders;
+  //Orders of magnitude to cover
+  d_om = std::abs(my_plas->get_omega_ref("ce"))/ std::pow(10, om_orders);
   
   std::ofstream outfile;
   outfile.open("Growth.dat");
@@ -138,10 +143,11 @@ int main(int argc, char *argv[]){
 
   if(mpi_info.rank ==0) write_growth_header(cmd_line_args.file_prefix, my_plas, my_elec, n_momenta, min_v, max_v, n_trials, outfile);
   for(int i=0; i<n_trials; ++i){
+    omega = std::pow(10, (calc_type) i /d_i)*d_om;
     
     growth_rate[i] = get_growth_rate(my_plas, my_elec, n_momenta, p_axis, omega);
     if(mpi_info.rank ==0) write_growth(omega, growth_rate[i], outfile);
-    omega += d_om;
+    //omega += d_om;
   }
 
   outfile.close();
@@ -152,9 +158,12 @@ int main(int argc, char *argv[]){
 
 calc_type get_growth_rate(plasma * my_plas, non_thermal * my_elec, int n_momenta, calc_type * p_axis, calc_type omega_in){
 
-  calc_type k = my_plas->get_dispersion(omega_in, WAVE_WHISTLER, 1);
+  calc_type k = my_plas->get_dispersion(omega_in, WAVE_WHISTLER, 1), k_paper;
 
   calc_type ck_om = v0*k/omega_in, om_ce = std::abs(my_plas->get_omega_ref("ce")), om_pe = std::abs(my_plas->get_omega_ref("pe")), om_diff = omega_in - om_ce;
+  
+  
+  //Calculate k using Eq 9 of Xiao k_paper = std::sqrt( (std::pow(omega_in, 2) - std::pow(om_pe, 2)*omega_in/om_diff)/std::pow(v0, 2));
   
   calc_type f_tmp, a_par, a_perp, v_tmp, norm_f, S_tot=0.0, S_full_tot=0.0, dp, A_crit, A_rel, eta_rel;
   calc_type  *S, *S_full, * dp_ax;
@@ -168,33 +177,35 @@ calc_type get_growth_rate(plasma * my_plas, non_thermal * my_elec, int n_momenta
   //Get RMS momenta from velocities...
   // a_x = RMS p_x (Note factor of 2 in perp, not in par...)
   v_tmp = my_elec->v_par;
-  a_par = 2.0*v_tmp / std::sqrt(1.0 - (v_tmp/v0)*(v_tmp/v0));
+  a_par = std::sqrt(2.0)*v_tmp / std::sqrt(1.0 - (v_tmp/v0)*(v_tmp/v0));
 
   v_tmp = my_elec->v_perp;
   a_perp = v_tmp / std::sqrt(1.0 - (v_tmp/v0)*(v_tmp/v0));
-  //These aren't right for high gamma, but nor is a damn Maxwellian...
 
   norm_f = 1.0/(a_perp*a_perp*a_par * pi * std::sqrt(pi));
   
   for(int j=0; j< n_momenta; ++j){
   
-    gamma = - 1.0 + ck_om * std::sqrt( (ck_om*ck_om -1.0 )*(1.0 + p_axis[j]*p_axis[j]/v0/v0)*(omega_in*omega_in/om_ce/om_ce) + 1 );
-    gamma /= ((ck_om*ck_om -1)*omega_in/om_ce);
+    gamma = - 1.0 + ck_om * std::sqrt( (ck_om*ck_om -1.0 )*(1.0 + p_axis[j]*p_axis[j]/v0/v0)*(omega_in*omega_in/om_ce/om_ce) + 1.0 );
+    gamma /= ((ck_om*ck_om - 1.0)*omega_in/om_ce);
     //14 in Xiao resonant gamma factor
 
-    p_res = (gamma * om_diff)/k;
+    p_res = (gamma * omega_in - om_ce)/k;
     //Resonant momentum
-
+    
     Delta_res = 1.0 - (omega_in*p_res / (v0*v0*k*gamma));
-    //Xiao 15, no meaning given
+    //Xiao 15, no meaning given. Always +ve
+    if(Delta_res < GEN_PRECISION) std::cout<<"ERROR!!"<<std::endl;
     
     //For f Maxwellian as Xiao 28: d f/ dp_x = 2 p_x a_x
     //Now p_par = p_res and p_perp is p_axis[j]
-
     f_tmp = norm_f * std::exp(- (p_res*p_res/(a_par*a_par)) - (p_axis[j]*p_axis[j]/(a_perp*a_perp)));
-    S[j] = std::pow(p_axis[j], 3) * f_tmp / Delta_res;
-    S_full[j] = (om_ce/gamma - omega_in)*S[j];
-    
+
+    S[j] = -2.0 * std::pow(p_axis[j], 3) * f_tmp / Delta_res;
+
+    S_full[j] = 2.0 * std::pow(p_axis[j], 3) * f_tmp / Delta_res *(omega_in - om_ce/gamma) * (1.0 - a_perp*a_perp/a_par/a_par);
+    //Both of these have removed factor of a_perp**2
+
   }
 
   dp_ax[0] = 0.0;
@@ -205,17 +216,17 @@ calc_type get_growth_rate(plasma * my_plas, non_thermal * my_elec, int n_momenta
 
   calc_type ret = 0.0;
   
-  if(std::abs(S_tot) > GEN_PRECISION){
-    A_crit = omega_in /om_diff;
-    A_rel = ((a_perp*a_perp/(a_par*a_par)) - 1.0)*S_full_tot/om_diff/S_tot;
-    eta_rel = -2.0 * pi * my_elec->fraction* om_diff/k * S_tot / a_perp/a_perp;
+  if(std::abs(S_tot) > std::numeric_limits<calc_type>::min()){
+    A_crit = - omega_in /om_diff;
+    A_rel = S_full_tot/S_tot/om_diff;
     
+    eta_rel = pi * my_elec->fraction* om_diff/k * S_tot / a_perp/a_perp;
     
     ret = pi*om_pe*om_pe/(2.0*omega_in + om_pe*om_pe*om_ce/(std::pow(om_diff, 2))) * eta_rel * (A_rel - A_crit);
   
-  }
+   // ret = A_rel;
 
-   std::cout<<ret/om_ce<<std::endl;
+  }
 
   free(S);
   free(S_full);
@@ -245,7 +256,7 @@ calc_type * make_momentum_axis(int n_mom, calc_type v_max){
 }
 
 g_args g_command_line(int argc, char * argv[]){
-/** Check whether to process no files (analytic only), sdf or spectrum 0, 1,2, respectively. Looping through again is silly, but we're stealing from main in chunks here... But if we have a -f arg we use sdf files, if a -s we use the spectra listed in that file, if neither, we output analytic only and if both the last one is used*/
+/** Check whether to process no files (analytic only), sdf or spectrum 0, 1,2, respectively. Looping through again is silly, but we're stealing from main in chunks here... But if we have a -sdf arg we use sdf files, if a -s we use the spectra listed in that file, if neither, we output analytic only and if both the last one is used*/
 
   g_args extra_cmd_line;
 
@@ -257,7 +268,7 @@ g_args g_command_line(int argc, char * argv[]){
       extra_cmd_line.spect_file = atoi(argv[i+1]);
       extra_cmd_line.src = 2;
     }
-    if(strcmp(argv[i], "-f")==0 && i < argc-1) extra_cmd_line.src = 1;
+    if(strcmp(argv[i], "-sdf")==0) extra_cmd_line.src = 1;
   }
   return extra_cmd_line;
 

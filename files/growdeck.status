@@ -1,0 +1,26 @@
+ EPOCH1D v4.5.2   v4.5.2-0-g16e6360-clean 1438102671.604               
+
+Deck state:  1
+
+ Beginning "constant" block
+charge =  -1.0000000000    
+ 	Element charge=-1 handled OK
+mass =   1.0000000000    
+ 	Element mass=1.0 handled OK
+ 	Element npart=ppc*nx handled OK
+ 	Element temp=1e4 
+ Initial conditions complete and valid. Attempting to load particles
+
+ Constant block values after second pass:
+
+  vtherm_par =   93776865.15999  
+  vtherm_perp =   188230189.864
+  temp_par =   133422680.68    
+  temp_perp =   948783507.05    
+  modB =  0.10000000000E-06
+  wCe =   17588.200878    
+  wpe =   35176.401757    
+  dens =   388794.18749    
+  dens_rat =  0.10000000000E-01
+  ppc =   1000.0000000    
+  deltax =   1022.7053696    

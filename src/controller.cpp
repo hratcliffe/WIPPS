@@ -108,7 +108,7 @@ diffusion_coeff * controller::get_current_d(){
 void controller::bounce_average(){
   /** \todo finish this!!*/
   if(my_d.size() ==1) return;
-  //No averaging to do!
+  //No averaging to do! Is that true??
 
   int dims[2];
   get_size(dims);

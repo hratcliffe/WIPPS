@@ -224,7 +224,7 @@ calc_type get_growth_rate(plasma * my_plas, non_thermal * my_elec, int n_momenta
     
     ret = pi*om_pe*om_pe/(2.0*omega_in + om_pe*om_pe*om_ce/(std::pow(om_diff, 2))) * eta_rel * (A_rel - A_crit);
   
-   // ret = A_rel;
+    //ret = eta_rel;
 
   }
 
@@ -297,3 +297,127 @@ void write_growth(calc_type omega, calc_type growth, std::ofstream &outfile){
 
 }
 
+void standalone_growth(){
+//Do a sample growth rate calculation to match Xiao et al paper
+//This duplocates get_growth rate but without using plasma etc etc class
+
+  const int n_momenta = 10000;
+  const int n_trials = 2000;
+
+  calc_type * p_axis, *growth_rate;
+  calc_type min_v = 0.0, max_v = 0.95;
+  p_axis = make_momentum_axis(n_momenta, max_v);
+  growth_rate = (calc_type*) malloc(n_trials* sizeof(calc_type));
+
+  calc_type my_elec_fraction = 0.10000000000e-02;
+  calc_type my_elec_v_par = 44968868.700;
+  calc_type my_elec_v_perp = 89937737.400;
+
+
+
+  calc_type k;
+
+  calc_type ck_om, om_ce = 10000.0, om_pe = 3.0*om_ce, om_diff, omega_in;
+
+  calc_type f_tmp, a_par, a_perp, v_tmp, norm_f, S_tot=0.0, S_full_tot=0.0, dp, A_crit, A_rel, eta_rel;
+  calc_type  *S, *S_full, * dp_ax;
+  calc_type gamma, p_res, Delta_res;
+
+  S = (calc_type *)malloc(n_momenta*sizeof(calc_type));
+  S_full = (calc_type *)malloc(n_momenta*sizeof(calc_type));
+  dp_ax = (calc_type *)malloc(n_momenta*sizeof(calc_type));
+  
+  calc_type d_om = std::abs(om_ce) / (float) (n_trials-1);
+  omega_in = 0.0;
+  int om_orders = 3;
+  calc_type d_i = (calc_type) (n_trials -1)/(calc_type) om_orders;
+
+  //Orders of magnitude to cover
+  d_om = std::abs(om_ce)/ std::pow(10, om_orders);
+  //"Logarithmic" axis of n_trials points up to 10^om_orders times om_ce
+
+  
+  for(int i=0; i< n_trials; i++){
+    omega_in = std::pow(10, (calc_type) i /d_i)*d_om;
+
+    //Calculate k using Eq 9 of Xiao
+    k = std::sqrt( (std::pow(omega_in, 2) - std::pow(om_pe, 2)*omega_in/om_diff)/std::pow(v0, 2));
+    ck_om = v0*k/omega_in;
+    om_diff = omega_in - om_ce;
+    
+    //Get RMS momenta from velocities...
+    // a_x = RMS p_x (Note factor of 2 in perp, not in par...)
+    v_tmp = my_elec_v_par;
+    a_par = std::sqrt(2.0)*v_tmp / std::sqrt(1.0 - (v_tmp/v0)*(v_tmp/v0));
+
+    v_tmp = my_elec_v_perp;
+    a_perp = v_tmp / std::sqrt(1.0 - (v_tmp/v0)*(v_tmp/v0));
+
+    norm_f = 1.0/(a_perp*a_perp*a_par * pi * std::sqrt(pi));
+    
+    for(int j=0; j< n_momenta; ++j){
+    
+      gamma = - 1.0 + ck_om * std::sqrt( (ck_om*ck_om -1.0 )*(1.0 + p_axis[j]*p_axis[j]/v0/v0)*(omega_in*omega_in/om_ce/om_ce) + 1.0 );
+      gamma /= ((ck_om*ck_om - 1.0)*omega_in/om_ce);
+      //14 in Xiao resonant gamma factor
+
+      p_res = (gamma * omega_in - om_ce)/k;
+      //Resonant momentum
+      
+      Delta_res = 1.0 - (omega_in*p_res / (v0*v0*k*gamma));
+      //Xiao 15, no meaning given. Always +ve
+      if(Delta_res < 1e-15) std::cout<<"ERROR!!"<<std::endl;
+      
+      //For f Maxwellian as Xiao 28: d f/ dp_x = 2 p_x a_x
+      //Now p_par = p_res and p_perp is p_axis[j]
+      f_tmp = norm_f * std::exp(- (p_res*p_res/(a_par*a_par)) - (p_axis[j]*p_axis[j]/(a_perp*a_perp)));
+
+      S[j] = -2.0 * std::pow(p_axis[j], 3) * f_tmp / Delta_res;
+
+      S_full[j] = 2.0 * std::pow(p_axis[j], 3) * f_tmp / Delta_res *(omega_in - om_ce/gamma) * (1.0 - a_perp*a_perp/a_par/a_par);
+      //Both of these have removed factor of a_perp**2
+
+    }
+
+    dp_ax[0] = 0.0;
+    for(int j=1; j<n_momenta; j++) dp_ax[j] = p_axis[j] - p_axis[j-1];
+
+    S_tot = integrator(S, n_momenta, dp_ax);
+    S_full_tot = integrator(S_full, n_momenta, dp_ax);
+
+    calc_type ret = 0.0;
+    
+    if(std::abs(S_tot) > std::numeric_limits<calc_type>::min()){
+      A_crit = - omega_in /om_diff;
+      A_rel = S_full_tot/S_tot/om_diff;
+      
+      eta_rel = pi * my_elec_fraction* om_diff/k * S_tot / a_perp/a_perp;
+      
+      ret = pi*om_pe*om_pe/(2.0*omega_in + om_pe*om_pe*om_ce/(std::pow(om_diff, 2))) * eta_rel * (A_rel - A_crit);
+    
+      //ret = eta_rel;
+
+    }
+    growth_rate[i] = ret;
+
+  }
+  
+  std::ofstream outfile;
+  outfile.open("Growth.dat");
+  outfile<<n_trials<<"\n";
+  outfile<<"Omega \t Growth rate:"<<"\n";
+  outfile<<"BEGIN"<<"\n";
+
+  for(int i=0; i<n_trials; ++i){
+    outfile<<omega<<" "<<growth_rate[i]<<"\n";
+  }
+
+  free(S);
+  free(S_full);
+  free(dp_ax);
+
+
+  
+
+
+}

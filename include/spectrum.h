@@ -9,6 +9,11 @@
 #ifndef _spectrum_h
 #define _spectrum_h
 
+#include "support.h"
+#include "controller.h"
+#include "my_array.h"
+
+
 class data_array;
 class plasma;
 class controller;

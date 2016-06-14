@@ -9,9 +9,12 @@
 #ifndef _controller_h
 #define _controller_h
 
+#include "support.h"
+
 class spectrum;
 class plasma;
 class diffusion_coeff;
+/*Circular dependencies, don't include headers*/
 
 /** \brief Controls plasma, spectrum and d_coeff objects and their connections
 *

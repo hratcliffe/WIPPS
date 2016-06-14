@@ -10,6 +10,8 @@
 #define _plasma_h
 
 #include<vector>
+#include "support.h"
+
 
 class spectrum;
 class diffusion_coeff;

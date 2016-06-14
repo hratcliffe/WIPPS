@@ -9,12 +9,14 @@
 #include <stdio.h>
 #include <cmath>
 #include <mpi.h>
-#include "support.h"
+
 #include "controller.h"
-#include "plasma.h"
 #include "my_array.h"
 #include "d_coeff.h"
 #include "spectrum.h"
+#include "my_array.h"
+#include "plasma.h"
+
 
 extern deck_constants my_const;
 extern const mpi_info_struc mpi_info;

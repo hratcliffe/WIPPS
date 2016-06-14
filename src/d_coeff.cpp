@@ -7,10 +7,6 @@
 #include <algorithm>
 #include <boost/math/special_functions.hpp>
 #include "support.h"
-#include "my_array.h"
-#include "controller.h"
-#include "spectrum.h"
-#include "plasma.h"
 #include "d_coeff.h"
 
 extern const mpi_info_struc mpi_info;

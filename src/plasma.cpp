@@ -9,7 +9,6 @@
 #include <boost/math/special_functions.hpp>
 //Provides Bessel functions, erf, and many more
 #include <boost/math/special_functions/sign.hpp>
-#include "support.h"
 #include "plasma.h"
 
 extern deck_constants my_const;

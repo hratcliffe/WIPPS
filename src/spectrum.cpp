@@ -11,9 +11,7 @@
 #include <iostream>
 #include <iomanip>
 #include <cmath>
-#include "support.h"
-#include "my_array.h"
-#include "controller.h"
+
 #include "plasma.h"
 #include "spectrum.h"
 

@@ -10,6 +10,11 @@
 #define ____d_coeff__
 
 #include <stdio.h>
+#include "controller.h"
+#include "spectrum.h"
+#include "my_array.h"
+#include "plasma.h"
+
 
 class data_array;
 class spectrum;

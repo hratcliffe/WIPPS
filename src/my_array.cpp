@@ -475,6 +475,90 @@ bool my_array::write_to_file(std::fstream &file){
 
 }
 
+
+bool my_array::write_section_to_file(std::fstream &file, std::vector<int> bounds){
+/**Takes the version etc info then the section of the data array and writes as a stream. It's not portable to other machines necessarily due to float sizes and endianness. It'll do. We'll start the file with a known float for confirmation.
+  * We use lazy method of get_element for each element, less prone to offset errors and memory is already much faster than disk
+  *
+  *IMPORTANT: this VERSION specifier links output files to code. If modifying output or order commit and clean build before using. @return 0 (sucess) 1 (error)
+*/
+  if(!file.is_open() || (this->data ==nullptr)) return 1;
+  if(bounds.size() != n_dims*2) return 1;
+  for(int i=0; i< n_dims; i++){
+    if(bounds[i] < 0 || bounds[2*i+1] >= dims[i]) return 1;
+  }
+  
+  const char tmp_vers[15] = VERSION;
+
+  file.write((char*) &io_verify, sizeof(my_type));
+  file.write((char*) &tmp_vers, sizeof(char)*15);
+
+  //Code version...
+
+  int total_size = get_total_elements();
+  //dimension info
+  if(!ragged){
+    file.write((char*) &n_dims, sizeof(int));
+    int dim_tmp;
+    for(int i=0;i<n_dims;i++){
+      dim_tmp = dims[i];
+      file.write((char*) &dim_tmp, sizeof(int));
+    }
+  }else{
+    //do different if we have ragged array...
+    int n_dims_new = -1*n_dims;
+    file.write((char*) &n_dims_new, sizeof(int));
+    int dim_tmp;
+      for(int i=0;i<n_dims;i++){
+      dim_tmp = dims[i];
+      file.write((char*) &dim_tmp, sizeof(int));
+    }
+
+    for(int i=0;i<dims[n_dims-1];i++){
+      dim_tmp = row_lengths[i];
+      file.write((char*) &dim_tmp, sizeof(int));
+    }
+
+  }
+  my_type element;
+  if(n_dims ==1){
+    for(int i= bounds[0]; i< bounds[1]; i++){
+      element = get_element(i);
+      file.write((char *) &element, sizeof(my_type));
+    }
+  }else if(n_dims ==2){
+    for(int i= bounds[0]; i< bounds[1]; i++){
+      for(int j= bounds[2]; j< bounds[3]; j++){
+        element = get_element(i, j);
+        file.write((char *)  &element, sizeof(my_type));
+      }
+    }
+  }else if(n_dims ==3){
+    for(int i= bounds[0]; i< bounds[1]; i++){
+      for(int j= bounds[2]; j< bounds[3]; j++){
+        for(int k= bounds[4]; k< bounds[5]; k++){
+          element  = get_element(i, j, k);
+          file.write((char *) &element, sizeof(my_type));
+        }
+      }
+    }
+  }else if(n_dims ==4){
+    for(int i= bounds[0]; i< bounds[1]; i++){
+      for(int j= bounds[2]; j< bounds[3]; j++){
+        for(int k= bounds[4]; k< bounds[5]; k++){
+          for(int l= bounds[6]; l< bounds[7]; l++){
+            element = get_element(i, j, k, l);
+            file.write((char *) &element , sizeof(my_type));
+          }
+        }
+      }
+    }
+  }
+  return 0;
+
+}
+
+
 bool my_array::read_from_file(std::fstream &file, bool no_version_check){
 /** \brief File read
 *
@@ -863,6 +947,50 @@ bool data_array::write_to_file(std::fstream &file){
 
 }
 
+bool data_array::write_section_to_file(std::fstream &file, std::vector<my_type> limits){
+/** \brief Print section of array to file
+*
+*Prints the section defined by the vector limits to supplied file. Limits should contain AXIS values. To use one dimension entire supply values less/greater than min and max axis values.
+*/
+
+  if(!file.is_open()) return 1;
+  if(limits.size() != 2*n_dims){
+    my_print("Limits vector size does not match array!", mpi_info.rank);
+    return 1;
+  }
+
+  file.write(block_id, sizeof(char)*ID_SIZE);
+
+  //Identify limits of segment from axes
+  std::vector<int> index_limits;
+  index_limits.resize(n_dims);
+
+  int len, index;
+  my_type * ax_start;
+  for(int i=0; i< n_dims; i++){
+    ax_start = get_axis(i, len);
+    index_limits[i*2] = where(ax_start, len, limits[2*i]);
+    index_limits[i*2 + 1] = where(ax_start, len, limits[2*i + 1]);
+
+  }
+    
+  
+  my_array::write_section_to_file(file, index_limits);
+  //call base class method to write that data.
+
+//  file.write((char *) axes ,sizeof(my_type)*(get_total_axis_elements()));
+  for(int i=0; i< n_dims; i++){
+    file.write((char *) get_axis(i, len)+index_limits[2*i], sizeof(my_type)*(index_limits[2*i +1]-index_limits[2*i]));
+
+  }
+  //Add axes.
+
+  return 0;
+
+
+
+}
+
 bool data_array::read_from_file(std::fstream &file, bool no_version_check){
 /** \brief Test file read
 *
@@ -928,7 +1056,10 @@ bool data_array::fft_me(data_array * data_out){
   result = (my_type*) ADD_FFTW(malloc)(sizeof(my_type) * total_size);
 
   /** \todo Possibly this bit can be genericised?*/
-  if(n_dims == 1 || (n_dims == 2 && dims[1] == 1) ){
+
+  p = ADD_FFTW(plan_dft_r2c)(n_dims, dims, in, out, FFTW_ESTIMATE);
+
+/*  if(n_dims == 1 || (n_dims == 2 && dims[1] == 1) ){
     p = ADD_FFTW(plan_dft_r2c_1d)(dims[0], in, out, FFTW_ESTIMATE);
 
   }else if(n_dims == 2){
@@ -939,7 +1070,7 @@ bool data_array::fft_me(data_array * data_out){
 
     return 1;
   }
-
+*/
   //copy data into in. Because the plan creation changes in, so we don't want to feed our actual data array in, and it's safer to run the plan with the memory block it was created with
   std::copy(this->data, this->data+total_size, in);
 
@@ -1062,4 +1193,5 @@ bool data_array::resize(int dim, int sz){
 
 
 }
+
 

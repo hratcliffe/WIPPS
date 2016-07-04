@@ -36,6 +36,7 @@ SOURCE := $(INCLS:.h=.cpp)
 OBJS := $(SOURCE:.cpp=.o)
 #make lists of source and object files from INCLS list
 MAINSOURCE := main.cpp main_growth.cpp
+UTILSSOURCE := generate_ffts.cpp do_a_thing.cpp
 #List of source files containing a main.
 #Valid program contains one and only one of these!
 #Add a rule to the Main rules section to build a different one
@@ -97,6 +98,10 @@ SOURCE := $(addprefix $(SRCDIR)/, $(SOURCE))
 OBJS := $(addprefix $(OBJDIR)/, $(OBJS))
 MAINOBJS := $(MAINSOURCE:.cpp=.o)
 MAINOBJS := $(addprefix $(OBJDIR)/, $(MAINOBJS))
+UTILS :=$(UTILSSOURCE:.cpp=)
+UTILSOBJS := $(UTILSSOURCE:.cpp=.o)
+UTILSOBJS := $(addprefix $(OBJDIR)/, $(UTILSOBJS))
+
 #We need these for clean etc
 INCLS := $(addprefix include/, $(INCLS))
 
@@ -123,6 +128,12 @@ read_test : $(OBJDIR)/read_test.o
 growth : $(OBJDIR)/main_growth.o $(OBJS)
 	$(CC) $(LFLAGS) $(INCLUDE) $(OBJS) $(OBJDIR)/main_growth.o $(LIB) -o growth
 
+#UTILSOBJS := $(UTILSSOURCE:.cpp=.o)
+#UTILSOBJS := $(addprefix $(OBJDIR)/, $(UTILSOBJS))
+utils : $(UTILSOBJS) $(OBJS)
+	for var in $(UTILSOBJS); do name=$$(basename $$(basename $$var .o )) && echo $$name && $(CC) $(LFLAGS) $(INCLUDE) $(OBJS) $$var $(LIB) -o $$name;done
+#	for var in $(UTILSOBJS); do name=$$(basename $${var%.*}) && echo $$name && $(CC) $(LFLAGS) $(INCLUDE) $(OBJS) $$var $(LIB) -o $$name;done
+
 #====================================================================
 
 #testing makefile commands ;)
@@ -132,6 +143,8 @@ debug :
 	@echo $(OBJS)
 	@echo " "
 	@echo $(MAINOBJS)
+	@echo " "
+	@echo $(UTILSOBJS)
 	@echo " "
 	@echo $(INCLS)
 	@echo " "
@@ -178,11 +191,11 @@ tar:
 	tar -cvzf Source.tgz $(SOURCE) $(INCLS) $(MAINSOURCE) ./files/* Makefile redox.sh process_deps.sh
 
 clean:
-	@-rm main $(OBJS) $(MAINOBJS)
+	@rm -f main $(UTILS) $(OBJS) $(MAINOBJS)
 
 veryclean:
-	@-rm main dependencies.log*
-	@-rm -r $(OBJDIR)
+	@rm -f main $(UTILS) dependencies.log*
+	@rm -rf $(OBJDIR)
 
 docs:
 	@echo Running Doxygen...

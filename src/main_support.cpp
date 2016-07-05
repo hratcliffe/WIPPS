@@ -162,6 +162,7 @@ void print_help(){
   if(mpi_info.rank == 0){
     std::cout<<"Command line options: "<<std::endl;
     std::cout<<halp.rdbuf();
+    std::cout<<'\n';
   }
   safe_exit();
 }

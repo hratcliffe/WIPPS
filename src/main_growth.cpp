@@ -409,7 +409,7 @@ void standalone_growth(){
   outfile<<"BEGIN"<<"\n";
 
   for(int i=0; i<n_trials; ++i){
-    outfile<<omega<<" "<<growth_rate[i]<<"\n";
+    outfile<<omega_in<<" "<<growth_rate[i]<<"\n";
   }
 
   free(S);

@@ -206,9 +206,9 @@ void tests::run_tests(){
     total_errs += (bool) test_list[current_test_id]->run();
     //Add one if is any error returned
   }
-  test_bed->set_colour('r');
-  test_bed->report_info(mk_str(total_errs)+" failed tests", mpi_info.rank);
-  test_bed->set_colour();
+  this->set_colour('r');
+  this->report_info(mk_str(total_errs)+" failed tests", mpi_info.rank);
+  this->set_colour();
 
 }
 

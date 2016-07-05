@@ -206,7 +206,8 @@ int reader::read_data(data_array * my_data_in, int time_range[3], int space_rang
   if(i < time_range[1]){
     my_data_in->resize(1, total_reads);
     //trim array to number of lines read... NB 2-D ONLY
-    my_print("Read stopped by error at file "+file_name, mpi_info.rank);
+    if(!accumulated) my_print("Read stopped by error at file "+file_name, mpi_info.rank);
+    else my_print("Read "+mk_str(total_reads)+" rows", mpi_info.rank);
     return 2;
   }
 

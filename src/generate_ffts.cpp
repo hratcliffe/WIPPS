@@ -88,7 +88,6 @@ int main(int argc, char *argv[]){
     
     MPI_Barrier(MPI_COMM_WORLD);
     //--------------THIS will slightly slow down some cores to match the slowest. But it makes output easier. Consider removing if many blocks
-
     data_array  * dat = new data_array(space_dim, n_tims);
 
     if(!dat->is_good()){
@@ -122,13 +121,13 @@ int main(int argc, char *argv[]){
     contr->add_spectrum(row_lengths, 2);
     contr->get_current_spectrum()->make_test_spectrum(cmd_line_args.time, my_space);
     
-
+    int n_dims = dat->get_dims();
     std::vector<my_type> lims;
-    if(dat.n_dims >=3){
+    if(n_dims >=3){
       lims.push_back(-0.002);
       lims.push_back(0.002);
     }
-    if(dat.n_dims >=2){
+    if(n_dims >=2){
       lims.push_back(-0.002);
       lims.push_back(0.002);
       lims.push_back(-2*my_const.omega_ce);
@@ -139,13 +138,14 @@ int main(int argc, char *argv[]){
     
     std::string block = block_id;
     std::string filename = cmd_line_args.file_prefix+"FFT_"+block +"_"+mk_str(cmd_line_args.time[0])+"_"+mk_str(cmd_line_args.time[1])+"_"+mk_str(cmd_line_args.space[0])+"_"+mk_str(cmd_line_args.space[1]) + ".dat";
-    std:::fstream file;
+    std::fstream file;
     file.open(filename.c_str(),std::ios::out|std::ios::binary);
     if(file.is_open()) dat_fft->write_section_to_file(file, lims);
     file.close();
 
 
     delete dat;
+    delete dat_fft;
 
   }
   //-----------------end of per_proc loop---- Now controller holds one spectrum and d per block
@@ -162,7 +162,7 @@ int main(int argc, char *argv[]){
   ADD_FFTW(cleanup());
   MPI_Finalize();
   //call these last...
-#endif
+
 
   exit(0);
 }

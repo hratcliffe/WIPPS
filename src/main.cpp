@@ -124,7 +124,7 @@ int main(int argc, char *argv[]){
     data_array  * dat = new data_array(space_dim, n_tims);
 
     if(!dat->is_good()){
-      my_print("Bugger, data array allocation failed. Aborting.", mpi_info.rank);
+      my_print("Data array allocation failed. Aborting.", mpi_info.rank);
       return 0;
     }
 
@@ -136,7 +136,7 @@ int main(int argc, char *argv[]){
     data_array * dat_fft = new data_array(space_dim, n_tims);
 
     if(!dat_fft->is_good()){
-      my_print("Bugger, data array allocation failed. Aborting.", mpi_info.rank);
+      my_print("Data array allocation failed. Aborting.", mpi_info.rank);
       return 0;
     }
 

@@ -134,12 +134,13 @@ int reader::read_data(data_array * my_data_in, int time_range[3], int space_rang
     my_print("Wrong data type detected. Grids will be corrupt", mpi_info.rank);
   }
 
-  ax_ptr = my_data_in->get_axis(0, len);
+  for(int i=0; i< my_data_in->get_dims()-1; i++){
+    ax_ptr = my_data_in->get_axis(i, len);
 
-  // Mostly c++ way
-  std::copy((my_type *) block->grids[0], (my_type *) block->grids[0] + len, ax_ptr);
-  /**get 0th axis. \todo extend to 2-d data */
-
+    // Mostly c++ way
+    std::copy((my_type *) block->grids[i], (my_type *) block->grids[i] + len, ax_ptr);
+    /**get 0th axis. \todo extend to 2-d data */
+  }
   sdf_close(handle);
 
   ax_ptr = my_data_in->get_axis(my_data_in->get_dims()-1, len);
@@ -176,22 +177,30 @@ int reader::read_data(data_array * my_data_in, int time_range[3], int space_rang
 
     if(block->datatype != my_sdf_type) my_print("WARNING!!! Data type does not match. Output may be nonsense!", mpi_info.rank);
 
-    *(ax_ptr + i) = (my_type) handle->time;
     //save time of file
     if(!block->data) break;
     my_type * my_ptr = (my_type *) block->data;
     my_ptr +=space_range[0];
     
     if(!accumulated){
+      *(ax_ptr + i) = (my_type) handle->time;
 
       my_data_in->populate_row(my_ptr, space_range[1], i-time_range[0]);
       total_reads++;
 
     }
     else{
+      block = sdf_find_block_by_id(handle, "grid_accum");
+      handle->current_block = block;
+      sdf_read_data(handle);
+//      std::cout<<*((my_type*) block->grids[1])<<'\n';
+
       rows = block->dims[block->ndims-1];
       if(total_reads + rows >= time_range[2]) rows = time_range[2]- total_reads;
       //don't read more than time[2] rows
+
+      std::copy((my_type *) block->grids[1], (my_type *) block->grids[1] + rows, ax_ptr);
+      //Copy time grid out
       for(int j=0; j<rows; j++){
         my_data_in->populate_row(my_ptr, space_range[1], total_reads+j);
         my_ptr += block->dims[0];

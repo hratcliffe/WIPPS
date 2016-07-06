@@ -391,6 +391,7 @@ int test_entity_get_and_fft::run(){
 
   bool tmp_err = test_dat->fft_me(test_dat_fft);
   if(tmp_err) err|=TEST_ASSERT_FAIL;
+  if(test_dat_fft->check_ids(test_dat)) err |= TEST_WRONG_RESULT;
   if(err == TEST_PASSED) test_bed->report_info("Data read and FFT reports no error", 1);
 
   //Get primary frequency

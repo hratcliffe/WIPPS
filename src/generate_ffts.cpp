@@ -60,6 +60,7 @@ int main(int argc, char *argv[]){
   strcpy(block_id, cmd_line_args.block.c_str());
 
   reader * my_reader = new reader(cmd_line_args.file_prefix, block_id);
+  if(my_reader->current_block_is_accum()) cmd_line_args.use_row_time = true;
 
   int n_tims;
   if(!cmd_line_args.use_row_time){
@@ -111,12 +112,8 @@ int main(int argc, char *argv[]){
       my_print("Data array allocation failed. Aborting.", mpi_info.rank);
       return 0;
     }
-
     err = dat->fft_me(dat_fft);
-    
-    std::cout<<dat->time[0];
-    std::cout<<dat->time[1];
-    
+
     if(mpi_info.rank ==0) MPI_Reduce(MPI_IN_PLACE, &err, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
     else MPI_Reduce(&err, NULL, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
 
@@ -136,26 +133,27 @@ int main(int argc, char *argv[]){
       lims.push_back(0.002);
     }
     if(n_dims >=2){
-      lims.push_back(-0.002);
-      lims.push_back(0.002);
-      lims.push_back(-2.0*my_const.omega_ce);
-      lims.push_back(2.0*my_const.omega_ce);
+      lims.push_back(-0.2);
+      lims.push_back(0.2);
+      lims.push_back(-100.0*my_const.omega_ce);
+      lims.push_back(100.0*my_const.omega_ce);
     
     }
   //Set cutout limits on FFT
-
-    std::string filename;
-    
-    /*std::string block = block_id;
-    filename = cmd_line_args.file_prefix+"FFT_"+block +"_"+mk_str(dat_fft->time[0])+"_"+mk_str(dat_fft->time[1])+"_"+mk_str(dat_fft->space[0])+"_"+mk_str(dat_fft->space[1]) + ".dat";
+    std::string filename, time_str;
+//    if(my_reader->current_block_is_accum()) time_str = mk_str(dat_fft->time[0], true)+"_r"+mk_str(dat_fft->time[2], true);
+    time_str = mk_str(dat_fft->time[0], true)+"_"+mk_str(dat_fft->time[1],true);
+    std::string block = block_id;
+    filename = cmd_line_args.file_prefix+"FFT_"+block +"_"+time_str+"_"+mk_str(dat_fft->space[0])+"_"+mk_str(dat_fft->space[1]) + ".dat";
     std::fstream file;
     file.open(filename.c_str(),std::ios::out|std::ios::binary);
     if(file.is_open()){
       dat_fft->write_section_to_file(file, lims);
     }
     file.close();
+    std::cout<<"FFT written"<<'\n';
 
-*/
+
     delete dat;
     delete dat_fft;
     break;

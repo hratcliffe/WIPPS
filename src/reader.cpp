@@ -108,7 +108,7 @@ int reader::read_data(data_array * my_data_in, int time_range[3], int space_rang
   //Now we start from time_range[0] and run through files to time_range[1], or until file not found. We construct with sprintf and the known n_z
 
   sdf_file_t *handle;
-  sdf_block_t * block;
+  sdf_block_t * block ,*ax_block;
   my_type * ax_ptr;
   int len;
 
@@ -196,20 +196,16 @@ int reader::read_data(data_array * my_data_in, int time_range[3], int space_rang
 
     }
     else{
-      block = sdf_find_block_by_id(handle, "grid_accum");
-      handle->current_block = block;
+      ax_block = sdf_find_block_by_id(handle, "grid_accum");
+      handle->current_block = ax_block;
       sdf_read_data(handle);
 
-      rows = block->dims[block->ndims-1];
+      rows = ax_block->dims[block->ndims-1];
       if(total_reads + rows >= time_range[2]) rows = time_range[2]- total_reads;
       //don't read more than time[2] rows
-      std::cout<<total_reads<<" "<<rows<<" "<<len<<'\n';
-      for(int j=0; j< rows; j++) std::cout<< *((my_type*) block->grids[1] + j)<<" ";
-      //if(ax_ptr) std::copy((my_type *) block->grids[1], (my_type *) block->grids[1] + rows, ax_ptr +total_reads);
-      if(ax_ptr) for(int j=0; j< rows-1; j++) *(ax_ptr+total_reads + j) = *((my_type*) block->grids[1] + j);
-      if(ax_ptr) for(int j=0; j< rows; j++) std::cout<< *(ax_ptr+total_reads + j)- *((my_type*) block->grids[1] + j) <<" ";
-
+      if(ax_ptr) std::copy((my_type *) ax_block->grids[1], (my_type *) ax_block->grids[1] + rows, ax_ptr +total_reads);
       //Copy time grid out
+
       for(int j=0; j<rows; j++){
         my_data_in->populate_row(my_ptr, space_range[1], total_reads+j);
         my_ptr += block->dims[0];
@@ -267,6 +263,9 @@ int reader::get_file_size(){
 
 }
 
+bool reader::current_block_is_accum(){
+  return is_accum(this->block_id);
+}
 bool reader::is_accum(std::string block_id){
 /** \brief checks for time accumulated blocks */
 

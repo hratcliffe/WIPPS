@@ -44,6 +44,7 @@ public:
   int get_file_size();
   std::string get_full_name(int num);
   bool is_accum(std::string block_id);
+  bool current_block_is_accum();
   
 };
 

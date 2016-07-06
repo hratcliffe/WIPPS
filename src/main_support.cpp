@@ -108,7 +108,6 @@ setup_args process_command_line(int argc, char *argv[]){
     if(strcmp(argv[i], "-end")==0 && i < argc-1) values.time[1] = atoi(argv[i+1]);
     if(strcmp(argv[i], "-rows")==0 && i < argc-1){
       values.time[2] = atoi(argv[i+1]);
-      values.use_row_time = true;
     }
 
     if(strcmp(argv[i], "-block")==0 && i < argc-1) values.block = argv[i+1];

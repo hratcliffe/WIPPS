@@ -893,7 +893,7 @@ float data_array::get_res(int i){
 /**Return resolution of axis on dimension i. Assumes linear etc etc. If axis is undefined or zero or one in length, return 1.0 */
   int len;
   my_type * axis = this->get_axis(i, len);
-  if(axis && len >1) return std::abs(axis[0]-axis[1]);
+  if(axis && len >1) return std::abs(axis[0]-axis[dims[i]-1])/(dims[i]-1);
   else return 1.0;
 
 }
@@ -958,7 +958,6 @@ bool data_array::write_section_to_file(std::fstream &file, std::vector<my_type> 
     my_print("Limits vector size does not match array!", mpi_info.rank);
     return 1;
   }
-  strcpy(block_id, "xxx");
   file.write(block_id, sizeof(char)*ID_SIZE);
 
   //Identify limits of segment from axes
@@ -967,10 +966,15 @@ bool data_array::write_section_to_file(std::fstream &file, std::vector<my_type> 
 
   int len, index;
   my_type * ax_start;
+  int where_val;
   for(int i=0; i< n_dims; i++){
     ax_start = get_axis(i, len);
-    index_limits[i*2] = where(ax_start, len, limits[2*i]);
-    index_limits[i*2 + 1] = where(ax_start, len, limits[2*i + 1]);
+    where_val = where(ax_start, len, limits[2*i]);
+    if(where_val != -1) index_limits[i*2] = where_val;
+    else index_limits[i*2] = 0;
+    where_val = where(ax_start, len, limits[2*i + 1]);
+    if(where_val != -1) index_limits[i*2 + 1] = where_val;
+    else index_limits[i*2 + 1] = this->dims[i]-1;
   }
     
   
@@ -1039,11 +1043,7 @@ bool data_array::fft_me(data_array * data_out){
     }
   }
 
-  data_out->time[0] = this->time[0];
-  data_out->time[1] = this->time[1];
-  data_out->space[0] = this->space[0];
-  data_out->space[1] = this->space[1];
-
+  data_out->copy_ids(this);
   int total_size=1; /* Total number of elements in array*/
   for(int i=0; i<n_dims;++i) total_size *= dims[i];
 
@@ -1138,6 +1138,18 @@ void data_array::copy_ids( data_array * src){
   std::copy(src->time, src->time + 1, this->time);
   for(int i=0; i < 2; ++i) this->space[i] = src->space[i];
 }
+
+bool data_array::check_ids( data_array * src){
+/** Checks ID fields match src */
+
+  bool err=false;
+  if(strcmp(this->block_id, src->block_id) != 0) err =true;
+  
+  for(int i=0; i< 3; i++) if(src->time[i] != this->time[i]) err=true;
+  for(int i=0; i < 2; ++i) if(this->space[i] != src->space[i]) err=true;
+  return err;
+}
+
 
 bool data_array::resize(int dim, int sz){
 /** \brief Resize my_array on the fly

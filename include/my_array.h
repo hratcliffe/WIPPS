@@ -112,6 +112,7 @@ public:
 
   bool fft_me(data_array * data_out);
   void copy_ids( data_array * src);
+  bool check_ids(data_array * src);
   virtual bool resize(int dim, int sz);
 
 };

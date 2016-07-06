@@ -171,6 +171,7 @@ echo_deps :
 
 
 $(OBJS): | $(OBJDIR)
+$(UTILSOBJS): | $(OBJDIR)
 $(OBJDIR):
 	@mkdir -p $(OBJDIR)
 #Create the object directory before it is used,

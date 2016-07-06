@@ -7,24 +7,24 @@ include/support.h\
 obj/d_coeff.o:\
 src/d_coeff.cpp\
   include/support.h\
-  include/my_array.h\
+  include/d_coeff.h\
   include/controller.h\
   include/spectrum.h\
+  include/my_array.h\
   include/plasma.h\
-  include/d_coeff.h\
 
 obj/spectrum.o:\
 src/spectrum.cpp\
+include/plasma.h\
 include/support.h\
-include/my_array.h\
-  include/controller.h\
-  include/plasma.h\
   include/spectrum.h\
+  include/controller.h\
+  include/my_array.h\
 
 obj/plasma.o:\
 src/plasma.cpp\
-  include/support.h\
   include/plasma.h\
+  include/support.h\
 
 obj/tests.o:\
 src/tests.cpp\
@@ -46,12 +46,12 @@ include/reader.h\
 
 obj/controller.o:\
 src/controller.cpp\
-  include/support.h\
   include/controller.h\
-  include/plasma.h\
+  include/support.h\
   include/my_array.h\
   include/d_coeff.h\
   include/spectrum.h\
+  include/plasma.h\
 
 obj/non_thermal.o:\
 src/non_thermal.cpp\

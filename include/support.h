@@ -167,6 +167,7 @@ struct mu_dmudom{
 */
 struct setup_args{
   int time[3];/**< Start and end dump numbers*/
+  bool use_row_time;/**Whether to use time[2] for sizing*/
   int space[2];/**< Local space block start and end*/
   std::string block;/**< Block ID to use (ex, bz etc)*/
   std::string file_prefix;/**< Prefix part of SDF file names*/

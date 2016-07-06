@@ -95,6 +95,7 @@ setup_args process_command_line(int argc, char *argv[]){
   values.time[0] = 0;
   values.time[1] = 1;
   values.time[2] = 0;
+  values.use_row_time = false;
   values.file_prefix = "./files/";
   values.block = "ex";
   values.d[0] = 10;
@@ -105,7 +106,10 @@ setup_args process_command_line(int argc, char *argv[]){
     if(strcmp(argv[i], "-f")==0 && i < argc-1) values.file_prefix = argv[i+1];
     if(strcmp(argv[i], "-start")==0 && i < argc-1) values.time[0] = atoi(argv[i+1]);
     if(strcmp(argv[i], "-end")==0 && i < argc-1) values.time[1] = atoi(argv[i+1]);
-    if(strcmp(argv[i], "-rows")==0 && i < argc-1) values.time[2] = atoi(argv[i+1]);
+    if(strcmp(argv[i], "-rows")==0 && i < argc-1){
+      values.time[2] = atoi(argv[i+1]);
+      values.use_row_time = true;
+    }
 
     if(strcmp(argv[i], "-block")==0 && i < argc-1) values.block = argv[i+1];
     if(strcmp(argv[i], "-n")==0 && i < argc-1) values.n_space= atoi(argv[i+1]);

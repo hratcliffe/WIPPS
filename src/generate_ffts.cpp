@@ -61,7 +61,12 @@ int main(int argc, char *argv[]){
 
   reader * my_reader = new reader(cmd_line_args.file_prefix, block_id);
 
-  int n_tims = std::max(cmd_line_args.time[1]-cmd_line_args.time[0], 1);
+  int n_tims;
+  if(!cmd_line_args.use_row_time){
+    n_tims = std::max(cmd_line_args.time[1]-cmd_line_args.time[0], 1);
+  }else{
+    n_tims = cmd_line_args.time[2];
+  }
 
   int my_space[2];
   my_space[0] = cmd_line_args.space[0];
@@ -109,6 +114,9 @@ int main(int argc, char *argv[]){
 
     err = dat->fft_me(dat_fft);
     
+    std::cout<<dat->time[0];
+    std::cout<<dat->time[1];
+    
     if(mpi_info.rank ==0) MPI_Reduce(MPI_IN_PLACE, &err, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
     else MPI_Reduce(&err, NULL, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
 
@@ -130,22 +138,27 @@ int main(int argc, char *argv[]){
     if(n_dims >=2){
       lims.push_back(-0.002);
       lims.push_back(0.002);
-      lims.push_back(-2*my_const.omega_ce);
-      lims.push_back(2*my_const.omega_ce);
+      lims.push_back(-2.0*my_const.omega_ce);
+      lims.push_back(2.0*my_const.omega_ce);
     
     }
   //Set cutout limits on FFT
+
+    std::string filename;
     
-    std::string block = block_id;
-    std::string filename = cmd_line_args.file_prefix+"FFT_"+block +"_"+mk_str(cmd_line_args.time[0])+"_"+mk_str(cmd_line_args.time[1])+"_"+mk_str(cmd_line_args.space[0])+"_"+mk_str(cmd_line_args.space[1]) + ".dat";
+    /*std::string block = block_id;
+    filename = cmd_line_args.file_prefix+"FFT_"+block +"_"+mk_str(dat_fft->time[0])+"_"+mk_str(dat_fft->time[1])+"_"+mk_str(dat_fft->space[0])+"_"+mk_str(dat_fft->space[1]) + ".dat";
     std::fstream file;
     file.open(filename.c_str(),std::ios::out|std::ios::binary);
-    if(file.is_open()) dat_fft->write_section_to_file(file, lims);
+    if(file.is_open()){
+      dat_fft->write_section_to_file(file, lims);
+    }
     file.close();
 
-
+*/
     delete dat;
     delete dat_fft;
+    break;
 
   }
   //-----------------end of per_proc loop---- Now controller holds one spectrum and d per block

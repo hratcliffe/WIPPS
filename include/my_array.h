@@ -60,7 +60,7 @@ public:
 
   virtual bool write_to_file(std::fstream &file);
   bool read_from_file(std::fstream &file, bool no_version_check=0);
-  bool write_section_to_file(std::fstream &file, std::vector<int> bounds);
+  virtual bool write_section_to_file(std::fstream &file, std::vector<int> bounds);
   virtual bool resize(int dim, int sz);
   
   //void tmp_function();

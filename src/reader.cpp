@@ -152,6 +152,12 @@ int reader::read_data(data_array * my_data_in, int time_range[3], int space_rang
   if(report_interval > 20) report_interval = 20;
   if(report_interval < 1) report_interval = 1;
     //Say we want to report 10 times over the list, or every 20th file if  more than 200.
+
+  my_data_in->time[0] = time_range[0];
+  my_data_in->time[1] = time_range[1];
+  my_data_in->space[0] = space_range[0];
+  my_data_in->space[1] = space_range[1];
+
   int rows=0;
   int total_reads=0;
   //now loop over files and get actual data
@@ -193,13 +199,16 @@ int reader::read_data(data_array * my_data_in, int time_range[3], int space_rang
       block = sdf_find_block_by_id(handle, "grid_accum");
       handle->current_block = block;
       sdf_read_data(handle);
-//      std::cout<<*((my_type*) block->grids[1])<<'\n';
 
       rows = block->dims[block->ndims-1];
       if(total_reads + rows >= time_range[2]) rows = time_range[2]- total_reads;
       //don't read more than time[2] rows
+      std::cout<<total_reads<<" "<<rows<<" "<<len<<'\n';
+      for(int j=0; j< rows; j++) std::cout<< *((my_type*) block->grids[1] + j)<<" ";
+      //if(ax_ptr) std::copy((my_type *) block->grids[1], (my_type *) block->grids[1] + rows, ax_ptr +total_reads);
+      if(ax_ptr) for(int j=0; j< rows-1; j++) *(ax_ptr+total_reads + j) = *((my_type*) block->grids[1] + j);
+      if(ax_ptr) for(int j=0; j< rows; j++) std::cout<< *(ax_ptr+total_reads + j)- *((my_type*) block->grids[1] + j) <<" ";
 
-      std::copy((my_type *) block->grids[1], (my_type *) block->grids[1] + rows, ax_ptr);
       //Copy time grid out
       for(int j=0; j<rows; j++){
         my_data_in->populate_row(my_ptr, space_range[1], total_reads+j);

@@ -482,17 +482,17 @@ bool my_array::write_section_to_file(std::fstream &file, std::vector<int> bounds
   *
   *IMPORTANT: this VERSION specifier links output files to code. If modifying output or order commit and clean build before using. @return 0 (sucess) 1 (error)
 */
+
   if(!file.is_open() || (this->data ==nullptr)) return 1;
   if(bounds.size() != n_dims*2) return 1;
   for(int i=0; i< n_dims; i++){
-    if(bounds[i] < 0 || bounds[2*i+1] >= dims[i]) return 1;
+    if(bounds[2*i] < 0 || bounds[2*i+1] >= dims[i]) return 1;
   }
   
   const char tmp_vers[15] = VERSION;
 
   file.write((char*) &io_verify, sizeof(my_type));
   file.write((char*) &tmp_vers, sizeof(char)*15);
-
   //Code version...
 
   int total_size = get_total_elements();
@@ -501,7 +501,7 @@ bool my_array::write_section_to_file(std::fstream &file, std::vector<int> bounds
     file.write((char*) &n_dims, sizeof(int));
     int dim_tmp;
     for(int i=0;i<n_dims;i++){
-      dim_tmp = dims[i];
+      dim_tmp = bounds[i*2+1]-bounds[i*2];
       file.write((char*) &dim_tmp, sizeof(int));
     }
   }else{
@@ -674,7 +674,7 @@ void data_array::construct(){
 *
 *
 */
-
+  axes=nullptr;
   ax_defined = false;
   time[0]=0; time[1]=1;
   space[0]=0; space[1]=1;
@@ -958,12 +958,12 @@ bool data_array::write_section_to_file(std::fstream &file, std::vector<my_type> 
     my_print("Limits vector size does not match array!", mpi_info.rank);
     return 1;
   }
-
+  strcpy(block_id, "xxx");
   file.write(block_id, sizeof(char)*ID_SIZE);
 
   //Identify limits of segment from axes
   std::vector<int> index_limits;
-  index_limits.resize(n_dims);
+  index_limits.resize(n_dims*2);
 
   int len, index;
   my_type * ax_start;
@@ -971,7 +971,6 @@ bool data_array::write_section_to_file(std::fstream &file, std::vector<my_type> 
     ax_start = get_axis(i, len);
     index_limits[i*2] = where(ax_start, len, limits[2*i]);
     index_limits[i*2 + 1] = where(ax_start, len, limits[2*i + 1]);
-
   }
     
   
@@ -979,6 +978,7 @@ bool data_array::write_section_to_file(std::fstream &file, std::vector<my_type> 
   //call base class method to write that data.
 
 //  file.write((char *) axes ,sizeof(my_type)*(get_total_axis_elements()));
+  
   for(int i=0; i< n_dims; i++){
     file.write((char *) get_axis(i, len)+index_limits[2*i], sizeof(my_type)*(index_limits[2*i +1]-index_limits[2*i]));
 
@@ -1038,6 +1038,11 @@ bool data_array::fft_me(data_array * data_out){
       return 1;
     }
   }
+
+  data_out->time[0] = this->time[0];
+  data_out->time[1] = this->time[1];
+  data_out->space[0] = this->space[0];
+  data_out->space[1] = this->space[1];
 
   int total_size=1; /* Total number of elements in array*/
   for(int i=0; i<n_dims;++i) total_size *= dims[i];
@@ -1140,7 +1145,7 @@ bool data_array::resize(int dim, int sz){
 *dim is the dimension to resize, sz the new size. If sz < dims[dim] the first sz rows will be kept and the rest deleted. If sz > dims[dim] the new elements will be added zero initialised. Similarly for axis elements. See my_array::resize() for more.
 */
 
-
+  return 1;
   //call my_array::resize to resize data...
   bool err = my_array::resize(dim, sz);
 

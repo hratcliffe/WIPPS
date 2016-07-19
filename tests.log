@@ -1,6 +1,6 @@
 Passed test reader class
 Passed test data array class
-Data read and FFT reports no error
+1D read and FFT reports no error
 FFT Frequency correct!
 Passed test read and FFT
 Where OK
@@ -32,5 +32,7 @@ Wrong derivative in get_phi_mu_om at omega = 31658.760938 and phi = 3.141593
 Wrong derivative in get_root at omega = 31658.760938 and phi = 3.141593
 Error Wrong result, (code 1) on test plasma
 Passed test spectrum checks
+FFT returned err_state 0
+Passed test level-one derivation
 1 failed tests
 Testing complete and logged in tests.log

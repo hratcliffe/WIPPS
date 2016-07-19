@@ -185,8 +185,8 @@ struct setup_args{
 
 void safe_exit();
 
-void my_print(std::string text, int rank, int rank_to_write=0);
-void my_print(std::fstream * handle, std::string text, int rank, int rank_to_write=0);
+void my_print(std::string text, int rank, int rank_to_write=0, bool noreturn=false);
+void my_print(std::fstream * handle, std::string text, int rank, int rank_to_write=0, bool noreturn=false);
 
 std::string mk_str(int i);/**<Converts int to string*/
 std::string mk_str(bool b);/**<Converts bool to string*/

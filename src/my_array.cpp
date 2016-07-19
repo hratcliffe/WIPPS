@@ -306,11 +306,11 @@ my_type my_array::get_element(int nx, int ny){
 /** Return element at nx, ny. Out of range etc will return 0.0*/
   int ind = get_index(nx, ny);
   if(ind  != -1){
+//    std::cout<<data[ind]<<" ";
     return data[ind];
   }else{
     return 0.0;
   }
-
 }
 my_type my_array::get_element(int nx, int ny, int nz){
 /** Return element at nx, ny, nz. Out of range etc will return 0.0*/
@@ -486,7 +486,7 @@ bool my_array::write_section_to_file(std::fstream &file, std::vector<int> bounds
   if(!file.is_open() || (this->data ==nullptr)) return 1;
   if(bounds.size() != n_dims*2) return 1;
   for(int i=0; i< n_dims; i++){
-    if(bounds[2*i] < 0 || bounds[2*i+1] >= dims[i]) return 1;
+    if(bounds[2*i] < 0 || bounds[2*i+1] > dims[i]) return 1;
   }
   
   const char tmp_vers[15] = VERSION;
@@ -527,26 +527,26 @@ bool my_array::write_section_to_file(std::fstream &file, std::vector<int> bounds
       file.write((char *) &element, sizeof(my_type));
     }
   }else if(n_dims ==2){
-    for(int i= bounds[0]; i< bounds[1]; i++){
-      for(int j= bounds[2]; j< bounds[3]; j++){
+    for(int j= bounds[2]; j< bounds[3]; j++){
+      for(int i= bounds[0]; i< bounds[1]; i++){
         element = get_element(i, j);
         file.write((char *)  &element, sizeof(my_type));
       }
     }
   }else if(n_dims ==3){
-    for(int i= bounds[0]; i< bounds[1]; i++){
+    for(int k= bounds[4]; k< bounds[5]; k++){
       for(int j= bounds[2]; j< bounds[3]; j++){
-        for(int k= bounds[4]; k< bounds[5]; k++){
+        for(int i= bounds[0]; i< bounds[1]; i++){
           element  = get_element(i, j, k);
           file.write((char *) &element, sizeof(my_type));
         }
       }
     }
   }else if(n_dims ==4){
-    for(int i= bounds[0]; i< bounds[1]; i++){
-      for(int j= bounds[2]; j< bounds[3]; j++){
-        for(int k= bounds[4]; k< bounds[5]; k++){
-          for(int l= bounds[6]; l< bounds[7]; l++){
+    for(int l= bounds[6]; l< bounds[7]; l++){
+      for(int k= bounds[4]; k< bounds[5]; k++){
+        for(int j= bounds[2]; j< bounds[3]; j++){
+          for(int i= bounds[0]; i< bounds[1]; i++){
             element = get_element(i, j, k, l);
             file.write((char *) &element , sizeof(my_type));
           }
@@ -961,7 +961,36 @@ bool data_array::write_section_to_file(std::fstream &file, std::vector<my_type> 
   file.write(block_id, sizeof(char)*ID_SIZE);
 
   //Identify limits of segment from axes
+  std::vector<int> index_limits = this->get_bounds(limits);
+
+
+  my_array::write_section_to_file(file, index_limits);
+  //call base class method to write that data.
+
+//  file.write((char *) axes ,sizeof(my_type)*(get_total_axis_elements()));
+  int len;
+  for(int i=0; i< n_dims; i++){
+    file.write((char *) get_axis(i, len)+index_limits[2*i], sizeof(my_type)*(index_limits[2*i +1]-index_limits[2*i]));
+
+  }
+  int i=1;
+  std::cout<<index_limits[2*i]<<" "<<index_limits[2*i +1]<<'\n';
+  for(int j=index_limits[2*i]; j<index_limits[2*i +1]; j++ ) std::cout<<*(get_axis(i, len)+j)<<" ";
+
+  //Add axes.
+
+  return 0;
+}
+
+std::vector<int> data_array::get_bounds(std::vector<my_type> limits){
+
   std::vector<int> index_limits;
+
+  if(limits.size() != 2*n_dims){
+    my_print("Limits vector size does not match array!", mpi_info.rank);
+    return index_limits;
+  }
+
   index_limits.resize(n_dims*2);
 
   int len, index;
@@ -974,25 +1003,10 @@ bool data_array::write_section_to_file(std::fstream &file, std::vector<my_type> 
     else index_limits[i*2] = 0;
     where_val = where(ax_start, len, limits[2*i + 1]);
     if(where_val != -1) index_limits[i*2 + 1] = where_val;
-    else index_limits[i*2 + 1] = this->dims[i]-1;
+    else index_limits[i*2 + 1] = this->dims[i];
   }
-    
-  
-  my_array::write_section_to_file(file, index_limits);
-  //call base class method to write that data.
 
-//  file.write((char *) axes ,sizeof(my_type)*(get_total_axis_elements()));
-  
-  for(int i=0; i< n_dims; i++){
-    file.write((char *) get_axis(i, len)+index_limits[2*i], sizeof(my_type)*(index_limits[2*i +1]-index_limits[2*i]));
-
-  }
-  //Add axes.
-
-  return 0;
-
-
-
+  return index_limits;
 }
 
 bool data_array::read_from_file(std::fstream &file, bool no_version_check){
@@ -1088,16 +1102,19 @@ bool data_array::fft_me(data_array * data_out){
   int middle = total_size/2;
   if(middle*2 !=total_size) middle++;
   //odd or even total length
+  *(result) = 0.0; //FAKENUMBERS
+
   for(int i=0; i< middle ; i++){
-    *(result+i+total_size/2) = (my_type)(((*addr)[0])*((*addr)[0]) + ((*addr)[1])*((*addr)[1]));
-    *(result-i+total_size/2) = (my_type)(((*addr)[0])*((*addr)[0]) + ((*addr)[1])*((*addr)[1]));
+    *(result+i+middle) = (my_type)(((*addr)[0])*((*addr)[0]) + ((*addr)[1])*((*addr)[1]));
+    *(result-i+middle) = *(result+i+middle);
+    //(my_type)(((*addr)[0])*((*addr)[0]) + ((*addr)[1])*((*addr)[1]));
     
     addr++;
   }
   //Absolute square of out array to produce final result of type my_type
   /** Make sure for 2-d we are making shape we expect!*/
   
-  bool err;
+  bool err=false;
   err = data_out->populate_data(result, total_size);
   //Copy result into out array
 

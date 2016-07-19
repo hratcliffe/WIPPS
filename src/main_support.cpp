@@ -334,26 +334,29 @@ void trim_string(std::string &str, char ch){
 
 }
 
-void my_print(std::string text, int rank, int rank_to_write){
+void my_print(std::string text, int rank, int rank_to_write, bool noreturn){
 /** \brief Write output
 *
 * Currently dump to term. Perhaps also to log file. Accomodates MPI also. Set rank_to_write to -1 to dump from all. Default value is 0
 */
   if(rank == rank_to_write || rank_to_write == -1){
   
-    std::cout<< text<<std::endl;
+    std::cout<< text;
+    if(!noreturn)std::cout<<std::endl;
   }
 
 }
-void my_print(std::fstream * handle, std::string text, int rank, int rank_to_write){
+void my_print(std::fstream * handle, std::string text, int rank, int rank_to_write, bool noreturn){
 /** \brief Write output
 *
 * Currently dump to term. Perhaps also to log file. Accomodates MPI also. Set rank_to_write to -1 to dump from all. Default value is 0
 */
   if((rank == rank_to_write || rank_to_write == -1) && handle!=nullptr){
-    *handle<<text<<std::endl;
+    *handle<<text;
+    if(!noreturn)*handle<<std::endl;
   }else if(rank == rank_to_write || rank_to_write == -1){
-    std::cout<<text<<std::endl;
+    std::cout<<text;
+    if(!noreturn)std::cout<<std::endl;
 
   }
 

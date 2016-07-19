@@ -32,7 +32,8 @@ const int TEST_USERDEF_ERR1 = 8;
 const int TEST_USERDEF_ERR2 = 16;
 const int TEST_USERDEF_ERR3 = 32;
 const int TEST_USERDEF_ERR4 = 64;
-const int err_tot = 8;
+const int TEST_FATAL_ERR = 128;
+const int err_tot = 9;
 const calc_type PRECISION = 1e-10;/**< Constant for equality at normal precision i.e. from rounding errors etc*/
 const calc_type NUM_PRECISION = 1e-6;/**< Constant for equality at good numerical precision, e.g. from numerical integration over 100-1000 pts*/
 const calc_type LOW_PRECISION = 5e-3;/**< Constant for equality at low precision, i.e. different approximations to an expression*/
@@ -77,6 +78,7 @@ private:
   int current_test_id;/**< Number in list of test being run*/
   std::vector<test_entity*> test_list;/**< List of tests to run*/
   int verbosity;/**< Verbosity level of output*/
+  std::string get_color_escape(char col);
 public:
   void report_err(int err, int test_id=-1);
   void report_info(std::string info, int verb_to_print = 1, int test_id=-1);
@@ -88,6 +90,8 @@ public:
   void run_tests();
   void set_verbosity(int verb);
   void set_colour(char col=0);
+  bool is_fatal(int err);
+  bool check_for_abort(int err);
   
 };
 
@@ -128,6 +132,8 @@ class test_entity_get_and_fft : public test_entity{
   test_entity_get_and_fft();
   virtual ~test_entity_get_and_fft();
   virtual int run();
+  int one_d();
+  int two_d();
 
 };
 
@@ -194,6 +200,28 @@ class test_entity_spectrum : public test_entity{
   int basic_tests();
   int albertGs_tests();
 };
+
+/** Full check of deriving a "level one" FFT and spectrum from the various input data formats */
+class test_entity_levelone: public test_entity{
+  private:
+  data_array * test_dat_fft;
+  data_array * test_dat;
+  controller * test_contr;
+  reader * my_reader;
+  std::string file_prefix;
+  int time_in[3], space_in[2];
+  char block_id[ID_SIZE];
+  int n_tims;
+
+
+  public:
+  test_entity_levelone();
+  virtual ~test_entity_levelone();
+  virtual int run();
+  int setup();
+  int basic_tests();
+};
+
 
 /** Spectrum to D test. Setup sample data in a spectrum with analytic solvable form. Calculate resulting D. Cross check*/
 class test_entity_d : public test_entity{

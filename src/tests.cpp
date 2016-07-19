@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <cmath>
+#include <mpi.h>
 #include "tests.h"
 #include "reader.h"
 #include "main_support.h"
@@ -30,9 +31,9 @@ extern tests * test_bed; /**< Global testbed, define somewhere in your code*/
 extern const mpi_info_struc mpi_info;
 extern deck_constants my_const;
 
-const int err_codes[err_tot] ={TEST_PASSED, TEST_WRONG_RESULT, TEST_NULL_RESULT, TEST_ASSERT_FAIL, TEST_USERDEF_ERR1, TEST_USERDEF_ERR2, TEST_USERDEF_ERR3, TEST_USERDEF_ERR4};/**< List of error codes available*/
+const int err_codes[err_tot] ={TEST_PASSED, TEST_WRONG_RESULT, TEST_NULL_RESULT, TEST_ASSERT_FAIL, TEST_USERDEF_ERR1, TEST_USERDEF_ERR2, TEST_USERDEF_ERR3, TEST_USERDEF_ERR4, TEST_FATAL_ERR};/**< List of error codes available*/
 
-std::string err_names[err_tot]={"None", "Wrong result", "Invalid Null result", "Assignment or assertion failed", "", "", "", ""};/**< Names corresponding to error codes, which are reported in log files*/
+std::string err_names[err_tot]={"None", "Wrong result", "Invalid Null result", "Assignment or assertion failed", "", "", "", "", "Fatal error"};/**< Names corresponding to error codes, which are reported in log files*/
 
 tests::tests(){
   setup_tests();
@@ -77,6 +78,8 @@ void tests::setup_tests(){
   add_test(test_obj);
   test_obj = new test_entity_spectrum();
   add_test(test_obj);
+  test_obj = new test_entity_levelone();
+  add_test(test_obj);
 
 }
 
@@ -85,6 +88,25 @@ void tests::add_test(test_entity * test){
   test_list.push_back(test);
 }
 
+bool tests::is_fatal(int err){
+
+  if((err & TEST_FATAL_ERR) == TEST_FATAL_ERR) return 1;
+  else return 0;
+}
+
+bool tests::check_for_abort(int err){
+
+  if(is_fatal(err)){
+    set_colour('r');
+    set_colour('*');
+    my_print("Fatal error occured. Aborting test "+test_list[current_test_id]->name, mpi_info.rank);
+    set_colour();
+    return true;
+  }
+  else{
+    return false;
+  }
+}
 void tests::report_err(int err, int test_id){
 /** \brief Log error
 *
@@ -92,6 +114,7 @@ void tests::report_err(int err, int test_id){
   if(test_id == -1) test_id = current_test_id;
   if(err ==TEST_PASSED) set_colour('b');
   else set_colour('r');
+  if(is_fatal(err)) set_colour('*');
   my_print(outfile, get_printable_error(err, test_id), mpi_info.rank);
   my_print(nullptr, get_printable_error(err, test_id), mpi_info.rank);
   set_colour();
@@ -139,37 +162,63 @@ void tests::set_colour(char col){
 *Set terminal output colour using std escape sequences. Accepts no argument to return to default, or rgb, cmyk and white to test text colour. NB technically not MPI safe. Use sparingly to highlight important information.
 */
 
+  my_print(this->get_color_escape(col), mpi_info.rank, 0, true);
+}
+
+inline std::string tests::get_color_escape(char col){
+/** \brief
+*\copydoc dummy_colour This returns the terminal escape string to set given colour.
+*/
+  if(col >='A' and col <='Z') col += 32;
+  //ASCII upper to lower
   switch (col) {
     case 0:
-      std::cout<<"\033[0m";
-      break;
+    case '0':
+      return "\033[0m";
+      break;//Redundant but clearer
     case 'r':
-      std::cout<<"\033[31m";
+      return "\033[31m";
       break;
     case 'g':
-      std::cout<<"\033[32m";
+      return "\033[32m";
       break;
     case 'b':
-      std::cout<<"\033[34m";
+      return "\033[34m";
       break;
     case 'c':
-      std::cout<<"\033[36m";
+      return "\033[36m";
       break;
     case 'm':
-      std::cout<<"\033[35m";
+      return "\033[35m";
       break;
     case 'y':
-      std::cout<<"\033[33m";
+      return "\033[33m";
       break;
     case 'w':
-      std::cout<<"\033[37m";
+      return "\033[37m";
       break;
     case 'k':
-      std::cout<<"\033[30m";
+      return "\033[30m";
       break;
-
+    case '*':
+    //bold
+      return "\033[1m";
+      break;
+    case '_':
+    //underline
+      return "\033[4m";
+      break;
+    case '?':
+    //blink. very annoying
+      return "\033[5m";
+      break;
+    case '$':
+    //reverse fore/back ground
+      return "\033[7m";
+      break;
+    
     default:
-      break;
+      return "";
   }
 
 }
@@ -337,8 +386,6 @@ int test_entity_data_array::run(){
 
 test_entity_get_and_fft::test_entity_get_and_fft(){
   name = "read and FFT";
-  char block_id[10]= "ex";
-  test_rdr = new reader("./files/sin", block_id);
 
 }
 test_entity_get_and_fft::~test_entity_get_and_fft(){
@@ -355,6 +402,26 @@ int test_entity_get_and_fft::run(){
 *Reads a test sdf file, stores into data array and runs fft. Test data should be a sine curve with one major frequency which is then checked. Note frequency is hard coded to match that produced by ./files/sin.deck
 */
 
+  int err = TEST_PASSED;
+  
+  char block_id[10]= "ex";
+  test_rdr = new reader("./files/sin", block_id);
+
+  err |=one_d();
+
+  //strcpy(block_id, "ay");
+//  strcpy(block_id, "ay");
+
+  //if(test_rdr) delete test_rdr;
+  //test_rdr = new reader("./files/accum", block_id);
+  //err|= two_d();
+
+  test_bed->report_err(err);
+  return err;
+
+}
+
+int test_entity_get_and_fft::one_d(){
   int err = TEST_PASSED;
 
   int tim_in[3], space_in[2];
@@ -392,15 +459,18 @@ int test_entity_get_and_fft::run(){
   bool tmp_err = test_dat->fft_me(test_dat_fft);
   if(tmp_err) err|=TEST_ASSERT_FAIL;
   if(test_dat_fft->check_ids(test_dat)) err |= TEST_WRONG_RESULT;
-  if(err == TEST_PASSED) test_bed->report_info("Data read and FFT reports no error", 1);
+  if(err == TEST_PASSED) test_bed->report_info("1D read and FFT reports no error", 1);
 
   //Get primary frequency
   int max_index = 0;
-  my_type max_val = 0, tmp;
-  //FFT is abs square so +ve
+  my_type max_val = 0, tmp=1.0;
 
+  std::cout<<test_dat->get_element(0, 0);
+
+  //FFT is abs square so +ve
   for(int i=0; i< test_dat_fft->get_dims(0); i++){
     tmp = test_dat_fft->get_element(i, 0);
+    std::cout<<tmp<<'\n';
     if(tmp >= max_val){
       max_index = i;
       max_val = tmp;
@@ -414,7 +484,50 @@ int test_entity_get_and_fft::run(){
     test_bed->report_info("Max freq is "+mk_str(test_dat_fft->get_axis_element(0,max_index))+" ("+mk_str(max_index)+")", 1);
   }
   else test_bed->report_info("FFT Frequency correct!", 1);
-  test_bed->report_err(err);
+  return err;
+
+}
+
+int test_entity_get_and_fft::two_d(){
+  int err = TEST_PASSED;
+
+  int tim_in[3], space_in[2];
+  tim_in[0]=0;
+  tim_in[1]=1;
+  tim_in[2]=50;
+  space_in[0]=0;
+
+  int n_tims = tim_in[2];//std::max(tim_in[1]-tim_in[0], 1);
+
+  int n_dims;
+  std::vector<int> dims;
+  test_rdr->read_dims(n_dims, dims);
+
+  space_in[1]=dims[0];
+
+  if(n_dims !=1){
+    err |= TEST_WRONG_RESULT;
+    test_bed->report_info("Array dims wrong", 1);
+    test_bed->report_err(err);
+
+    return err;
+    //nothing more worth doing right now...
+  }
+
+  test_dat = new data_array(dims[0], n_tims);
+  test_dat_fft = new data_array(dims[0], n_tims);
+  if(!test_dat->is_good()||!test_dat_fft->is_good()){
+    err|=TEST_ASSERT_FAIL;
+    return err;
+  }
+  
+  test_rdr->read_data(test_dat, tim_in, space_in);
+
+  bool tmp_err = test_dat->fft_me(test_dat_fft);
+  if(tmp_err) err|=TEST_ASSERT_FAIL;
+  if(test_dat_fft->check_ids(test_dat)) err |= TEST_WRONG_RESULT;
+  if(err == TEST_PASSED) test_bed->report_info("2D read and FFT reports no error", 1);
+
   return err;
 
 }
@@ -1202,6 +1315,165 @@ int test_entity_spectrum::albertGs_tests(){
 
   return err;
 }
+
+test_entity_levelone::test_entity_levelone(){
+
+  name = "level-one derivation";
+  strcpy(block_id, "ax");
+
+  file_prefix = "./files/l1";
+  space_in[0] = 0;
+  space_in[1] = 1024;
+  time_in[0] = 0;
+  time_in[1] = 4;
+  time_in[2] = 100;
+  
+}
+test_entity_levelone::~test_entity_levelone(){
+
+  delete test_dat;
+  delete test_dat_fft;
+  delete test_contr;
+  delete my_reader;
+
+
+}
+
+int test_entity_levelone::run(){
+/** \brief Test entire level-1 data extraction
+*
+**/
+
+  int err = TEST_PASSED;
+
+  //Use a different deck.status file...
+  if(mpi_info.rank == 0) get_deck_constants(file_prefix);
+  share_consts();
+
+  err|= setup();
+  if(test_bed->check_for_abort(err)) return err;
+  err|= basic_tests();
+  if(test_bed->check_for_abort(err)) return err;
+  
+  test_bed->report_err(err);
+
+  return err;
+
+}
+
+int test_entity_levelone::setup(){
+/** \brief Setup to test spectrum
+*
+* Note strictly this is the test of data array constructor taking a filename too.
+*/
+
+  int err = TEST_PASSED;
+  bool use_row_time=false;
+  my_reader = new reader(file_prefix, block_id);
+  if(my_reader->current_block_is_accum()) use_row_time = true;
+
+  if(!use_row_time){
+    n_tims = std::max(time_in[1]-time_in[0], 1);
+  }else{
+    n_tims = time_in[2];
+  }
+
+  int my_space[2];
+  my_space[0] = space_in[0];
+  my_space[1] = space_in[1];
+
+  int n_dims;
+  std::vector<int> dims;
+  int err2 = my_reader->read_dims(n_dims, dims);
+  if(err2) err |= TEST_FATAL_ERR;
+  
+  if(n_dims !=1) err |= TEST_FATAL_ERR;
+  /**for now abort if data file wrong size... \todo FIX*/
+
+  test_contr = new controller(file_prefix);
+
+  return err;
+}
+
+int test_entity_levelone::basic_tests(){
+/** \brief Basic tests of process to make levl-1 data
+*
+* Reads proper data files, produces FFT, derived spectrum etc*/
+  int err = TEST_PASSED;
+
+  int space_dim = space_in[1]-space_in[0];
+
+  data_array  * dat = new data_array(space_dim, n_tims);
+
+  if(!dat->is_good()){
+    my_print("Data array allocation failed.", mpi_info.rank);
+    err |= TEST_ASSERT_FAIL;
+    err |= TEST_FATAL_ERR;
+  }
+
+  int err2 = my_reader->read_data(dat, time_in, space_in);
+  if(err2 == 1) return TEST_FATAL_ERR;
+
+  if(err2 == 2) n_tims = dat->get_dims(1);
+  //Check if we had to truncate data array...
+  data_array * dat_fft = new data_array(space_dim, n_tims);
+
+  if(!dat_fft->is_good()){
+    return TEST_FATAL_ERR;
+  }
+  err2 = dat->fft_me(dat_fft);
+
+  if(mpi_info.rank ==0) MPI_Reduce(MPI_IN_PLACE, &err, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+  else MPI_Reduce(&err, NULL, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+
+  test_bed->report_info("FFT returned err_state " + mk_str(err2));
+
+  int row_lengths[2];
+  row_lengths[0] = space_dim;
+  row_lengths[1] = DEFAULT_N_ANG;
+  
+  test_contr->add_spectrum(row_lengths, 2);
+  test_contr->get_current_spectrum()->make_test_spectrum(time_in, space_in);
+  
+  int n_dims = dat->get_dims();
+  std::vector<my_type> lims;
+  if(n_dims >=3){
+    lims.push_back(-0.002);
+    lims.push_back(0.002);
+  }
+  if(n_dims >=2){
+    lims.push_back(-0.2);
+    lims.push_back(0.2);
+    lims.push_back(-10.0*my_const.omega_ce);
+    lims.push_back(10.0*my_const.omega_ce);
+  
+  }
+//Set cutout limits on FFT
+  std::string filename, time_str;
+  time_str = mk_str(dat_fft->time[0], true)+"_"+mk_str(dat_fft->time[1],true);
+  std::string block = block_id;
+  filename = file_prefix+"FFT_"+block +"_"+time_str+"_"+mk_str(dat_fft->space[0])+"_"+mk_str(dat_fft->space[1]) + ".dat";
+  std::fstream file;
+  file.open(filename.c_str(),std::ios::out|std::ios::binary);
+  if(file.is_open()){
+//    dat_fft->write_section_to_file(file, lims);
+    err2=dat_fft->write_section_to_file(file, lims);
+//    dat->write_to_file(file);
+    if(err2){
+      test_bed->report_info("File writing failed");
+      err |=TEST_ASSERT_FAIL;
+    }
+    
+  }else{
+    err |=TEST_ASSERT_FAIL;
+  
+  }
+  file.close();
+
+  return err;
+
+}
+
 
 test_entity_d::test_entity_d(){
 

@@ -109,7 +109,7 @@ public:
   bool write_to_file(std::fstream &file);
   bool read_from_file(std::fstream &file, bool no_version_check=0);
   bool write_section_to_file(std::fstream &file, std::vector<my_type> limits);
-
+  std::vector<int> get_bounds(std::vector<my_type> limits);
   bool fft_me(data_array * data_out);
   void copy_ids( data_array * src);
   bool check_ids(data_array * src);

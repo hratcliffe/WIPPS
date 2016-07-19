@@ -306,7 +306,6 @@ my_type my_array::get_element(int nx, int ny){
 /** Return element at nx, ny. Out of range etc will return 0.0*/
   int ind = get_index(nx, ny);
   if(ind  != -1){
-//    std::cout<<data[ind]<<" ";
     return data[ind];
   }else{
     return 0.0;
@@ -678,7 +677,8 @@ void data_array::construct(){
   ax_defined = false;
   time[0]=0; time[1]=1;
   space[0]=0; space[1]=1;
-  memset((void *) block_id, 0, 10*sizeof(char));
+  memset((void *) block_id, 0, ID_SIZE*sizeof(char));
+  
 
 }
 
@@ -709,6 +709,8 @@ data_array::data_array(int nx, int ny, int nz, int nt) : my_array(nx,ny, nz, nt)
 
 data_array::data_array(int * row_lengths, int ny): my_array(row_lengths,ny){
 /** Adds axes to a ragged my_array One per row in this case...*/
+
+  construct();
 
   int tot_els = cumulative_row_lengths[dims[n_dims-1]-1]+row_lengths[dims[n_dims-1]-1];
 
@@ -934,7 +936,6 @@ bool data_array::write_to_file(std::fstream &file){
 */
 
   if(!file.is_open()) return 1;
-
   file.write(block_id, sizeof(char)*ID_SIZE);
 
   my_array::write_to_file(file);

@@ -465,12 +465,10 @@ int test_entity_get_and_fft::one_d(){
   int max_index = 0;
   my_type max_val = 0, tmp=1.0;
 
-  std::cout<<test_dat->get_element(0, 0);
 
   //FFT is abs square so +ve
   for(int i=0; i< test_dat_fft->get_dims(0); i++){
     tmp = test_dat_fft->get_element(i, 0);
-    std::cout<<tmp<<'\n';
     if(tmp >= max_val){
       max_index = i;
       max_val = tmp;

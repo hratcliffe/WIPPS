@@ -28,6 +28,7 @@ protected:
   int * cumulative_row_lengths; /**< Offset to start of given row to iterate through*/
   my_type *data;/**< The data */
   bool defined; /**< Flag to check memory allocation sucess*/
+  virtual std::vector<int> get_index_from_offset(int offset);
 
 public:
 
@@ -114,6 +115,11 @@ public:
   void copy_ids( data_array * src);
   bool check_ids(data_array * src);
   virtual bool resize(int dim, int sz);
+  
+  my_type minval();
+  my_type maxval();
+  my_type minval(std::vector<int> &ind);
+  my_type maxval(std::vector<int> &ind);
 
 };
 

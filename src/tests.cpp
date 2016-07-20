@@ -378,6 +378,16 @@ int test_entity_data_array::run(){
     }
   }
 
+  int i0=test_array->get_dims(0)/2, i1=test_array->get_dims(1)/3;
+  my_type current_max = test_array->maxval();
+  test_array->set_element(i0, i1, current_max+10);
+  std::vector<int> pos;
+  current_max -= test_array->maxval(pos);
+  if(current_max != -10 || pos.size()!=2||pos[0]!=i0||pos[1]!=i1){
+    err |= TEST_WRONG_RESULT;
+  }
+
+
 /* do testing */
   test_bed->report_err(err);
   return err;
@@ -389,7 +399,7 @@ test_entity_get_and_fft::test_entity_get_and_fft(){
 
 }
 test_entity_get_and_fft::~test_entity_get_and_fft(){
-  delete test_rdr;
+  if(test_rdr) delete test_rdr;
   delete test_dat;
   delete test_dat_fft;
   
@@ -410,10 +420,10 @@ int test_entity_get_and_fft::run(){
   err |=one_d();
 
   //strcpy(block_id, "ay");
-//  strcpy(block_id, "ay");
+  strcpy(block_id, "ax");
 
-  //if(test_rdr) delete test_rdr;
-  //test_rdr = new reader("./files/accum", block_id);
+  if(test_rdr) delete test_rdr;
+  test_rdr = new reader("./files/l1", block_id);
   //err|= two_d();
 
   test_bed->report_err(err);
@@ -464,9 +474,10 @@ int test_entity_get_and_fft::one_d(){
   //Get primary frequency
   int max_index = 0;
   my_type max_val = 0, tmp=1.0;
+  std::vector<int> max_pos;
+  my_type expected_max = 1.2566371e-4;
 
-
-  //FFT is abs square so +ve
+/*  //FFT is abs square so +ve
   for(int i=0; i< test_dat_fft->get_dims(0); i++){
     tmp = test_dat_fft->get_element(i, 0);
     if(tmp >= max_val){
@@ -475,9 +486,11 @@ int test_entity_get_and_fft::one_d(){
     
     }
   }
-//  for(int i=0; i< test_dat_fft->get_dims(0); i++) std::cout<< test_dat_fft->get_axis_element(0, i);
-  my_type expected_max = 1.2566371e-4;
-  if(std::abs(test_dat_fft->get_axis_element(0,max_index) - expected_max) > PRECISION){
+  */
+  max_val = test_dat_fft->maxval(max_pos);
+  if(max_pos.size() <1) err |=TEST_WRONG_RESULT;
+  max_index = max_pos[0];
+  if(std::abs(std::abs(test_dat_fft->get_axis_element(0,max_index)) - expected_max) > PRECISION){
     err|= TEST_WRONG_RESULT;
     test_bed->report_info("Max freq is "+mk_str(test_dat_fft->get_axis_element(0,max_index))+" ("+mk_str(max_index)+")", 1);
   }
@@ -497,12 +510,12 @@ int test_entity_get_and_fft::two_d(){
 
   int n_tims = tim_in[2];//std::max(tim_in[1]-tim_in[0], 1);
 
-  int n_dims;
+  int n_dims, space_size;
   std::vector<int> dims;
   test_rdr->read_dims(n_dims, dims);
 
-  space_in[1]=dims[0];
-
+  space_in[1]=dims[0]/64.0;
+  space_size = space_in[1]-space_in[0];
   if(n_dims !=1){
     err |= TEST_WRONG_RESULT;
     test_bed->report_info("Array dims wrong", 1);
@@ -512,8 +525,8 @@ int test_entity_get_and_fft::two_d(){
     //nothing more worth doing right now...
   }
 
-  test_dat = new data_array(dims[0], n_tims);
-  test_dat_fft = new data_array(dims[0], n_tims);
+  test_dat = new data_array(space_size, n_tims);
+  test_dat_fft = new data_array(space_size, n_tims);
   if(!test_dat->is_good()||!test_dat_fft->is_good()){
     err|=TEST_ASSERT_FAIL;
     return err;
@@ -521,10 +534,37 @@ int test_entity_get_and_fft::two_d(){
   
   test_rdr->read_data(test_dat, tim_in, space_in);
 
+
+  std::cout<<test_dat->minval()<<'\n';
+  std::cout<<test_dat->maxval()<<'\n';
+
+
   bool tmp_err = test_dat->fft_me(test_dat_fft);
   if(tmp_err) err|=TEST_ASSERT_FAIL;
   if(test_dat_fft->check_ids(test_dat)) err |= TEST_WRONG_RESULT;
   if(err == TEST_PASSED) test_bed->report_info("2D read and FFT reports no error", 1);
+  
+  std::string filename, time_str;
+  int err2;
+  time_str = mk_str(test_dat_fft->time[0], true)+"_"+mk_str(test_dat_fft->time[1],true);
+  std::string block = test_dat_fft->block_id;
+  filename = test_rdr->file_prefix+"FFT2DTest_"+block +"_"+time_str+"_"+mk_str(test_dat_fft->space[0])+"_"+mk_str(test_dat_fft->space[1]) + ".dat";
+  std::fstream file;
+  file.open(filename.c_str(),std::ios::out|std::ios::binary);
+  if(file.is_open()){
+//    err2=dat_fft->write_section_to_file(file, lims);
+      err2 = test_dat->write_to_file(file);
+    if(err2){
+      test_bed->report_info("File writing failed");
+      err |=TEST_ASSERT_FAIL;
+    }
+    
+  }else{
+    err |=TEST_ASSERT_FAIL;
+  
+  }
+  file.close();
+
 
   return err;
 

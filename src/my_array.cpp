@@ -265,6 +265,26 @@ int my_array::get_index(int nx, int ny, int nz, int nt){
   }
 }
 
+std::vector<int> my_array::get_index_from_offset(int offset){
+
+  std::vector<int> pos;
+  pos.resize(n_dims);
+  int tmp_offset = offset;
+  
+  int stride=1;
+  for(int i=0; i< n_dims-1; i++) stride*=dims[i];
+
+  for(int i=n_dims-1; i>0; i--){
+    pos[i] = tmp_offset/stride;
+    //INTEGER division!!!
+    tmp_offset = tmp_offset%stride;
+    stride/=dims[i-1];
+  
+  }
+  pos[0] = tmp_offset/stride;
+  return pos;
+}
+
 int my_array::get_dims(){
   return n_dims;
 }
@@ -974,9 +994,9 @@ bool data_array::write_section_to_file(std::fstream &file, std::vector<my_type> 
     file.write((char *) get_axis(i, len)+index_limits[2*i], sizeof(my_type)*(index_limits[2*i +1]-index_limits[2*i]));
 
   }
-  int i=1;
-  std::cout<<index_limits[2*i]<<" "<<index_limits[2*i +1]<<'\n';
-  for(int j=index_limits[2*i]; j<index_limits[2*i +1]; j++ ) std::cout<<*(get_axis(i, len)+j)<<" ";
+//  int i=1;
+//  std::cout<<index_limits[2*i]<<" "<<index_limits[2*i +1]<<'\n';
+  //for(int j=index_limits[2*i]; j<index_limits[2*i +1]; j++ ) std::cout<<*(get_axis(i, len)+j)<<" ";
 
   //Add axes.
 
@@ -1228,5 +1248,51 @@ bool data_array::resize(int dim, int sz){
 
 
 }
+
+my_type data_array::minval(){
+/** Find minimum value of data, allows linear search through contiguous memory*/
+
+  int total_size=1;
+  for(int i=0; i< n_dims; i++) total_size*=dims[i];
+  return *(std::min_element(data, data+total_size));
+
+}
+my_type data_array::minval(std::vector<int> &ind){
+/** Find minimum value of data, allows linear search through contiguous memory*/
+
+  int total_size=1;
+  for(int i=0; i< n_dims; i++) total_size*=dims[i];
+  auto it = std::min_element(data, data+total_size);
+  ind = get_index_from_offset(it - data);
+  return *(it);
+  
+
+}
+
+my_type data_array::maxval(){
+/** Find minimum value of data, allows linear search through contiguous memory*/
+
+  int total_size=1;
+  for(int i=0; i< n_dims; i++) total_size*=dims[i];
+  return *(std::max_element(data, data+total_size));
+
+
+}
+
+my_type data_array::maxval(std::vector<int> &ind){
+/** Find minimum value of data, allows linear search through contiguous memory*/
+
+  int total_size=1;
+  for(int i=0; i< n_dims; i++) total_size*=dims[i];
+  auto it = std::max_element(data, data+total_size);
+  ind = get_index_from_offset(it - data);
+//  ind.push_back(it - data);
+
+  return *(it);
+
+
+}
+
+
 
 

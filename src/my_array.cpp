@@ -1173,7 +1173,7 @@ void data_array::copy_ids( data_array * src){
 
   strcpy(this->block_id, src->block_id);
   
-  std::copy(src->time, src->time + 1, this->time);
+  std::copy(src->time, src->time + 2, this->time);
   for(int i=0; i < 2; ++i) this->space[i] = src->space[i];
 }
 
@@ -1182,9 +1182,9 @@ bool data_array::check_ids( data_array * src){
 
   bool err=false;
   if(strcmp(this->block_id, src->block_id) != 0) err =true;
-  
   for(int i=0; i< 3; i++) if(src->time[i] != this->time[i]) err=true;
   for(int i=0; i < 2; ++i) if(this->space[i] != src->space[i]) err=true;
+
   return err;
 }
 

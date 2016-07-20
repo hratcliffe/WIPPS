@@ -2,6 +2,7 @@ Passed test reader class
 Passed test data array class
 1D read and FFT reports no error
 FFT Frequency correct!
+2D read and FFT reports no error
 Passed test read and FFT
 Where OK
 Integrator OK

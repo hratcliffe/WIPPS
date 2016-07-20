@@ -10,6 +10,7 @@
 #include <fstream>
 #include <iostream>
 #include <vector>
+#include <algorithm>
 #include "support.h"
 #include "reader.h"
 #include "my_array.h"
@@ -187,7 +188,6 @@ int reader::read_data(data_array * my_data_in, int time_range[3], int space_rang
     if(!block->data) break;
     my_type * my_ptr = (my_type *) block->data;
     my_ptr +=space_range[0];
-    
     if(!accumulated){
       *(ax_ptr + i) = (my_type) handle->time;
 
@@ -205,7 +205,8 @@ int reader::read_data(data_array * my_data_in, int time_range[3], int space_rang
       //don't read more than time[2] rows
       if(ax_ptr) std::copy((my_type *) ax_block->grids[1], (my_type *) ax_block->grids[1] + rows, ax_ptr +total_reads);
       //Copy time grid out
-
+      
+      
       for(int j=0; j<rows; j++){
         my_data_in->populate_row(my_ptr, space_range[1], total_reads+j);
         my_ptr += block->dims[0];

@@ -424,7 +424,7 @@ int test_entity_get_and_fft::run(){
 
   if(test_rdr) delete test_rdr;
   test_rdr = new reader("./files/l1", block_id);
-  //err|= two_d();
+  err|= two_d();
 
   test_bed->report_err(err);
   return err;
@@ -504,7 +504,7 @@ int test_entity_get_and_fft::two_d(){
 
   int tim_in[3], space_in[2];
   tim_in[0]=0;
-  tim_in[1]=1;
+  tim_in[1]=3;
   tim_in[2]=50;
   space_in[0]=0;
 

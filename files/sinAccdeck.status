@@ -1,0 +1,206 @@
+ EPOCH1D v4.6.0   v4.6.0-5-g7633740-dirty 1469109801.201               
+
+Deck state:  1
+
+ Beginning "control" block
+
+ 	Element nx=400 handled OK
+ 	Element npart=3200 handled OK
+ 	Element t_end=1.5e-1 handled OK
+ 	Element x_min=0 handled OK
+ 	Element x_max=5.0e5 handled OK
+
+ Ending "control" block
+
+ Beginning "boundaries" block
+
+ 	Element bc_x_min=periodic handled OK
+ 	Element bc_x_max=periodic handled OK
+
+ Ending "boundaries" block
+
+ Beginning "constant" block
+
+ 	Element drift_p=2.5e-24 handled OK
+ 	Element temp=273 handled OK
+ 	Element dens=10 handled OK
+
+ Ending "constant" block
+
+ Beginning "species" block
+
+ 	Element name=Right handled OK
+ 	Element charge=-1 handled OK
+ 	Element mass=1.0 handled OK
+ 	Element frac=0.5 handled OK
+ 	Element temp_x=temp handled OK
+ 	Element drift_x=drift_p handled OK
+ 	Element density=dens handled OK
+
+ Ending "species" block
+
+ Beginning "species" block
+
+ 	Element name=Left handled OK
+ 	Element charge=-1 handled OK
+ 	Element mass=1.0 handled OK
+ 	Element frac=0.5 handled OK
+ 	Element temp_x=temp handled OK
+ 	Element drift_x=-drift_p handled OK
+ 	Element density=dens handled OK
+
+ Ending "species" block
+
+ Beginning "fields" block
+
+ 	Element ex=sin(2.0*pi*10.0*x/ lengthx - lengthx/1.5e-4) handled OK
+
+ Ending "fields" block
+
+ Beginning "accumulator" block
+
+ 	Element dt_accumulate=1.5e-5 handled OK
+
+ Ending "accumulator" block
+
+ Beginning "output" block
+
+ 	Element dt_snapshot=1.5e-3 handled OK
+ 	Element full_dump_every=1 handled OK
+ 	Element particles=always handled OK
+ 	Element px=always handled OK
+ 	Element grid=always+single handled OK
+ 	Element ex=always+single handled OK
+ 	Element ey=always handled OK
+ 	Element ez=always handled OK
+ 	Element bx=always handled OK
+ 	Element by=always handled OK
+ 	Element bz=always handled OK
+ 	Element jx=always handled OK
+ 	Element ekbar=always handled OK
+ 	Element mass_density=never + species handled OK
+ 	Element charge_density=always handled OK
+ 	Element number_density=always + species handled OK
+ 	Element temperature=always + species handled OK
+ 	Element distribution_functions=always handled OK
+
+ Ending "output" block
+
+ Beginning "dist_fn" block
+
+ 	Element name=x_px handled OK
+ 	Element ndims=2 handled OK
+ 	Element direction1=dir_x handled OK
+ 	Element direction2=dir_px handled OK
+ 	Element range1=(1, 1) handled OK
+ 	Element range2=(-5e-24, 5e-24) handled OK
+ 	Element resolution1=1 handled OK
+ 	Element resolution2=200 handled OK
+ 	Element include_species=Left handled OK
+ 	Element include_species=Right handled OK
+
+ Ending "dist_fn" block
+
+Deck state:  2
+
+ Beginning "control" block
+
+ 	Element nx=400 handled OK
+ 	Element npart=3200 handled OK
+ 	Element t_end=1.5e-1 handled OK
+ 	Element x_min=0 handled OK
+ 	Element x_max=5.0e5 handled OK
+
+ Ending "control" block
+
+ Beginning "boundaries" block
+
+ 	Element bc_x_min=periodic handled OK
+ 	Element bc_x_max=periodic handled OK
+
+ Ending "boundaries" block
+
+ Beginning "constant" block
+
+ 	Element drift_p=2.5e-24 handled OK
+ 	Element temp=273 handled OK
+ 	Element dens=10 handled OK
+
+ Ending "constant" block
+
+ Beginning "species" block
+
+ 	Element name=Right handled OK
+ 	Element charge=-1 handled OK
+ 	Element mass=1.0 handled OK
+ 	Element frac=0.5 handled OK
+ 	Element temp_x=temp handled OK
+ 	Element drift_x=drift_p handled OK
+ 	Element density=dens handled OK
+
+ Ending "species" block
+
+ Beginning "species" block
+
+ 	Element name=Left handled OK
+ 	Element charge=-1 handled OK
+ 	Element mass=1.0 handled OK
+ 	Element frac=0.5 handled OK
+ 	Element temp_x=temp handled OK
+ 	Element drift_x=-drift_p handled OK
+ 	Element density=dens handled OK
+
+ Ending "species" block
+
+ Beginning "fields" block
+
+ 	Element ex=sin(2.0*pi*10.0*x/ lengthx - lengthx/1.5e-4) handled OK
+
+ Ending "fields" block
+
+ Beginning "accumulator" block
+
+ 	Element dt_accumulate=1.5e-5 handled OK
+
+ Ending "accumulator" block
+
+ Beginning "output" block
+
+ 	Element dt_snapshot=1.5e-3 handled OK
+ 	Element full_dump_every=1 handled OK
+ 	Element particles=always handled OK
+ 	Element px=always handled OK
+ 	Element grid=always+single handled OK
+ 	Element ex=always+single handled OK
+ 	Element ey=always handled OK
+ 	Element ez=always handled OK
+ 	Element bx=always handled OK
+ 	Element by=always handled OK
+ 	Element bz=always handled OK
+ 	Element jx=always handled OK
+ 	Element ekbar=always handled OK
+ 	Element mass_density=never + species handled OK
+ 	Element charge_density=always handled OK
+ 	Element number_density=always + species handled OK
+ 	Element temperature=always + species handled OK
+ 	Element distribution_functions=always handled OK
+
+ Ending "output" block
+
+ Beginning "dist_fn" block
+
+ 	Element name=x_px handled OK
+ 	Element ndims=2 handled OK
+ 	Element direction1=dir_x handled OK
+ 	Element direction2=dir_px handled OK
+ 	Element range1=(1, 1) handled OK
+ 	Element range2=(-5e-24, 5e-24) handled OK
+ 	Element resolution1=1 handled OK
+ 	Element resolution2=200 handled OK
+ 	Element include_species=Left handled OK
+ 	Element include_species=Right handled OK
+
+ Ending "dist_fn" block
+
+ Initial conditions complete and valid. Attempting to load particles
+

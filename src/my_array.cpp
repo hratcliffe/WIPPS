@@ -1088,15 +1088,18 @@ bool data_array::fft_me(data_array * data_out){
   fft_dim = 1;/* Dimension to FFT over, if required*/
 
   ADD_FFTW(plan) p;
-  cplx_type *out, *in2;
+  cplx_type *out;
   my_type * in, *result;
+
+  int output_size=this->get_total_elements()/dims[0]*(dims[0]/2+1);
+  //Size of r2c transform output
+  //This has been checked manually with valgrind and is CORRECT
 
   in = (my_type*) ADD_FFTW(malloc)(sizeof(my_type) * total_size);
   //my_type should match the used FFTW library, so no type conversion necessary
-  out = (cplx_type *) ADD_FFTW(malloc)(sizeof(cplx_type) * total_size);
-  in2 = (cplx_type *) ADD_FFTW(malloc)(sizeof(cplx_type) * total_size);
+  out = (cplx_type *) ADD_FFTW(malloc)(sizeof(cplx_type) * output_size);
 
-  result = (my_type*) ADD_FFTW(malloc)(sizeof(my_type) * total_size);
+  result = (my_type*) ADD_FFTW(malloc)(sizeof(my_type) * output_size);
 
   /** \todo Possibly this bit can be genericised?*/
 
@@ -1120,56 +1123,20 @@ bool data_array::fft_me(data_array * data_out){
   ADD_FFTW(execute)(p);
   //Execute the plan
 
-/*
-  if(n_dims == 1 || (n_dims == 2 && dims[1] == 1) ){
-    p = ADD_FFTW(plan_dft_c2r_1d)(dims[0], in2, in, FFTW_ESTIMATE);
-
-  }else if(n_dims == 2){
-    p = ADD_FFTW(plan_dft_c2r_2d)(dims[1], dims[0], in2, in, FFTW_ESTIMATE);
-
-  }else{
-    my_print("FFT of more than 2-d arrays not added yet", mpi_info.rank);
-
-    return 1;
-  }
-
-  for(int i=0; i< total_size; i++){
-//    std::copy(out+i, out+i+2, in2+i);
-    *(in2+i)[0]=*(out+i)[0];
-    *(in2+i)[1]=*(out+i)[1];
-  }
-
-  ADD_FFTW(execute)(p);
-  //Execute the plan
-*/
-
   cplx_type * addr;
   addr = out;
   //because double indirection is messy and cplx type is currently a 2-element array of floats
-//  int middle = total_size/2+1;
-  int middle=this->get_total_elements()/dims[0]*(dims[0]/2+1);
-  
-//  if(middle*2 !=total_size) middle++;
-  //odd or even total length
-  *(result) = 0.0; //FAKENUMBERS
 
-  for(int i=0; i< middle ; i++){
-    //*(result+i+middle) = (my_type)(((*addr)[0])*((*addr)[0]) + ((*addr)[1])*((*addr)[1]));
+  for(int i=0; i< output_size; i++){
     *(result+i) = (my_type)(((*addr)[0])*((*addr)[0]) + ((*addr)[1])*((*addr)[1]));
-   // *(result-i+middle) = *(result+i+middle);
-    //(my_type)(((*addr)[0])*((*addr)[0]) + ((*addr)[1])*((*addr)[1]));
     addr++;
   }
   //Absolute square of out array to produce final result of type my_type
-  /** Make sure for 2-d we are making shape we expect!*/
-//  std::copy(in, in+total_size, result);
+  
+  std::cout<<*(std::max_element(result, result+output_size))<<" ";
   
   bool err=false;
-  //if(n_dims>1 && dims[1] > 1 ){
-    err = data_out->populate_mirror_fastest(result, total_size);
-//  }else{
-  //  err = data_out->populate_data(result, total_size);
-  //}
+  err = data_out->populate_mirror_fastest(result, total_size);
   //Copy result into out array
 
   if(err){
@@ -1209,10 +1176,10 @@ bool data_array::populate_mirror_fastest(my_type * result_in, int total_els){
 //  return this->populate_data(result_in, total_els);
   int last_size = dims[0]/2 + 1;
   int num_strides = total_els/dims[0];
-  std::cout<<total_els<<" "<<last_size<<" "<<dims[0]<<" "<<num_strides<<" "<<this->get_total_elements()<<'\n';
+  //std::cout<<total_els<<" "<<last_size<<" "<<dims[0]<<" "<<num_strides<<" "<<this->get_total_elements()<<'\n';
  
   for(int i=0; i< num_strides; i++){
-    std::cout<<i*dims[0]+last_size-1<<" "<<i*dims[0]+last_size-1+last_size<<'\n';
+    //std::cout<<i*dims[0]+last_size-1<<" "<<i*dims[0]+last_size-1+last_size<<'\n';
     std::copy(result_in+ i*last_size, result_in+(i+1)*last_size -1, data+i*dims[0]+last_size-1);
     std::reverse_copy(result_in+ i*last_size, result_in+(i+1)*last_size-1, data+i*dims[0]+1);
   }

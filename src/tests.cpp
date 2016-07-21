@@ -551,6 +551,17 @@ int test_entity_get_and_fft::two_d(){
   if(test_dat_fft->check_ids(test_dat)) err |= TEST_WRONG_RESULT;
   if(err == TEST_PASSED) test_bed->report_info("2D read and FFT reports no error", 1);
   
+  int max_index = 0;
+  my_type max_val = 0, tmp=1.0;
+  std::vector<int> max_pos;
+  my_type expected_max = 1.2566371e-4;
+
+  max_val = test_dat_fft->maxval(max_pos);
+  if(max_pos.size() <2) err |=TEST_WRONG_RESULT;
+  max_index = max_pos[0];
+  std::cout<<max_val<<'\n';
+  for(int i=0; i<max_pos.size(); i++) std::cout<<max_pos[i]<<" ";
+  
   std::string filename, time_str;
   int err2;
   time_str = mk_str(test_dat_fft->time[0], true)+"_"+mk_str(test_dat_fft->time[1],true);
@@ -1373,10 +1384,15 @@ test_entity_levelone::test_entity_levelone(){
   time_in[1] = 4;
   time_in[2] = 100;
   
+  test_dat = nullptr;
+  test_dat_fft=nullptr;
+  test_contr=nullptr;
+  my_reader=nullptr;
+  
 }
 test_entity_levelone::~test_entity_levelone(){
 
-  delete test_dat;
+  if(test_dat) delete test_dat;
   delete test_dat_fft;
   delete test_contr;
   delete my_reader;

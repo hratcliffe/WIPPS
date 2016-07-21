@@ -63,7 +63,6 @@ public:
   bool read_from_file(std::fstream &file, bool no_version_check=0);
   virtual bool write_section_to_file(std::fstream &file, std::vector<int> bounds);
   virtual bool resize(int dim, int sz);
-  
   //void tmp_function();
   
 };
@@ -112,14 +111,15 @@ public:
   bool write_section_to_file(std::fstream &file, std::vector<my_type> limits);
   std::vector<int> get_bounds(std::vector<my_type> limits);
   bool fft_me(data_array * data_out);
+  bool populate_mirror_fastest(my_type * result_in, int total_els);
   void copy_ids( data_array * src);
   bool check_ids(data_array * src);
   virtual bool resize(int dim, int sz);
   
-  my_type minval();
-  my_type maxval();
-  my_type minval(std::vector<int> &ind);
-  my_type maxval(std::vector<int> &ind);
+  my_type minval(int offset=0);
+  my_type maxval(int offset=0);
+  my_type minval(std::vector<int> &ind, int offset=0);
+  my_type maxval(std::vector<int> &ind, int offset=0);
 
 };
 

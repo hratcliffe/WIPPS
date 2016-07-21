@@ -13,6 +13,7 @@
 #include <cstdlib>
 #include <algorithm>
 #include <complex.h>
+#include <limits.h>
 #include <fftw3.h>
 #include <cmath>
 #include "support.h"
@@ -450,6 +451,7 @@ bool my_array::populate_row(void * dat_in, int nx, int y_row){
   return 0;
 }
 
+
 bool my_array::write_to_file(std::fstream &file){
 /**Takes the version etc info then the whole data array and writes as a stream. It's not portable to other machines necessarily due to float sizes and endianness. It'll do. We'll start the file with a known float for confirmation.
   *
@@ -493,7 +495,6 @@ bool my_array::write_to_file(std::fstream &file){
   return 0;
 
 }
-
 
 bool my_array::write_section_to_file(std::fstream &file, std::vector<int> bounds){
 /**Takes the version etc info then the section of the data array and writes as a stream. It's not portable to other machines necessarily due to float sizes and endianness. It'll do. We'll start the file with a known float for confirmation.
@@ -1086,36 +1087,60 @@ bool data_array::fft_me(data_array * data_out){
   fft_dim = 1;/* Dimension to FFT over, if required*/
 
   ADD_FFTW(plan) p;
-  cplx_type *out;
+  cplx_type *out, *in2;
   my_type * in, *result;
 
   in = (my_type*) ADD_FFTW(malloc)(sizeof(my_type) * total_size);
   //my_type should match the used FFTW library, so no type conversion necessary
   out = (cplx_type *) ADD_FFTW(malloc)(sizeof(cplx_type) * total_size);
+  in2 = (cplx_type *) ADD_FFTW(malloc)(sizeof(cplx_type) * total_size);
 
   result = (my_type*) ADD_FFTW(malloc)(sizeof(my_type) * total_size);
 
   /** \todo Possibly this bit can be genericised?*/
 
-  p = ADD_FFTW(plan_dft_r2c)(n_dims, dims, in, out, FFTW_ESTIMATE);
+ // p = ADD_FFTW(plan_dft_r2c)(n_dims, dims, in, out, FFTW_ESTIMATE);
 
-/*  if(n_dims == 1 || (n_dims == 2 && dims[1] == 1) ){
+  if(n_dims == 1 || (n_dims == 2 && dims[1] == 1) ){
     p = ADD_FFTW(plan_dft_r2c_1d)(dims[0], in, out, FFTW_ESTIMATE);
 
   }else if(n_dims == 2){
-    p = ADD_FFTW(plan_dft_r2c_2d)(dims[0], dims[1], in, out, FFTW_ESTIMATE);
+    p = ADD_FFTW(plan_dft_r2c_2d)(dims[1], dims[0], in, out, FFTW_ESTIMATE);
 
   }else{
     my_print("FFT of more than 2-d arrays not added yet", mpi_info.rank);
 
     return 1;
   }
-*/
+
   //copy data into in. Because the plan creation changes in, so we don't want to feed our actual data array in, and it's safer to run the plan with the memory block it was created with
   std::copy(this->data, this->data+total_size, in);
 
   ADD_FFTW(execute)(p);
   //Execute the plan
+
+/*
+  if(n_dims == 1 || (n_dims == 2 && dims[1] == 1) ){
+    p = ADD_FFTW(plan_dft_c2r_1d)(dims[0], in2, in, FFTW_ESTIMATE);
+
+  }else if(n_dims == 2){
+    p = ADD_FFTW(plan_dft_c2r_2d)(dims[1], dims[0], in2, in, FFTW_ESTIMATE);
+
+  }else{
+    my_print("FFT of more than 2-d arrays not added yet", mpi_info.rank);
+
+    return 1;
+  }
+
+  for(int i=0; i< total_size; i++){
+//    std::copy(out+i, out+i+2, in2+i);
+    *(in2+i)[0]=*(out+i)[0];
+    *(in2+i)[1]=*(out+i)[1];
+  }
+
+  ADD_FFTW(execute)(p);
+  //Execute the plan
+*/
 
   cplx_type * addr;
   addr = out;
@@ -1126,17 +1151,22 @@ bool data_array::fft_me(data_array * data_out){
   *(result) = 0.0; //FAKENUMBERS
 
   for(int i=0; i< middle ; i++){
-    *(result+i+middle) = (my_type)(((*addr)[0])*((*addr)[0]) + ((*addr)[1])*((*addr)[1]));
-    *(result-i+middle) = *(result+i+middle);
+    //*(result+i+middle) = (my_type)(((*addr)[0])*((*addr)[0]) + ((*addr)[1])*((*addr)[1]));
+    *(result+i) = (my_type)(((*addr)[0])*((*addr)[0]) + ((*addr)[1])*((*addr)[1]));
+   // *(result-i+middle) = *(result+i+middle);
     //(my_type)(((*addr)[0])*((*addr)[0]) + ((*addr)[1])*((*addr)[1]));
-    
     addr++;
   }
   //Absolute square of out array to produce final result of type my_type
   /** Make sure for 2-d we are making shape we expect!*/
+//  std::copy(in, in+total_size, result);
   
   bool err=false;
-  err = data_out->populate_data(result, total_size);
+  //if(n_dims>1 && dims[1] > 1 ){
+    err = data_out->populate_mirror_fastest(result, total_size);
+//  }else{
+  //  err = data_out->populate_data(result, total_size);
+  //}
   //Copy result into out array
 
   if(err){
@@ -1168,6 +1198,25 @@ bool data_array::fft_me(data_array * data_out){
 
 }
 
+bool data_array::populate_mirror_fastest(my_type * result_in, int total_els){
+
+//  int total_size=1;
+//  for(int i=0; i< n_dims; i++) total_size*=dims[i];
+
+//  return this->populate_data(result_in, total_els);
+  int last_size = dims[0]/2 + 1;
+  int num_strides = total_els/dims[0];
+  std::cout<<sizeof(my_type)<<'\n';
+  std::cout<<total_els<<" "<<last_size<<" "<<dims[0]<<" "<<num_strides<<" "<<this->get_total_elements()<<'\n';
+ 
+  for(int i=0; i< num_strides; i++){
+    std::cout<<i*dims[0]+last_size-1<<" "<<i*dims[0]+last_size-1+last_size<<'\n';
+    std::copy(result_in+ i*last_size, result_in+(i+1)*last_size -1, data+i*dims[0]+last_size-1);
+    std::reverse_copy(result_in+ i*last_size, result_in+(i+1)*last_size-1, data+i*dims[0]+1);
+  }
+  return 0;
+}
+
 void data_array::copy_ids( data_array * src){
 /** Copies ID fields from src array to this */
 
@@ -1187,7 +1236,6 @@ bool data_array::check_ids( data_array * src){
 
   return err;
 }
-
 
 bool data_array::resize(int dim, int sz){
 /** \brief Resize my_array on the fly
@@ -1249,50 +1297,49 @@ bool data_array::resize(int dim, int sz){
 
 }
 
-my_type data_array::minval(){
+my_type data_array::minval(int offset){
 /** Find minimum value of data, allows linear search through contiguous memory*/
+  int total_size=get_total_elements();
+  if(offset > total_size) return std::numeric_limits<my_type>::min();
 
-  int total_size=1;
-  for(int i=0; i< n_dims; i++) total_size*=dims[i];
-  return *(std::min_element(data, data+total_size));
+  return *(std::min_element(data+offset, data+total_size));
 
 }
-my_type data_array::minval(std::vector<int> &ind){
+my_type data_array::minval(std::vector<int> &ind, int offset){
 /** Find minimum value of data, allows linear search through contiguous memory*/
 
-  int total_size=1;
-  for(int i=0; i< n_dims; i++) total_size*=dims[i];
-  auto it = std::min_element(data, data+total_size);
+  int total_size=get_total_elements();
+  if(offset > total_size) return std::numeric_limits<my_type>::min();
+
+  auto it = std::min_element(data+offset, data+total_size);
   ind = get_index_from_offset(it - data);
   return *(it);
   
 
 }
 
-my_type data_array::maxval(){
+my_type data_array::maxval(int offset){
 /** Find minimum value of data, allows linear search through contiguous memory*/
 
-  int total_size=1;
-  for(int i=0; i< n_dims; i++) total_size*=dims[i];
-  return *(std::max_element(data, data+total_size));
+  int total_size=get_total_elements();
+  if(offset > total_size) return std::numeric_limits<my_type>::max();
+
+  return *(std::max_element(data+offset, data+total_size));
 
 
 }
 
-my_type data_array::maxval(std::vector<int> &ind){
+my_type data_array::maxval(std::vector<int> &ind, int offset){
 /** Find minimum value of data, allows linear search through contiguous memory*/
 
-  int total_size=1;
-  for(int i=0; i< n_dims; i++) total_size*=dims[i];
-  auto it = std::max_element(data, data+total_size);
+  int total_size=get_total_elements();
+  if(offset > total_size) return std::numeric_limits<my_type>::max();
+
+  auto it = std::max_element(data+offset, data+total_size);
   ind = get_index_from_offset(it - data);
 //  ind.push_back(it - data);
 
   return *(it);
 
-
 }
-
-
-
 

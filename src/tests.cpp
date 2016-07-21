@@ -517,7 +517,7 @@ int test_entity_get_and_fft::two_d(){
   int tim_in[3], space_in[2];
   tim_in[0]=0;
   tim_in[1]=3;
-  tim_in[2]=50;
+  tim_in[2]=100;
   space_in[0]=0;
 
   int n_tims = tim_in[2];//std::max(tim_in[1]-tim_in[0], 1);
@@ -526,7 +526,7 @@ int test_entity_get_and_fft::two_d(){
   std::vector<int> dims;
   test_rdr->read_dims(n_dims, dims);
 
-  space_in[1]=dims[0]/64.0;
+  space_in[1]=dims[0];
   space_size = space_in[1]-space_in[0];
   if(n_dims !=1){
     err |= TEST_WRONG_RESULT;

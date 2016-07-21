@@ -38,7 +38,7 @@ readu, 1, commit_in
 n_dims = int_type
 readu, 1, n_dims
 
-print, id_in, io_in, commit_in
+print, id_in," ",  io_in," ",  commit_in
 if(n_dims GT 0) THEN BEGIN
   dims = lonarr(n_dims)
   readu, 1, dims

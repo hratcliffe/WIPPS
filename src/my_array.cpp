@@ -472,6 +472,7 @@ bool my_array::write_to_file(std::fstream &file){
     int dim_tmp;
     for(int i=0;i<n_dims;i++){
       dim_tmp = dims[i];
+      std::cout<<dim_tmp<<'\n';
       file.write((char*) &dim_tmp, sizeof(int));
     }
   }else{
@@ -1145,8 +1146,10 @@ bool data_array::fft_me(data_array * data_out){
   cplx_type * addr;
   addr = out;
   //because double indirection is messy and cplx type is currently a 2-element array of floats
-  int middle = total_size/2;
-  if(middle*2 !=total_size) middle++;
+//  int middle = total_size/2+1;
+  int middle=this->get_total_elements()/dims[0]*(dims[0]/2+1);
+  
+//  if(middle*2 !=total_size) middle++;
   //odd or even total length
   *(result) = 0.0; //FAKENUMBERS
 
@@ -1206,7 +1209,6 @@ bool data_array::populate_mirror_fastest(my_type * result_in, int total_els){
 //  return this->populate_data(result_in, total_els);
   int last_size = dims[0]/2 + 1;
   int num_strides = total_els/dims[0];
-  std::cout<<sizeof(my_type)<<'\n';
   std::cout<<total_els<<" "<<last_size<<" "<<dims[0]<<" "<<num_strides<<" "<<this->get_total_elements()<<'\n';
  
   for(int i=0; i< num_strides; i++){

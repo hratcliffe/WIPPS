@@ -417,7 +417,6 @@ int test_entity_data_array::run(){
     err |= TEST_WRONG_RESULT;
     test_bed->report_info("Resizer error, wrong values read", 1);
   }
-  std::cout<<test_array->get_element(2, 3)<<" "<<test_array->get_element(1, 5)<<" "<<test_array->get_element(6, 5)<<" "<<test_array->get_element(4, 4)<<" "<<'\n';
   
   //And now a 3-d version
   if(test_array) delete test_array;
@@ -437,6 +436,7 @@ int test_entity_data_array::run(){
   els[2]=test_array->get_element(6, 5, 1);
   els[3]=test_array->get_element(4, 4, 0);
 
+
   test_array->resize(1, new2);
   test_array->resize(2, new3);
 
@@ -450,7 +450,69 @@ int test_entity_data_array::run(){
     test_bed->report_info("Resizer error, wrong values read", 1);
   }
 
-  
+  //Now test the shift function
+/*  test_array->shift(1, 1);
+  std::cout<<"shift by 1"<<'\n';
+  if(els[0] != test_array->get_element(2, 4, 2)|| els[1]!=test_array->get_element(1, 0, 4) || els[2]!=test_array->get_element(6, 0, 1) || els[3]!=test_array->get_element(4, 5, 0)){
+    err |= TEST_WRONG_RESULT;
+    test_bed->report_info("Shift error, wrong values read", 1);
+  }
+  std::cout<<test_array->get_element(2, 4, 2)<<" "<<test_array->get_element(1, 0, 4)<<" "<<test_array->get_element(6, 0, 1)<<" "<<test_array->get_element(4, 5, 0)<<" "<<'\n';
+
+  test_array->shift(1, -1);
+  std::cout<<"shift by -1"<<'\n';
+
+  if(els[0] != test_array->get_element(2, 3, 2)|| els[1]!=test_array->get_element(1, 5, 4) || els[2]!=test_array->get_element(6, 5, 1) || els[3]!=test_array->get_element(4, 4, 0)){
+    err |= TEST_WRONG_RESULT;
+    test_bed->report_info("Shift error, wrong values read", 1);
+  }
+
+  std::cout<<test_array->get_element(2, 3, 2)<<" "<<test_array->get_element(1, 5, 4)<<" "<<test_array->get_element(6, 5, 1)<<" "<<test_array->get_element(4, 4, 0)<<" "<<'\n';
+
+
+  std::cout<<"shift by 3"<<'\n';
+
+  test_array->shift(1, 3);
+  if(els[0] != test_array->get_element(2, 0, 2)|| els[1]!=test_array->get_element(1, 2, 4) || els[2]!=test_array->get_element(6, 2, 1) || els[3]!=test_array->get_element(4, 1, 0)){
+    err |= TEST_WRONG_RESULT;
+    test_bed->report_info("Shift error, wrong values read", 1);
+  }
+  for(int i=0; i<4; i++) std::cout<<els[i]<<" ";
+  std::cout<<'\n';
+  std::cout<<test_array->get_element(2, 0, 2)<<" "<<test_array->get_element(1, 2, 4)<<" "<<test_array->get_element(6, 2, 1)<<" "<<test_array->get_element(4, 1, 0)<<" "<<'\n';
+*/
+
+
+  test_array->shift(1, 3);
+  test_array->shift(1, -3);
+
+  if(els[0] != test_array->get_element(2, 3, 2)|| els[1]!=test_array->get_element(1, 5, 4) || els[2]!=test_array->get_element(6, 5, 1) || els[3]!=test_array->get_element(4, 4, 0)){
+    err |= TEST_WRONG_RESULT;
+    test_bed->report_info("Shift error, wrong values read", 1);
+  }
+  test_array->shift(2, 3);
+  test_array->shift(2, -3);
+
+  if(els[0] != test_array->get_element(2, 3, 2)|| els[1]!=test_array->get_element(1, 5, 4) || els[2]!=test_array->get_element(6, 5, 1) || els[3]!=test_array->get_element(4, 4, 0)){
+    err |= TEST_WRONG_RESULT;
+    test_bed->report_info("Shift error, wrong values read", 1);
+  }
+
+  for(int i=0; i<4; i++) std::cout<<els[i]<<" ";
+  std::cout<<'\n';
+
+  test_array->shift(0, 2);
+  std::cout<<test_array->get_element(2, 3, 4)<<" "<<test_array->get_element(1, 5, 2)<<" "<<test_array->get_element(6, 5, 3)<<" "<<test_array->get_element(4, 4, 2)<<" "<<'\n';
+
+  test_array->shift(0, -2);
+
+  std::cout<<test_array->get_element(2, 3, 2)<<" "<<test_array->get_element(1, 5, 4)<<" "<<test_array->get_element(6, 5, 1)<<" "<<test_array->get_element(4, 4, 0)<<" "<<'\n';
+
+  if(els[0] != test_array->get_element(2, 3, 2)|| els[1]!=test_array->get_element(1, 5, 4) || els[2]!=test_array->get_element(6, 5, 1) || els[3]!=test_array->get_element(4, 4, 0)){
+    err |= TEST_WRONG_RESULT;
+    test_bed->report_info("Shift error, wrong values read", 1);
+  }
+
 
 /* do testing */
   test_bed->report_err(err);

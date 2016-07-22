@@ -703,40 +703,86 @@ bool my_array::shift(int dim, int n_els){
 A 3-d 5x3x2 is
 [|ooooo||ooooo||ooooo|][|ooooo||ooooo||ooooo|]
 <--------'slice'------>
-Etc \todo We may get speedup from removing checks. If so, wrap them in a debug IFDEF for fiddling vs running
 */
 
   if(dim > this->n_dims || dim < 0) return 1;
+  if(n_els ==0) return 0;
   if(ragged){
    my_print("Cannot shift a ragged array.", mpi_info.rank);
      return 1;
   }
+  //Correct n_els for being more than one full cycle and move < 0 to equivalent +ve
+  int sign_n = (n_els<0? -1: 1);
+  n_els = sign_n >0? (abs(n_els)%dims[dim]):dims[dim]-(abs(n_els)%dims[dim]) ;
   
   my_type * new_data;
   int part_sz, sub_sz = 1;
 
-  //allocate a new block and copy across. chunking so we don't need to use element getters
-  for(int i=0; i<dim-1; ++i) sub_sz*= dims[i];
-  //Size of sub chunk which stays intact as we rotate
+  if(dim == n_dims -1){
+    //Special case else we'd be copying the whole array
+    //We extract one chunk, hold it aside while we slot the rest into place and then put it back
+    for(int i=0; i<dim-1; ++i) sub_sz*= dims[i];
+    //Size of sub chunk which stays intact as we rotate
 
-  new_data=(my_type*)calloc(this->get_total_elements(),sizeof(my_type));
-  int els_to_copy = 1, n_segments = 1;
+    int  n_segments = 1;
+    //Total size of copyable chunk
+    int chunk_sz = sub_sz*dims[dim-1];
+    new_data=(my_type*)malloc(chunk_sz*sizeof(my_type));
+    int actual_shift = 0;
 
-  els_to_copy = sub_sz*dims[dim-1]*dims[dim];
-  //Total size of copyable, rotateable chunk
-  int chunk_sz = els_to_copy;
-/*  (sz> dims[dim])? els_to_copy *= dims[dim] : els_to_copy *= sz;
-  for(int i=dim+1; i< n_dims; ++i) n_segments *= dims[i];
+    //Total number of chunks
+//    for(int i=dim; i< n_dims; ++i) n_segments *= dims[i];
+    n_segments = dims[dim];
 
-  //Now we rotate the order of the chunks
-  for(int i=0; i< n_segments; ++i) memcpy((void*)(data + i*chunk_sz*dims[dim]), (void*)(new_data + i*chunk_sz*sz), els_to_copy);
-*/
-  free(data);
+    //Put one chunk aside safely
+    int removed_chunk = 0;
+    std::copy(data + removed_chunk*chunk_sz,data + (removed_chunk+1)*chunk_sz, new_data);
+    int last_pos=0, dest_chunk =0;
+    for(int i=0; i< n_segments; ++i){
+      //Now move the chunk that replaces it
+//      dest_chunk = dims[dim] - n_els + last_pos;
+      dest_chunk = (last_pos-n_els >= dims[dim])? last_pos-n_els-dims[dim]: last_pos-n_els;
+      dest_chunk += (dest_chunk < 0 ? dims[dim]:0);
 
-  data = new_data;
+      std::cout<<dest_chunk<<'\n';
+      std::copy(data+dest_chunk*chunk_sz, data+(dest_chunk+1)*chunk_sz, data+last_pos*chunk_sz);
+      last_pos=dest_chunk;
+    }
+    //Slot the spare chunk back in
+    std::copy(new_data, new_data+chunk_sz, data+last_pos*chunk_sz);
+    
+  }else{
+
+    //allocate a new block and copy across. chunking so we don't need to use element getters
+    for(int i=0; i<dim; ++i) sub_sz*= dims[i];
+    //Size of sub chunk which stays intact as we rotate
+
+    int  n_segments = 1;
+    //Total size of copyable, rotateable chunk
+    int chunk_sz = sub_sz*dims[dim];
+    new_data=(my_type*)malloc(chunk_sz*sizeof(my_type));
+    int actual_shift = 0;
+
+    //Total number of chunks
+    for(int i=dim+1; i< n_dims; ++i) n_segments *= dims[i];
+    
+    //Now we rotate each chunk
+    for(int i=0; i< n_segments; ++i){
+      //We extract the first chunk to our spare memory
+      std::copy(data + i*chunk_sz,data + (i+1)*chunk_sz, new_data);
+//      std::cout<<*(data+i*chunk_sz+2)<<" "<<*(new_data+2)<<'\n';
+          //And rotate it as we put it back. This is two copies, but damn is it easier
+      for(int j=0; j< dims[dim]; j++){
+        actual_shift = (j+n_els >= dims[dim])? j+n_els-dims[dim]: j+n_els;
+        actual_shift += (actual_shift < 0 ? dims[dim]:0);
+        //std::cout<<actual_shift<<" "<<j+n_els<<" "<<j+n_els-dims[dim]<<'\n';
+        std::copy(new_data+j*sub_sz, new_data+(j+1)*sub_sz, data + i*chunk_sz+actual_shift*sub_sz);
+      }
+    }
+  }
+  if(new_data) free(new_data);
 
   return 0;
-
 
 }
 

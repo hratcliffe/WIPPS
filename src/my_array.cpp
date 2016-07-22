@@ -194,9 +194,9 @@ int my_array::get_index(int nx, int ny){
 |ooooo||ooooo||ooooo|
 <-row->
 
-A 3-d 5x3x2 is
+A 3-d 5x3x2 is <-row->
 [|ooooo||ooooo||ooooo|][|ooooo||ooooo||ooooo|]
-<--------'slice'------>
+<---------slice------->
 Etc
 */
 
@@ -634,7 +634,7 @@ bool my_array::resize(int dim, int sz){
 
   if(sz < 0 || sz > MAX_SIZE) return 1;
   //size errors
-  if(dim > this->n_dims) return 1;
+  if(dim > this->n_dims || dim < 0) return 1;
   if(dim>=0 && sz == dims[dim]){
      my_print("Size matches", mpi_info.rank);
      return 1;
@@ -658,16 +658,16 @@ bool my_array::resize(int dim, int sz){
       return 1;
       //failure. leave as was.
     }
-    int new_els = part_sz*(sz - dims[n_dims-1]);
+
+    int new_els = part_sz*(sz - dims[dim]);
     
-    if(new_els > 0) memset((void*)(new_data + part_sz*dims[n_dims-1]), 0.0, new_els*sizeof(my_type));
+    if(new_els > 0) memset((void*)(new_data + part_sz*dims[dim]), 0.0, new_els*sizeof(my_type));
     //zero new elements
   }
   else{
     //have to allocate a new block and copy across.
-    for(int i=0; i<dim-1; ++i) part_sz*= dims[i];
+    for(int i=0; i<dim; ++i) part_sz*= dims[i];
     for(int i=dim+1; i<n_dims; ++i) part_sz*= dims[i];
-
     new_data=(my_type*)calloc(part_sz*sz,sizeof(my_type));
     int els_to_copy = 1, n_segments = 1;
 
@@ -676,7 +676,7 @@ bool my_array::resize(int dim, int sz){
     int chunk_sz = els_to_copy;
     (sz> dims[dim])? els_to_copy *= dims[dim] : els_to_copy *= sz;
     for(int i=dim+1; i< n_dims; ++i) n_segments *= dims[i];
-    for(int i=0; i< n_segments; ++i) memcpy((void*)(data + i*chunk_sz*dims[dim]), (void*)(new_data + i*chunk_sz*sz), els_to_copy);
+    for(int i=0; i< n_segments; ++i) std::copy(data + i*chunk_sz*dims[dim],data + i*chunk_sz*dims[dim]+ els_to_copy, new_data + i*chunk_sz*sz);
 
     free(data);
   }
@@ -687,6 +687,56 @@ bool my_array::resize(int dim, int sz){
   my_print("New size of dim "+mk_str(dim)+  " is " + mk_str(dims[dim]), mpi_info.rank);
 
   return 0;
+
+}
+
+bool my_array::shift(int dim, int n_els){
+/** \brief Shift array on dimension dim by n_els
+*
+* Because of individual getter/setter per dimensionality, we use the 1-d backing to do this.
+*/
+/*
+* A 2-d array 5x3 is
+|ooooo||ooooo||ooooo|
+<-row->
+
+A 3-d 5x3x2 is
+[|ooooo||ooooo||ooooo|][|ooooo||ooooo||ooooo|]
+<--------'slice'------>
+Etc \todo We may get speedup from removing checks. If so, wrap them in a debug IFDEF for fiddling vs running
+*/
+
+  if(dim > this->n_dims || dim < 0) return 1;
+  if(ragged){
+   my_print("Cannot shift a ragged array.", mpi_info.rank);
+     return 1;
+  }
+  
+  my_type * new_data;
+  int part_sz, sub_sz = 1;
+
+  //allocate a new block and copy across. chunking so we don't need to use element getters
+  for(int i=0; i<dim-1; ++i) sub_sz*= dims[i];
+  //Size of sub chunk which stays intact as we rotate
+
+  new_data=(my_type*)calloc(this->get_total_elements(),sizeof(my_type));
+  int els_to_copy = 1, n_segments = 1;
+
+  els_to_copy = sub_sz*dims[dim-1]*dims[dim];
+  //Total size of copyable, rotateable chunk
+  int chunk_sz = els_to_copy;
+/*  (sz> dims[dim])? els_to_copy *= dims[dim] : els_to_copy *= sz;
+  for(int i=dim+1; i< n_dims; ++i) n_segments *= dims[i];
+
+  //Now we rotate the order of the chunks
+  for(int i=0; i< n_segments; ++i) memcpy((void*)(data + i*chunk_sz*dims[dim]), (void*)(new_data + i*chunk_sz*sz), els_to_copy);
+*/
+  free(data);
+
+  data = new_data;
+
+  return 0;
+
 
 }
 
@@ -1133,8 +1183,6 @@ bool data_array::fft_me(data_array * data_out){
   }
   //Absolute square of out array to produce final result of type my_type
   
-  std::cout<<*(std::max_element(result, result+output_size))<<" ";
-  
   bool err=false;
   err = data_out->populate_mirror_fastest(result, total_size);
   //Copy result into out array
@@ -1212,7 +1260,6 @@ bool data_array::resize(int dim, int sz){
 *dim is the dimension to resize, sz the new size. If sz < dims[dim] the first sz rows will be kept and the rest deleted. If sz > dims[dim] the new elements will be added zero initialised. Similarly for axis elements. See my_array::resize() for more.
 */
 
-  return 1;
   //call my_array::resize to resize data...
   bool err = my_array::resize(dim, sz);
 
@@ -1223,7 +1270,7 @@ bool data_array::resize(int dim, int sz){
 
     if(dim == n_dims-1){
       //special case as we can shrink and maybe grow without copy
-      for(int i=0; i<n_dims-1; ++i) part_sz+= dims[i];
+      for(int i=0; i<dim; ++i) part_sz+= dims[i];
       //product of all other dims
       new_ax = (my_type *) realloc((void*) this->axes, (part_sz+sz)*sizeof(my_type));
       if(!new_ax){
@@ -1231,14 +1278,14 @@ bool data_array::resize(int dim, int sz){
         return 1;
         //failure. leave as was.
       }
-      int new_els = (sz - dims[n_dims-1]);
+      int new_els = (sz - dims[dim]);
       
       if(new_els > 0) memset((void*)(new_ax + part_sz), 0.0, new_els*sizeof(my_type));
       //zero new elements
       axes = new_ax;
     }else{
       //have to allocate a new block and copy across.
-      for(int i=0; i<dim-1; ++i) part_sz+= dims[i];
+      for(int i=0; i<dim; ++i) part_sz+= dims[i];
       for(int i=dim+1; i<n_dims; ++i) part_sz+= dims[i];
 
       new_ax=(my_type*)calloc(part_sz+sz,sizeof(my_type));

@@ -64,6 +64,7 @@ public:
   virtual bool write_section_to_file(std::fstream &file, std::vector<int> bounds);
   virtual bool resize(int dim, int sz);
   //void tmp_function();
+  virtual bool shift(int dim, int n_els);
   
 };
 

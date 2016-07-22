@@ -343,6 +343,7 @@ test_entity_data_array::test_entity_data_array(){
   name = "data array class";
   test_array = new data_array(10, 10);
   
+  
 }
 test_entity_data_array::~test_entity_data_array(){
 
@@ -356,7 +357,7 @@ int test_entity_data_array::run(){
 */
   int err = TEST_PASSED;
   bool tmp_err;
-  
+  if(!test_array) return TEST_ASSERT_FAIL;
   int val;
   if(test_array->get_dims() == 2){
     //assign each element to unique val
@@ -378,6 +379,7 @@ int test_entity_data_array::run(){
     }
   }
 
+  //test maxval function
   int i0=test_array->get_dims(0)/2, i1=test_array->get_dims(1)/3;
   my_type current_max = test_array->maxval();
   test_array->set_element(i0, i1, current_max+10);
@@ -387,6 +389,68 @@ int test_entity_data_array::run(){
     err |= TEST_WRONG_RESULT;
   }
 
+  //test resizer
+
+  int new2=6, new1=7;
+  my_type els[4];
+  els[0]=test_array->get_element(2, 3);
+  els[1]=test_array->get_element(1, 5);
+  els[2]=test_array->get_element(6, 5);
+  els[3]=test_array->get_element(4, 4);
+  //Check some "random" elements
+  
+  test_bed->report_info("Testing resizer. Suggest using valgrind for memory checks", 2);
+  test_bed->report_info("Initial size is "+mk_str(test_array->get_dims(0))+" by "+mk_str(test_array->get_dims(1)), 1);
+
+  test_array->resize(1, new2);
+  if(test_array->get_dims(1) !=new2){
+    err |=TEST_WRONG_RESULT;
+    test_bed->report_info("Second dim size is "+mk_str(test_array->get_dims(1))+" not "+mk_str(new2), 1);
+  }
+  test_array->resize(0, new1);
+  if(test_array->get_dims(0) !=new1){
+    err |=TEST_WRONG_RESULT;
+    test_bed->report_info("First dim size is "+mk_str(test_array->get_dims(0))+" not "+mk_str(new1), 1);
+  }
+  
+  if(els[0] != test_array->get_element(2, 3)|| els[1]!=test_array->get_element(1, 5) || els[2]!=test_array->get_element(6, 5) || els[3]!=test_array->get_element(4, 4)){
+    err |= TEST_WRONG_RESULT;
+    test_bed->report_info("Resizer error, wrong values read", 1);
+  }
+  std::cout<<test_array->get_element(2, 3)<<" "<<test_array->get_element(1, 5)<<" "<<test_array->get_element(6, 5)<<" "<<test_array->get_element(4, 4)<<" "<<'\n';
+  
+  //And now a 3-d version
+  if(test_array) delete test_array;
+  test_array = new data_array(10, 10, 10);
+  for(int i=0; i<test_array->get_dims(0); i++){
+    for(int j =0; j<test_array->get_dims(1); j++){
+      for(int k =0; k<test_array->get_dims(2); k++){
+        tmp_err=test_array->set_element(i, j, k, (i+1)*(2*j+1)*(4*k+1));
+        if(tmp_err) err |= TEST_ASSERT_FAIL;
+      }
+    }
+  }
+  int new3 = 5;
+  
+  els[0]=test_array->get_element(2, 3, 2);
+  els[1]=test_array->get_element(1, 5, 4);
+  els[2]=test_array->get_element(6, 5, 1);
+  els[3]=test_array->get_element(4, 4, 0);
+
+  test_array->resize(1, new2);
+  test_array->resize(2, new3);
+
+  if(test_array->get_dims(2) !=new3 || test_array->get_dims(1) !=new2){
+    err |=TEST_WRONG_RESULT;
+    test_bed->report_info("Third dim size is "+mk_str(test_array->get_dims(2))+" not "+mk_str(new3), 1);
+  }
+
+  if(els[0] != test_array->get_element(2, 3, 2)|| els[1]!=test_array->get_element(1, 5, 4) || els[2]!=test_array->get_element(6, 5, 1) || els[3]!=test_array->get_element(4, 4, 0)){
+    err |= TEST_WRONG_RESULT;
+    test_bed->report_info("Resizer error, wrong values read", 1);
+  }
+
+  
 
 /* do testing */
   test_bed->report_err(err);
@@ -555,12 +619,22 @@ int test_entity_get_and_fft::two_d(){
   my_type max_val = 0, tmp=1.0;
   std::vector<int> max_pos;
   my_type expected_max = 1.2566371e-4;
+  bool both_freqs_correct = true;
 
   max_val = test_dat_fft->maxval(max_pos);
   if(max_pos.size() <2) err |=TEST_WRONG_RESULT;
   max_index = max_pos[0];
-  std::cout<<max_val<<'\n';
-  for(int i=0; i<max_pos.size(); i++) std::cout<<max_pos[i]<<" ";
+//  for(int i=0; i<max_pos.size(); i++) std::cout<<max_pos[i]<<" ";
+  
+  if(std::abs(std::abs(test_dat_fft->get_axis_element(0,max_index)) - expected_max) > PRECISION || max_pos[1] != test_dat_fft->get_dims(1)/2){
+    err|= TEST_WRONG_RESULT;
+    test_bed->report_info("Max freq is "+mk_str(test_dat_fft->get_axis_element(0,max_index))+" ("+mk_str(max_index)+", "+mk_str(max_pos[1])+")", 1);
+  }
+  else both_freqs_correct = false;
+  
+  if(!both_freqs_correct) test_bed->report_info("FFT Frequency correct!", 1);
+
+  
   
   std::string filename, time_str;
   int err2;

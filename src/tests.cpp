@@ -498,16 +498,8 @@ int test_entity_data_array::run(){
     test_bed->report_info("Shift error, wrong values read", 1);
   }
 
-  for(int i=0; i<4; i++) std::cout<<els[i]<<" ";
-  std::cout<<'\n';
-
   test_array->shift(0, 2);
-  std::cout<<test_array->get_element(2, 3, 4)<<" "<<test_array->get_element(1, 5, 2)<<" "<<test_array->get_element(6, 5, 3)<<" "<<test_array->get_element(4, 4, 2)<<" "<<'\n';
-
   test_array->shift(0, -2);
-
-  std::cout<<test_array->get_element(2, 3, 2)<<" "<<test_array->get_element(1, 5, 4)<<" "<<test_array->get_element(6, 5, 1)<<" "<<test_array->get_element(4, 4, 0)<<" "<<'\n';
-
   if(els[0] != test_array->get_element(2, 3, 2)|| els[1]!=test_array->get_element(1, 5, 4) || els[2]!=test_array->get_element(6, 5, 1) || els[3]!=test_array->get_element(4, 4, 0)){
     err |= TEST_WRONG_RESULT;
     test_bed->report_info("Shift error, wrong values read", 1);

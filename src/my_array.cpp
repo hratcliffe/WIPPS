@@ -740,11 +740,8 @@ A 3-d 5x3x2 is
     int last_pos=0, dest_chunk =0;
     for(int i=0; i< n_segments; ++i){
       //Now move the chunk that replaces it
-//      dest_chunk = dims[dim] - n_els + last_pos;
       dest_chunk = (last_pos-n_els >= dims[dim])? last_pos-n_els-dims[dim]: last_pos-n_els;
       dest_chunk += (dest_chunk < 0 ? dims[dim]:0);
-
-      std::cout<<dest_chunk<<'\n';
       std::copy(data+dest_chunk*chunk_sz, data+(dest_chunk+1)*chunk_sz, data+last_pos*chunk_sz);
       last_pos=dest_chunk;
     }

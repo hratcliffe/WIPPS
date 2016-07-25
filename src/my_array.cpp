@@ -472,7 +472,6 @@ bool my_array::write_to_file(std::fstream &file){
     int dim_tmp;
     for(int i=0;i<n_dims;i++){
       dim_tmp = dims[i];
-      std::cout<<dim_tmp<<'\n';
       file.write((char*) &dim_tmp, sizeof(int));
     }
   }else{
@@ -738,18 +737,18 @@ A 3-d 5x3x2 is
     int removed_chunk = 0;
     std::copy(data + removed_chunk*chunk_sz,data + (removed_chunk+1)*chunk_sz, new_data);
     int last_pos=0, dest_chunk =0;
-    for(int i=0; i< n_segments; ++i){
+    for(int i=0; i< n_segments-1; ++i){
       //Now move the chunk that replaces it
       dest_chunk = (last_pos-n_els >= dims[dim])? last_pos-n_els-dims[dim]: last_pos-n_els;
       dest_chunk += (dest_chunk < 0 ? dims[dim]:0);
+      //copy the dest chunk to the last vacated position
       std::copy(data+dest_chunk*chunk_sz, data+(dest_chunk+1)*chunk_sz, data+last_pos*chunk_sz);
       last_pos=dest_chunk;
     }
     //Slot the spare chunk back in
     std::copy(new_data, new_data+chunk_sz, data+last_pos*chunk_sz);
-    
+      
   }else{
-
     //allocate a new block and copy across. chunking so we don't need to use element getters
     for(int i=0; i<dim; ++i) sub_sz*= dims[i];
     //Size of sub chunk which stays intact as we rotate

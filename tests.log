@@ -5,8 +5,8 @@ Passed test data array class
 1D read and FFT reports no error
 FFT Frequency correct!
 2D read and FFT reports no error
-Max freq is -1.256637e-04 (190, 0)
-Error Wrong result, (code 1) on test read and FFT
+FFT Frequency correct!
+Passed test read and FFT
 Where OK
 Integrator OK
 Boxcar smooth OK
@@ -38,5 +38,5 @@ Error Wrong result, (code 1) on test plasma
 Passed test spectrum checks
 FFT returned err_state 0
 Passed test level-one derivation
-2 failed tests
+1 failed tests
 Testing complete and logged in tests.log

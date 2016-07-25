@@ -398,8 +398,10 @@ int test_entity_data_array::run(){
   els[2]=test_array->get_element(6, 5);
   els[3]=test_array->get_element(4, 4);
   //Check some "random" elements
-  
+  test_bed->set_colour('*');
   test_bed->report_info("Testing resizer. Suggest using valgrind for memory checks", 2);
+  test_bed->set_colour(0);
+
   test_bed->report_info("Initial size is "+mk_str(test_array->get_dims(0))+" by "+mk_str(test_array->get_dims(1)), 1);
 
   test_array->resize(1, new2);
@@ -430,7 +432,7 @@ int test_entity_data_array::run(){
     }
   }
   int new3 = 5;
-  
+  new2 = 9;
   els[0]=test_array->get_element(2, 3, 2);
   els[1]=test_array->get_element(1, 5, 4);
   els[2]=test_array->get_element(6, 5, 1);
@@ -440,9 +442,13 @@ int test_entity_data_array::run(){
   test_array->resize(1, new2);
   test_array->resize(2, new3);
 
-  if(test_array->get_dims(2) !=new3 || test_array->get_dims(1) !=new2){
+  if(test_array->get_dims(2) !=new3){
     err |=TEST_WRONG_RESULT;
     test_bed->report_info("Third dim size is "+mk_str(test_array->get_dims(2))+" not "+mk_str(new3), 1);
+  }
+  if(test_array->get_dims(1) !=new2){
+    err |=TEST_WRONG_RESULT;
+    test_bed->report_info("Second dim size is "+mk_str(test_array->get_dims(1))+" not "+mk_str(new2), 1);
   }
 
   if(els[0] != test_array->get_element(2, 3, 2)|| els[1]!=test_array->get_element(1, 5, 4) || els[2]!=test_array->get_element(6, 5, 1) || els[3]!=test_array->get_element(4, 4, 0)){
@@ -451,56 +457,47 @@ int test_entity_data_array::run(){
   }
 
   //Now test the shift function
-/*  test_array->shift(1, 1);
-  std::cout<<"shift by 1"<<'\n';
-  if(els[0] != test_array->get_element(2, 4, 2)|| els[1]!=test_array->get_element(1, 0, 4) || els[2]!=test_array->get_element(6, 0, 1) || els[3]!=test_array->get_element(4, 5, 0)){
-    err |= TEST_WRONG_RESULT;
-    test_bed->report_info("Shift error, wrong values read", 1);
-  }
-  std::cout<<test_array->get_element(2, 4, 2)<<" "<<test_array->get_element(1, 0, 4)<<" "<<test_array->get_element(6, 0, 1)<<" "<<test_array->get_element(4, 5, 0)<<" "<<'\n';
 
-  test_array->shift(1, -1);
-  std::cout<<"shift by -1"<<'\n';
-
-  if(els[0] != test_array->get_element(2, 3, 2)|| els[1]!=test_array->get_element(1, 5, 4) || els[2]!=test_array->get_element(6, 5, 1) || els[3]!=test_array->get_element(4, 4, 0)){
-    err |= TEST_WRONG_RESULT;
-    test_bed->report_info("Shift error, wrong values read", 1);
-  }
-
-  std::cout<<test_array->get_element(2, 3, 2)<<" "<<test_array->get_element(1, 5, 4)<<" "<<test_array->get_element(6, 5, 1)<<" "<<test_array->get_element(4, 4, 0)<<" "<<'\n';
-
-
-  std::cout<<"shift by 3"<<'\n';
-
+  my_type tot_pre=0, tot_aft=0;
+  int sz=0;
+  sz=test_array->get_dims(1);
+  for(int i=0; i<sz; i++) tot_pre +=test_array->get_element(2,i, 0);
   test_array->shift(1, 3);
-  if(els[0] != test_array->get_element(2, 0, 2)|| els[1]!=test_array->get_element(1, 2, 4) || els[2]!=test_array->get_element(6, 2, 1) || els[3]!=test_array->get_element(4, 1, 0)){
-    err |= TEST_WRONG_RESULT;
-    test_bed->report_info("Shift error, wrong values read", 1);
-  }
-  for(int i=0; i<4; i++) std::cout<<els[i]<<" ";
-  std::cout<<'\n';
-  std::cout<<test_array->get_element(2, 0, 2)<<" "<<test_array->get_element(1, 2, 4)<<" "<<test_array->get_element(6, 2, 1)<<" "<<test_array->get_element(4, 1, 0)<<" "<<'\n';
-*/
-
-
-  test_array->shift(1, 3);
+  for(int i=0; i<sz; i++) tot_aft +=test_array->get_element(2,i, 0);
   test_array->shift(1, -3);
 
-  if(els[0] != test_array->get_element(2, 3, 2)|| els[1]!=test_array->get_element(1, 5, 4) || els[2]!=test_array->get_element(6, 5, 1) || els[3]!=test_array->get_element(4, 4, 0)){
+  if(tot_pre != tot_aft || els[0] != test_array->get_element(2, 3, 2)|| els[1]!=test_array->get_element(1, 5, 4) || els[2]!=test_array->get_element(6, 5, 1) || els[3]!=test_array->get_element(4, 4, 0)){
     err |= TEST_WRONG_RESULT;
     test_bed->report_info("Shift error, wrong values read", 1);
   }
+  
+  sz=test_array->get_dims(2);
+  for(int i=0; i<sz; i++) tot_pre +=test_array->get_element(2,0, i);
+
   test_array->shift(2, 3);
+  for(int i=0; i<sz; i++) tot_aft +=test_array->get_element(2,0, i);
   test_array->shift(2, -3);
 
-  if(els[0] != test_array->get_element(2, 3, 2)|| els[1]!=test_array->get_element(1, 5, 4) || els[2]!=test_array->get_element(6, 5, 1) || els[3]!=test_array->get_element(4, 4, 0)){
+  if(tot_pre != tot_aft ||els[0] != test_array->get_element(2, 3, 2)|| els[1]!=test_array->get_element(1, 5, 4) || els[2]!=test_array->get_element(6, 5, 1) || els[3]!=test_array->get_element(4, 4, 0)){
     err |= TEST_WRONG_RESULT;
     test_bed->report_info("Shift error, wrong values read", 1);
   }
 
+
+  sz=test_array->get_dims(0);
+  for(int i=0; i<sz; i++) tot_pre +=test_array->get_element(i, 2,0);
+
   test_array->shift(0, 2);
+  for(int i=0; i<sz; i++) tot_aft +=test_array->get_element(i, 2,0);
+
+
+  if(els[0] == test_array->get_element(2, 3, 2)|| els[1]==test_array->get_element(1, 5, 4) || els[2]==test_array->get_element(6, 5, 1) || els[3]==test_array->get_element(4, 4, 0)){
+    err |= TEST_WRONG_RESULT;
+    test_bed->report_info("Shift error, no shift applied", 1);
+  }
+
   test_array->shift(0, -2);
-  if(els[0] != test_array->get_element(2, 3, 2)|| els[1]!=test_array->get_element(1, 5, 4) || els[2]!=test_array->get_element(6, 5, 1) || els[3]!=test_array->get_element(4, 4, 0)){
+  if(tot_pre != tot_aft || els[0] != test_array->get_element(2, 3, 2)|| els[1]!=test_array->get_element(1, 5, 4) || els[2]!=test_array->get_element(6, 5, 1) || els[3]!=test_array->get_element(4, 4, 0)){
     err |= TEST_WRONG_RESULT;
     test_bed->report_info("Shift error, wrong values read", 1);
   }
@@ -669,20 +666,30 @@ int test_entity_get_and_fft::two_d(){
   if(test_dat_fft->check_ids(test_dat)) err |= TEST_WRONG_RESULT;
   if(err == TEST_PASSED) test_bed->report_info("2D read and FFT reports no error", 1);
   
+  int shft = test_dat_fft->get_dims(1)/2;
+  test_dat_fft->shift(1, shft);
+
   int max_index = 0;
   my_type max_val = 0, tmp=1.0;
   std::vector<int> max_pos;
   my_type expected_max = 1.2566371e-4;
   bool both_freqs_correct = true;
 
+
   max_val = test_dat_fft->maxval(max_pos);
+
   if(max_pos.size() <2) err |=TEST_WRONG_RESULT;
   max_index = max_pos[0];
 //  for(int i=0; i<max_pos.size(); i++) std::cout<<max_pos[i]<<" ";
   
-  if(std::abs(std::abs(test_dat_fft->get_axis_element(0,max_index)) - expected_max) > PRECISION || max_pos[1] != test_dat_fft->get_dims(1)/2){
+  if(std::abs(std::abs(test_dat_fft->get_axis_element(0,max_index)) - expected_max) > PRECISION){
     err|= TEST_WRONG_RESULT;
     test_bed->report_info("Max freq is "+mk_str(test_dat_fft->get_axis_element(0,max_index))+" ("+mk_str(max_index)+", "+mk_str(max_pos[1])+")", 1);
+  }
+  else both_freqs_correct = false;
+  if(max_pos[1] != test_dat_fft->get_dims(1)/2){
+    err|= TEST_WRONG_RESULT;
+    test_bed->report_info("Max freq is "+mk_str(test_dat_fft->get_axis_element(1,max_pos[1]))+" ("+mk_str(max_index)+", "+mk_str(max_pos[1])+")", 1);
   }
   else both_freqs_correct = false;
   

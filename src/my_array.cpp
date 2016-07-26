@@ -1193,21 +1193,27 @@ bool data_array::fft_me(data_array * data_out){
 
   result = (my_type*) ADD_FFTW(malloc)(sizeof(my_type) * output_size);
 
-  /** \todo Possibly this bit can be genericised?*/
-
- // p = ADD_FFTW(plan_dft_r2c)(n_dims, dims, in, out, FFTW_ESTIMATE);
-
+  int *rev_dims;
+  rev_dims = (int *) malloc(n_dims*sizeof(int));
+  for(int i=0; i< n_dims; i++) rev_dims[i] =dims[n_dims-1-i];
+  //Construct dims array in reverse order as we're using the opposite majority to FFTW
+  p = ADD_FFTW(plan_dft_r2c)(n_dims, rev_dims, in, out, FFTW_ESTIMATE);
+  free(rev_dims);
+/*
   if(n_dims == 1 || (n_dims == 2 && dims[1] == 1) ){
     p = ADD_FFTW(plan_dft_r2c_1d)(dims[0], in, out, FFTW_ESTIMATE);
 
   }else if(n_dims == 2){
     p = ADD_FFTW(plan_dft_r2c_2d)(dims[1], dims[0], in, out, FFTW_ESTIMATE);
 
+  }else if(n_dims == 3){
+    p = ADD_FFTW(plan_dft_r2c_3d)(dims[2], dims[1], dims[0], in, out, FFTW_ESTIMATE);
+
   }else{
     my_print("FFT of more than 2-d arrays not added yet", mpi_info.rank);
 
     return 1;
-  }
+  }*/
 
   //copy data into in. Because the plan creation changes in, so we don't want to feed our actual data array in, and it's safer to run the plan with the memory block it was created with
   std::copy(this->data, this->data+total_size, in);

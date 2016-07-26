@@ -1675,6 +1675,7 @@ int test_entity_levelone::basic_tests(){
   
   }
   
+  dat_fft->shift(1, 50, 1);
 //Set cutout limits on FFT
   std::string filename, time_str;
   time_str = mk_str(dat_fft->time[0], true)+"_"+mk_str(dat_fft->time[1],true);

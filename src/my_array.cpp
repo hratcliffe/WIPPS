@@ -693,6 +693,7 @@ bool my_array::shift(int dim, int n_els){
 /** \brief Shift array on dimension dim by n_els
 *
 * Because of individual getter/setter per dimensionality, we use the 1-d backing to do this.
+* @param dim Dimension to shift, (0 to n_dims-1) @param n_els Number of elements to shift by.
 */
 /*
 * A 2-d array 5x3 is
@@ -1111,27 +1112,11 @@ bool data_array::write_section_to_file(std::fstream &file, std::vector<my_type> 
   my_array::write_section_to_file(file, index_limits);
   //call base class method to write that data.
 
-//  file.write((char *) axes ,sizeof(my_type)*(get_total_axis_elements()));
   int len;
   for(int i=0; i< n_dims; i++){
     file.write((char *) (get_axis(i, len)+index_limits[2*i]), sizeof(my_type)*(index_limits[2*i +1]-index_limits[2*i]));
 
   }
-  
-/*    int len, n_els;
-  my_type * ax;
-  for(int i=0; i< n_dims; i++){
-    n_els =index_limits[2*i +1]-index_limits[2*i];
-    ax = get_axis(i, len)+index_limits[2*i];
-    
-    file.write((char *) ax, sizeof(my_type)*n_els);
-
-  }*/
-
-//  int i=1;
-//  std::cout<<index_limits[2*i]<<" "<<index_limits[2*i +1]<<'\n';
-  //for(int j=index_limits[2*i]; j<index_limits[2*i +1]; j++ ) std::cout<<*(get_axis(i, len)+j)<<" ";
-
   //Add axes.
 
   return 0;
@@ -1290,7 +1275,7 @@ bool data_array::fft_me(data_array * data_out){
   int shft = 0;
   for(int i=1; i< n_dims; i++){
     shft = data_out->get_dims(i)/2;
-    data_out->shift(i, shft);
+    data_out->shift(i, shft, 0);
   }
 
 
@@ -1406,6 +1391,34 @@ bool data_array::resize(int dim, int sz){
   
   }
 
+
+}
+
+bool data_array::shift(int dim, int n_els, bool axis){
+/** Shift array on dim dim by n_els
+*
+*@param axis Whether to shift the corresponding axis
+*/
+  if(dim >= n_dims || dim < 0) return 0;
+  bool err;
+  err = my_array::shift(dim, n_els);
+
+  if(axis){
+    int len=0;
+    my_type * ax = get_axis(dim, len);
+    my_type * new_data=(my_type*)malloc(len*sizeof(my_type));
+    int actual_shift = 0;
+    //Rotate the axis
+    std::copy(ax,ax+len, new_data);
+    for(int j=0; j< len; j++){
+      //This is inefficient but is minimmaly changed from shift for whole array
+      actual_shift = (j+n_els >= dims[dim])? j+n_els-dims[dim]: j+n_els;
+      actual_shift += (actual_shift < 0 ? dims[dim]:0);
+      std::copy(new_data+j, new_data+(j+1), ax+actual_shift);
+    }
+    if(new_data) free(new_data);
+  }
+  return err;
 
 }
 

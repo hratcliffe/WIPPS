@@ -116,7 +116,7 @@ public:
   void copy_ids( data_array * src);
   bool check_ids(data_array * src);
   virtual bool resize(int dim, int sz);
-  
+  virtual bool shift(int dim, int n_els, bool axis=1);
   my_type minval(int offset=0);
   my_type maxval(int offset=0);
   my_type minval(std::vector<int> &ind, int offset=0);

@@ -140,7 +140,7 @@ int reader::read_data(data_array * my_data_in, int time_range[3], int space_rang
 
     // Mostly c++ way
     std::copy((my_type *) block->grids[i], (my_type *) block->grids[i] + len, ax_ptr);
-    /**get 0th axis. \todo extend to 2-d data */
+    //Get space axes
   }
   sdf_close(handle);
 
@@ -206,9 +206,12 @@ int reader::read_data(data_array * my_data_in, int time_range[3], int space_rang
       if(ax_ptr) std::copy((my_type *) ax_block->grids[1], (my_type *) ax_block->grids[1] + rows, ax_ptr +total_reads);
       //Copy time grid out
       
-      
+      int val[1];
       for(int j=0; j<rows; j++){
-        my_data_in->populate_row(my_ptr, space_range[1], total_reads+j);
+        //my_data_in->populate_row(my_ptr, space_range[1], total_reads+j);
+        val[0] = total_reads+j;
+        my_data_in->populate_slice(my_ptr, 1, val);
+
         my_ptr += block->dims[0];
       }
       total_reads+= rows;

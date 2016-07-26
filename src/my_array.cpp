@@ -158,6 +158,20 @@ my_array::~my_array(){
   }
 }
 
+int my_array::get_index(int n_dims, int * inds_in){
+/** Passing integer array and loop so going to be slower
+*/
+  if(n_dims != this-> n_dims) return -1;
+  for(int i=0; i< n_dims; i++){
+   // std::cout<<i<<' '<<inds_in[i]<<' ';
+      if(inds_in[i] < 0 || inds_in[i] >=dims[i]) return -1;
+  }
+
+  int ind = inds_in[0];
+  for(int i=1; i< n_dims; i++) ind += dims[i-1]*inds_in[i];
+  return ind;
+  
+}
 int my_array::get_index(int nx){
 /** \brief Get index for location
 *
@@ -451,6 +465,35 @@ bool my_array::populate_row(void * dat_in, int nx, int y_row){
   return 0;
 }
 
+bool my_array::populate_slice(my_type * dat_in, int n_dims_in, int * offsets){
+/** \brief Populate a slice of the array from the input array.
+*
+* Extends populate_row to fill an array slice, that is a section of dimension m, with some finite offset in dimensions from m to n only. E.g. to fill a row of a 3-d array call with n_dims_in = 3-1=2 and offsets={column, plane}
+ @param dat_in pointer to data @param n_dims Dimensionality of input (must be less than dimension of array) @param offsets Offsets in the other dimensions
+*/
+
+  if(n_dims_in >= n_dims) return 1;
+
+  int indx, sz_in=1;
+  int * inds_arr;
+  inds_arr = (int *) malloc(n_dims*sizeof(int));
+  for(int i=0; i<n_dims-n_dims_in; i++){
+    inds_arr[i] = 0;
+    sz_in *=dims[i];
+  }
+  for(int i = n_dims-n_dims_in; i<n_dims; i++){
+    inds_arr[i] = offsets[i-(n_dims-n_dims_in)];
+  }
+  indx = get_index(n_dims, inds_arr);
+
+  if(indx==-1) return 1;
+
+  std::copy(dat_in, dat_in + sz_in, data+indx);
+
+  free(inds_arr);
+  return 0;
+
+}
 
 bool my_array::write_to_file(std::fstream &file){
 /**Takes the version etc info then the whole data array and writes as a stream. It's not portable to other machines necessarily due to float sizes and endianness. It'll do. We'll start the file with a known float for confirmation.

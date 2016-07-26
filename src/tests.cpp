@@ -502,7 +502,7 @@ int test_entity_data_array::run(){
   }
 
 
-  test_array = new data_array(5, 8);
+/*  test_array = new data_array(5, 8);
   for(int i=0; i<test_array->get_dims(0); i++){
     for(int j =0; j<test_array->get_dims(1); j++){
       tmp_err=test_array->set_element(i, j, (i+1)*(2*j+1));
@@ -530,7 +530,7 @@ int test_entity_data_array::run(){
   file.open(filename.c_str(),std::ios::out|std::ios::binary);
   if(file.is_open()){
     test_array->write_to_file(file);//, lims);
-  }
+  }*/
 
 
 /* do testing */
@@ -1588,9 +1588,9 @@ int test_entity_levelone::run(){
 }
 
 int test_entity_levelone::setup(){
-/** \brief Setup to test spectrum
+/** \brief Setup to "level one" extraction
 *
-* Note strictly this is the test of data array constructor taking a filename too.
+*
 */
 
   int err = TEST_PASSED;
@@ -1675,7 +1675,6 @@ int test_entity_levelone::basic_tests(){
   
   }
   
-  dat_fft->shift(1, 50, 1);
 //Set cutout limits on FFT
   std::string filename, time_str;
   time_str = mk_str(dat_fft->time[0], true)+"_"+mk_str(dat_fft->time[1],true);

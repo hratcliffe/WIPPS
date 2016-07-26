@@ -713,17 +713,18 @@ A 3-d 5x3x2 is
   //Correct n_els for being more than one full cycle and move < 0 to equivalent +ve
   int sign_n = (n_els<0? -1: 1);
   n_els = sign_n >0? (abs(n_els)%dims[dim]):dims[dim]-(abs(n_els)%dims[dim]) ;
+  std::cout<<"here "<<n_els<<'\n';
   
   my_type * new_data;
   int part_sz, sub_sz = 1;
 
-  if(dim == n_dims -1){
-    //Special case else we'd be copying the whole array
+/*  if(dim == n_dims -1){
+    //Special case else we'd be copying up to the whole array at once
     //We extract one chunk, hold it aside while we slot the rest into place and then put it back
     for(int i=0; i<dim-1; ++i) sub_sz*= dims[i];
     //Size of sub chunk which stays intact as we rotate
 
-    int  n_segments = 1;
+    int  n_segments = 1, int n_cyc=1;
     //Total size of copyable chunk
     int chunk_sz = sub_sz*dims[dim-1];
     new_data=(my_type*)malloc(chunk_sz*sizeof(my_type));
@@ -732,23 +733,52 @@ A 3-d 5x3x2 is
     //Total number of chunks
 //    for(int i=dim; i< n_dims; ++i) n_segments *= dims[i];
     n_segments = dims[dim];
+    n_cyc = n_segments | n_els;
+    
 
     //Put one chunk aside safely
     int removed_chunk = 0;
     std::copy(data + removed_chunk*chunk_sz,data + (removed_chunk+1)*chunk_sz, new_data);
     int last_pos=0, dest_chunk =0;
-    for(int i=0; i< n_segments-1; ++i){
+/*    for(int i=0; i< n_segments-1; ++i){
+      
       //Now move the chunk that replaces it
       dest_chunk = (last_pos-n_els >= dims[dim])? last_pos-n_els-dims[dim]: last_pos-n_els;
       dest_chunk += (dest_chunk < 0 ? dims[dim]:0);
       //copy the dest chunk to the last vacated position
+      std::cout<<"working on "<<(*(data+last_pos*chunk_sz))<<'\n';
+      for(int i=0; i<this->get_dims(0); i++){
+        for(int j =0; j<this->get_dims(1); j++){
+          std::cout<<this->get_element(i, j)<<" ";
+        }
+      std::cout<<'\n';
+      }
+
       std::copy(data+dest_chunk*chunk_sz, data+(dest_chunk+1)*chunk_sz, data+last_pos*chunk_sz);
       last_pos=dest_chunk;
     }
     //Slot the spare chunk back in
     std::copy(new_data, new_data+chunk_sz, data+last_pos*chunk_sz);
-      
-  }else{
+    //Damn that only works for relatively prime size and swap
+    //This uses as many element copies as the other case version but less memory
+    for(int i=0; i< n_segments-1; ++i){
+      //identify which chunk lives here
+      //Now move the chunk that replaces it
+      dest_chunk = (last_pos-n_els >= dims[dim])? last_pos-n_els-dims[dim]: last_pos-n_els;
+      dest_chunk += (dest_chunk < 0 ? dims[dim]:0);
+      for(int i=0; i<this->get_dims(0); i++){
+        for(int j =0; j<this->get_dims(1); j++){
+          std::cout<<this->get_element(i, j)<<" ";
+        }
+      std::cout<<'\n';
+      }
+
+      std::copy(data+dest_chunk*chunk_sz, data+(dest_chunk+1)*chunk_sz, data+last_pos*chunk_sz);
+      last_pos=dest_chunk;
+    }
+    
+  }else*/
+  {
     //allocate a new block and copy across. chunking so we don't need to use element getters
     for(int i=0; i<dim; ++i) sub_sz*= dims[i];
     //Size of sub chunk which stays intact as we rotate
@@ -1250,6 +1280,7 @@ bool data_array::fft_me(data_array * data_out){
   int shft = 0;
   for(int i=1; i< n_dims; i++){
     shft = data_out->get_dims(i)/2;
+    std::cout<<i<<" "<<shft<<'\n';
     data_out->shift(i, shft);
   }
 

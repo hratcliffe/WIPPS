@@ -432,7 +432,7 @@ int test_entity_data_array::run(){
     }
   }
   int new3 = 5;
-  new2 = 9;
+  new2 = 6;//for element choices below to work, this must be >= 6
   els[0]=test_array->get_element(2, 3, 2);
   els[1]=test_array->get_element(1, 5, 4);
   els[2]=test_array->get_element(6, 5, 1);
@@ -490,7 +490,6 @@ int test_entity_data_array::run(){
   test_array->shift(0, 2);
   for(int i=0; i<sz; i++) tot_aft +=test_array->get_element(i, 2,0);
 
-
   if(els[0] == test_array->get_element(2, 3, 2)|| els[1]==test_array->get_element(1, 5, 4) || els[2]==test_array->get_element(6, 5, 1) || els[3]==test_array->get_element(4, 4, 0)){
     err |= TEST_WRONG_RESULT;
     test_bed->report_info("Shift error, no shift applied", 1);
@@ -500,6 +499,37 @@ int test_entity_data_array::run(){
   if(tot_pre != tot_aft || els[0] != test_array->get_element(2, 3, 2)|| els[1]!=test_array->get_element(1, 5, 4) || els[2]!=test_array->get_element(6, 5, 1) || els[3]!=test_array->get_element(4, 4, 0)){
     err |= TEST_WRONG_RESULT;
     test_bed->report_info("Shift error, wrong values read", 1);
+  }
+
+
+  test_array = new data_array(5, 8);
+  for(int i=0; i<test_array->get_dims(0); i++){
+    for(int j =0; j<test_array->get_dims(1); j++){
+      tmp_err=test_array->set_element(i, j, (i+1)*(2*j+1));
+      }
+    }
+  for(int i=0; i<test_array->get_dims(0); i++){
+    for(int j =0; j<test_array->get_dims(1); j++){
+      std::cout<<test_array->get_element(i, j)<<" ";
+    }
+    std::cout<<'\n';
+  }
+  test_array-> shift(1, 4);
+    std::cout<<'\n';
+  
+  for(int i=0; i<test_array->get_dims(0); i++){
+    for(int j =0; j<test_array->get_dims(1); j++){
+      std::cout<<test_array->get_element(i, j)<<" ";
+    }
+    std::cout<<'\n';
+  }
+  
+  std::string filename, time_str;
+  filename = "TEST.dat";
+  std::fstream file;
+  file.open(filename.c_str(),std::ios::out|std::ios::binary);
+  if(file.is_open()){
+    test_array->write_to_file(file);//, lims);
   }
 
 
@@ -1510,7 +1540,7 @@ int test_entity_spectrum::albertGs_tests(){
 test_entity_levelone::test_entity_levelone(){
 
   name = "level-one derivation";
-  strcpy(block_id, "ax");
+  strcpy(block_id, "ay");
 
   file_prefix = "./files/l1";
   space_in[0] = 0;
@@ -1644,6 +1674,7 @@ int test_entity_levelone::basic_tests(){
     lims.push_back(10.0*my_const.omega_ce);
   
   }
+  
 //Set cutout limits on FFT
   std::string filename, time_str;
   time_str = mk_str(dat_fft->time[0], true)+"_"+mk_str(dat_fft->time[1],true);
@@ -1653,7 +1684,7 @@ int test_entity_levelone::basic_tests(){
   file.open(filename.c_str(),std::ios::out|std::ios::binary);
   if(file.is_open()){
 //    dat_fft->write_section_to_file(file, lims);
-    err2=dat_fft->write_section_to_file(file, lims);
+    dat_fft->write_section_to_file(file, lims);
 //    dat->write_to_file(file);
     if(err2){
       test_bed->report_info("File writing failed");

@@ -666,8 +666,8 @@ int test_entity_get_and_fft::two_d(){
   if(test_dat_fft->check_ids(test_dat)) err |= TEST_WRONG_RESULT;
   if(err == TEST_PASSED) test_bed->report_info("2D read and FFT reports no error", 1);
   
-  int shft = test_dat_fft->get_dims(1)/2;
-  test_dat_fft->shift(1, shft);
+//  int shft = test_dat_fft->get_dims(1)/2;
+//  test_dat_fft->shift(1, shft);
 
   int max_index = 0;
   my_type max_val = 0, tmp=1.0;

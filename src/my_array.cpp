@@ -1246,6 +1246,14 @@ bool data_array::fft_me(data_array * data_out){
   ADD_FFTW(free)(result);
   //Destroy stuff we don't need
 
+  //do shifts for all but 0th dim
+  int shft = 0;
+  for(int i=1; i< n_dims; i++){
+    shft = data_out->get_dims(i)/2;
+    data_out->shift(i, shft);
+  }
+
+
   my_type * tmp_axis;
   float N2, res;
   int len;

@@ -713,7 +713,6 @@ A 3-d 5x3x2 is
   //Correct n_els for being more than one full cycle and move < 0 to equivalent +ve
   int sign_n = (n_els<0? -1: 1);
   n_els = sign_n >0? (abs(n_els)%dims[dim]):dims[dim]-(abs(n_els)%dims[dim]) ;
-  std::cout<<"here "<<n_els<<'\n';
   
   my_type * new_data;
   int part_sz, sub_sz = 1;
@@ -740,7 +739,7 @@ A 3-d 5x3x2 is
     int removed_chunk = 0;
     std::copy(data + removed_chunk*chunk_sz,data + (removed_chunk+1)*chunk_sz, new_data);
     int last_pos=0, dest_chunk =0;
-/*    for(int i=0; i< n_segments-1; ++i){
+    for(int i=0; i< n_segments-1; ++i){
       
       //Now move the chunk that replaces it
       dest_chunk = (last_pos-n_els >= dims[dim])? last_pos-n_els-dims[dim]: last_pos-n_els;
@@ -1115,9 +1114,20 @@ bool data_array::write_section_to_file(std::fstream &file, std::vector<my_type> 
 //  file.write((char *) axes ,sizeof(my_type)*(get_total_axis_elements()));
   int len;
   for(int i=0; i< n_dims; i++){
-    file.write((char *) get_axis(i, len)+index_limits[2*i], sizeof(my_type)*(index_limits[2*i +1]-index_limits[2*i]));
+    file.write((char *) (get_axis(i, len)+index_limits[2*i]), sizeof(my_type)*(index_limits[2*i +1]-index_limits[2*i]));
 
   }
+  
+/*    int len, n_els;
+  my_type * ax;
+  for(int i=0; i< n_dims; i++){
+    n_els =index_limits[2*i +1]-index_limits[2*i];
+    ax = get_axis(i, len)+index_limits[2*i];
+    
+    file.write((char *) ax, sizeof(my_type)*n_els);
+
+  }*/
+
 //  int i=1;
 //  std::cout<<index_limits[2*i]<<" "<<index_limits[2*i +1]<<'\n';
   //for(int j=index_limits[2*i]; j<index_limits[2*i +1]; j++ ) std::cout<<*(get_axis(i, len)+j)<<" ";
@@ -1280,7 +1290,6 @@ bool data_array::fft_me(data_array * data_out){
   int shft = 0;
   for(int i=1; i< n_dims; i++){
     shft = data_out->get_dims(i)/2;
-    std::cout<<i<<" "<<shft<<'\n';
     data_out->shift(i, shft);
   }
 

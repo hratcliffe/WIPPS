@@ -27,6 +27,7 @@
  * Data arrays are a specialised class containing data, axes and information. Data should only be directly accessed when copying as the internal layout may change. Get/set_element methods are provided for accessing specific parts.
  * \subsection FileIO SDF IO
  * SDF file reading uses the SDF C libraries and extracts the selected field and axes from files sequentially, taking a suitable space subarray if necessary. It fills a data_array instance with this, which can then be worked with.
+   Any version of the SDF libraries should be compatible since about version 4.3.
  * \subsection FFT Fourier Transforms and Special Functions
  * FFTs are handled by the FFTW routines in suitable precision (float or double). Special functions are provided by Boost.
  * \subsection contr Spectrum and D generation
@@ -39,6 +40,8 @@
  *
  *\section test Integrated Testing
  * All (hopefully) significant (copout!) parts of the code should be covered by inbuilt tests. These are defined in test.cpp and cover a mixture of unit testing, science testing and library integration tests. To run the tests, clean build with make MODE=test and run. To add tests, see class \ref tests. Consider adding tests for any significant additions or changes, and running the existing ones ditto. To include tests in this documentation, run make docs after make MODE=test. Similarly, to omit them, make without test mode
+ *\section idl IDL routines
+ *Some IDL helpers are provided for reading the output files, reading the deck.status file etc. To enable those which depend on SDF library IO, use the .idlstartup file in the files subdirectory, like, for example, IDL> pref_set, 'IDL_STARTUP', '/path/to/.idlstartup',/commit
  *
  */
 

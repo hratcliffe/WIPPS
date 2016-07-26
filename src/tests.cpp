@@ -1668,10 +1668,10 @@ int test_entity_levelone::basic_tests(){
     lims.push_back(0.002);
   }
   if(n_dims >=2){
-    lims.push_back(-0.2);
-    lims.push_back(0.2);
-    lims.push_back(-10.0*my_const.omega_ce);
-    lims.push_back(10.0*my_const.omega_ce);
+    lims.push_back(-0.002);
+    lims.push_back(0.002);
+    lims.push_back(-3.0*my_const.omega_ce);
+    lims.push_back(3.0*my_const.omega_ce);
   
   }
   

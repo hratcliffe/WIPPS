@@ -140,15 +140,20 @@ int reader::read_data(data_array * my_data_in, int time_range[3], int space_rang
     //Get space axes
   }
   bool simple_slice=false;
-  int * source_sizes;
+  int * source_sizes = nullptr;
+  int source_advance = 1;
   //Simple slices are those where we're slicing only the last spatial dimension. For what we have here, that means 1 space dim or more than one and no slicing. We have no mechanism to slice y etc, only x.
-  if(my_data_in->get_dims() ==2 || block->dims[0] == space_range[1]-space_range[0]){
-    simple_slice=true;
+  //Grid dimensions are for staggered grid for subtract 1
+  if(my_data_in->get_dims() ==2 || block->dims[0]-1 == space_range[1]-space_range[0]){
+    simple_slice = true;
+  }else{
     source_sizes = (int *) malloc((my_data_in->get_dims()-1)*sizeof(int));
     
     for(int i=0; i< my_data_in->get_dims()-1; i++){
-      source_sizes[i] = block->dims[i];
+      source_sizes[i] = block->dims[i]-1;
+      source_advance*=source_sizes[i];
     }
+    source_advance/=source_sizes[0];
   }
 
   sdf_close(handle);
@@ -199,7 +204,6 @@ int reader::read_data(data_array * my_data_in, int time_range[3], int space_rang
     my_type * my_ptr = (my_type *) block->data;
     
     my_ptr +=space_range[0];
-    //THIS WONT WORK IN 2DDDDD
     if(!accumulated){
       *(ax_ptr + i) = (my_type) handle->time;
       if(simple_slice){
@@ -207,7 +211,7 @@ int reader::read_data(data_array * my_data_in, int time_range[3], int space_rang
         val[0] = i-time_range[0];
         my_data_in->populate_slice(my_ptr, 1, val);
 
-//        my_data_in->populate_row(my_ptr, space_range[1], i-time_range[0]);
+  //      my_data_in->populate_row(my_ptr, space_range[1], i-time_range[0]);
       }else{
         int val[1];
         val[0] = i-time_range[0];
@@ -255,7 +259,7 @@ int reader::read_data(data_array * my_data_in, int time_range[3], int space_rang
     if(accumulated && total_reads >=time_range[2]) break;
   }
 
-  if(simple_slice) free(source_sizes);
+  if(source_sizes) free(source_sizes);
 
   //report if we broke out of loop and print filename
   if(i < time_range[1]){

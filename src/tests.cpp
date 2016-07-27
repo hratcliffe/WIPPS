@@ -1540,14 +1540,6 @@ int test_entity_spectrum::albertGs_tests(){
 test_entity_levelone::test_entity_levelone(){
 
   name = "level-one derivation";
-  strcpy(block_id, "ay");
-
-  file_prefix = "./files/l1/l1";
-  space_in[0] = 0;
-  space_in[1] = 1024;
-  time_in[0] = 0;
-  time_in[1] = 4;
-  time_in[2] = 100;
   
   test_dat = nullptr;
   test_dat_fft=nullptr;
@@ -1576,6 +1568,15 @@ int test_entity_levelone::run(){
 //  if(mpi_info.rank == 0) get_deck_constants(file_prefix);
 //  share_consts();
 
+  strcpy(block_id, "ay");
+
+  file_prefix = "./files/l1/l1";
+  space_in[0] = 0;
+  space_in[1] = 1024;
+  time_in[0] = 0;
+  time_in[1] = 4;
+  time_in[2] = 100;
+
   err|= setup();
   if(test_bed->check_for_abort(err)) return err;
   err|= basic_tests();
@@ -1583,7 +1584,14 @@ int test_entity_levelone::run(){
   if(my_reader) delete my_reader;
   if(test_contr) delete test_contr;
   
-  file_prefix = "./files/l1_2d";
+  file_prefix = "./files/2dtest/";
+  strcpy(block_id, "ey");
+  space_in[0] = 0;
+  space_in[1] = 1024;
+  time_in[0] = 0;
+  time_in[1] = 50;
+  time_in[2] = 0;
+
   err|=setup();
   err|= twod_tests();
   if(test_bed->check_for_abort(err)) return err;
@@ -1620,9 +1628,6 @@ int test_entity_levelone::setup(){
   int err2 = my_reader->read_dims(n_dims, dims);
   if(err2) err |= TEST_FATAL_ERR;
   
-  if(n_dims !=1) err |= TEST_FATAL_ERR;
-  /**for now abort if data file wrong size... \todo FIX*/
-
   test_contr = new controller(file_prefix);
 
   return err;
@@ -1713,9 +1718,16 @@ int test_entity_levelone::twod_tests(){
 * Reads proper data files, produces FFT, derived spectrum etc*/
   int err = TEST_PASSED;
 
+  int n_dims_in;
+  std::vector<int> dims_in;
+  my_reader->read_dims(n_dims_in, dims_in);
+  if(n_dims_in != 2){
+    test_bed->report_info("Wrong file dimension", 1);
+    return TEST_FATAL_ERR;
+  }
   int space_dim = space_in[1]-space_in[0];
 
-  data_array  * dat = new data_array(space_dim, n_tims);
+  data_array  * dat = new data_array(space_dim, dims_in[1], n_tims);
 
   if(!dat->is_good()){
     my_print("Data array allocation failed.", mpi_info.rank);
@@ -1727,8 +1739,8 @@ int test_entity_levelone::twod_tests(){
   if(err2 == 1) return TEST_FATAL_ERR;
 
   if(err2 == 2) n_tims = dat->get_dims(1);
-  //Check if we had to truncate data array...
-  data_array * dat_fft = new data_array(space_dim, n_tims);
+  //Check if we had to truncate data array and size FFT accordingly
+  data_array  * dat_fft = new data_array(space_dim, dims_in[1], n_tims);
 
   if(!dat_fft->is_good()){
     return TEST_FATAL_ERR;
@@ -1769,8 +1781,8 @@ int test_entity_levelone::twod_tests(){
   std::fstream file;
   file.open(filename.c_str(),std::ios::out|std::ios::binary);
   if(file.is_open()){
+    dat->write_to_file(file);
 //    dat_fft->write_section_to_file(file, lims);
-    dat_fft->write_section_to_file(file, lims);
 //    dat->write_to_file(file);
     if(err2){
       test_bed->report_info("File writing failed");

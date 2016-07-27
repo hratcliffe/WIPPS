@@ -1,1 +1,2 @@
-!PATH=!PATH+':'+Expand_Path('../../SDF/IDL/')
+!PATH=!PATH+':'+Expand_Path('/Users/heatherratcliffe/Documents/ActualWork/StockEpoch/epoch/SDF/IDL')
+@'/Users/heatherratcliffe/Documents/ActualWork/StockEpoch/epoch/SDF/IDL/Start.pro'

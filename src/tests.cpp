@@ -1781,8 +1781,7 @@ int test_entity_levelone::twod_tests(){
   std::fstream file;
   file.open(filename.c_str(),std::ios::out|std::ios::binary);
   if(file.is_open()){
-    dat->write_to_file(file);
-//    dat_fft->write_section_to_file(file, lims);
+    dat_fft->write_section_to_file(file, lims);
 //    dat->write_to_file(file);
     if(err2){
       test_bed->report_info("File writing failed");

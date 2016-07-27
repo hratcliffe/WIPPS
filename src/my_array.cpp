@@ -488,10 +488,7 @@ bool my_array::populate_slice(my_type * dat_in, int n_dims_in, int * offsets){
   for(int i = n_dims-n_dims_in; i<n_dims; i++){
     inds_arr[i] = offsets[i-(n_dims-n_dims_in)];
   }
-  for(int i=0; i<n_dims; i++)std::cout<<inds_arr[i]<<" ";
   indx = get_index(n_dims, inds_arr);
-  std::cout<<indx<<" "<<offsets[0]<< " "<<sz_in<<" ";
-  std::cout<<'\n';
   if(indx==-1) return 1;
 
   std::copy(dat_in, dat_in + sz_in, data+indx);

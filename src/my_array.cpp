@@ -495,6 +495,49 @@ bool my_array::populate_slice(my_type * dat_in, int n_dims_in, int * offsets){
 
 }
 
+bool my_array::populate_complex_slice(my_type * dat_in, int n_dims_in, int * offsets, int* sizes){
+/** \brief Populate a slice of the array from the input array.
+*
+* Extends populate_slice to fill an array slice from a larger array. As populate slice, assumes destination is a section of dimension m, with some finite offset in dimensions from m to n only. Assuming dat_in is a 1-d array in Fortran order (see get_element) this will read the proper subsection. Note this works fine for simple slices but costs more
+ @param dat_in pointer to data @param n_dims Dimensionality of input (must be less than dimension of array) @param offsets Offsets in the other dimensions @param sizes Sizes of input array
+*/
+  std::cout<<"populate_complex_slice IS AN UNTESTED ROUTINE!!!!!!!!!!!!!!!"<<'\n';
+  if(n_dims_in >= n_dims) return 1;
+
+  int indx, sz_in=1;
+  int * inds_arr;
+  inds_arr = (int *) malloc(n_dims*sizeof(int));
+  for(int i=0; i<n_dims-n_dims_in; i++){
+    inds_arr[i] = 0;
+    sz_in *=dims[i];
+  }
+  for(int i = n_dims-n_dims_in; i<n_dims; i++){
+    inds_arr[i] = offsets[i-(n_dims-n_dims_in)];
+  }
+  indx = get_index(n_dims, inds_arr);
+
+  if(indx==-1) return 1;
+
+  int input_n_dims= n_dims-n_dims_in, tot_sz=this->get_total_elements();
+  std::vector<int> dest_inds_vec;
+  int dest_ind, input_ind;
+  for(int i=0; i< tot_sz; i++){
+    //Destination index
+    dest_ind = i + indx;
+    dest_inds_vec = get_index_from_offset(dest_ind);
+    //Source index
+    input_ind = dest_inds_vec[0];
+    for(int j=1; j < input_n_dims; j++) input_ind += sizes[j-1]*dest_inds_vec[i];
+
+    std::copy(dat_in + input_ind, dat_in+input_ind +1, data + dest_ind);
+  }
+  //Clumsy but hey
+
+  return 0;
+
+}
+
+
 bool my_array::write_to_file(std::fstream &file){
 /**Takes the version etc info then the whole data array and writes as a stream. It's not portable to other machines necessarily due to float sizes and endianness. It'll do. We'll start the file with a known float for confirmation.
   *
@@ -672,7 +715,7 @@ bool my_array::resize(int dim, int sz){
 *dim is the dimension to resize, sz the new size. If sz < dims[dim] the first sz rows will be kept and the rest deleted. If sz > dims[dim] the new elements will be added zero initialised. Note due to using 1-d memory layout both cases require copying all data and therefore briefly memory to store the old and new arrays. However shinking the last dimension does not necessarily require a copy. Note cannot be called on ragged array. NOTE dim runs from 1 to number of dims
 */
 
-  my_print("Attempting to resize", mpi_info.rank);
+//  my_print("Attempting to resize", mpi_info.rank);
 
   if(sz < 0 || sz > MAX_SIZE) return 1;
   //size errors

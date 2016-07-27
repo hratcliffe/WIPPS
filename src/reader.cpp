@@ -64,21 +64,18 @@ bool reader::read_dims(int &n_dims, std::vector<int> &dims){
 
   sdf_block_t * block;
 
-  if(handle){my_print("Success! File opened", mpi_info.rank);}
-  else{
+  if(!handle){
     my_print("Bleh. File open error. Aborting", mpi_info.rank);
     return 1;
   }
-
+  
   bool err=sdf_read_blocklist(handle);
-  if(!err) my_print("Yay! Blocks read", mpi_info.rank);
-  else my_print("Bum. Block read failed", mpi_info.rank);
+  if(err) my_print("Block read failed", mpi_info.rank);
 
   block = sdf_find_block_by_id(handle, this->block_id);
 
-  if(block) my_print("Success!!! Requested block found", mpi_info.rank);
-  else{
-    my_print("Bleh. Requested block not found. Aborting", mpi_info.rank);
+  if(!block){
+    my_print("Requested block not found. Aborting", mpi_info.rank);
     return 1;
   }
 
@@ -100,13 +97,13 @@ bool reader::read_dims(int &n_dims, std::vector<int> &dims){
 int reader::read_data(data_array * my_data_in, int time_range[3], int space_range[2]){
 /** \brief Read data into given array
 *
-*This will open the files dictated by time range sequentially, and populate them into the data_array. It'll stop when the end of range is reached, or it goes beyond the size available. Space range upper entry of -1 is taken as respective limit. @return 0 for success, 1 for error \todo Currently gives no report of nature of error... use 2 for non-fatal read error \todo 2-d array???!
+*This will open the files dictated by time range sequentially, and populate them into the data_array. It'll stop when the end of range is reached, or it goes beyond the size available. Space range upper entry of -1 is taken as respective limit. @return 0 for success, 1 for error \todo Currently gives no report of nature of error... use 2 for non-fatal read error NB: blocking is only supported on the X axis.
 */
   
   strcpy(my_data_in->block_id, block_id);
   //set block id
 
-  //Now we start from time_range[0] and run through files to time_range[1], or until file not found. We construct with sprintf and the known n_z
+  //Now we start from time_range[0] and run through files to time_range[1], or until file not found.
 
   sdf_file_t *handle;
   sdf_block_t * block ,*ax_block;
@@ -142,6 +139,18 @@ int reader::read_data(data_array * my_data_in, int time_range[3], int space_rang
     std::copy((my_type *) block->grids[i], (my_type *) block->grids[i] + len, ax_ptr);
     //Get space axes
   }
+  bool simple_slice=false;
+  int * source_sizes;
+  //Simple slices are those where we're slicing only the last spatial dimension. For what we have here, that means 1 space dim or more than one and no slicing. We have no mechanism to slice y etc, only x.
+  if(my_data_in->get_dims() ==2 || block->dims[0] == space_range[1]-space_range[0]){
+    simple_slice=true;
+    source_sizes = (int *) malloc((my_data_in->get_dims()-1)*sizeof(int));
+    
+    for(int i=0; i< my_data_in->get_dims()-1; i++){
+      source_sizes[i] = block->dims[i];
+    }
+  }
+
   sdf_close(handle);
 
   ax_ptr = my_data_in->get_axis(my_data_in->get_dims()-1, len);
@@ -158,6 +167,7 @@ int reader::read_data(data_array * my_data_in, int time_range[3], int space_rang
   my_data_in->time[1] = time_range[1];
   my_data_in->space[0] = space_range[0];
   my_data_in->space[1] = space_range[1];
+  
 
   int rows=0;
   int total_reads=0;
@@ -187,11 +197,24 @@ int reader::read_data(data_array * my_data_in, int time_range[3], int space_rang
     //save time of file
     if(!block->data) break;
     my_type * my_ptr = (my_type *) block->data;
+    
     my_ptr +=space_range[0];
+    //THIS WONT WORK IN 2DDDDD
     if(!accumulated){
       *(ax_ptr + i) = (my_type) handle->time;
+      if(simple_slice){
+        int val[1];
+        val[0] = i-time_range[0];
+        my_data_in->populate_slice(my_ptr, 1, val);
 
-      my_data_in->populate_row(my_ptr, space_range[1], i-time_range[0]);
+//        my_data_in->populate_row(my_ptr, space_range[1], i-time_range[0]);
+      }else{
+        int val[1];
+        val[0] = i-time_range[0];
+        my_data_in->populate_complex_slice(my_ptr, 1, val, source_sizes);
+//        my_data_in->populate_row(my_ptr, space_range[1], i-time_range[0]);
+      
+      }
       total_reads++;
 
     }
@@ -206,19 +229,33 @@ int reader::read_data(data_array * my_data_in, int time_range[3], int space_rang
       if(ax_ptr) std::copy((my_type *) ax_block->grids[1], (my_type *) ax_block->grids[1] + rows, ax_ptr +total_reads);
       //Copy time grid out
       
-      int val[1];
-      for(int j=0; j<rows; j++){
-        //my_data_in->populate_row(my_ptr, space_range[1], total_reads+j);
-        val[0] = total_reads+j;
-        my_data_in->populate_slice(my_ptr, 1, val);
+      if(simple_slice){
+        int val[1];
+        for(int j=0; j<rows; j++){
+          //my_data_in->populate_row(my_ptr, space_range[1], total_reads+j);
+          val[0] = total_reads+j;
+          my_data_in->populate_slice(my_ptr, 1, val);
 
-        my_ptr += block->dims[0];
+          my_ptr += block->dims[0];
+        }
+      }else{
+
+        int val[1];
+        for(int j=0; j<rows; j++){
+          //my_data_in->populate_row(my_ptr, space_range[1], total_reads+j);
+          val[0] = total_reads+j;
+          my_data_in->populate_complex_slice(my_ptr, 1, val, source_sizes);
+
+          my_ptr += block->dims[0];
+        }
       }
       total_reads+= rows;
     }
     sdf_close(handle);
     if(accumulated && total_reads >=time_range[2]) break;
   }
+
+  if(simple_slice) free(source_sizes);
 
   //report if we broke out of loop and print filename
   if(i < time_range[1]){

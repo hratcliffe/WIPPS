@@ -30,6 +30,8 @@ protected:
   bool defined; /**< Flag to check memory allocation sucess*/
   virtual std::vector<int> get_index_from_offset(int offset);
 
+  virtual int get_index(int n_dims, int * dim);
+
 public:
 
   my_array();
@@ -39,7 +41,6 @@ public:
   virtual ~my_array();
 
   virtual bool is_good(){return !defined;}/**< Check memory allocation etc worked*/
-  virtual int get_index(int n_dims, int * dim);
   virtual int get_index(int nx);
   virtual int get_index(int nx, int ny);
   virtual int get_index(int nx, int ny, int nz);
@@ -60,6 +61,7 @@ public:
   bool populate_data(my_type * dat_in, int n_tot);
   bool populate_row(void * dat_in, int nx, int y_row);
   bool populate_slice(my_type * dat_in, int n_dims, int * offsets);
+  bool populate_complex_slice(my_type * dat_in, int n_dims, int * offsets, int* sizes);
   virtual bool write_to_file(std::fstream &file);
   bool read_from_file(std::fstream &file, bool no_version_check=0);
   virtual bool write_section_to_file(std::fstream &file, std::vector<int> bounds);

@@ -1542,7 +1542,7 @@ test_entity_levelone::test_entity_levelone(){
   name = "level-one derivation";
   strcpy(block_id, "ay");
 
-  file_prefix = "./files/l1";
+  file_prefix = "./files/l1/l1";
   space_in[0] = 0;
   space_in[1] = 1024;
   time_in[0] = 0;
@@ -1573,12 +1573,19 @@ int test_entity_levelone::run(){
   int err = TEST_PASSED;
 
   //Use a different deck.status file...
-  if(mpi_info.rank == 0) get_deck_constants(file_prefix);
-  share_consts();
+//  if(mpi_info.rank == 0) get_deck_constants(file_prefix);
+//  share_consts();
 
   err|= setup();
   if(test_bed->check_for_abort(err)) return err;
   err|= basic_tests();
+  if(test_bed->check_for_abort(err)) return err;
+  if(my_reader) delete my_reader;
+  if(test_contr) delete test_contr;
+  
+  file_prefix = "./files/l1_2d";
+  err|=setup();
+  err|= twod_tests();
   if(test_bed->check_for_abort(err)) return err;
   
   test_bed->report_err(err);
@@ -1696,7 +1703,86 @@ int test_entity_levelone::basic_tests(){
   
   }
   file.close();
+  test_bed->report_info("FFT section output in "+filename, 1);
+  return err;
 
+}
+int test_entity_levelone::twod_tests(){
+/** \brief Basic tests of process to make levl-1 data from 2-d input
+*
+* Reads proper data files, produces FFT, derived spectrum etc*/
+  int err = TEST_PASSED;
+
+  int space_dim = space_in[1]-space_in[0];
+
+  data_array  * dat = new data_array(space_dim, n_tims);
+
+  if(!dat->is_good()){
+    my_print("Data array allocation failed.", mpi_info.rank);
+    err |= TEST_ASSERT_FAIL;
+    err |= TEST_FATAL_ERR;
+  }
+
+  int err2 = my_reader->read_data(dat, time_in, space_in);
+  if(err2 == 1) return TEST_FATAL_ERR;
+
+  if(err2 == 2) n_tims = dat->get_dims(1);
+  //Check if we had to truncate data array...
+  data_array * dat_fft = new data_array(space_dim, n_tims);
+
+  if(!dat_fft->is_good()){
+    return TEST_FATAL_ERR;
+  }
+  err2 = dat->fft_me(dat_fft);
+
+  if(mpi_info.rank ==0) MPI_Reduce(MPI_IN_PLACE, &err, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+  else MPI_Reduce(&err, NULL, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+
+  test_bed->report_info("FFT returned err_state " + mk_str(err2));
+
+  int row_lengths[2];
+  row_lengths[0] = space_dim;
+  row_lengths[1] = DEFAULT_N_ANG;
+  
+  test_contr->add_spectrum(row_lengths, 2);
+  test_contr->get_current_spectrum()->make_test_spectrum(time_in, space_in);
+  
+  int n_dims = dat->get_dims();
+  std::vector<my_type> lims;
+  if(n_dims >=3){
+    lims.push_back(-0.002);
+    lims.push_back(0.002);
+  }
+  if(n_dims >=2){
+    lims.push_back(-0.002);
+    lims.push_back(0.002);
+    lims.push_back(-3.0*my_const.omega_ce);
+    lims.push_back(3.0*my_const.omega_ce);
+  
+  }
+  
+//Set cutout limits on FFT
+  std::string filename, time_str;
+  time_str = mk_str(dat_fft->time[0], true)+"_"+mk_str(dat_fft->time[1],true);
+  std::string block = block_id;
+  filename = file_prefix+"FFT_"+block +"_"+time_str+"_"+mk_str(dat_fft->space[0])+"_"+mk_str(dat_fft->space[1]) + ".dat";
+  std::fstream file;
+  file.open(filename.c_str(),std::ios::out|std::ios::binary);
+  if(file.is_open()){
+//    dat_fft->write_section_to_file(file, lims);
+    dat_fft->write_section_to_file(file, lims);
+//    dat->write_to_file(file);
+    if(err2){
+      test_bed->report_info("File writing failed");
+      err |=TEST_ASSERT_FAIL;
+    }
+    
+  }else{
+    err |=TEST_ASSERT_FAIL;
+  
+  }
+  file.close();
+  test_bed->report_info("FFT section output in "+filename, 1);
   return err;
 
 }

@@ -16,3 +16,5 @@ profiler/
 *.dat
 *.bak
 *.log
+files/l1/
+files/2dtest/

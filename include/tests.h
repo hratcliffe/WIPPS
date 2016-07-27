@@ -220,6 +220,7 @@ class test_entity_levelone: public test_entity{
   virtual int run();
   int setup();
   int basic_tests();
+  int twod_tests();
 };
 
 

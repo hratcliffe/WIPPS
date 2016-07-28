@@ -79,12 +79,13 @@ int main(int argc, char *argv[]){
   if(err) safe_exit();
   int space_dim = dims[0];
   
-  if(n_dims !=1) return 1;
-  /**for now abort if data file wrong size... \todo FIX*/
-
   controller * contr;
   contr = new controller(cmd_line_args.file_prefix);
 
+  std::fstream logfile;
+  std::string logfilename;
+  logfilename = cmd_line_args.file_prefix + "generate_ffts.log";
+  logfile.open(logfilename.c_str(),std::ios::app);
 
   //---------------- Now we loop over blocks per proc-------
   for(int block_num = 0; block_num<cmd_line_args.per_proc; block_num++){
@@ -126,6 +127,7 @@ int main(int argc, char *argv[]){
     contr->add_spectrum(row_lengths, 2);
     contr->get_current_spectrum()->make_test_spectrum(cmd_line_args.time, my_space);
     
+    //Set cutout limits on FFT
     int n_dims = dat->get_dims();
     std::vector<my_type> lims;
     if(n_dims >=3){
@@ -139,10 +141,9 @@ int main(int argc, char *argv[]){
       lims.push_back(100.0*my_const.omega_ce);
     
     }
-  //Set cutout limits on FFT
+    //Construct filename. Since the MPI is using block-wise domain decomposition, different processors can't overlap on blocks
     std::string filename, time_str;
-//    if(my_reader->current_block_is_accum()) time_str = mk_str(dat_fft->time[0], true)+"_r"+mk_str(dat_fft->time[2], true);
-    time_str = mk_str(dat_fft->time[0], true)+"_"+mk_str(dat_fft->time[1],true);
+    time_str = mk_str(dat_fft->time[0], true)+"_"+mk_str(n_tims);
     std::string block = block_id;
     filename = cmd_line_args.file_prefix+"FFT_"+block +"_"+time_str+"_"+mk_str(dat_fft->space[0])+"_"+mk_str(dat_fft->space[1]) + ".dat";
     std::fstream file;
@@ -151,12 +152,12 @@ int main(int argc, char *argv[]){
       dat_fft->write_section_to_file(file, lims);
     }
     file.close();
-    std::cout<<"FFT written"<<'\n';
-
+    if(logfile) my_print(&logfile, "FFT section output in "+filename, mpi_info.rank);
 
     delete dat;
     delete dat_fft;
-    break;
+
+    break;//FAKENUMBERS
 
   }
   //-----------------end of per_proc loop---- Now controller holds one spectrum and d per block
@@ -164,6 +165,7 @@ int main(int argc, char *argv[]){
   
   contr->save_spectra(cmd_line_args.file_prefix);
 
+  logfile.close();
   //Cleanup objects etc
   delete my_reader;
   delete contr;

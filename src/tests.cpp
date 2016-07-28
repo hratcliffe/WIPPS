@@ -1661,9 +1661,6 @@ int test_entity_levelone::basic_tests(){
   }
   err2 = dat->fft_me(dat_fft);
 
-  if(mpi_info.rank ==0) MPI_Reduce(MPI_IN_PLACE, &err, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
-  else MPI_Reduce(&err, NULL, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
-
   test_bed->report_info("FFT returned err_state " + mk_str(err2));
 
   int row_lengths[2];
@@ -1689,7 +1686,7 @@ int test_entity_levelone::basic_tests(){
   
 //Set cutout limits on FFT
   std::string filename, time_str;
-  time_str = mk_str(dat_fft->time[0], true)+"_"+mk_str(dat_fft->time[1],true);
+  time_str = mk_str(dat_fft->time[0], true)+"_"+mk_str(this->n_tims);
   std::string block = block_id;
   filename = file_prefix+"FFT_"+block +"_"+time_str+"_"+mk_str(dat_fft->space[0])+"_"+mk_str(dat_fft->space[1]) + ".dat";
   std::fstream file;
@@ -1747,9 +1744,6 @@ int test_entity_levelone::twod_tests(){
   }
   err2 = dat->fft_me(dat_fft);
 
-  if(mpi_info.rank ==0) MPI_Reduce(MPI_IN_PLACE, &err, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
-  else MPI_Reduce(&err, NULL, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
-
   test_bed->report_info("FFT returned err_state " + mk_str(err2));
 
   int row_lengths[2];
@@ -1775,7 +1769,7 @@ int test_entity_levelone::twod_tests(){
   
 //Set cutout limits on FFT
   std::string filename, time_str;
-  time_str = mk_str(dat_fft->time[0], true)+"_"+mk_str(dat_fft->time[1],true);
+  time_str = mk_str(dat_fft->time[0], true)+"_"+mk_str(this->n_tims);
   std::string block = block_id;
   filename = file_prefix+"FFT_"+block +"_"+time_str+"_"+mk_str(dat_fft->space[0])+"_"+mk_str(dat_fft->space[1]) + ".dat";
   std::fstream file;

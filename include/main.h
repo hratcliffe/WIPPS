@@ -43,5 +43,7 @@
  *\section idl IDL routines
  *Some IDL helpers are provided for reading the output files, reading the deck.status file etc. To enable those which depend on SDF library IO, use the .idlstartup file in the files subdirectory, like, for example, IDL> pref_set, 'IDL_STARTUP', '/path/to/.idlstartup',/commit
  *
+ *\section utils Utilities
+ *As well as the main program, some utility programs are defined. These are built using make utils. For example, generate_ffts processes input data and outputs trimmed FFTs, or growth calculates theoretical growth rates of whistlers
  */
 

@@ -111,9 +111,6 @@ int main(int argc, char *argv[]){
   if(err) safe_exit();
   int space_dim = dims[0];
   
-  if(n_dims !=1) return 1;
-  /**for now abort if data file wrong size... \todo FIX*/
-
   controller * contr;
   contr = new controller(cmd_line_args.file_prefix);
 

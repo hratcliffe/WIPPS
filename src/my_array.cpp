@@ -258,7 +258,7 @@ int my_array::get_index(int nx, int ny, int nz){
     }
   }else{
     return -1;
-     /**\todo Can we do this case elegantly??*/
+     /**\todo Ragged case*/
   }
 }
 int my_array::get_index(int nx, int ny, int nz, int nt){
@@ -278,7 +278,7 @@ int my_array::get_index(int nx, int ny, int nz, int nt){
       return -1;
     }
   }else{
-     /**\todo Can we do this case elegantly??*/
+     /**\todo Ragged case*/
     return -1;
 
   }
@@ -1268,7 +1268,7 @@ bool data_array::read_from_file(std::fstream &file, bool no_version_check){
 bool data_array::fft_me(data_array * data_out){
 /** \brief FFT data_array
 *
-* Data and axes in this object are FFT'd using FFTW and stored into the instance pointed to by data_out. Data_out must be created with correct dimensions first, but we check and return error (1) if it is not so. \todo Check handling of odd vs even total sizes
+* Data and axes in this object are FFT'd using FFTW and stored into the instance pointed to by data_out. Data_out must be created with correct dimensions first, but we check and return error (1) if it is not so.
 */
 
   if(!data_out->is_good()){

@@ -97,7 +97,7 @@ bool reader::read_dims(int &n_dims, std::vector<int> &dims){
 int reader::read_data(data_array * my_data_in, int time_range[3], int space_range[2]){
 /** \brief Read data into given array
 *
-*This will open the files dictated by time range sequentially, and populate them into the data_array. It'll stop when the end of range is reached, or it goes beyond the size available. Space range upper entry of -1 is taken as respective limit. @return 0 for success, 1 for error \todo Currently gives no report of nature of error... use 2 for non-fatal read error NB: blocking is only supported on the X axis.
+*This will open the files dictated by time range sequentially, and populate them into the data_array. It'll stop when the end of range is reached, or it goes beyond the size available. Space range upper entry of -1 is taken as respective limit. @return 0 for success, 1 for error 2 for unusual exit, i.e. early termination NB: blocking is only supported on the X axis.
 */
   
   strcpy(my_data_in->block_id, block_id);

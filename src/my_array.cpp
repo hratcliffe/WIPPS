@@ -454,7 +454,7 @@ bool my_array::populate_data(my_type * dat_in, int n_tot){
 bool my_array::populate_row(void * dat_in, int nx, int y_row){
 /** /brief Fill row
 *
-* Fills the row y_row of array from dat_in to length of nx. Nx is param for sanity so we can't overflow dat_in. @return 0 (sucess) 1 (error) \todo Extend to larger dimensions
+* Fills the row y_row of array from dat_in to length of nx. Nx is param for sanity so we can't overflow dat_in. @return 0 (sucess) 1 (error)
 */
 
   if(nx != dims[0]) return 1;
@@ -720,8 +720,8 @@ bool my_array::resize(int dim, int sz){
 
 //  my_print("Attempting to resize", mpi_info.rank);
 
-  if(sz < 0 || sz > MAX_SIZE) return 1;
-  //size errors
+  if(sz <= 0 || sz > MAX_SIZE)return 1;
+  //size errors. Don't allow to resize to 0!!!
   if(dim > this->n_dims || dim < 0) return 1;
   if(dim>=0 && sz == dims[dim]){
      my_print("Size matches", mpi_info.rank);
@@ -1268,7 +1268,7 @@ bool data_array::read_from_file(std::fstream &file, bool no_version_check){
 bool data_array::fft_me(data_array * data_out){
 /** \brief FFT data_array
 *
-* Data and axes in this object are FFT'd using FFTW and stored into the instance pointed to by data_out. Data_out must be created with correct dimensions first, but we check and return error (1) if it is not so. \todo Add 3, 4 dimensions \todo Check handling of odd vs even total sizes
+* Data and axes in this object are FFT'd using FFTW and stored into the instance pointed to by data_out. Data_out must be created with correct dimensions first, but we check and return error (1) if it is not so. \todo Check handling of odd vs even total sizes
 */
 
   if(!data_out->is_good()){
@@ -1449,8 +1449,8 @@ bool data_array::resize(int dim, int sz){
         //failure. leave as was.
       }
       int new_els = (sz - dims[dim]);
-      
-      if(new_els > 0) memset((void*)(new_ax + part_sz), 0.0, new_els*sizeof(my_type));
+
+      if(new_els > 0) memset((void*)(new_ax + part_sz), 0, new_els*sizeof(my_type));
       //zero new elements
       axes = new_ax;
     }else{
@@ -1463,10 +1463,10 @@ bool data_array::resize(int dim, int sz){
       for(int i=0;i<n_dims; ++i){
         els_to_copy = dims[i];
         if(i == dim && sz< dims[i]) els_to_copy = sz;
-        memcpy((void*)(axes + old_starts), (void*)(new_ax + new_starts), els_to_copy);
+        std::copy(axes+old_starts, axes+old_starts+els_to_copy, new_ax+new_starts);
 
         old_starts += dims[i];
-        i==dim ? new_starts += sz: new_starts += dims[i];
+        new_starts +=els_to_copy;
       
       }
       free(axes);

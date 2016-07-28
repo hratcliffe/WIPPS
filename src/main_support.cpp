@@ -86,7 +86,6 @@ setup_args process_command_line(int argc, char *argv[]){
 *
 *Sets defaults or those given via command line (see help.txt). Forces an constant integer number of space blocks on each core.
 */
-
   setup_args values;
   values.n_space = -1;
   values.space[0] = -1;
@@ -101,7 +100,7 @@ setup_args process_command_line(int argc, char *argv[]){
   values.d[0] = 10;
   values.d[1] = 10;
 
-  for(int i=1; i< argc; i++){
+  for(int i=0; i< argc; i++){
     if(strcmp(argv[i], "-h")==0) print_help();
     if(strcmp(argv[i], "-f")==0 && i < argc-1) values.file_prefix = argv[i+1];
     if(strcmp(argv[i], "-start")==0 && i < argc-1) values.time[0] = atoi(argv[i+1]);

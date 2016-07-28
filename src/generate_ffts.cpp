@@ -55,6 +55,7 @@ int main(int argc, char *argv[]){
   /** Get constants from deck and share to other procs*/
 
   my_print("Processing "+mk_str(cmd_line_args.per_proc)+" blocks per core", mpi_info.rank);
+  my_print("Input "+cmd_line_args.file_prefix, mpi_info.rank);
 
   char block_id[ID_SIZE];
   strcpy(block_id, cmd_line_args.block.c_str());
@@ -135,10 +136,10 @@ int main(int argc, char *argv[]){
       lims.push_back(0.002);
     }
     if(n_dims >=2){
-      lims.push_back(-0.2);
-      lims.push_back(0.2);
-      lims.push_back(-100.0*my_const.omega_ce);
-      lims.push_back(100.0*my_const.omega_ce);
+      lims.push_back(-0.002);
+      lims.push_back(0.002);
+      lims.push_back(-5.0*my_const.omega_ce);
+      lims.push_back(5.0*my_const.omega_ce);
     
     }
     //Construct filename. Since the MPI is using block-wise domain decomposition, different processors can't overlap on blocks
@@ -152,12 +153,11 @@ int main(int argc, char *argv[]){
       dat_fft->write_section_to_file(file, lims);
     }
     file.close();
+    my_print( "FFT section output in "+filename, mpi_info.rank);
     if(logfile) my_print(&logfile, "FFT section output in "+filename, mpi_info.rank);
 
     delete dat;
     delete dat_fft;
-
-    break;//FAKENUMBERS
 
   }
   //-----------------end of per_proc loop---- Now controller holds one spectrum and d per block

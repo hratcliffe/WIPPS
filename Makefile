@@ -195,7 +195,7 @@ list:
 #From http://stackoverflow.com/questions/4219255/how-do-you-get-the-list-of-targets-in-a-makefile and added exclusion for objdir and .o
 
 tar: dependencies.log
-	COPYFILE_DISABLE=1 tar --no-recursion -cvzf Source.tgz $(SOURCE) $(INCLS) $(MAINSOURCE) ./files/* Makefile redox.sh process_deps.sh dependencies.log
+	tar --no-recursion -cvzf Source.tgz $(SOURCE) $(INCLS) $(MAINSOURCE) ./files/* Makefile redox.sh process_deps.sh dependencies.log
 
 clean:
 	@rm -f main $(UTILS) $(OBJS) $(MAINOBJS)

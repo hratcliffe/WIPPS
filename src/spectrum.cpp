@@ -1,8 +1,8 @@
 //
-//  spectrum.cpp
+//  spectrum2.cpp
 //  
 //
-//  Created by Heather Ratcliffe on 24/09/2015.
+//  Created by Heather Ratcliffe on 29/07/2016 as refactor of spectrum class
 //
 //
 
@@ -29,16 +29,21 @@ void spectrum::construct(){
   normB = 0;
   normg = nullptr;
   max_power=0.0;
+  g_angle_array = nullptr;
+  B_omega_array = nullptr;
 
 }
 
-spectrum::spectrum(int * row_lengths, int ny):data_array(row_lengths, ny){
+spectrum::spectrum(int * row_lengths, int ny){
 /** \brief Construct ragged spectrum
 *
 *Constructs a spectrum as a ragged array, for e.g. two independent functions of omega and angle. Spectra are always in the form B^2(omega) g(theta, omega). Here g(theta, omega) = g(theta). Normally the first row is then the number of omega points, the second the number of angles.
 */
   construct();
-
+  this->B_omega_array = new data_array(row_lengths[0]);
+  this->g_angle_array = new data_array(1, row_lengths[1]);
+  //One d and 2-d arrays for the functions
+  
   angle_is_function = true;
   n_angs = row_lengths[1];
   function_type = FUNCTION_DELTA;
@@ -46,13 +51,17 @@ spectrum::spectrum(int * row_lengths, int ny):data_array(row_lengths, ny){
   //Single row so only one norm
 }
 
-spectrum::spectrum(int nx, int n_ang):data_array(nx, n_ang+1){
+spectrum::spectrum(int nx, int n_ang){
 /** \brief Construct rectangular spectrum
 *
 *Constructs a spectrum as a rectangle when for instance the angle dependence varies with k. Spectra are always in the form B^2(omega) g(theta, omega). Here we require to hold both an n_omega x 1 array for B plus the n_omega*n_angs array for g.
 */
 
   construct();
+  this->B_omega_array = new data_array(nx);
+  this->g_angle_array = new data_array(nx, n_ang);
+  //One d and 2-d arrays for the functions
+
   angle_is_function = false;
   n_angs = n_ang;
   normg = (my_type *) calloc(n_ang, sizeof(my_type));
@@ -88,6 +97,11 @@ bool spectrum::generate_spectrum(data_array * parent, int om_fuzz, int angle_typ
 *Takes a parent data array and uses the specified ids to generate a spectrum. Windows using the specified wave dispersion and integrates over frequency. Also adopts axes from parent. \todo Ensure !angle_is_function forces all other rows to be equal length... \todo Fill in the rest of logic etc @param parent Data array to read from @param om_fuzz Band width around dispersion curve in percent of central frequency \todo omega vs k, is there some normalising to do?
 */
 
+  if(!g_angle_array->is_good() || !B_omega_array->is_good()){
+    my_print("Angle or omega arrays invalid. Returning", mpi_info.rank);
+    return 1;
+  }
+
   if(parent && angle_is_function){
     //First we read axes from parent
     this->copy_ids(parent);
@@ -109,21 +123,21 @@ bool spectrum::generate_spectrum(data_array * parent, int om_fuzz, int angle_typ
     max_om /= this->get_length(0);*/
     //for(int i=0; i<this->get_length(0); ++i) this->set_axis_element(0, i, )
 
-    for(int i=0; i<this->get_length(0); ++i){
+    for(int i=0; i<B_omega_array->get_length(0); ++i){
       om_disp = get_omega(parent->get_axis_element(0,i), WAVE_WHISTLER);
       
-      this->set_axis_element(0, i, om_disp);
+      B_omega_array->set_axis_element(0, i, om_disp);
       
       low_bnd = where(ax_ptr, len, om_disp *(1.0-tolerance));
       high_bnd = where(ax_ptr, len, om_disp *(1.0+tolerance));
       if(low_bnd < 0 || high_bnd< 0){
-        this->set_element(i,0,0.0);
+        B_omega_array->set_element(i,0.0);
         continue;
       }
       //now total the part of the array between these bnds
       total=0.0;
       for(j=low_bnd; j<high_bnd; j++) total += parent->get_element(i,j);
-      this->set_element(i,0,total);
+      B_omega_array->set_element(i,total);
       if(total > max) max = total;
     }
 
@@ -138,14 +152,14 @@ bool spectrum::generate_spectrum(data_array * parent, int om_fuzz, int angle_typ
     int len;
 
     my_type * ax_ptr = parent->get_axis(0, len);
-    memcpy ((void *)this->axes, (void *)ax_ptr, len*sizeof(my_type));
+    //memcpy ((void *)this->axes, (void *)ax_ptr, len*sizeof(my_type));
     ax_ptr = parent->get_axis(1, len);
     //y-axis to work with
 
     //Generate angle axis to work with
   {int res = 1;
   //set axis resolution somehow... TODO this
-  make_linear_axis(1, res, 0);
+  g_angle_array->make_linear_axis(0, res, 0);
   }
 
   //and now we extract the data at each angle...
@@ -173,37 +187,41 @@ bool spectrum::make_angle_distrib(){
     my_print("Angular distrib is not a function. Returning", mpi_info.rank);
     return 1;
   }
+  if(!g_angle_array->is_good()){
+    my_print("Angular array invalid. Returning", mpi_info.rank);
+    return 1;
+  }
   
-  calc_type res = (ANG_MAX - ANG_MIN)/this->get_length(1);
+  calc_type res = (ANG_MAX - ANG_MIN)/g_angle_array->get_length(0);
   int len;
   int offset = -ANG_MIN/res;
-  make_linear_axis(1, res, offset);
-  len = get_length(0);
+  g_angle_array->make_linear_axis(0, res, offset);
+  len = g_angle_array->get_length(0);
   my_type val;
 
   if(function_type == FUNCTION_DELTA){
   
-    for(int i=1; i<len; ++i) this->set_element(i,1,0.0);
+    for(int i=1; i<len; ++i) g_angle_array->set_element(i,0,0.0);
     val = 1.0/res;
-    int zero = where(this->get_axis(1, len), len, 0.0);
+    int zero = where(g_angle_array->get_axis(0, len), len, 0.0);
     //Set_element checks bnds automagically
-    this->set_element(zero, 1, val);
+    g_angle_array->set_element(zero, 0, val);
 
   }else if(function_type == FUNCTION_GAUSS){
     my_type ax_el;
     my_type norm;
     norm = 1.0/ (std::sqrt(2.0*pi) * SPECTRUM_ANG_STDDEV);
     for(int i=0; i<len; ++i){
-      ax_el = this->get_axis_element(1, i);
+      ax_el = g_angle_array->get_axis_element(0, i);
       val = std::exp( -0.5 * std::pow(ax_el/SPECTRUM_ANG_STDDEV, 2)) * norm;
-      this->set_element(i,1,val);
+      g_angle_array->set_element(i,0,val);
     }
 
 
   }else if(function_type ==FUNCTION_ISO){
 
-    val = 1.0/ (ANG_MAX - ANG_MIN)*get_length(1)/(get_length(1)-1);
-    for(int i=0; i<len; ++i) this->set_element(i,1,val);
+    val = 1.0/ (ANG_MAX - ANG_MIN)*g_angle_array->get_length(0)/(g_angle_array->get_length(0)-1);
+    for(int i=0; i<len; ++i) g_angle_array->set_element(i,0,val);
 
   }else{
   
@@ -242,13 +260,13 @@ my_type * spectrum::get_angle_distrib(int &len, my_type omega){
 
   my_type * ret = NULL;
 
-  if(angle_is_function){
+  if(angle_is_function && g_angle_array->is_good()){
 
-    ret = data + get_length(0);
-  }else if(omega !=0.0){
+    ret = g_angle_array->data;
+  }else{
   //select row by omega...
-    int offset = where(axes + get_length(0), n_angs, omega);
-    if(offset>0) ret = data + offset*get_length(0);
+    int offset = where(g_angle_array->axes, n_angs, omega);
+    if(offset>0) ret = g_angle_array->data + offset*g_angle_array->get_length(0);
 
   }
 
@@ -273,9 +291,18 @@ std::vector<int> spectrum::all_where(my_type * ax_ptr, int len, my_type target,s
 
 bool spectrum::write_to_file(std::fstream &file){
 /** \brief Write to file*/
-  if(!file.is_open()) return 1;
-  data_array::write_to_file(file);
-  return 0;
+
+  if(!file.is_open() || (!this->B_omega_array->is_good())|| (!this->g_angle_array->is_good())) return 1;
+  const char tmp_vers[15] = VERSION;
+  file.write((char*) &io_verify, sizeof(my_type));
+  file.write((char*) &tmp_vers, sizeof(char)*15);
+  int n_blocks = 2;
+  file.write((char*) &n_blocks, sizeof(int));
+  //Write how many smaller arrays there are
+  bool err;
+  err = g_angle_array->write_to_file(file);
+  err |= B_omega_array->write_to_file(file);
+  return err;
 
 }
 
@@ -293,7 +320,7 @@ void spectrum::make_test_spectrum(int time[2], int space[2],int angle_type){
   int len0, len1;
   my_type * ax_ptr;
 
-  ax_ptr = get_axis(0, len0);
+  ax_ptr =   B_omega_array->get_axis(0, len0);
   my_type res;
   bool offset = true;
   //whether to have even ±pm axes or start from 0;
@@ -311,8 +338,9 @@ void spectrum::make_test_spectrum(int time[2], int space[2],int angle_type){
   my_type centre, width, background = 0.0;
   centre = 14000, width=0.1*centre;
   
-  my_type * data_ptr = this->data;
   my_type * data_tmp, *ax_tmp;
+  my_type * data_ptr;
+  data_ptr = (my_type *) malloc(len0*sizeof(my_type));
   data_tmp = data_ptr;
   ax_tmp = ax_ptr;
 
@@ -329,6 +357,8 @@ void spectrum::make_test_spectrum(int time[2], int space[2],int angle_type){
       *(data_tmp) = exp(-pow((*(ax_tmp) - centre), 2)/width/width) + background;
     }
   }
+  this->B_omega_array->populate_data(data_ptr, len0);
+  free(data_ptr);
   //reflect onto +ve axis
 //+ 0.25*exp(-pow((*(ax_tmp) + centre), 2)/width*50.0)
   max_power = 1.0;
@@ -350,17 +380,17 @@ bool spectrum::truncate_om(my_type om_min, my_type om_max){
   }
 
   int index = -1;
-  int len = get_length(0);
+  int len = B_omega_array->get_length(0);
 
   if(om_min != 0.0){
     index=where_omega(om_min);
-    if(index != -1) for(int i=0; i< index; i++) set_element(i, 0, 0.0);
+    if(index != -1) for(int i=0; i< index; i++) B_omega_array->set_element(i, 0.0);
     //Zero up to om_min
   }
 
-  if(om_max != 0.0 && om_max < this->get_axis_element(0, len-1)){
+  if(om_max != 0.0 && om_max < B_omega_array->get_axis_element(0, len-1)){
     index=where_omega(om_max);
-    if(index != -1) for(int i = index; i< len; i++) set_element(i, 0, 0.0);
+    if(index != -1) for(int i = index; i< len; i++) B_omega_array->set_element(i, 0.0);
     //Zero after to om_max
   }
 
@@ -373,7 +403,7 @@ bool spectrum::truncate_om(my_type om_min, my_type om_max){
 bool spectrum::truncate_x(my_type x_min, my_type x_max){
 /** \brief Truncate angle distribution at x_min and x_max.
 *
-*Zeros all elements outside the range [abs(x_min), abs(x_max)]. Zeros are ignored. x_min must be < x_max.
+*Zeros all elements outside the range [abs(x_min), abs(x_max)]. Zeros are ignored. x_min must be < x_max. \todo shouldn't this do all rows?
 */
 
   if(x_min >= x_max){
@@ -382,16 +412,16 @@ bool spectrum::truncate_x(my_type x_min, my_type x_max){
   }
 
   int index = -1;
-  int len = get_length(1);
+  int len = g_angle_array->get_length(0);
 
   if(x_min > ANG_MIN){
-    index = where(get_axis(1, len), len, x_min);
-    if(index != -1) for(int i=0; i< index; i++) set_element(i, 1, 0.0);
+    index = where(g_angle_array->get_axis(0, len), len, x_min);
+    if(index != -1) for(int i=0; i< index; i++) g_angle_array->set_element(i, 0, 0.0);
   
   }
   if(x_max < ANG_MAX){
-    index = where(get_axis(1, len), len, x_max);
-    if(index != -1) for(int i=index; i< len; i++) set_element(i, 1, 0.0);
+    index = where(g_angle_array->get_axis(0, len), len, x_max);
+    if(index != -1) for(int i=index; i< len; i++) g_angle_array->set_element(i, 0, 0.0);
   
   }
 
@@ -405,9 +435,9 @@ int spectrum::where_omega(my_type omega){
 *Finds where frequency or wavenumber axis exceeds passed omega, using dispersion relation to transform k to omega if necessary.
 */
   int len, index;
-  get_axis(0, len);
+  B_omega_array->get_axis(0, len);
 
-  index = where(get_axis(0, len), len, omega);
+  index = where(B_omega_array->get_axis(0, len), len, omega);
   return index;
 
 }
@@ -418,11 +448,11 @@ bool spectrum::normaliseB(){
 * Calculate the total square integral of values over range \todo Is this data bare or squared?
 */
 
-  int len = get_length(0);
+  int len = B_omega_array->get_length(0);
   my_type * d_axis = (my_type *) calloc(len, sizeof(my_type));
-  for(int i=0; i<len-1; i++) d_axis[i] = get_axis_element(0, i+1) - get_axis_element(0, i);
+  for(int i=0; i<len-1; i++) d_axis[i] = B_omega_array->get_axis_element(0, i+1) - B_omega_array->get_axis_element(0, i);
   
-  normB = integrator(data, len, d_axis);
+  normB = integrator(B_omega_array->data, len, d_axis);
   free(d_axis);
   return 0;
 }
@@ -433,13 +463,13 @@ bool spectrum::normaliseg(my_type omega){
 *Calculate the norm of g used in e.g. denom of Albert eq 3 or calc'd in derivations.tex. We assume omega, x are off the axes already so no interpolation  \todo Catch zero norms
 */
 
-  int len=get_length(1);
+  int len=g_angle_array->get_length(0);
   plasma * plas =my_controller->get_plasma();
 
   my_type * d_axis = (my_type *) calloc(len, sizeof(my_type));
   my_type * integrand = (my_type *) calloc(len, sizeof(my_type));
 
-  for(int i=0; i<len-1; i++) d_axis[i] = get_axis_element(1, i+1) - get_axis_element(1, i);
+  for(int i=0; i<len-1; i++) d_axis[i] = g_angle_array->get_axis_element(0, i+1) - g_angle_array->get_axis_element(0, i);
   //Construct dx axis for integration
 
   mu my_mu;
@@ -447,9 +477,9 @@ bool spectrum::normaliseg(my_type omega){
   int om_ind = 1;
   //skip over B data
   
-  int lena=get_length(0);
+  int lena=B_omega_array->get_length(0);
   if(!angle_is_function){
-    om_ind = where(get_axis(0, lena), lena, omega);
+    om_ind = where(B_omega_array->get_axis(0, lena), lena, omega);
   }
   if(om_ind<0) return 1;
   //break if Omega is out of range
@@ -461,14 +491,14 @@ bool spectrum::normaliseg(my_type omega){
   angle_is_function ? indb=om_ind: inda=om_ind;
 
   for(int i=0; i<len; i++){
-    x = get_axis_element(1, i);
+    x = g_angle_array->get_axis_element(0, i);
     psi = atan(x);
     my_mu = plas->get_root(0.0, omega, psi);
 
     angle_is_function ? inda=i: indb=i;
 
     if(!my_mu.err){
-      integrand[i] = get_element(inda, indb) * x * std::pow((std::pow(x, 2)+1.0), -1.5)*std::pow(my_mu.mu, 2) * std::abs( my_mu.mu + omega*my_mu.dmudom);
+      integrand[i] = g_angle_array->get_element(inda, indb) * x * std::pow((std::pow(x, 2)+1.0), -1.5)*std::pow(my_mu.mu, 2) * std::abs( my_mu.mu + omega*my_mu.dmudom);
     }
     //product of g(theta) * x (x^2+1)^-(3/2) * mu^2 |mu+omega dmu/domega|
   }
@@ -499,23 +529,23 @@ calc_type spectrum::get_G1(calc_type omega){
   int len, offset;
   my_type data_bit[2];
   my_type ax_val;
-  my_type * axis = this->get_axis(0, len);
+  my_type * axis = B_omega_array->get_axis(0, len);
 
   //If we have B(k) we need to change to B(w)
   my_type change_of_vars = 1.0;
 
   ax_val = (my_type) omega;
   
-  offset = where(axis, len, ax_val);
+  offset = where(B_omega_array->get_axis(0, len), len, ax_val);
   //Interpolate if possible, else use the end
   if(offset > 0 && offset < len){
-    data_bit[0] = get_element(offset-1, 0);
-    data_bit[1] = get_element(offset, 0);
-    tmpB2 = interpolate(axis + offset-1, data_bit, ax_val, 2);
+    data_bit[0] = B_omega_array->get_element(offset-1);
+    data_bit[1] = B_omega_array->get_element(offset);
+    tmpB2 = interpolate(B_omega_array->get_axis(0, len) + offset-1, data_bit, ax_val, 2);
     //tmpB2 = data_bit[0];
   }else if(offset == 0){
     //we're right at end, can't meaningfully interpolate, use raw
-    tmpB2 = get_element(0, 0);
+    tmpB2 = B_omega_array->get_element(0);
   }else{
     //offset <0 or > len, value not found
     tmpB2 = 0.0;
@@ -540,10 +570,10 @@ calc_type spectrum::get_G2(calc_type omega, calc_type x){
   my_type tmpg;
   my_type data_bit[2];
 
-  len=get_length(0);
+  len=B_omega_array->get_length(0);
 
   if(!angle_is_function){
-    om_ind = where(get_axis(0, len), len, omega);
+    om_ind = where(B_omega_array->get_axis(0, len), len, omega);
   }
   else om_ind = 0;
   if(om_ind>=0 && normg[om_ind] == 0.0){
@@ -552,18 +582,18 @@ calc_type spectrum::get_G2(calc_type omega, calc_type x){
  // std::cout<< normg[0]<<" "<<std::endl;
   
   //Bump up to miss B row
-  my_type * axis = this->get_axis(1, len);
+  my_type * axis = g_angle_array->get_axis(0, len);
   offset = where(axis, len, x);
   
   //Interpolate if possible, else use the end
   if(offset > 0 && offset < len){
-    data_bit[0] = get_element(offset-1, om_ind+1);
-    data_bit[1] = get_element(offset, om_ind+1);
+    data_bit[0] = g_angle_array->get_element(offset-1, om_ind);
+    data_bit[1] = g_angle_array->get_element(offset, om_ind);
     tmpg = interpolate(axis + offset-1, data_bit, (my_type)x, 2);
 
   }else if(offset==0){
     //we're right at end, can't meaningfully interpolate, use raw
-    tmpg = get_element(offset, om_ind+1);
+    tmpg = g_angle_array->get_element(offset, om_ind);
 
   }else{
     //offset <0 or > len, value not found
@@ -585,19 +615,19 @@ calc_type spectrum::check_upper(){
 //First move up from bottom in strides and find where _first_ rises above threshold. Specifcally upwards.
 
   size_t stride = 1;
-  size_t ax_len = get_length(0);
+  size_t ax_len = B_omega_array->get_length(0);
   size_t len = ax_len/2 - stride;
   my_type threshold = SPECTRUM_THRESHOLD*this->max_power, k_thresh;
   size_t index=0;
 
   //Naive check for symmetric or +ve only. Allow up to 2 d ax mismatch for odd/even lengths
-  my_type d_axis = std::abs(get_axis_element(0, 1) - get_axis_element(0, 2));
+  my_type d_axis = std::abs(B_omega_array->get_axis_element(0, 1) - B_omega_array->get_axis_element(0, 2));
 
-  if(std::abs(get_axis_element(0, 1) + get_axis_element(0, ax_len-1)) > 2.0 * d_axis){
+  if(std::abs(B_omega_array->get_axis_element(0, 1) + B_omega_array->get_axis_element(0, ax_len-1)) > 2.0 * d_axis){
 
   //Axis presumed to be +ve only, move in from top
     for(size_t i=0; i< ax_len; i+=stride){
-      if((get_element(ax_len - i, 0) < threshold && get_element(ax_len - i - stride, 0) > threshold)){
+      if((B_omega_array->get_element(ax_len - i) < threshold && B_omega_array->get_element(ax_len - i - stride) > threshold)){
         index = i;
         break;
       }
@@ -608,7 +638,7 @@ calc_type spectrum::check_upper(){
   //Axis presumed to be symmetrical
 
     for(size_t i=0; i< len; i+=stride){
-      if((get_element(i, 0) < threshold && get_element(i+stride, 0) > threshold) ||(get_element(ax_len - i, 0) < threshold && get_element(ax_len - i - stride, 0) > threshold)){
+      if((B_omega_array->get_element(i) < threshold && B_omega_array->get_element(i+stride) > threshold) ||(B_omega_array->get_element(ax_len - i) < threshold && B_omega_array->get_element(ax_len - i - stride) > threshold)){
         index = i;
         break;
       }
@@ -616,7 +646,7 @@ calc_type spectrum::check_upper(){
   }
   //get omega value and convert to k...
   if(index != 0){
-    my_type tmp = std::abs(this->get_axis_element(0, index));
+    my_type tmp = std::abs(B_omega_array->get_axis_element(0, index));
     k_thresh = get_k(tmp, WAVE_WHISTLER);
   }else{
   //there either isn't a peak, or isn't waves or whatever. So we pick something arbitrary...
@@ -635,8 +665,8 @@ calc_type spectrum::get_peak_omega(){
 
   calc_type value = -1.0, tmp;
   int index;
-  for(int i=0; i<this->get_length(0); ++i){
-    tmp = get_element(i, 0);
+  for(int i=0; i<B_omega_array->get_length(0); ++i){
+    tmp = B_omega_array->get_element(i);
     if(tmp > value){
       index = i;
       value = tmp;
@@ -644,6 +674,42 @@ calc_type spectrum::get_peak_omega(){
 
   }
 
-  return get_axis_element(0, index);
+  return B_omega_array->get_axis_element(0, index);
 
 }
+
+void spectrum::copy_ids( data_array * src){
+/** Copies ID fields from src array to this */
+
+  strcpy(this->block_id, src->block_id);
+  
+  std::copy(src->time, src->time + 2, this->time);
+  for(int i=0; i < 2; ++i) this->space[i] = src->space[i];
+  //if(angle)
+}
+
+bool spectrum::check_ids( data_array * src){
+/** Checks ID fields match src */
+
+  bool err=false;
+  if(strcmp(this->block_id, src->block_id) != 0) err =true;
+  for(int i=0; i< 3; i++) if(src->time[i] != this->time[i]) err=true;
+  for(int i=0; i < 2; ++i) if(this->space[i] != src->space[i]) err=true;
+
+  return err;
+}
+
+my_type spectrum::get_B_element(int nx){
+  return B_omega_array-> get_element(nx);
+}
+my_type spectrum::get_ang_element(int nx, int ny){
+  return g_angle_array-> get_element(nx, ny);
+}
+my_type spectrum::get_B_axis_element(int nx){
+  return B_omega_array-> get_axis_element(0, nx);
+}
+my_type spectrum::get_ang_axis_element(int nx){
+  return g_angle_array-> get_axis_element(1, nx);
+}
+
+

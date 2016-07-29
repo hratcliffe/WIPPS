@@ -56,6 +56,7 @@ public:
   int get_min_n(calc_type v_par, my_type k_thresh, calc_type om_ce);
   int get_max_n(calc_type v_par, my_type k_thresh, calc_type om_ce);
   //Return min and max n worth exploring for largest k_par in range
+  void copy_ids(spectrum * spect);
 };
 
 

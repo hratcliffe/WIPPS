@@ -1428,7 +1428,7 @@ int test_entity_spectrum::basic_tests(){
   if(is_symmetric || is_zero){
     d_angle = (my_type *) calloc(row_lengths[1], sizeof(my_type));
     for(int i=0; i<row_lengths[1]-1; ++i){
-      d_angle[i] = std::abs(test_contr->get_current_spectrum()->get_axis_element(1, i) - test_contr->get_current_spectrum()->get_axis_element(1, i+1));
+      d_angle[i] = std::abs(test_contr->get_current_spectrum()->get_ang_axis_element(i) - test_contr->get_current_spectrum()->get_ang_axis_element(i+1));
     }
     angle_data = test_contr->get_current_spectrum()->get_angle_distrib(len);
     
@@ -1454,7 +1454,7 @@ int test_entity_spectrum::basic_tests(){
   outfile.open("spect_testy.dat", std::ios::out|std::ios::binary);
   test_contr->get_current_spectrum()->write_to_file(outfile);
   outfile.close();
-
+  if(err == TEST_PASSED) test_bed->report_info("Test spectrum OK");
   
   /** Now make the real spectrum from data and check the result matches the plain text test file*/
 
@@ -1469,10 +1469,10 @@ int test_entity_spectrum::basic_tests(){
   /**Hard code min freq to match the IDL file with test data generation...*/
   total_error = 0.0;
   for(int i=0; i< row_lengths[0]/2 - min_ind; i++){
-    total_error += std::abs(test_contr->get_current_spectrum()->get_element(i,0)-test_spect->get_element(i));
+    total_error += std::abs(test_contr->get_current_spectrum()->get_B_element(i)-test_spect->get_element(i));
   }
   for(int i=row_lengths[0]/2 + min_ind; i< row_lengths[0]; i++){
-    total_error += std::abs(test_contr->get_current_spectrum()->get_element(i,0)-test_spect->get_element(i));
+    total_error += std::abs(test_contr->get_current_spectrum()->get_B_element(i)-test_spect->get_element(i));
 
   }
   if(total_error > LOW_PRECISION){
@@ -1483,6 +1483,7 @@ int test_entity_spectrum::basic_tests(){
   outfile.open("spect_out.dat", std::ios::out|std::ios::binary);
   test_contr->get_current_spectrum()->write_to_file(outfile);
   outfile.close();
+  if(err == TEST_PASSED) test_bed->report_info("Generate spectrum OK");
 
   return err;
 

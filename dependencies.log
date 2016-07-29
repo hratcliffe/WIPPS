@@ -28,9 +28,9 @@ src/plasma.cpp\
 
 obj/tests.o:\
 src/tests.cpp\
-include/tests.h\
-include/support.h\
-include/reader.h\
+  include/tests.h\
+  include/support.h\
+  include/reader.h\
   include/main_support.h\
   include/plasma.h\
   include/controller.h\

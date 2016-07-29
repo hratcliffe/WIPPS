@@ -194,6 +194,7 @@ list:
 #List targets.
 #From http://stackoverflow.com/questions/4219255/how-do-you-get-the-list-of-targets-in-a-makefile and added exclusion for objdir and .o
 
+#Refresh dependencies before building the tarball
 tar: dependencies.log
 	tar --no-recursion -cvzf Source.tgz $(SOURCE) $(INCLS) $(MAINSOURCE) ./files/* Makefile redox.sh process_deps.sh dependencies.log
 

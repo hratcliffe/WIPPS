@@ -277,4 +277,13 @@ int diffusion_coeff::get_max_n(calc_type v_par, my_type k_thresh, calc_type om_c
 
 }
 
+void diffusion_coeff::copy_ids( spectrum * src){
+/** Copies ID fields from src array to this \todo cClean this up*/
+
+  strcpy(this->block_id, src->block_id);
+  
+  std::copy(src->time, src->time + 2, this->time);
+  for(int i=0; i < 2; ++i) this->space[i] = src->space[i];
+}
+
 

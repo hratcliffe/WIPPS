@@ -58,6 +58,7 @@ public:
   my_type get_element(int nx, int ny, int nz);
   my_type get_element(int nx, int ny, int nz, int nt);
   my_type get_element(int n_dims, int * dim);
+  bool set_element(int nx, my_type val);
   bool set_element(int nx, int ny, my_type val);
   bool set_element(int nx, int ny, int nz, my_type val);
   bool set_element(int nx, int ny, int nz, int nt, my_type val);
@@ -95,7 +96,6 @@ protected:
 
   float get_res(int i);
   int get_total_axis_elements();
-  void make_linear_axis(int dim, float res, int offset=0);
   int get_axis_index(int dim, int pt);
 
   std::vector<int> get_bounds(std::vector<my_type> limits);
@@ -103,12 +103,13 @@ protected:
 
 
 public:
-
+  friend class spectrum;/**< \todo Can we remove this plz?*/
   char block_id[ID_SIZE]; /**< The field name id from SDF file*/
 
   float time[2];/**< Time range over which data are taken*/
   int space[2];/**< Space range over which data are taken*/
 
+  data_array(int nx);
   data_array(int nx, int ny);
   data_array(int nx, int ny, int nz);
   data_array(int nx, int ny, int nz, int nt);
@@ -122,6 +123,7 @@ public:
   bool set_axis_element(int dim, int pt, my_type val);
   bool populate_axis(int dim, my_type * dat_in, int n_tot);
   my_type * get_axis(int dim, int & length);
+  void make_linear_axis(int dim, float res, int offset=0);
 
   virtual bool write_to_file(std::fstream &file);
   virtual bool read_from_file(std::fstream &file, bool no_version_check=0);

@@ -12,36 +12,23 @@ my_type = 0.0
 ;this matches the type of the C code my_type...
 ;Usually float or double. Set code to f for float, d for double...
 
-id_type ='1234567891'
-id_in = id_type
-;type for block id...
-
-io_type =0.0
-io_check = 3.0/32.0
-io_in=io_type
-;type for io verification const.
-
-commit_type ='123456789112345'
-commit_in = commit_type
-;type for commit id
-
 int_type = 1
-
-openr, 1, filename
-;"Tmp.txt"
+OPENR, filenum,  filename, /GET_LUN
 ;open file
 
-readu, 1, id_in
-readu, 1, io_in
-readu, 1, commit_in
+error=read_header(filenum)
+IF(error) THEN BEGIN
+  FREE_LUN, filenum
+  PRINT, "Error reading file header"
+  RETURN, !NULL
+ENDIF
 
 n_dims = int_type
-readu, 1, n_dims
+readu, filenum, n_dims
 
-print, id_in," ",  io_in," ",  commit_in
 if(n_dims GT 0) THEN BEGIN
   dims = lonarr(n_dims)
-  readu, 1, dims
+  readu, filenum, dims
   IF my_type_code EQ 'f' THEN BEGIN
     axes_list = {x:fltarr(dims[0])}
     if(n_dims GT 1) THEN axes_list = create_struct(axes_list, {Y:fltarr(dims[1])})
@@ -62,52 +49,52 @@ if(n_dims GT 0) THEN BEGIN
   ENDELSE
 
   ;Can't read directly into anon structure field, so use tmp
-  readu, 1, tmp2
+  readu, filenum, tmp2
   data.data = tmp2
   tmp2=0
 ENDIF ELSE BEGIN
   print, "Array is ragged. Use read_ragged.pro"
-  close, 1
+  FREE_LUN, filenum
   RETURN, !NULL
 ENDELSE
 
 
 IF my_type_code EQ 'f' THEN BEGIN
   tmpa=fltarr(dims[0])
-  readu, 1, tmpa
+  readu, filenum, tmpa
   data.axes.X = tmpa
 
   IF(n_dims GT 1) THEN BEGIN
     tmpa=fltarr(dims[1])
-    readu, 1, tmpa
+    readu, filenum, tmpa
     data.axes.Y = tmpa
   ENDIF
   IF(n_dims GT 2) THEN BEGIN
     tmpa=fltarr(dims[2])
-    readu, 1, tmpa
+    readu, filenum, tmpa
     data.axes.Z = tmpa
   ENDIF
 ENDIF ELSE BEGIN
   tmpa=dblarr(dims[0])
-  readu, 1, tmpa
+  readu, filenum, tmpa
   data.axes.X = tmpa
 
   IF(n_dims GT 1) THEN BEGIN
     tmpa=dblarr(dims[1])
-    readu, 1, tmpa
+    readu, filenum, tmpa
     data.axes.Y = tmpa
   ENDIF
   IF(n_dims GT 2) THEN BEGIN
     tmpa=dblarr(dims[2])
-    readu, 1, tmpa
+    readu, filenum, tmpa
     data.axes.Z = tmpa
   ENDIF
 ENDELSE
 
 
 tmpa = 0
+FREE_LUN, filenum
 
-close, 1
 
 return, data
 

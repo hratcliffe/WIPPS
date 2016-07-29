@@ -422,6 +422,21 @@ int my_array::get_total_elements(){
 
 }
 
+bool my_array::set_element(int nx, my_type val){
+/** \brief Sets array element
+*
+*Sets elements at nx, @return 1 if out of range, wrong number of args, 0 else.
+*/
+
+  int index = get_index(nx);
+  if(index >= 0){
+    data[index] = val;
+    return 0;
+  }else{
+    return 1;
+  }
+  
+}
 bool my_array::set_element(int nx, int ny, my_type val){
 /** \brief Sets array element
 *

@@ -1,13 +1,13 @@
 //
-//  spectrum.h
+//  spectrum2.h
 //  
 //
-//  Created by Heather Ratcliffe on 24/09/2015.
+//  Created by Heather Ratcliffe on 29/07/2016  as refactor of spectrum class
 //
 //
 
-#ifndef _spectrum_h
-#define _spectrum_h
+#ifndef _spectrum2_h
+#define _spectrum2_h
 
 #include "support.h"
 #include "controller.h"
@@ -22,7 +22,7 @@ class controller;
 *
 *Specialises shape and adds functions to process spectrum, normalise it etc. Can be created/destroyed only by controllers. IMPORTANT: because we are working with FFT data, we assume the angle/frequency axis either covers some small cutout in +ve domain, or is symmetrical in positive and negative values. A few of the specific routines here use this to simplify things. The "angle" axis is stored as tan(theta) for theta the wave normal angle. We seperate forwards and backwards wave modes by \author Heather Ratcliffe \date 24/09/2015 
 */
-class spectrum : public data_array{
+class spectrum{
   friend void controller::add_spectrum(int nx, int n_ang);
   friend void controller::add_spectrum(int * row_lengths, int ny);
   friend controller::~controller();
@@ -38,8 +38,14 @@ class spectrum : public data_array{
   virtual ~spectrum();/**< Private because only controllers can create/destroy*/
   my_type max_power;/**<Value of maximum in spectral power*/
 //  my_type k_thresh;/**<K value of where spectrum crosses threshold (noise) value*/
-public:
+  data_array * g_angle_array;
+  data_array * B_omega_array;
 
+public:
+  char block_id[ID_SIZE]; /**< The field name id from SDF file*/
+
+  float time[2];/**< Time range over which data are taken*/
+  int space[2];/**< Space range over which data are taken*/
   int wave_id; /**< ID for which wave mode cutout we're going for. See support.h*/
   bool angle_is_function;/**< Says we impose g(x) rather than have one g for each w*/
   int function_type;/**< Type code for angular function. See support.h */
@@ -54,7 +60,6 @@ public:
   my_type get_k(my_type omega, int wave_type, bool deriv =0);
 
   bool make_angle_distrib();
-  my_type * get_angle_distrib(int &len, my_type omega=0.0);
   int where_omega(my_type value);
   std::vector<int> all_where(my_type * ax_ptr, int len, my_type target, std::function<bool(my_type,my_type)> func = std::greater<my_type>());
   
@@ -66,7 +71,17 @@ public:
   calc_type get_G2(calc_type omega, calc_type x);
   calc_type check_upper();
   calc_type get_peak_omega();
+  
+  void copy_ids(data_array * src);
+  bool check_ids( data_array * src);
+  my_type * get_angle_distrib(int &len, my_type omega=0.0);
+  
+  my_type get_B_element(int nx);
+  my_type get_ang_element(int nx, int ny=0);
+  my_type get_B_axis_element(int nx);
+  my_type get_ang_axis_element(int nx);
 
+  
 };
 
 

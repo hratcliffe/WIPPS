@@ -29,7 +29,7 @@ LFLAGS = -g
 #=====================================================================
 
 #======================Add files here=================================
-INCLS = my_array.h d_coeff.h spectrum2.h  plasma.h tests.h reader.h controller.h non_thermal.h main_support.h
+INCLS = my_array.h d_coeff.h spectrum.h  plasma.h tests.h reader.h controller.h non_thermal.h main_support.h
 #list of all files with both header and cpp pair.
 
 SOURCE := $(INCLS:.h=.cpp)
@@ -98,6 +98,7 @@ SOURCE := $(addprefix $(SRCDIR)/, $(SOURCE))
 OBJS := $(addprefix $(OBJDIR)/, $(OBJS))
 MAINOBJS := $(MAINSOURCE:.cpp=.o)
 MAINOBJS := $(addprefix $(OBJDIR)/, $(MAINOBJS))
+MAINSOURCE := $(addprefix $(SRCDIR)/, $(MAINSOURCE))
 UTILS :=$(UTILSSOURCE:.cpp=)
 UTILSOBJS := $(UTILSSOURCE:.cpp=.o)
 UTILSOBJS := $(addprefix $(OBJDIR)/, $(UTILSOBJS))
@@ -110,7 +111,7 @@ WARN_STR = "**************Run make clean before changing MODE or TYPE. Run echo_
 
 #=========================Main rules=================================
 #Yes we have multiple "main"s we can compile. They aren't in OBJS but are in SOURCE (for the dependency gen, and tarball). Deal with it and add to these compile lines explicitly
-main : echo_float echo_warning $(OBJDIR)/main.o $(OBJS)
+main : echo_float echo_warning $(OBJS) $(OBJDIR)/main.o 
 	$(CC) $(LFLAGS) $(INCLUDE) $(OBJS) $(OBJDIR)/main.o $(LIB) -o main
 	@echo $(WARN_STR)
 	@$(SED_STR)
@@ -155,6 +156,11 @@ debug :
 -include dependencies.log
 #Include in the dependencies file we generate in echo_deps
 
+.PHONY : echo_deps
+
+dependencies.log :
+	@if [ ! -e dependencies.log ]; then echo "+++++++++++++++++Run make echo_deps to get correct file dependencies+++++++++"; fi
+
 echo_deps :
 	@echo "Regenerating dependencies..."
 	@touch dependencies.log
@@ -188,8 +194,8 @@ list:
 #List targets.
 #From http://stackoverflow.com/questions/4219255/how-do-you-get-the-list-of-targets-in-a-makefile and added exclusion for objdir and .o
 
-tar:
-	tar -cvzf Source.tgz $(SOURCE) $(INCLS) $(MAINSOURCE) ./files/* Makefile redox.sh process_deps.sh
+tar: dependencies.log
+	COPYFILE_DISABLE=1 tar --no-recursion -cvzf Source.tgz $(SOURCE) $(INCLS) $(MAINSOURCE) ./files/* Makefile redox.sh process_deps.sh dependencies.log
 
 clean:
 	@rm -f main $(UTILS) $(OBJS) $(MAINOBJS)

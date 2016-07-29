@@ -50,13 +50,13 @@ void my_array::construct(){
 }
 
 my_array::my_array(int nx, int ny, int nz, int nt){
-/** \brief 2-d rectangular array
+/** \brief 1 to 4 d rectangular array
 *
-*Sets up a n-d rectangular array of nx*ny and allocates data arrays. If either of first 2 sizes is zero or exceeds MAX_SIZE, print error and exit. Otherwise construct 2, 3, 4d as dims specify
+*Sets up a n-d rectangular array of nx*ny and allocates data arrays. If first size is zero or exceeds MAX_SIZE, print error and exit. Otherwise construct 1, 2, 3, 4d as dims specify
 */
   construct();
   
-  if(ny==0 || nx==0){
+  if(nx==0){
     my_print("Array cannot have 0 dim", mpi_info.rank);
     return;
   }
@@ -64,7 +64,14 @@ my_array::my_array(int nx, int ny, int nz, int nt){
     my_print("Array size exceeds MAX_SIZE of "+mk_str(MAX_SIZE), mpi_info.rank);
     return;
   }
-  if(nz==0 && nt==0){
+  if(ny==0 && nz==0 && nt==0){
+    n_dims = 1;
+    this->dims = (int*)malloc(n_dims*sizeof(int));
+    dims[0]=nx;
+
+    data=(my_type*)calloc(nx,sizeof(my_type));
+
+  }else if(nz==0 && nt==0){
     n_dims = 2;
     this->dims = (int*)malloc(n_dims*sizeof(int));
     dims[0]=nx;
@@ -100,10 +107,45 @@ my_array::my_array(int nx, int ny, int nz, int nt){
   }
 }
 
+my_array::my_array(int n_dims, int * dims ){
+/** \brief arbitrary dim rectangular array
+*
+*Sets up a n-d rectangular array and allocates data arrays. If any size is zero or exceeds MAX_SIZE, print error and exit.
+*/
+  construct();
+  //Check for 0 or over large dimensions
+  int tot_dims = 1;
+  bool too_large=false;
+  for(int i=0; i< n_dims; i++){
+    tot_dims*=dims[i];
+    if(dims[i] > MAX_SIZE) too_large = true;
+  }
+  //tot_dims now 0 if any dim is 0
+  if(tot_dims==0){
+    my_print("Array cannot have 0 dim", mpi_info.rank);
+    return;
+  }
+  if(too_large || tot_dims > MAX_SIZE_TOT){
+    if(too_large) my_print("Array size exceeds max per-dimension size of "+mk_str(MAX_SIZE), mpi_info.rank);
+    if(tot_dims> MAX_SIZE_TOT) my_print("Array size exceeds max overall size of "+mk_str(MAX_SIZE_TOT), mpi_info.rank);
+    return;
+  }
+  
+  this->n_dims =n_dims;
+  this->dims = (int*)malloc(n_dims*sizeof(int));
+  std::copy(dims, dims+n_dims, this->dims);
+  data=(my_type*)calloc(tot_dims,sizeof(my_type));
+  
+  if(data){
+    defined = true;
+  }
+}
+
+
 my_array::my_array(int * row_len, int ny){
 /** \brief 2-d ragged array
 *
-*Sets up a 2-d array containing ny rows of lengths given in row_len and allocates data arrays. If ny is zero or exceeds MAX_SIZE, or any row_len is, print error and exit
+*Sets up a 2-d array containing ny rows of lengths given in row_len and allocates data arrays. If ny is zero or exceeds MAX_SIZE, or any row_len is, print error and exit \todo Seriously, just make this its own class...
 */
 
   construct();

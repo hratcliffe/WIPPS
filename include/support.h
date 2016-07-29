@@ -48,7 +48,8 @@
 /** \defgroup const Constants
 *@{ */
 //----------- CONSTANTS ---------------------------------
-const int MAX_SIZE = 100000;/**< Maximum array size allowed (per processor if MPI in use) */
+const int MAX_SIZE = 100000;/**< Maximum per-dim array size allowed (per processor if MPI in use) */
+const int MAX_SIZE_TOT = 4*MAX_SIZE;/**< Maximum overall array size allowed (per processor if MPI in use) */
 const int MAX_FILENAME_DIGITS = 7;/**< Maximum number of digits in filename dump number string*/
 const my_type io_verify = 3.0/32.0;/**< An exactly binary representable my_type to verify we're reading what we're writing.*/
 const calc_type pi = 3.14159265359;/**< Pi */

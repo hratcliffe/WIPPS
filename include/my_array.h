@@ -29,21 +29,23 @@ protected:
   my_type *data;/**< The data */
   bool defined; /**< Flag to check memory allocation sucess*/
   virtual std::vector<int> get_index_from_offset(int offset);
-public:
-
-  my_array();
-  virtual void construct();
-  my_array(int nx, int ny, int nz=0, int nt=0);
-  my_array(int * row_lengths, int ny);
-  virtual ~my_array();
-
-  virtual bool is_good(){return !defined;}/**< Check memory allocation etc worked*/
   virtual int get_index(int n_dims, int * dim);
 
   virtual int get_index(int nx);
   virtual int get_index(int nx, int ny);
   virtual int get_index(int nx, int ny, int nz);
   virtual int get_index(int nx, int ny, int nz, int nt);
+
+public:
+
+  my_array();
+  virtual void construct();
+  my_array(int nx, int ny=0, int nz=0, int nt=0);
+  my_array(int * row_lengths, int ny);
+  my_array(int n_dims, int * dims);
+  virtual ~my_array();
+
+  virtual bool is_good(){return !defined;}/**< Check memory allocation etc worked*/
   int get_total_elements();
 
   int get_dims();

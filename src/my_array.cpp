@@ -258,7 +258,6 @@ int my_array::get_index(int nx, int ny, int nz){
     }
   }else{
     return -1;
-     /**\todo Ragged case*/
   }
 }
 int my_array::get_index(int nx, int ny, int nz, int nt){
@@ -278,9 +277,7 @@ int my_array::get_index(int nx, int ny, int nz, int nt){
       return -1;
     }
   }else{
-     /**\todo Ragged case*/
     return -1;
-
   }
 }
 
@@ -370,6 +367,16 @@ my_type my_array::get_element(int nx, int ny, int nz, int nt){
   }
 
 }
+my_type my_array::get_element(int n_dims, int* dims){
+/** Return element at nx, ny. Out of range etc will return 0.0*/
+  int ind = get_index(n_dims, dims);
+  if(ind  != -1){
+    return data[ind];
+  }else{
+    return 0.0;
+  }
+
+}
 
 int my_array::get_total_elements(){
 /** Return total size of array */
@@ -429,6 +436,22 @@ bool my_array::set_element(int nx, int ny, int nz, int nt, my_type val){
     return 1;
   }
   
+}
+bool my_array::set_element(int n_dims, int * dim, my_type val){
+/** \brief Sets array element
+*
+*Sets elements at nx, ny, nz, nt, @return 1 if out of range, wrong number of args, 0 else.
+*/
+
+  int index = get_index(n_dims, dims);
+  if(index >= 0){
+    data[index] = val;
+    return 0;
+  }else{
+    return 1;
+  }
+  
+
 }
 
 bool my_array::populate_data(my_type * dat_in, int n_tot){

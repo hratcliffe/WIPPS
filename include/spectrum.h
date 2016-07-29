@@ -74,12 +74,13 @@ public:
   
   void copy_ids(data_array * src);
   bool check_ids( data_array * src);
-  my_type * get_angle_distrib(int &len, my_type omega=0.0);
   
   my_type get_B_element(int nx);
   my_type get_ang_element(int nx, int ny=0);
   my_type get_B_axis_element(int nx);
   my_type get_ang_axis_element(int nx);
+  int get_ang_dims(int i=-1);
+  int get_B_dims(int i=-1);
 
   
 };

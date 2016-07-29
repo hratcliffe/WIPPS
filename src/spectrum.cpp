@@ -252,29 +252,6 @@ my_type spectrum::get_k(my_type omega, int wave_type, bool deriv){
   else return 0.0;
 }
 
-my_type * spectrum::get_angle_distrib(int &len, my_type omega){
-/** \brief Return g_w(x) for given omega
-*
-*Returns the row corresponding to omega. If the angle distribution is a single function, the omega param may be omitted. Len is set to the axis length, which is always = n_angs \todo. What if omega is 0?
-*/
-
-  my_type * ret = NULL;
-
-  if(angle_is_function && g_angle_array->is_good()){
-
-    ret = g_angle_array->data;
-  }else{
-  //select row by omega...
-    int offset = where(g_angle_array->axes, n_angs, omega);
-    if(offset>0) ret = g_angle_array->data + offset*g_angle_array->get_length(0);
-
-  }
-
-  len = n_angs;
-  return ret;
-
-}
-
 std::vector<int> spectrum::all_where(my_type * ax_ptr, int len, my_type target,std::function<bool(my_type,my_type)> func){
 /**\brief Find all points where
 *
@@ -453,10 +430,14 @@ bool spectrum::normaliseB(){
 
   int len = B_omega_array->get_length(0);
   my_type * d_axis = (my_type *) calloc(len, sizeof(my_type));
+  my_type * data = (my_type *) malloc(len*sizeof(my_type));
+
   for(int i=0; i<len-1; i++) d_axis[i] = B_omega_array->get_axis_element(0, i+1) - B_omega_array->get_axis_element(0, i);
+  for(int i=0; i<len-1; i++) data[i] = get_B_element(i);
   
-  normB = integrator(B_omega_array->data, len, d_axis);
+  normB = integrator(data, len, d_axis);
   free(d_axis);
+  free(data);
   return 0;
 }
 
@@ -714,5 +695,13 @@ my_type spectrum::get_B_axis_element(int nx){
 my_type spectrum::get_ang_axis_element(int nx){
   return g_angle_array-> get_axis_element(1, nx);
 }
+int spectrum::get_ang_dims(int i){
+  if(i== -1) return this->g_angle_array->get_dims();
+  else return this->g_angle_array->get_dims(i);
+}
+int spectrum::get_B_dims(int i){
+  if(i== -1) return this->B_omega_array->get_dims();
+  else return this->B_omega_array->get_dims(i);
 
+}
 

@@ -103,7 +103,7 @@ protected:
 
 
 public:
-  friend class spectrum;/**< \todo Can we remove this plz?*/
+  //friend class spectrum;/**< \todo Can we remove this plz?*/
   char block_id[ID_SIZE]; /**< The field name id from SDF file*/
 
   float time[2];/**< Time range over which data are taken*/

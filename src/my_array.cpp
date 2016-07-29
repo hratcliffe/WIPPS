@@ -130,7 +130,6 @@ my_array::my_array(int n_dims, int * dims ){
   }
 }
 
-
 my_array::my_array(int * row_len, int ny){
 /** \brief 2-d ragged array
 *

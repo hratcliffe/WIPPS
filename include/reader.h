@@ -26,6 +26,9 @@ class reader{
 
   int n_z; /*<*Number of characters in filename's dump number*/
   int ref_file_num;/**< Number of any file which exists to test dimensions etc*/
+  std::string get_full_name(int num);
+  bool is_accum(std::string block_id);
+
 public:
 
   std::string file_prefix;/**< Prefix of files before dump number*/
@@ -41,10 +44,8 @@ public:
   bool read_dims(int &n_dims, std::vector<int> &dims);
 
   int read_data(data_array * my_data_in, int time_range[3], int space_range[2]);
-  int get_file_size();
-  std::string get_full_name(int num);
-  bool is_accum(std::string block_id);
   bool current_block_is_accum();
+  int get_file_size();
   
 };
 

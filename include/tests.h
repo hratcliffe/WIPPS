@@ -50,12 +50,12 @@ class controller;
 *Consists of at least a constructor doing any setup required, a name string for output id, a function run() taking no parameters which performs the necessary test and a destructor doing cleanup.
 */
 class test_entity{
-public:
-  std::string name;/**< The name of the test, which will be reported in the log file*/
-  
-  test_entity(){;}
-  virtual ~test_entity(){;}
-  virtual int run()=0;/*Pure virtual because we don't want an instances of this template*/
+  public:
+    std::string name;/**< The name of the test, which will be reported in the log file*/
+    
+    test_entity(){;}
+    virtual ~test_entity(){;}
+    virtual int run()=0;/*Pure virtual because we don't want an instances of this template*/
 
 };
 
@@ -71,53 +71,53 @@ public:
 */
 
 class tests{
-private:
+  private:
 
-  std::string get_printable_error(int err, int test_id);
-  std::fstream * outfile; /**< Output file handle*/
-  int current_test_id;/**< Number in list of test being run*/
-  std::vector<test_entity*> test_list;/**< List of tests to run*/
-  int verbosity;/**< Verbosity level of output*/
-  std::string get_color_escape(char col);
-public:
-  void report_err(int err, int test_id=-1);
-  void report_info(std::string info, int verb_to_print = 1, int test_id=-1);
-  tests();
-  ~tests();
-  void setup_tests();
-  void add_test(test_entity* test);
-  void cleanup_tests();
-  void run_tests();
-  void set_verbosity(int verb);
-  void set_colour(char col=0);
-  bool is_fatal(int err);
-  bool check_for_abort(int err);
+    std::string get_printable_error(int err, int test_id);
+    std::fstream * outfile; /**< Output file handle*/
+    int current_test_id;/**< Number in list of test being run*/
+    std::vector<test_entity*> test_list;/**< List of tests to run*/
+    int verbosity;/**< Verbosity level of output*/
+    std::string get_color_escape(char col);
+  public:
+    void report_err(int err, int test_id=-1);
+    void report_info(std::string info, int verb_to_print = 1, int test_id=-1);
+    tests();
+    ~tests();
+    void setup_tests();
+    void add_test(test_entity* test);
+    void cleanup_tests();
+    void run_tests();
+    void set_verbosity(int verb);
+    void set_colour(char col=0);
+    bool is_fatal(int err);
+    bool check_for_abort(int err);
   
 };
 
 /** Test for reader class */
 class test_entity_reader : public test_entity{
   private:
-  reader * test_rdr;
-  reader * accum_reader;
-  const static int size = 49367784;
-  //Size of my test file...
+    reader * test_rdr;
+    reader * accum_reader;
+    const static int size = 49367784;
+    //Size of my test file...
 
   public:
-  test_entity_reader();
-  virtual ~test_entity_reader();
-  virtual int run();
+    test_entity_reader();
+    virtual ~test_entity_reader();
+    virtual int run();
 
 };
 
 /** Test for data array class, assigns values to entry and reads back*/
 class test_entity_data_array : public test_entity{
   private:
-  data_array * test_array;
+    data_array * test_array;
   public:
-  test_entity_data_array();
-  virtual ~test_entity_data_array();
-  virtual int run();
+    test_entity_data_array();
+    virtual ~test_entity_data_array();
+    virtual int run();
 
 };
 
@@ -125,15 +125,15 @@ class test_entity_data_array : public test_entity{
 */
 class test_entity_get_and_fft : public test_entity{
   private:
-  data_array * test_dat;
-  data_array * test_dat_fft;
-  reader * test_rdr;
+    data_array * test_dat;
+    data_array * test_dat_fft;
+    reader * test_rdr;
+    int one_d();
+    int two_d();
   public:
-  test_entity_get_and_fft();
-  virtual ~test_entity_get_and_fft();
-  virtual int run();
-  int one_d();
-  int two_d();
+    test_entity_get_and_fft();
+    virtual ~test_entity_get_and_fft();
+    virtual int run();
 
 };
 
@@ -149,9 +149,9 @@ class test_entity_basic_maths : public test_entity{
     calc_type * d_axis;
     int size;
   public:
-  test_entity_basic_maths();
-  virtual ~test_entity_basic_maths();
-  virtual int run();
+    test_entity_basic_maths();
+    virtual ~test_entity_basic_maths();
+    virtual int run();
 
 };
 
@@ -161,9 +161,9 @@ class test_entity_extern_maths : public test_entity{
   private:
 
   public:
-  test_entity_extern_maths();
-  virtual ~test_entity_extern_maths();
-  virtual int run();
+    test_entity_extern_maths();
+    virtual ~test_entity_extern_maths();
+    virtual int run();
 
 };
 
@@ -171,56 +171,54 @@ class test_entity_extern_maths : public test_entity{
 */
 class test_entity_plasma : public test_entity{
   private:
-  plasma * plas;
-  int resonant_freq();
-  int high_density();
-  int other_modes();
-  int phi_dom();
+    plasma * plas;
+    int resonant_freq();
+    int high_density();
+    int other_modes();
+    int phi_dom();
   public:
-  test_entity_plasma();
-  virtual ~test_entity_plasma();
-  virtual int run();
+    test_entity_plasma();
+    virtual ~test_entity_plasma();
+    virtual int run();
 
 };
 
 /** Check spectrum calculations, such as test spectrum derivation etc */
 class test_entity_spectrum : public test_entity{
   private:
-  data_array * test_dat_fft;
-  data_array * test_spect;
-  controller * test_contr;
-  std::string file_prefix;
-  int tim_in[3], space_in[2];
+    data_array * test_dat_fft;
+    data_array * test_spect;
+    controller * test_contr;
+    std::string file_prefix;
+    int tim_in[3], space_in[2];
+    int setup();
+    int basic_tests();
+    int albertGs_tests();
 
   public:
-  test_entity_spectrum();
-  virtual ~test_entity_spectrum();
-  virtual int run();
-  int setup();
-  int basic_tests();
-  int albertGs_tests();
+    test_entity_spectrum();
+    virtual ~test_entity_spectrum();
+    virtual int run();
 };
 
 /** Full check of deriving a "level one" FFT and spectrum from the various input data formats */
 class test_entity_levelone: public test_entity{
   private:
-  data_array * test_dat_fft;
-  data_array * test_dat;
-  controller * test_contr;
-  reader * my_reader;
-  std::string file_prefix;
-  int time_in[3], space_in[2];
-  char block_id[ID_SIZE];
-  int n_tims;
-
-
+    data_array * test_dat_fft;
+    data_array * test_dat;
+    controller * test_contr;
+    reader * my_reader;
+    std::string file_prefix;
+    int time_in[3], space_in[2];
+    char block_id[ID_SIZE];
+    int n_tims;
+    int setup();
+    int basic_tests();
+    int twod_tests();
   public:
-  test_entity_levelone();
-  virtual ~test_entity_levelone();
-  virtual int run();
-  int setup();
-  int basic_tests();
-  int twod_tests();
+    test_entity_levelone();
+    virtual ~test_entity_levelone();
+    virtual int run();
 };
 
 
@@ -229,9 +227,9 @@ class test_entity_d : public test_entity{
   private:
 
   public:
-  test_entity_d();
-  virtual ~test_entity_d();
-  virtual int run();
+    test_entity_d();
+    virtual ~test_entity_d();
+    virtual int run();
 };
 
 /** Test bounce averaging. Setup dummy D data across multiple blocks and average. Cross check with analytic results*/
@@ -239,9 +237,9 @@ class test_entity_bounce: public test_entity{
   private:
 
   public:
-  test_entity_bounce();
-  virtual ~test_entity_bounce();
-  virtual int run();
+    test_entity_bounce();
+    virtual ~test_entity_bounce();
+    virtual int run();
 };
 
 

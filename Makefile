@@ -29,7 +29,7 @@ LFLAGS = -g
 #=====================================================================
 
 #======================Add files here=================================
-INCLS = my_array.h d_coeff.h spectrum.h  plasma.h tests.h reader.h controller.h non_thermal.h main_support.h
+INCLS = my_array.h d_coeff.h spectrum2.h  plasma.h tests.h reader.h controller.h non_thermal.h main_support.h
 #list of all files with both header and cpp pair.
 
 SOURCE := $(INCLS:.h=.cpp)

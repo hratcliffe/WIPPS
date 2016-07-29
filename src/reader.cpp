@@ -303,7 +303,10 @@ int reader::get_file_size(){
   sdf_read_blocklist(handle);
 
   block = handle->last_block_in_file;
-  return block->next_block_location;
+  int sz =block->next_block_location;
+  sdf_close(handle);
+
+  return sz;
 
 
 }

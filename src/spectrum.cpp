@@ -31,13 +31,15 @@ void spectrum::construct(){
   max_power=0.0;
   g_angle_array = nullptr;
   B_omega_array = nullptr;
+  memset((void *) block_id, 0, ID_SIZE*sizeof(char));
+
 
 }
 
 spectrum::spectrum(int * row_lengths, int ny){
-/** \brief Construct ragged spectrum
+/** \brief Construct spectrum
 *
-*Constructs a spectrum as a ragged array, for e.g. two independent functions of omega and angle. Spectra are always in the form B^2(omega) g(theta, omega). Here g(theta, omega) = g(theta). Normally the first row is then the number of omega points, the second the number of angles.
+*Constructs a spectrum with two independent seperable functions of omega and angle. Spectra are always in the form B^2(omega) g(theta, omega). Here g(theta, omega) = g(theta).
 */
   construct();
   this->B_omega_array = new data_array(row_lengths[0]);
@@ -52,9 +54,9 @@ spectrum::spectrum(int * row_lengths, int ny){
 }
 
 spectrum::spectrum(int nx, int n_ang){
-/** \brief Construct rectangular spectrum
+/** \brief Construct spectrum
 *
-*Constructs a spectrum as a rectangle when for instance the angle dependence varies with k. Spectra are always in the form B^2(omega) g(theta, omega). Here we require to hold both an n_omega x 1 array for B plus the n_omega*n_angs array for g.
+*Constructs a spectrum when for instance the angle dependence varies with k. Spectra are always in the form B^2(omega) g(theta, omega). Here we require to hold both an n_omega x 1 array for B plus the n_omega*n_angs array for g.
 */
 
   construct();
@@ -88,6 +90,8 @@ void spectrum::set_ids(float time1, float time2, int space1, int space2, int wav
 spectrum::~spectrum(){
 
   free(normg);
+  if(g_angle_array) delete g_angle_array;
+  if(B_omega_array) delete B_omega_array;
 
 }
 
@@ -433,7 +437,7 @@ bool spectrum::normaliseB(){
   my_type * data = (my_type *) malloc(len*sizeof(my_type));
 
   for(int i=0; i<len-1; i++) d_axis[i] = B_omega_array->get_axis_element(0, i+1) - B_omega_array->get_axis_element(0, i);
-  for(int i=0; i<len-1; i++) data[i] = get_B_element(i);
+  for(int i=0; i<len; i++) data[i] = get_B_element(i);
   
   normB = integrator(data, len, d_axis);
   free(d_axis);
@@ -695,6 +699,7 @@ my_type spectrum::get_B_axis_element(int nx){
 my_type spectrum::get_ang_axis_element(int nx){
   return g_angle_array-> get_axis_element(1, nx);
 }
+
 int spectrum::get_ang_dims(int i){
   if(i== -1) return this->g_angle_array->get_dims();
   else return this->g_angle_array->get_dims(i);

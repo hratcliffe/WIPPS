@@ -78,8 +78,8 @@ void tests::setup_tests(){
   add_test(test_obj);
   test_obj = new test_entity_spectrum();
   add_test(test_obj);
-  test_obj = new test_entity_levelone();
-  add_test(test_obj);
+  //test_obj = new test_entity_levelone();
+  //add_test(test_obj);
 
 }
 
@@ -322,11 +322,12 @@ int test_entity_reader::run(){
          err |=TEST_WRONG_RESULT;
          test_bed->report_info("Error reading accumulated data", 1);
        }
-    
+
     }else{
       err |=TEST_NULL_RESULT;
       test_bed->report_info("Error reading test files", 1);
     }
+    if(dat) delete dat;
     
   }else{
     err |=TEST_NULL_RESULT;
@@ -568,6 +569,8 @@ int test_entity_get_and_fft::run(){
   strcpy(block_id, "ax");
 
   if(test_rdr) delete test_rdr;
+  if(test_dat) delete test_dat;
+  if(test_dat_fft) delete test_dat_fft;
   test_rdr = new reader("./files/sinAcc", block_id);
   err|= two_d();
 
@@ -824,6 +827,7 @@ test_entity_basic_maths::~test_entity_basic_maths(){
   free(data_tmp);
   free(axis);
   free(d_axis);
+  free(axisf);
 }
 
 int test_entity_basic_maths::run(){
@@ -1454,6 +1458,7 @@ int test_entity_spectrum::basic_tests(){
       test_bed->report_info("Error in angular distribution integrals, value " + mk_str(total_error, true));
     }
     if(angle_data) free(angle_data);
+    if(d_angle) free(d_angle);
   }else{
     test_bed->report_info("Cannot test assymmetric spectrum");
   }

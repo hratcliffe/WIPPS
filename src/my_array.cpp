@@ -222,7 +222,7 @@ Etc \todo We may get speedup from removing checks. If so, wrap them in a debug I
 */
 
   if(n_dims != 1){
-    my_print("Wrong array dimension, check get_index calls", mpi_info.rank);
+    my_print("Wrong array dimension, attempting 1 with "+mk_str(n_dims), mpi_info.rank);
     return -1;
 
   }
@@ -249,7 +249,7 @@ Etc
 */
 
   if(n_dims != 2){
-    my_print("Wrong array dimension, check get_index calls", mpi_info.rank);
+    my_print("Wrong array dimension, attempting 2 with "+mk_str(n_dims), mpi_info.rank);
     return -1;
 
   }
@@ -276,8 +276,8 @@ int my_array::get_index(int nx, int ny, int nz){
 */
 
   if(n_dims != 3){
+    my_print("Wrong array dimension, attempting 3 with "+mk_str(n_dims), mpi_info.rank);
     return -1;
-    my_print("Wrong array dimension, check get_index calls", mpi_info.rank);
   }
 
   if(!ragged){
@@ -297,8 +297,8 @@ int my_array::get_index(int nx, int ny, int nz, int nt){
 */
 
   if(n_dims != 4){
+    my_print("Wrong array dimension, attempting 4 with "+mk_str(n_dims), mpi_info.rank);
     return -1;
-    my_print("Wrong array dimension, check get_index calls", mpi_info.rank);
   }
   if(!ragged){
     if((nx < dims[0]) && (ny<dims[1])&& ((nz<dims[2]))&& ((nt<dims[3]))){
@@ -996,6 +996,14 @@ void data_array::construct(){
 
 }
 
+data_array::data_array(int nx) : my_array(nx){
+/**Adds axes to a normal rectangular my array \todo Combine, alright?*/
+
+  construct();
+  axes=(my_type*)calloc((nx),sizeof(my_type));
+  if(axes) ax_defined=true;
+
+}
 data_array::data_array(int nx, int ny) : my_array(nx,ny){
 /**Adds axes to a normal rectangular my array*/
 

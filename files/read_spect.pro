@@ -1,6 +1,6 @@
 function read_spect, filename
 
-;Written for commit ID from 801d57e to ... FILL IN IF IO CHNAGES....
+;Written for commit ID from 00db4e7 to ... FILL IN IF IO CHNAGES....
 
 COMPILE_OPT IDL2
 ;force long ints and proper brackets
@@ -16,8 +16,8 @@ int_type = 1
 OPENR, filenum,  filename, /GET_LUN
 ;open file
 
-error=read_header(filenum)
-IF(error) THEN BEGIN
+hdr=read_header(filenum)
+IF(hdr.err) THEN BEGIN
   FREE_LUN, filenum
   PRINT, "Error reading file header"
   RETURN, !NULL
@@ -25,3 +25,27 @@ ENDIF
 
 n_blocks = int_type
 readu, filenum, n_blocks
+IF(n_blocks NE 2) THEN BEGIN
+  PRINT, "Spectrum should contain two blocks"
+  RETURN, !NULL
+ENDIF
+
+hdr=read_header(filenum)
+IF(hdr.err) THEN BEGIN
+  FREE_LUN, filenum
+  PRINT, "Error reading file header"
+  RETURN, !NULL
+ENDIF
+
+spect = {B:read_block(filenum, my_type_code, hdr.block)}
+
+hdr=read_header(filenum)
+IF(hdr.err) THEN BEGIN
+  FREE_LUN, filenum
+  PRINT, "Error reading file header"
+  RETURN, !NULL
+ENDIF
+spect = create_struct({ang:read_block(filenum, my_type_code, hdr.block)}, spect)
+
+return, spect
+END

@@ -293,6 +293,9 @@ bool spectrum::write_to_file(std::fstream &file){
 /** \brief Write to file*/
 
   if(!file.is_open() || (!this->B_omega_array->is_good())|| (!this->g_angle_array->is_good())) return 1;
+
+  file.write(block_id, sizeof(char)*ID_SIZE);
+
   const char tmp_vers[15] = VERSION;
   file.write((char*) &io_verify, sizeof(my_type));
   file.write((char*) &tmp_vers, sizeof(char)*15);
@@ -300,8 +303,8 @@ bool spectrum::write_to_file(std::fstream &file){
   file.write((char*) &n_blocks, sizeof(int));
   //Write how many smaller arrays there are
   bool err;
-  err = g_angle_array->write_to_file(file);
   err |= B_omega_array->write_to_file(file);
+  err = g_angle_array->write_to_file(file);
   return err;
 
 }

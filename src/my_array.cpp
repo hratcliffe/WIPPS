@@ -516,11 +516,11 @@ bool my_array::populate_data(my_type * dat_in, int n_tot){
 
 }
 
-bool my_array::populate_row(void * dat_in, int nx, int y_row){
-/** /brief Fill row
+/*bool my_array::populate_row(void * dat_in, int nx, int y_row){
+ /brief Fill row
 *
 * Fills the row y_row of array from dat_in to length of nx. Nx is param for sanity so we can't overflow dat_in. @return 0 (sucess) 1 (error)
-*/
+
 
   if(nx != dims[0]) return 1;
   if(y_row > dims[1] || y_row < 0) return 1;
@@ -532,7 +532,7 @@ bool my_array::populate_row(void * dat_in, int nx, int y_row){
   memcpy (tmp , dat_in, nx*sizeof(my_type));
 
   return 0;
-}
+}*/
 
 bool my_array::populate_slice(my_type * dat_in, int n_dims_in, int * offsets){
 /** \brief Populate a slice of the array from the input array.

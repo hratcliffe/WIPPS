@@ -31,10 +31,10 @@ protected:
   virtual std::vector<int> get_index_from_offset(int offset);
   virtual int get_index(int n_dims, int * dim);
 
-  virtual int get_index(int nx);
-  virtual int get_index(int nx, int ny);
-  virtual int get_index(int nx, int ny, int nz);
-  virtual int get_index(int nx, int ny, int nz, int nt);
+  int get_index(int nx);
+  int get_index(int nx, int ny);
+  int get_index(int nx, int ny, int nz);
+  int get_index(int nx, int ny, int nz, int nt);
 
 public:
 
@@ -62,7 +62,7 @@ public:
   bool set_element(int n_dims, int * dim, my_type val);
 
   bool populate_data(my_type * dat_in, int n_tot);
-  bool populate_row(void * dat_in, int nx, int y_row);
+  //bool populate_row(void * dat_in, int nx, int y_row);
   bool populate_slice(my_type * dat_in, int n_dims, int * offsets);
   bool populate_complex_slice(my_type * dat_in, int n_dims, int * offsets, int* sizes);
   virtual bool write_to_file(std::fstream &file);

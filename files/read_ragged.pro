@@ -12,59 +12,41 @@ my_type = 0.0
 ;this matches the type of the C code my_type...
 ;Usually float or double. Set code to f for float, d for double...
 
-id_type ='1234567891'
-id_in = id_type
-;type for block id...
-
-io_type =0.0
-io_check = 3.0/32.0
-io_in=io_type
-;type for io verification const.
-
-commit_type ='123456789112345'
-commit_in = commit_type
-;type for commit id
-
 int_type = 1
 
-openr, 1, filename
-;"Tmp.txt"
+openr, filenum, filename, /GET_LUN
 ;open file
 
-readu, 1, id_in
-readu, 1, io_in
-IF(abs(io_in - io_check) GT 0.001) THEN BEGIN
-  close, 1
-  print, "File read error!"
-  ;return
-  stop
+hdr=read_header(filenum)
+IF(hdr.err) THEN BEGIN
+  FREE_LUN, filenum
+  PRINT, "Error reading file header"
+  RETURN, !NULL
 ENDIF
 
-readu, 1, commit_in
-
 n_dims = int_type
-readu, 1, n_dims
+readu, filenum, n_dims
 print, n_dims
 
 if(n_dims LT 0) THEN BEGIN
   n_dims = abs(n_dims)
   ;now we make a list of each row eh?
   dims = lonarr(n_dims)
-  readu, 1, dims
+  readu, filenum, dims
   lengths = lonarr(dims[1])
-  readu, 1, lengths
+  readu, filenum, lengths
   IF my_type_code EQ 'f' THEN BEGIN
     data_list = LIST(length = dims[1])
     axes_list = LIST(length = dims[1])
     FOR i=0, dims[1]-1 DO BEGIN
       tmp = fltarr(lengths[i])
-      readu, 1, tmp
+      readu, filenum, tmp
 ;      print, minmax(tmp)
       data_list[i] = tmp
     END
     FOR i=0, dims[1]-1 DO BEGIN
       tmp = fltarr(lengths[i])
-      readu, 1, tmp
+      readu, filenum, tmp
 ;      print, minmax(tmp)
       axes_list[i] = tmp
     END
@@ -74,12 +56,12 @@ if(n_dims LT 0) THEN BEGIN
     axes_list = LIST(length = dims[1])
     FOR i=0, dims[1]-1 DO BEGIN
       tmp = dblarr(lengths[i])
-      readu, 1, tmp
+      readu, filenum, tmp
       data_list[i] = tmp
     END
     FOR i=0, dims[1]-1 DO BEGIN
       tmp = dblarr(lengths[i])
-      readu, 1, tmp
+      readu, filenum, tmp
       axes_list[i] = tmp
     END
   ENDELSE
@@ -91,7 +73,7 @@ ENDIF ELSE BEGIN
 
 ENDELSE
 
-close, 1
+FREE_LUN, filenum
 
 return, data
 

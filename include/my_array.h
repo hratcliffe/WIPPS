@@ -23,9 +23,6 @@ class my_array{
 protected:
   int n_dims;/**< Number of dimensions*/
   int * dims;/**< Array dimensions*/
-  bool ragged; /**< Flag for if array has different lengths on each row...*/
-  int * row_lengths;/**< Row lengths if ragged*/
-  int * cumulative_row_lengths; /**< Offset to start of given row to iterate through*/
   my_type *data;/**< The data */
   bool defined; /**< Flag to check memory allocation sucess*/
 

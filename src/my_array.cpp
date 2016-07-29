@@ -32,7 +32,6 @@ void my_array::construct(){
 *Sets default values of things in case of constructor omissions
 */
   defined = false;
-  ragged=false;
   n_dims = 0;
   data=nullptr;
 
@@ -130,50 +129,6 @@ my_array::my_array(int n_dims, int * dims ){
   }
 }
 
-my_array::my_array(int * row_len, int ny){
-/** \brief 2-d ragged array
-*
-*Sets up a 2-d array containing ny rows of lengths given in row_len and allocates data arrays. If ny is zero or exceeds MAX_SIZE, or any row_len is, print error and exit \todo Seriously, just make this its own class...
-*/
-
-  construct();
-  
-  int nx_min=MAX_SIZE, nx_max=0;
-  for(int i=0; i< ny; ++i){
-    if(row_len[i]< nx_min) nx_min = row_len[i];
-    if(row_len[i]> nx_max) nx_max = row_len[i];
-  }
-  if(ny==0 || nx_min==0){
-    my_print("Array size cannot be 0", mpi_info.rank);
-    return;
-  }
-  if(ny> MAX_SIZE || nx_max >MAX_SIZE){
-    my_print("Array size exceeds MAX_SIZE of "+mk_str(MAX_SIZE), mpi_info.rank);
-    return;
-  }
-
-  n_dims = 2;
-  dims = (int*)malloc(n_dims*sizeof(int));
-  dims[0]=0;
-  dims[1]=ny;
-  ragged = true;
-
-  this->row_lengths = (int*) malloc(ny*sizeof(int));
-  this->cumulative_row_lengths = (int*) malloc(ny*sizeof(int));
-
-  memcpy((void *) this->row_lengths, (void *)row_len, ny*sizeof(int));
-  
-  cumulative_row_lengths[0] = 0;
-
-  for(int i=1; i<ny;++i) cumulative_row_lengths[i] = cumulative_row_lengths[i-1] + this->row_lengths[i-1];
-  
-  data=(my_type*)calloc((cumulative_row_lengths[ny-1] + row_lengths[ny-1]), sizeof(my_type));
-
-  if(data){
-    defined = true;
-  }
-}
-
 my_array::~my_array(){
 /** Clean up explicit allocations
 *
@@ -182,10 +137,6 @@ my_array::~my_array(){
   if(data) free(data);
   data = NULL; // technically unnecessary as desctructor deletes memebers. 
   if(dims) free(dims);
-  if(ragged){
-    if(cumulative_row_lengths) free(cumulative_row_lengths);
-    if(row_lengths) free(row_lengths);
-  }
 }
 
 int my_array::get_index(int n_dims, int * inds_in){
@@ -253,20 +204,10 @@ Etc
     return -1;
 
   }
-  if(!ragged){
-    if((nx < dims[0]) && (ny<dims[1])){
-      return ny*dims[0] + nx;
-    }else{
-      return -1;
-    }
+  if((nx < dims[0]) && (ny<dims[1])){
+    return ny*dims[0] + nx;
   }else{
-    //have to check specific row length...
-    if((ny<dims[1]) && (nx < row_lengths[ny])){
-      return cumulative_row_lengths[ny] + nx;
-    }else{
-      return -1;
-    }
-  
+    return -1;
   }
 }
 int my_array::get_index(int nx, int ny, int nz){
@@ -280,12 +221,8 @@ int my_array::get_index(int nx, int ny, int nz){
     return -1;
   }
 
-  if(!ragged){
-    if((nx < dims[0]) && (ny<dims[1]) && ((nz<dims[2]))){
-      return (nz*dims[1]+ ny)*dims[0] + nx;
-    }else{
-      return -1;
-    }
+  if((nx < dims[0]) && (ny<dims[1]) && ((nz<dims[2]))){
+    return (nz*dims[1]+ ny)*dims[0] + nx;
   }else{
     return -1;
   }
@@ -300,12 +237,8 @@ int my_array::get_index(int nx, int ny, int nz, int nt){
     my_print("Wrong array dimension, attempting 4 with "+mk_str(n_dims), mpi_info.rank);
     return -1;
   }
-  if(!ragged){
-    if((nx < dims[0]) && (ny<dims[1])&& ((nz<dims[2]))&& ((nt<dims[3]))){
-      return ((nt*dims[2] +nz)*dims[1]+ ny)*dims[0] + nx;
-    }else{
-      return -1;
-    }
+  if((nx < dims[0]) && (ny<dims[1])&& ((nz<dims[2]))&& ((nt<dims[3]))){
+    return ((nt*dims[2] +nz)*dims[1]+ ny)*dims[0] + nx;
   }else{
     return -1;
   }
@@ -335,9 +268,8 @@ int my_array::get_dims(){
   return n_dims;
 }
 int my_array::get_dims(int dim){
-/** \brief Return dims[dim]
+/** \brief Return size of dimension dim
 *
-*WARNING Do NOT use this to get sizes of a ragged array. It won't work. Use get_length instead
 */
   if(dim < n_dims){
     return dims[dim];
@@ -348,14 +280,8 @@ int my_array::get_dims(int dim){
 int my_array::get_length(int dim){
 /** \brief Get size of dimension dim
 *
-*For a rectangular array returns the stored dim, else returns the row length for ragged
-*/
-  if(!ragged) return get_dims(dim);
-  else{
-    if(n_dims==2 && dim < dims[1]) return row_lengths[dim];
-    else return 0;
-  }
-
+**/
+  return get_dims(dim);
 }
 
 my_type my_array::get_element(int nx){
@@ -412,12 +338,7 @@ int my_array::get_total_elements(){
 /** Return total size of array */
   int tot_els=1;
 
-  if(!ragged){
-    for(int i=0; i<n_dims;++i) tot_els *=dims[i];
-  }else{
-    tot_els = cumulative_row_lengths[dims[n_dims-1]-1]+row_lengths[dims[n_dims-1]-1];
-  }
-
+  for(int i=0; i<n_dims;++i) tot_els *=dims[i];
   return tot_els;
 
 }
@@ -606,28 +527,11 @@ bool my_array::write_to_file(std::fstream &file){
 
   int total_size = get_total_elements();
   //dimension info
-  if(!ragged){
-    file.write((char*) &n_dims, sizeof(int));
-    int dim_tmp;
-    for(int i=0;i<n_dims;i++){
-      dim_tmp = dims[i];
-      file.write((char*) &dim_tmp, sizeof(int));
-    }
-  }else{
-    //do different if we have ragged array...
-    int n_dims_new = -1*n_dims;
-    file.write((char*) &n_dims_new, sizeof(int));
-    int dim_tmp;
-      for(int i=0;i<n_dims;i++){
-      dim_tmp = dims[i];
-      file.write((char*) &dim_tmp, sizeof(int));
-    }
-
-    for(int i=0;i<dims[n_dims-1];i++){
-      dim_tmp = row_lengths[i];
-      file.write((char*) &dim_tmp, sizeof(int));
-    }
-
+  file.write((char*) &n_dims, sizeof(int));
+  int dim_tmp;
+  for(int i=0;i<n_dims;i++){
+    dim_tmp = dims[i];
+    file.write((char*) &dim_tmp, sizeof(int));
   }
   file.write((char *) data , sizeof(my_type)*total_size);
 
@@ -639,7 +543,7 @@ bool my_array::write_section_to_file(std::fstream &file, std::vector<int> bounds
 /**Takes the version etc info then the section of the data array and writes as a stream. It's not portable to other machines necessarily due to float sizes and endianness. It'll do. We'll start the file with a known float for confirmation.
   * We use lazy method of get_element for each element, less prone to offset errors and memory is already much faster than disk
   *
-  *IMPORTANT: this VERSION specifier links output files to code. If modifying output or order commit and clean build before using. @return 0 (sucess) 1 (error)
+  *IMPORTANT: this VERSION specifier links output files to code. If modifying output or order commit and clean build before using. @return 0 (sucess) 1 (error) \todo Probably need arb dims version... Hell, we can copy and resize if we want! \todo Copy or move constructor...
 */
 
   if(!file.is_open() || (this->data ==nullptr)) return 1;
@@ -656,28 +560,11 @@ bool my_array::write_section_to_file(std::fstream &file, std::vector<int> bounds
 
   int total_size = get_total_elements();
   //dimension info
-  if(!ragged){
-    file.write((char*) &n_dims, sizeof(int));
-    int dim_tmp;
-    for(int i=0;i<n_dims;i++){
-      dim_tmp = bounds[i*2+1]-bounds[i*2];
-      file.write((char*) &dim_tmp, sizeof(int));
-    }
-  }else{
-    //do different if we have ragged array...
-    int n_dims_new = -1*n_dims;
-    file.write((char*) &n_dims_new, sizeof(int));
-    int dim_tmp;
-      for(int i=0;i<n_dims;i++){
-      dim_tmp = dims[i];
-      file.write((char*) &dim_tmp, sizeof(int));
-    }
-
-    for(int i=0;i<dims[n_dims-1];i++){
-      dim_tmp = row_lengths[i];
-      file.write((char*) &dim_tmp, sizeof(int));
-    }
-
+  file.write((char*) &n_dims, sizeof(int));
+  int dim_tmp;
+  for(int i=0;i<n_dims;i++){
+    dim_tmp = bounds[i*2+1]-bounds[i*2];
+    file.write((char*) &dim_tmp, sizeof(int));
   }
   my_type element;
   if(n_dims ==1){
@@ -765,7 +652,7 @@ bool my_array::read_from_file(std::fstream &file, bool no_version_check){
 bool my_array::resize(int dim, int sz){
 /** \brief Resize my_array on the fly
 *
-*dim is the dimension to resize, sz the new size. If sz < dims[dim] the first sz rows will be kept and the rest deleted. If sz > dims[dim] the new elements will be added zero initialised. Note due to using 1-d memory layout both cases require copying all data and therefore briefly memory to store the old and new arrays. However shinking the last dimension does not necessarily require a copy. Note cannot be called on ragged array. NOTE dim runs from 1 to number of dims
+*dim is the dimension to resize, sz the new size. If sz < dims[dim] the first sz rows will be kept and the rest deleted. If sz > dims[dim] the new elements will be added zero initialised. Note due to using 1-d memory layout both cases require copying all data and therefore briefly memory to store the old and new arrays. However shinking the last dimension does not necessarily require a copy.
 */
 
 //  my_print("Attempting to resize", mpi_info.rank);
@@ -775,10 +662,6 @@ bool my_array::resize(int dim, int sz){
   if(dim > this->n_dims || dim < 0) return 1;
   if(dim>=0 && sz == dims[dim]){
      my_print("Size matches", mpi_info.rank);
-     return 1;
-  }
-  if(ragged){
-   my_print("Cannot resize a ragged array. Create new and copy", mpi_info.rank);
      return 1;
   }
   
@@ -846,10 +729,6 @@ A 3-d 5x3x2 is
 
   if(dim > this->n_dims || dim < 0) return 1;
   if(n_els ==0) return 0;
-  if(ragged){
-   my_print("Cannot shift a ragged array.", mpi_info.rank);
-     return 1;
-  }
   //Correct n_els for being more than one full cycle and move < 0 to equivalent +ve
   int sign_n = (n_els<0? -1: 1);
   n_els = sign_n >0? (abs(n_els)%dims[dim]):dims[dim]-(abs(n_els)%dims[dim]) ;
@@ -1044,18 +923,6 @@ data_array::data_array(int nx, int ny, int nz, int nt) : my_array(nx,ny, nz, nt)
 
 }
 
-data_array::data_array(int * row_lengths, int ny): my_array(row_lengths,ny){
-/** Adds axes to a ragged my_array One per row in this case...*/
-
-  construct();
-
-  int tot_els = cumulative_row_lengths[dims[n_dims-1]-1]+row_lengths[dims[n_dims-1]-1];
-
-  axes=(my_type*)calloc(tot_els, sizeof(my_type));
-  if(axes) ax_defined=true;
-
-}
-
 data_array::data_array(std::string filename, bool no_version_check){
 /**\brief Create data array from file
 *
@@ -1116,10 +983,6 @@ data_array::data_array(std::string filename, bool no_version_check){
     this->read_from_file(infile, no_version_check);
 
   
-  }else if(n_dims_in < 0){
-    //This means ragged array
-    my_print("I didn't finish this because i am useless!!!!!!!!!!!!!!!!!!!!!!!!!!!", mpi_info.rank);
-  
   }else{
     my_print("Invalid dimensionality in input file", mpi_info.rank);
   
@@ -1163,15 +1026,7 @@ int data_array::get_axis_index(int dim, int pt){
   //Out of range error
   
   int offset = 0;
-  if(!ragged){
-  // Rectangular, skip over other dims
-    for(int i=0; i< dim; i++) offset +=dims[i];
-  
-  }else{
-  // Ragged, skip axes for other rows
-    offset = cumulative_row_lengths[dim];
-  }
-  
+  for(int i=0; i< dim; i++) offset +=dims[i];
   return offset + pt;
 
 }
@@ -1244,11 +1099,7 @@ int data_array::get_total_axis_elements(){
 */
   int tot_els=0;
 
-  if(!ragged){
-    for(int i=0; i<n_dims;++i) tot_els +=dims[i];
-  }else{
-    tot_els = cumulative_row_lengths[dims[n_dims-1]-1]+row_lengths[dims[n_dims-1]-1];
-  }
+  for(int i=0; i<n_dims;++i) tot_els +=dims[i];
 
   return tot_els;
 

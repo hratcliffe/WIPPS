@@ -21,17 +21,6 @@
 
 extern const mpi_info_struc mpi_info;
 
-
-/*void my_array::tmp_function(){
-
-  std::cout<< mpi_info.rank<<std::endl;
-    mpi_info.rank +=1;
-    std::cout<< mpi_info.rank<<std::endl;
-  if(mpi_info.rank ==0) std::cout<< &mpi_info<<std::endl;
-
-}*/
-
-
 my_array::my_array(){
 /** Default constructor*/
   construct();
@@ -516,24 +505,6 @@ bool my_array::populate_data(my_type * dat_in, int n_tot){
 
 }
 
-/*bool my_array::populate_row(void * dat_in, int nx, int y_row){
- /brief Fill row
-*
-* Fills the row y_row of array from dat_in to length of nx. Nx is param for sanity so we can't overflow dat_in. @return 0 (sucess) 1 (error)
-
-
-  if(nx != dims[0]) return 1;
-  if(y_row > dims[1] || y_row < 0) return 1;
-  int indx = get_index(0, y_row);
-
-  void * tmp = (void *) (data+indx);
-
-  if(indx==-1 || !tmp) return 1;
-  memcpy (tmp , dat_in, nx*sizeof(my_type));
-
-  return 0;
-}*/
-
 bool my_array::populate_slice(my_type * dat_in, int n_dims_in, int * offsets){
 /** \brief Populate a slice of the array from the input array.
 *
@@ -965,6 +936,52 @@ A 3-d 5x3x2 is
   return 0;
 
 }
+
+my_type my_array::minval(int offset){
+/** Find minimum value of data, allows linear search through contiguous memory*/
+  int total_size=get_total_elements();
+  if(offset > total_size) return std::numeric_limits<my_type>::min();
+
+  return *(std::min_element(data+offset, data+total_size));
+
+}
+my_type my_array::minval(std::vector<int> &ind, int offset){
+/** Find minimum value of data, allows linear search through contiguous memory*/
+
+  int total_size=get_total_elements();
+  if(offset > total_size) return std::numeric_limits<my_type>::min();
+
+  auto it = std::min_element(data+offset, data+total_size);
+  ind = get_index_from_offset(it - data);
+  return *(it);
+  
+
+}
+
+my_type my_array::maxval(int offset){
+/** Find minimum value of data, allows linear search through contiguous memory*/
+
+  int total_size=get_total_elements();
+  if(offset > total_size) return std::numeric_limits<my_type>::max();
+
+  return *(std::max_element(data+offset, data+total_size));
+
+
+}
+my_type my_array::maxval(std::vector<int> &ind, int offset){
+/** Find minimum value of data, allows linear search through contiguous memory*/
+
+  int total_size=get_total_elements();
+  if(offset > total_size) return std::numeric_limits<my_type>::max();
+
+  auto it = std::max_element(data+offset, data+total_size);
+  ind = get_index_from_offset(it - data);
+//  ind.push_back(it - data);
+
+  return *(it);
+
+}
+
 
 void data_array::construct(){
 /** \brief Common parts for all constructors
@@ -1573,52 +1590,6 @@ bool data_array::shift(int dim, int n_els, bool axis){
     if(new_data) free(new_data);
   }
   return err;
-
-}
-
-my_type data_array::minval(int offset){
-/** Find minimum value of data, allows linear search through contiguous memory*/
-  int total_size=get_total_elements();
-  if(offset > total_size) return std::numeric_limits<my_type>::min();
-
-  return *(std::min_element(data+offset, data+total_size));
-
-}
-my_type data_array::minval(std::vector<int> &ind, int offset){
-/** Find minimum value of data, allows linear search through contiguous memory*/
-
-  int total_size=get_total_elements();
-  if(offset > total_size) return std::numeric_limits<my_type>::min();
-
-  auto it = std::min_element(data+offset, data+total_size);
-  ind = get_index_from_offset(it - data);
-  return *(it);
-  
-
-}
-
-my_type data_array::maxval(int offset){
-/** Find minimum value of data, allows linear search through contiguous memory*/
-
-  int total_size=get_total_elements();
-  if(offset > total_size) return std::numeric_limits<my_type>::max();
-
-  return *(std::max_element(data+offset, data+total_size));
-
-
-}
-
-my_type data_array::maxval(std::vector<int> &ind, int offset){
-/** Find minimum value of data, allows linear search through contiguous memory*/
-
-  int total_size=get_total_elements();
-  if(offset > total_size) return std::numeric_limits<my_type>::max();
-
-  auto it = std::max_element(data+offset, data+total_size);
-  ind = get_index_from_offset(it - data);
-//  ind.push_back(it - data);
-
-  return *(it);
 
 }
 

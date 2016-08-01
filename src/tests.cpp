@@ -357,28 +357,68 @@ int test_entity_data_array::run(){
 *
 */
   int err = TEST_PASSED;
+
+  err|=assign();
+  if(test_bed->check_for_abort(err)) return err;
+
+  err |=basic_tests();
+  if(test_bed->check_for_abort(err)) return err;
+  err |= technical_tests();
+  if(test_bed->check_for_abort(err)) return err;
+  err |= three_d_and_shift();
+  test_bed->report_err(err);
+  return err;
+}
+
+int test_entity_data_array::assign(){
+/** Set values and check basic assignment worked*/
+  int err = TEST_PASSED;
   bool tmp_err;
-  if(!test_array) return TEST_ASSERT_FAIL;
+  if(!test_array){
+    err |= TEST_ASSERT_FAIL;
+    err |= TEST_FATAL_ERR;
+    return err;
+  }
   int val;
-  if(test_array->get_dims() == 2){
-    //assign each element to unique val
+  //assign each element to unique val and axes to position
 
-    for(int i=0; i<test_array->get_dims(0); i++){
-      for(int j =0; j<test_array->get_dims(1); j++){
-        tmp_err=test_array->set_element(i, j, (i+1)*(2*j+1));
-        if(tmp_err) err |= TEST_ASSERT_FAIL;
-      }
-    }
-
-    //test assignments worked
-
-    for(int i=0; i<test_array->get_dims(0); i++){
-      for(int j =0; j<test_array->get_dims(1); j++){
-        val = test_array->get_element(i,j);
-        if(val != (i+1)*(2*j+1)) err |=TEST_WRONG_RESULT;
-      }
+  for(int i=0; i<test_array->get_dims(0); i++){
+    for(int j =0; j<test_array->get_dims(1); j++){
+      tmp_err=test_array->set_element(i, j, (i+1)*(2*j+1));
+      if(tmp_err) err |= TEST_ASSERT_FAIL;
     }
   }
+  for(int i=0; i<test_array->get_dims(); i++){
+    for(int j =0; j<test_array->get_dims(i); j++){
+      tmp_err=test_array->set_axis_element(i, j, j*(i+1));
+      if(tmp_err) err |= TEST_ASSERT_FAIL;
+    }
+  }
+
+  //test assignments worked
+
+  for(int i=0; i<test_array->get_dims(0); i++){
+    for(int j =0; j<test_array->get_dims(1); j++){
+      val = test_array->get_element(i,j);
+      if(val != (i+1)*(2*j+1)) err |=TEST_WRONG_RESULT;
+    }
+  }
+  for(int i=0; i<test_array->get_dims(); i++){
+    for(int j =0; j<test_array->get_dims(i); j++){
+      val=test_array->get_axis_element(i, j);
+      if(val != (i+1)*j) err |=TEST_WRONG_RESULT;
+    }
+  }
+
+  return err;
+}
+
+int test_entity_data_array::basic_tests(){
+/** \todo Change to random selec and check by definition?*/
+
+  int err = TEST_PASSED;
+  bool tmp_err;
+  if(!test_array) return TEST_ASSERT_FAIL;
 
   //test maxval function
   int i0=test_array->get_dims(0)/2, i1=test_array->get_dims(1)/3;
@@ -398,6 +438,12 @@ int test_entity_data_array::run(){
   els[1]=test_array->get_element(1, 5);
   els[2]=test_array->get_element(6, 5);
   els[3]=test_array->get_element(4, 4);
+  my_type ax_els[4];
+  ax_els[0]=test_array->get_axis_element(0, 3);
+  ax_els[1]=test_array->get_axis_element(1, 0);
+  ax_els[2]=test_array->get_axis_element(0, 6);
+  ax_els[3]=test_array->get_axis_element(1, 5);
+
   //Check some "random" elements
   test_bed->set_colour('*');
   test_bed->report_info("Testing resizer. Suggest using valgrind for memory checks", 2);
@@ -420,7 +466,19 @@ int test_entity_data_array::run(){
     err |= TEST_WRONG_RESULT;
     test_bed->report_info("Resizer error, wrong values read", 1);
   }
-  
+  if(ax_els[0] != test_array->get_axis_element(0, 3)|| ax_els[1]!=test_array->get_axis_element(1, 0) || ax_els[2]!=test_array->get_axis_element(0, 6) || ax_els[3]!=test_array->get_axis_element(1, 5)){
+    err |= TEST_WRONG_RESULT;
+    test_bed->report_info("Resizer error, wrong values read", 1);
+  }
+
+
+  return err;
+}
+
+int test_entity_data_array::three_d_and_shift(){
+
+  int err= TEST_PASSED;
+  int tmp_err;
   //And now a 3-d version
   if(test_array) delete test_array;
   test_array = new data_array(10, 10, 10);
@@ -433,7 +491,9 @@ int test_entity_data_array::run(){
     }
   }
   int new3 = 5;
-  new2 = 6;//for element choices below to work, this must be >= 6
+  int new2 = 6;//for element choices below to work, this must be >= 6
+  my_type els[4];
+
   els[0]=test_array->get_element(2, 3, 2);
   els[1]=test_array->get_element(1, 5, 4);
   els[2]=test_array->get_element(6, 5, 1);
@@ -535,7 +595,40 @@ int test_entity_data_array::run(){
 
 
 /* do testing */
-  test_bed->report_err(err);
+  return err;
+
+}
+
+int test_entity_data_array::technical_tests(){
+/** Check things like copy constructors
+*
+* Expects a 2-d array and wont be any use if els and axes not set
+*/
+
+  int err = TEST_PASSED;
+  data_array dat= *(test_array);
+  
+  if(dat.get_dims() ==0 || dat.get_dims(0) ==0 || dat.get_dims(1) == 0) err |= TEST_ASSERT_FAIL;
+  std::cout<<dat.get_dims(0)<<" "<<dat.get_dims(1)<<" ";
+  if(dat.get_dims() != test_array->get_dims()){
+    err |= TEST_WRONG_RESULT;
+  }
+  for(int i=0; i< dat.get_dims(); i++) if(dat.get_dims(i) != test_array->get_dims(i)) err |= TEST_WRONG_RESULT;
+
+  for(int i=0; i<test_array->get_dims(0); i++){
+    for(int j =0; j<test_array->get_dims(1); j++){
+      if(test_array->get_element(i,j) != dat.get_element(i, j)) err |=TEST_WRONG_RESULT;
+    }
+  }
+  
+  
+  for(int i=0; i<test_array->get_dims(); i++){
+    for(int j=0; j< test_array->get_dims(i); j++){
+      if(test_array->get_axis_element(i,j) != dat.get_axis_element(i, j)) err |=TEST_WRONG_RESULT;
+      std::cout<<test_array->get_axis_element(i,j)<<" "<< dat.get_axis_element(i, j)<<'\n';
+    }
+  }
+
   return err;
 
 }

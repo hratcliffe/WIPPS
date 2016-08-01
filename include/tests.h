@@ -114,6 +114,10 @@ class test_entity_reader : public test_entity{
 class test_entity_data_array : public test_entity{
   private:
     data_array * test_array;
+    int technical_tests();
+    int basic_tests();
+    int assign();
+    int three_d_and_shift();
   public:
     test_entity_data_array();
     virtual ~test_entity_data_array();

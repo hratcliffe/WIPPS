@@ -885,13 +885,12 @@ void data_array::construct(){
   space[0]=0; space[1]=1;
   memset((void *) block_id, 0, ID_SIZE*sizeof(char));
   
-
 }
 
 void data_array::alloc_ax(const int els){
 /* \brief Allocate axis memory
 *
-* Alocate memory for axes
+* Alocate memory for axes and set the defined flag
 */
   if(els > 0 && els <= this->n_dims*MAX_SIZE){
     axes=(my_type*)calloc((els),sizeof(my_type));
@@ -982,15 +981,18 @@ data_array::~data_array(){
 /**Similarly destructor automatically calls destructor for my_array and frees axes*/
 
   if(axes) free(axes);
-  axes = NULL; // technically unnecessary as desctructor deletes members.
-  
-
+  axes = nullptr; // technically unnecessary as desctructor deletes members.
 }
 
-
 data_array::data_array(const data_array &src) : my_array(src){
-  
 
+  construct();
+  //Basic construction of additionals, not already called base class constructor entire
+  int els= this->get_total_axis_elements();
+  alloc_ax(els);
+  //Allocate axis memory
+  if(axes) std::copy(src.axes, src.axes+els, this->axes);
+  //Copy data
 }
 
 my_type * data_array::get_axis(int dim, int & length){

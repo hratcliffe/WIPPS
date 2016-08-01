@@ -553,7 +553,7 @@ bool my_array::write_section_to_file(std::fstream &file, std::vector<size_t> bou
 /**Takes the version etc info then the section of the data array and writes as a stream. It's not portable to other machines necessarily due to float sizes and endianness. It'll do. We'll start the file with a known float for confirmation.
   * We use lazy method of get_element for each element, less prone to offset errors and memory is already much faster than disk
   *
-  *IMPORTANT: this VERSION specifier links output files to code. If modifying output or order commit and clean build before using. @return 0 (sucess) 1 (error) \todo Probably need arb dims version... Hell, we can copy and resize if we want! \todo Copy or move constructor...
+  *IMPORTANT: this VERSION specifier links output files to code. If modifying output or order commit and clean build before using. @return 0 (sucess) 1 (error) \todo Probably need arb dims version... Hell, we can copy and resize if we want! 
 */
 
   if(!file.is_open() || (this->data ==nullptr)) return 1;
@@ -922,6 +922,16 @@ data_array::data_array(size_t nx, size_t ny, size_t nz, size_t nt) : my_array(nx
   size_t els= this->get_total_axis_elements();
   //by now this is setup to work
   alloc_ax(els);
+}
+
+data_array::data_array(size_t n_dims, size_t * dims) : my_array(n_dims, dims){
+
+  construct();
+  size_t els= this->get_total_axis_elements();
+  //by now this is setup to work
+  alloc_ax(els);
+
+
 }
 
 data_array::data_array(std::string filename, bool no_version_check){

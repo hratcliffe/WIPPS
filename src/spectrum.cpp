@@ -72,7 +72,7 @@ spectrum::spectrum(int nx, int n_ang){
 
 }
 
-void spectrum::set_ids(float time1, float time2, int space1, int space2, int wave_id, char block_id[10], int function_type){
+void spectrum::set_ids(float time1, float time2, int space1, int space2, int wave_id, char block_id[ID_SIZE], int function_type){
 /**\brief Set parameters
 *
 *Sets the time and space ranges, wave type etc attached to the spectrum. Times should be in terms of file output time. Space in terms of grid points.
@@ -301,7 +301,7 @@ void spectrum::make_test_spectrum(int time[2], int space[2],int angle_type){
     my_print("Array allocations failed, cannot make spectrum", mpi_info.rank);
     return;
   }
-  char id[10] = "ex";
+  char id[ID_SIZE] = "ex";
 
   this->set_ids(time[0], time[1], space[0], space[1], WAVE_WHISTLER, id, angle_type);
   

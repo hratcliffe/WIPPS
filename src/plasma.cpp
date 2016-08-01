@@ -19,10 +19,8 @@ plasma::plasma( calc_type ref_B, std::string file_prefix){
   configure_from_file(file_prefix);
   B0 = ref_B;
   if(ref_B == -1.0) B0 = my_const.omega_ce * me/std::abs(q0);
-  //my_const.omega_ce * me/std::abs(q0);
 
   this->om_ce = (pcharge[0]) * this->B0 / pmass[0]; /*reference electron cyclotron freq \todo FIX! FAKENUMBERS */
-  //ret_vec.reserve(4);
 }
 plasma::~plasma(){
 
@@ -35,7 +33,6 @@ void plasma::write(std::ofstream &outfile){
 
 
 }
-
 
 bool plasma::configure_from_file(std::string file_prefix){
 /** \brief Setup plasma from file

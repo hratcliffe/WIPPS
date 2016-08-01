@@ -19,7 +19,6 @@ class data_array;
 
 *
 *Takes file prefixes, block id (see SDF documentation) and time and space ranges and a data_array pointer to fill and does so. The data array is not stored here.
-*\todo maybe we write a verify sdf which checks our files have the correct dimensionalities etc etc and contain needed blocks...
 * @author Heather Ratcliffe @date 02/10/2015
 */
 class reader{
@@ -36,7 +35,7 @@ public:
   int space_range[2];/**< Space range in x to extract*/
   int time_range[3];/**< Time range to extract*/
 
-  char block_id[10];/**< Name of block to extract*/
+  char block_id[ID_SIZE];/**< Name of block to extract*/
 
   reader(std::string file_prefix_in,  char * block_id_in, int first=0);
   ~reader(){;}

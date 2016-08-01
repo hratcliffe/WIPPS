@@ -31,7 +31,7 @@ diffusion_coeff::~diffusion_coeff(){
 
 }
 
-void diffusion_coeff::set_ids(float time1, float time2, int space1, int space2, int wave_id, char block_id[10]){
+void diffusion_coeff::set_ids(float time1, float time2, int space1, int space2, int wave_id, char block_id[ID_SIZE]){
 /**\brief Set parameters
 *
 *Sets the time and space ranges, wave type etc attached to the spectrum. Times should be in terms of file output time. Space in terms of grid points.
@@ -278,7 +278,7 @@ int diffusion_coeff::get_max_n(calc_type v_par, my_type k_thresh, calc_type om_c
 }
 
 void diffusion_coeff::copy_ids( spectrum * src){
-/** Copies ID fields from src array to this \todo cClean this up*/
+/** Copies ID fields from src array to this*/
 
   strcpy(this->block_id, src->block_id);
   

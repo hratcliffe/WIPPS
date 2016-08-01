@@ -263,9 +263,9 @@ void tests::run_tests(){
 
 test_entity_reader::test_entity_reader(){
   name = "reader class";
-  char block_id[10]= "run_info";
+  char block_id[ID_SIZE]= "run_info";
   test_rdr = new reader("./files/test", block_id);
-  char block_id2[10] = "ax";
+  char block_id2[ID_SIZE] = "ax";
 
   accum_reader = new reader("./files/accum", block_id2);
   
@@ -657,7 +657,7 @@ int test_entity_get_and_fft::run(){
 
   int err = TEST_PASSED;
   
-  char block_id[10]= "ex";
+  char block_id[ID_SIZE]= "ex";
   test_rdr = new reader("./files/sin", block_id);
 
   err |=one_d();
@@ -1447,7 +1447,7 @@ The reason for using the better dispersion solver is a) to avoid any numerical d
 test_entity_spectrum::test_entity_spectrum(){
 
   name = "spectrum checks";
-  char block_id[10]= "ex";
+  char block_id[ID_SIZE]= "ex";
   file_prefix = "./files/";
   
 }

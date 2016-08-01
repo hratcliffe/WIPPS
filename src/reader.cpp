@@ -100,6 +100,10 @@ int reader::read_data(data_array * my_data_in, int time_range[3], int space_rang
 *This will open the files dictated by time range sequentially, and populate them into the data_array. It'll stop when the end of range is reached, or it goes beyond the size available. Space range upper entry of -1 is taken as respective limit. @return 0 for success, 1 for error 2 for unusual exit, i.e. early termination NB: blocking is only supported on the X axis.
 */
   
+  if(!my_data_in->is_good()){
+    my_print("Cannot read into invalid array", mpi_info.rank);
+    return 1;
+  }
   strcpy(my_data_in->block_id, block_id);
   //set block id
 

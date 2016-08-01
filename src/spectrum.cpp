@@ -297,6 +297,10 @@ void spectrum::make_test_spectrum(int time[2], int space[2],int angle_type){
 *Makes a basic spectrum object with suitable number of points, and twin, symmetric Gaussians centred at fixed k/freq and x value \todo Should we use negative freqs?? @param time Time range (number of points) @param space Space range (number of points) @param angle_type Function to use for angular distrib @param 
 */
 
+  if(!this->B_omega_array->is_good() || !this->g_angle_array->is_good()){
+    my_print("Array allocations failed, cannot make spectrum", mpi_info.rank);
+    return;
+  }
   char id[10] = "ex";
 
   this->set_ids(time[0], time[1], space[0], space[1], WAVE_WHISTLER, id, angle_type);

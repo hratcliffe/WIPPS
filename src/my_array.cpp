@@ -34,6 +34,7 @@ void my_array::construct(){
   defined = false;
   n_dims = 0;
   data=nullptr;
+  dims=nullptr;
 
 }
 
@@ -171,7 +172,9 @@ Etc \todo We may get speedup from removing checks. If so, wrap them in a debug I
 */
 
   if(n_dims != 1){
+#ifdef DEBUG_DIMS
     my_print("Wrong array dimension, attempting 1 with "+mk_str(n_dims), mpi_info.rank);
+#endif
     return -1;
 
   }
@@ -198,7 +201,9 @@ Etc
 */
 
   if(n_dims != 2){
+#ifdef DEBUG_DIMS
     my_print("Wrong array dimension, attempting 2 with "+mk_str(n_dims), mpi_info.rank);
+#endif
     return -1;
 
   }
@@ -215,7 +220,9 @@ long my_array::get_index(size_t nx, size_t ny, size_t nz){
 */
 
   if(n_dims != 3){
+#ifdef DEBUG_DIMS
     my_print("Wrong array dimension, attempting 3 with "+mk_str(n_dims), mpi_info.rank);
+#endif
     return -1;
   }
 
@@ -232,7 +239,9 @@ long my_array::get_index(size_t nx, size_t ny, size_t nz, size_t nt){
 */
 
   if(n_dims != 4){
+#ifdef DEBUG_DIMS
     my_print("Wrong array dimension, attempting 4 with "+mk_str(n_dims), mpi_info.rank);
+#endif
     return -1;
   }
   if((nx < dims[0]) && (ny<dims[1])&& ((nz<dims[2]))&& ((nt<dims[3]))){

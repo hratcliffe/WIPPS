@@ -615,7 +615,6 @@ int test_entity_data_array::technical_tests(){
   data_array dat= *(test_array);
   
   if(dat.get_dims() ==0 || dat.get_dims(0) ==0 || dat.get_dims(1) == 0) err |= TEST_ASSERT_FAIL;
-  std::cout<<dat.get_dims(0)<<" "<<dat.get_dims(1)<<" ";
   if(dat.get_dims() != test_array->get_dims()){
     err |= TEST_WRONG_RESULT;
   }
@@ -631,7 +630,6 @@ int test_entity_data_array::technical_tests(){
   for(int i=0; i<test_array->get_dims(); i++){
     for(int j=0; j< test_array->get_dims(i); j++){
       if(test_array->get_axis_element(i,j) != dat.get_axis_element(i, j)) err |=TEST_WRONG_RESULT;
-      std::cout<<test_array->get_axis_element(i,j)<<" "<< dat.get_axis_element(i, j)<<'\n';
     }
   }
 
@@ -1620,6 +1618,13 @@ int test_entity_spectrum::albertGs_tests(){
   row_lengths[1] = DEFAULT_N_ANG;
   test_contr->add_spectrum(row_lengths, 2);
 
+  if(!test_contr->get_current_spectrum()->is_good()){
+    my_print("Spectrum in invalid state. Aborting", mpi_info.rank);
+    err |=TEST_ASSERT_FAIL;
+    err |=TEST_FATAL_ERR;
+    return err;
+  }
+
   test_contr->get_current_spectrum()->make_test_spectrum(tim_in, space_in, FUNCTION_GAUSS);
   
   my_type om_min, om_max, x_min, x_max, om_peak;
@@ -1794,13 +1799,17 @@ int test_entity_levelone::basic_tests(){
   }
 
   int err2 = my_reader->read_data(dat, time_in, space_in);
-  if(err2 == 1) return TEST_FATAL_ERR;
-
+  if(err2 == 1){
+    if(dat) delete dat;
+    return TEST_FATAL_ERR;
+  }
   if(err2 == 2) n_tims = dat->get_dims(1);
   //Check if we had to truncate data array...
   data_array * dat_fft = new data_array(space_dim, n_tims);
 
   if(!dat_fft->is_good()){
+    if(dat) delete dat;
+    if(dat_fft) delete dat_fft;
     return TEST_FATAL_ERR;
   }
   err2 = dat->fft_me(dat_fft);
@@ -1850,6 +1859,9 @@ int test_entity_levelone::basic_tests(){
   }
   file.close();
   test_bed->report_info("FFT section output in "+filename, 1);
+  if(dat) delete dat;
+  if(dat_fft) delete dat_fft;
+
   return err;
 
 }
@@ -1877,13 +1889,17 @@ int test_entity_levelone::twod_tests(){
   }
 
   int err2 = my_reader->read_data(dat, time_in, space_in);
-  if(err2 == 1) return TEST_FATAL_ERR;
-
+  if(err2 == 1){
+    if(dat) delete dat;
+    return TEST_FATAL_ERR;
+  }
   if(err2 == 2) n_tims = dat->get_dims(1);
   //Check if we had to truncate data array and size FFT accordingly
   data_array  * dat_fft = new data_array(space_dim, dims_in[1], n_tims);
 
   if(!dat_fft->is_good()){
+    if(dat) delete dat;
+    if(dat_fft) delete dat_fft;
     return TEST_FATAL_ERR;
   }
   err2 = dat->fft_me(dat_fft);
@@ -1932,6 +1948,9 @@ int test_entity_levelone::twod_tests(){
   }
   file.close();
   test_bed->report_info("FFT section output in "+filename, 1);
+  if(dat) delete dat;
+  if(dat_fft) delete dat_fft;
+
   return err;
 
 }

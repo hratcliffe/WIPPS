@@ -38,7 +38,7 @@ class spectrum{
   virtual ~spectrum();/**< Private because only controllers can create/destroy*/
   my_type max_power;/**<Value of maximum in spectral power*/
 //  my_type k_thresh;/**<K value of where spectrum crosses threshold (noise) value*/
-  data_array * g_angle_array;
+  data_array * g_angle_array;/**< \todo refactor to non-pointer*/
   data_array * B_omega_array;
 
 public:
@@ -74,6 +74,7 @@ public:
   
   void copy_ids(data_array * src);
   bool check_ids( data_array * src);
+  bool is_good(){return B_omega_array->is_good() && g_angle_array->is_good();}
   
   my_type get_B_element(int nx);
   my_type get_ang_element(int nx, int ny=0);

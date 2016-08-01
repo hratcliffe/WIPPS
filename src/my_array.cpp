@@ -1380,6 +1380,7 @@ bool data_array::resize(int dim, int sz){
 *dim is the dimension to resize, sz the new size. If sz < dims[dim] the first sz rows will be kept and the rest deleted. If sz > dims[dim] the new elements will be added zero initialised. Similarly for axis elements. See my_array::resize() for more.
 */
 
+  int old_sz = this->get_dims(dim);
   //call my_array::resize to resize data...
   bool err = my_array::resize(dim, sz);
 
@@ -1412,10 +1413,11 @@ bool data_array::resize(int dim, int sz){
       int els_to_copy = 0, old_starts=0, new_starts=0;
       for(int i=0;i<n_dims; ++i){
         els_to_copy = dims[i];
-        if(i == dim && sz< dims[i]) els_to_copy = sz;
+        if(i == dim && sz< old_sz) els_to_copy = sz;
         std::copy(axes+old_starts, axes+old_starts+els_to_copy, new_ax+new_starts);
 
-        old_starts += dims[i];
+        if(i!= dim) old_starts += dims[i];
+        else old_starts +=old_sz;
         new_starts +=els_to_copy;
       
       }

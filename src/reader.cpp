@@ -108,7 +108,7 @@ int reader::read_data(data_array * my_data_in, int time_range[3], int space_rang
   sdf_file_t *handle;
   sdf_block_t * block ,*ax_block;
   my_type * ax_ptr;
-  int len;
+  size_t len;
 
   std::string file_name = get_full_name(time_range[0]);
   
@@ -140,14 +140,14 @@ int reader::read_data(data_array * my_data_in, int time_range[3], int space_rang
     //Get space axes
   }
   bool simple_slice=false;
-  int * source_sizes = nullptr;
+  size_t * source_sizes = nullptr;
   int source_advance = 1;
   //Simple slices are those where we're slicing only the last spatial dimension. For what we have here, that means 1 space dim or more than one and no slicing. We have no mechanism to slice y etc, only x.
   //Grid dimensions are for staggered grid for subtract 1
   if(my_data_in->get_dims() ==2 || block->dims[0]-1 == space_range[1]-space_range[0]){
     simple_slice = true;
   }else{
-    source_sizes = (int *) malloc((my_data_in->get_dims()-1)*sizeof(int));
+    source_sizes = (size_t *) malloc((my_data_in->get_dims()-1)*sizeof(size_t));
     
     for(int i=0; i< my_data_in->get_dims()-1; i++){
       source_sizes[i] = block->dims[i]-1;
@@ -207,13 +207,13 @@ int reader::read_data(data_array * my_data_in, int time_range[3], int space_rang
     if(!accumulated){
       *(ax_ptr + i) = (my_type) handle->time;
       if(simple_slice){
-        int val[1];
+        size_t val[1];
         val[0] = i-time_range[0];
         my_data_in->populate_slice(my_ptr, 1, val);
 
   //      my_data_in->populate_row(my_ptr, space_range[1], i-time_range[0]);
       }else{
-        int val[1];
+        size_t val[1];
         val[0] = i-time_range[0];
         my_data_in->populate_complex_slice(my_ptr, 1, val, source_sizes);
 //        my_data_in->populate_row(my_ptr, space_range[1], i-time_range[0]);
@@ -234,7 +234,7 @@ int reader::read_data(data_array * my_data_in, int time_range[3], int space_rang
       //Copy time grid out
       
       if(simple_slice){
-        int val[1];
+        size_t val[1];
         for(int j=0; j<rows; j++){
           //my_data_in->populate_row(my_ptr, space_range[1], total_reads+j);
           val[0] = total_reads+j;
@@ -244,7 +244,7 @@ int reader::read_data(data_array * my_data_in, int time_range[3], int space_rang
         }
       }else{
 
-        int val[1];
+        size_t val[1];
         for(int j=0; j<rows; j++){
           //my_data_in->populate_row(my_ptr, space_range[1], total_reads+j);
           val[0] = total_reads+j;

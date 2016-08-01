@@ -370,6 +370,15 @@ std::string mk_str(int i){
   
 }
 
+std::string mk_str(size_t i){
+
+  char buffer[25];
+  std::sprintf(buffer, "%lu", i);
+  std::string ret = buffer;
+  return ret;
+  
+}
+
 std::string mk_str(double i, bool noexp){
 
   char buffer[25];

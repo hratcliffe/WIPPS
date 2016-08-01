@@ -48,8 +48,8 @@
 /** \defgroup const Constants
 *@{ */
 //----------- CONSTANTS ---------------------------------
-const int MAX_SIZE = 100000;/**< Maximum per-dim array size allowed (per processor if MPI in use) */
-const int MAX_SIZE_TOT = MAX_SIZE*MAX_SIZE;/**< Maximum overall array size allowed (per processor if MPI in use) */
+const size_t MAX_SIZE = 100000;/**< Maximum per-dim array size allowed (per processor if MPI in use) */
+const size_t MAX_SIZE_TOT = MAX_SIZE*MAX_SIZE;/**< Maximum overall array size allowed (per processor if MPI in use) */
 const int MAX_FILENAME_DIGITS = 7;/**< Maximum number of digits in filename dump number string*/
 const my_type io_verify = 3.0/32.0;/**< An exactly binary representable my_type to verify we're reading what we're writing.*/
 const calc_type pi = 3.14159265359;/**< Pi */
@@ -190,6 +190,7 @@ void my_print(std::string text, int rank, int rank_to_write=0, bool noreturn=fal
 void my_print(std::fstream * handle, std::string text, int rank, int rank_to_write=0, bool noreturn=false);
 
 std::string mk_str(int i);/**<Converts int to string*/
+std::string mk_str(size_t i); /**< Long int to string*/
 std::string mk_str(bool b);/**<Converts bool to string*/
 //std::string mk_str(size_t i){ return mk_str((int) i);} /**<Converts size_t to string*/
 std::string mk_str(double i, bool noexp=0);/**<Converts double to string*/

@@ -296,18 +296,24 @@ int test_entity_reader::run(){
     data_array  * dat = new data_array(dims[0], 40);
     //We know there are at most ten rows per accumulate in our test file and 4 files
     rd_err = accum_reader->read_data(dat, time, space);
-    
+    size_t a, b;
     if(rd_err!=1){
        //Test data should have row 0 =0, row 1=2 (generation procedure does this, row 3=1, 4=2 through to 9, then begin again at 1 through 10, 1 through 10.
        //Check some selection of elements and sum errs. Note all test entries are whole ints
        int tot_errs=0;
 
        //Check a few selected rows are right...
-       tot_errs += !(dat->get_element(0,0) == 0.0);
-       tot_errs += !(dat->get_element(0,1) == 2.0);
-       tot_errs += !(dat->get_element(0,2) == 1.0);
-       tot_errs += !(dat->get_element(0,10) == 9.0);
-       tot_errs += !(dat->get_element(0,11) == 1.0);
+       a=0;
+       b=0;
+       tot_errs += !(dat->get_element(a,b) == 0.0);
+       b=1;
+       tot_errs += !(dat->get_element(a,b) == 2.0);
+       b=2;
+       tot_errs += !(dat->get_element(a,b) == 1.0);
+       b=10;
+       tot_errs += !(dat->get_element(a,b) == 9.0);
+       b=11;
+       tot_errs += !(dat->get_element(a,b) == 1.0);
       
        //Check both ends of a few rows for off by ones etc
        int rows[3] = {1,10,11};
@@ -424,7 +430,7 @@ int test_entity_data_array::basic_tests(){
   int i0=test_array->get_dims(0)/2, i1=test_array->get_dims(1)/3;
   my_type current_max = test_array->maxval();
   test_array->set_element(i0, i1, current_max+10);
-  std::vector<int> pos;
+  std::vector<size_t> pos;
   current_max -= test_array->maxval(pos);
   if(current_max != -10 || pos.size()!=2||pos[0]!=i0||pos[1]!=i1){
     err |= TEST_WRONG_RESULT;
@@ -716,7 +722,7 @@ int test_entity_get_and_fft::one_d(){
     //Get primary frequency
     int max_index = 0;
     my_type max_val = 0, tmp=1.0;
-    std::vector<int> max_pos;
+    std::vector<size_t> max_pos;
     my_type expected_max = 1.2566371e-4;
     bool both_freqs_correct = true;
 
@@ -754,7 +760,7 @@ int test_entity_get_and_fft::one_d(){
     //Get primary frequency
     int max_index = 0;
     my_type max_val = 0, tmp=1.0;
-    std::vector<int> max_pos;
+    std::vector<size_t> max_pos;
     my_type expected_max = 1.2566371e-4;
     bool both_freqs_correct = true;
 
@@ -830,7 +836,7 @@ int test_entity_get_and_fft::two_d(){
 
   int max_index = 0;
   my_type max_val = 0, tmp=1.0;
-  std::vector<int> max_pos;
+  std::vector<size_t> max_pos;
   my_type expected_max = 1.2566371e-4;
   bool both_freqs_correct = true;
 
@@ -1504,7 +1510,7 @@ int test_entity_spectrum::basic_tests(){
 
   std::fstream outfile;
 
-  int len=0;
+  size_t len=0;
   my_type total_error =0.0;
   my_type * d_angle, * angle_data;
   int row_lengths[2];

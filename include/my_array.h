@@ -21,61 +21,61 @@
 class my_array{
 
 protected:
-  int n_dims;/**< Number of dimensions*/
-  int * dims;/**< Array dimensions*/
+  size_t n_dims;/**< Number of dimensions*/
+  size_t * dims;/**< Array dimensions*/
   my_type *data;/**< The data */
   bool defined; /**< Flag to check memory allocation sucess*/
 
   virtual void construct();
-  virtual void alloc_all(const int n_dims, const int * const dims);
+  virtual void alloc_all(const size_t n_dims, const size_t * const dims);
   
-  virtual std::vector<int> get_index_from_offset(int offset);
-  virtual int get_index(int n_dims, int * dim);
-  int get_index(int nx);
-  int get_index(int nx, int ny);
-  int get_index(int nx, int ny, int nz);
-  int get_index(int nx, int ny, int nz, int nt);
+  virtual std::vector<size_t> get_index_from_offset(size_t offset);
+  virtual long get_index(size_t n_dims, size_t * dim);
+  long get_index(size_t nx);
+  long get_index(size_t nx, size_t ny);
+  long get_index(size_t nx, size_t ny, size_t nz);
+  long get_index(size_t nx, size_t ny, size_t nz, size_t nt);
 
-  int get_total_elements();
+  size_t get_total_elements();
 
 public:
 
   my_array();
-  my_array(int nx, int ny=0, int nz=0, int nt=0);
-  my_array(int * row_lengths, int ny);
-  my_array(int n_dims, int * dims);
+  my_array(size_t nx, size_t ny=0, size_t nz=0, size_t nt=0);
+//  my_array(size_t * row_lengths, size_t ny);
+  my_array(size_t n_dims, size_t * dims);
   virtual ~my_array();
   my_array(const my_array &src);
   virtual bool is_good(){return !defined;}/**< Check memory allocation etc worked*/
 
-  int get_dims();
-  int get_dims(int dim);
-  int get_length(int dim);
-  my_type get_element(int nx);
-  my_type get_element(int nx, int ny);
-  my_type get_element(int nx, int ny, int nz);
-  my_type get_element(int nx, int ny, int nz, int nt);
-  my_type get_element(int n_dims, int * dim);
-  bool set_element(int nx, my_type val);
-  bool set_element(int nx, int ny, my_type val);
-  bool set_element(int nx, int ny, int nz, my_type val);
-  bool set_element(int nx, int ny, int nz, int nt, my_type val);
-  bool set_element(int n_dims, int * dim, my_type val);
+  size_t get_dims();
+  size_t get_dims(size_t dim);
+  size_t get_length(size_t dim);
+  my_type get_element(size_t nx);
+  my_type get_element(size_t nx, size_t ny);
+  my_type get_element(size_t nx, size_t ny, size_t nz);
+  my_type get_element(size_t nx, size_t ny, size_t nz, size_t nt);
+  my_type get_element(size_t n_dims, size_t * dim);
+  bool set_element(size_t nx, my_type val);
+  bool set_element(size_t nx, size_t ny, my_type val);
+  bool set_element(size_t nx, size_t ny, size_t nz, my_type val);
+  bool set_element(size_t nx, size_t ny, size_t nz, size_t nt, my_type val);
+  bool set_element(size_t n_dims, size_t * dim, my_type val);
 
-  bool populate_data(my_type * dat_in, int n_tot);
-  bool populate_slice(my_type * dat_in, int n_dims, int * offsets);
-  bool populate_complex_slice(my_type * dat_in, int n_dims, int * offsets, int* sizes);
+  bool populate_data(my_type * dat_in, size_t n_tot);
+  bool populate_slice(my_type * dat_in, size_t n_dims, size_t * offsets);
+  bool populate_complex_slice(my_type * dat_in, size_t n_dims, size_t * offsets, size_t* sizes);
 
   virtual bool write_to_file(std::fstream &file);
   virtual bool read_from_file(std::fstream &file, bool no_version_check=0);
-  virtual bool write_section_to_file(std::fstream &file, std::vector<int> bounds);
-  virtual bool resize(int dim, int sz);
-  virtual bool shift(int dim, int n_els);
+  virtual bool write_section_to_file(std::fstream &file, std::vector<size_t> bounds);
+  virtual bool resize(size_t dim, size_t sz);
+  virtual bool shift(size_t dim, long n_els);
   
-  my_type minval(int offset=0);
-  my_type maxval(int offset=0);
-  my_type minval(std::vector<int> &ind, int offset=0);
-  my_type maxval(std::vector<int> &ind, int offset=0);
+  my_type minval(size_t offset=0);
+  my_type maxval(size_t offset=0);
+  my_type minval(std::vector<size_t> &ind, size_t offset=0);
+  my_type maxval(std::vector<size_t> &ind, size_t offset=0);
 
 };
 
@@ -91,12 +91,12 @@ protected:
   my_type *axes;/**< 1-d array in sections, so can be arbitary length and dims*/
 
   virtual void construct();
-  void alloc_ax(const int els);
-  float get_res(int i);
-  int get_total_axis_elements();
-  int get_axis_index(int dim, int pt);
+  void alloc_ax(const size_t els);
+  float get_res(size_t i);
+  size_t get_total_axis_elements();
+  long get_axis_index(size_t dim, size_t pt);
 
-  std::vector<int> get_bounds(std::vector<my_type> limits);
+  std::vector<size_t> get_bounds(std::vector<my_type> limits);
   void copy_ids( data_array * src);
 
 
@@ -105,30 +105,29 @@ public:
   char block_id[ID_SIZE]; /**< The field name id from SDF file*/
 
   float time[2];/**< Time range over which data are taken*/
-  int space[2];/**< Space range over which data are taken*/
-  data_array(int nx, int ny=0, int nz=0, int nt=0);
-  data_array(int * row_lengths, int ny);
+  size_t space[2];/**< Space range over which data are taken*/
+  data_array(size_t nx, size_t ny=0, size_t nz=0, size_t nt=0);
   data_array(const data_array &src);
   data_array(std::string filename, bool no_version_check = 0);
   virtual ~data_array();
 
   virtual bool is_good(){return defined && ax_defined;}
 
-  my_type get_axis_element(int dim, int pt);
-  bool set_axis_element(int dim, int pt, my_type val);
-  bool populate_axis(int dim, my_type * dat_in, int n_tot);
-  my_type * get_axis(int dim, int & length);
-  void make_linear_axis(int dim, float res, int offset=0);
+  my_type get_axis_element(size_t dim, size_t pt);
+  bool set_axis_element(size_t dim, size_t pt, my_type val);
+  bool populate_axis(size_t dim, my_type * dat_in, size_t n_tot);
+  my_type * get_axis(size_t dim, size_t & length);
+  void make_linear_axis(size_t dim, float res, size_t offset=0);
 
   virtual bool write_to_file(std::fstream &file);
   virtual bool read_from_file(std::fstream &file, bool no_version_check=0);
   virtual bool write_section_to_file(std::fstream &file, std::vector<my_type> limits);
   
   bool fft_me(data_array * data_out);
-  bool populate_mirror_fastest(my_type * result_in, int total_els);
+  bool populate_mirror_fastest(my_type * result_in, size_t total_els);
   bool check_ids(data_array * src);
-  virtual bool resize(int dim, int sz);
-  virtual bool shift(int dim, int n_els, bool axis=1);
+  virtual bool resize(size_t dim, size_t sz);
+  virtual bool shift(size_t dim, long n_els, bool axis=1);
 
 };
 

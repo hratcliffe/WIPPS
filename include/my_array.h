@@ -27,7 +27,8 @@ protected:
   bool defined; /**< Flag to check memory allocation sucess*/
 
   virtual void construct();
-
+  virtual void alloc_all(const int n_dims, const int * const dims);
+  
   virtual std::vector<int> get_index_from_offset(int offset);
   virtual int get_index(int n_dims, int * dim);
   int get_index(int nx);
@@ -44,7 +45,7 @@ public:
   my_array(int * row_lengths, int ny);
   my_array(int n_dims, int * dims);
   virtual ~my_array();
-
+  my_array(const my_array &src);
   virtual bool is_good(){return !defined;}/**< Check memory allocation etc worked*/
 
   int get_dims();
@@ -90,7 +91,7 @@ protected:
   my_type *axes;/**< 1-d array in sections, so can be arbitary length and dims*/
 
   virtual void construct();
-
+  void alloc_ax(const int els);
   float get_res(int i);
   int get_total_axis_elements();
   int get_axis_index(int dim, int pt);
@@ -105,12 +106,9 @@ public:
 
   float time[2];/**< Time range over which data are taken*/
   int space[2];/**< Space range over which data are taken*/
-
-  data_array(int nx);
-  data_array(int nx, int ny);
-  data_array(int nx, int ny, int nz);
-  data_array(int nx, int ny, int nz, int nt);
+  data_array(int nx, int ny=0, int nz=0, int nt=0);
   data_array(int * row_lengths, int ny);
+  data_array(const data_array &src);
   data_array(std::string filename, bool no_version_check = 0);
   virtual ~data_array();
 

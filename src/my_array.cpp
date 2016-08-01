@@ -29,7 +29,7 @@ my_array::my_array(){
 void my_array::construct(){
 /** \brief Shared contructor code
 *
-*Sets default values of things in case of constructor omissions
+*Sets default values of things
 */
   defined = false;
   n_dims = 0;
@@ -37,71 +37,12 @@ void my_array::construct(){
 
 }
 
-my_array::my_array(int nx, int ny, int nz, int nt){
-/** \brief 1 to 4 d rectangular array
+void my_array::alloc_all(const int n_dims, const int * const dims){
+/** \brief Takes care of memory allocation
 *
-*Sets up a n-d rectangular array of nx*ny and allocates data arrays. If first size is zero or exceeds MAX_SIZE, print error and exit. Otherwise construct 1, 2, 3, 4d as dims specify
+* Allocate dims array and data. If any size is zero, any exceeds MAX_SIZE, or overall exceeds MAX_SIZE_TOT, print error and stop. NB inputs will not be modified, will be copied
 */
-  construct();
-  
-  if(nx==0){
-    my_print("Array cannot have 0 dim", mpi_info.rank);
-    return;
-  }
-  if(ny> MAX_SIZE || nx>MAX_SIZE|| nz>MAX_SIZE || nt>MAX_SIZE){
-    my_print("Array size exceeds MAX_SIZE of "+mk_str(MAX_SIZE), mpi_info.rank);
-    return;
-  }
-  if(ny==0 && nz==0 && nt==0){
-    n_dims = 1;
-    this->dims = (int*)malloc(n_dims*sizeof(int));
-    dims[0]=nx;
 
-    data=(my_type*)calloc(nx,sizeof(my_type));
-
-  }else if(nz==0 && nt==0){
-    n_dims = 2;
-    this->dims = (int*)malloc(n_dims*sizeof(int));
-    dims[0]=nx;
-    dims[1]=ny;
-
-    data=(my_type*)calloc(nx*ny,sizeof(my_type));
-  }else if (nt==0){
-    n_dims = 3;
-    this->dims = (int*)malloc(n_dims*sizeof(int));
-    dims[0]=nx;
-    dims[1]=ny;
-    dims[2]=nz;
-
-    data=(my_type*)calloc(nx*ny*nz,sizeof(my_type));
-  
-  }else if (nz>0 && nt>0){
-    n_dims = 4;
-    this->dims = (int*)malloc(n_dims*sizeof(int));
-    dims[0]=nx;
-    dims[1]=ny;
-    dims[2]=nz;
-    dims[3]=nt;
-
-    data=(my_type*)calloc(nx*ny*nz*nt,sizeof(my_type));
-  
-  }else{
-    my_print("Array cannot have 0 dim", mpi_info.rank);
-    return;
-
-  }
-  if(data){
-    defined = true;
-  }
-}
-
-my_array::my_array(int n_dims, int * dims ){
-/** \brief arbitrary dim rectangular array
-*
-*Sets up a n-d rectangular array and allocates data arrays. If any size is zero or exceeds MAX_SIZE, print error and exit.
-*/
-  construct();
-  //Check for 0 or over large dimensions
   int tot_dims = 1;
   bool too_large=false;
   for(int i=0; i< n_dims; i++){
@@ -121,10 +62,52 @@ my_array::my_array(int n_dims, int * dims ){
   
   this->n_dims =n_dims;
   this->dims = (int*)malloc(n_dims*sizeof(int));
-  std::copy(dims, dims+n_dims, this->dims);
-  data=(my_type*)calloc(tot_dims,sizeof(my_type));
+  if(dims){
+  //If allocation succeeds, we can copy in data and allocate data array, else stop
+    std::copy(dims, dims+n_dims, this->dims);
+    data=(my_type*)calloc(tot_dims,sizeof(my_type));
+  }
+
+}
+my_array::my_array(int nx, int ny, int nz, int nt){
+/** \brief 1 to 4 d rectangular array helper
+*
+*Sets up a n-d rectangular array for n = 1 to 4. Helper avoids user having to construct int array of dims
+*/
+  construct();
   
-  if(data){
+  int * dims_in;
+  int n_dims_in, n_dims_act = 4;
+  n_dims_in = 4;
+  dims_in = (int*)malloc(n_dims_in*sizeof(int));
+  dims_in[0] = nx;
+  dims_in[1] = ny;
+  dims_in[2] = nz;
+  dims_in[3] = nt;
+  
+  for(int i=3; i>=0; i--){
+    if(dims_in[i] == 0) n_dims_act --;
+    else break;
+  }
+  //Check which dims are zero
+  alloc_all(n_dims_act, dims_in);
+  
+  free(dims_in);
+  
+  if(data && dims){
+    defined = true;
+  }
+}
+
+my_array::my_array(int n_dims, int * dims ){
+/** \brief arbitrary dim rectangular array
+*
+*Sets up a n-d rectangular array and allocates data arrays.
+*/
+  construct();
+  alloc_all(n_dims, dims);
+  
+  if(data && dims){
     defined = true;
   }
 }
@@ -137,6 +120,21 @@ my_array::~my_array(){
   if(data) free(data);
   data = NULL; // technically unnecessary as desctructor deletes memebers. 
   if(dims) free(dims);
+}
+
+my_array::my_array(const my_array &src){
+  
+  construct();
+  if(!src.dims) return;
+  //Stop if src has no dims
+  
+  alloc_all(src.n_dims, src.dims);
+  if(data && dims){
+    defined = true;
+  }
+  int tot_els = this->get_total_elements();
+  if(this->data && src.data) std::copy(src.data, src.data + tot_els, this->data);
+
 }
 
 int my_array::get_index(int n_dims, int * inds_in){
@@ -890,37 +888,26 @@ void data_array::construct(){
 
 }
 
-data_array::data_array(int nx) : my_array(nx){
-/**Adds axes to a normal rectangular my array \todo Combine, alright?*/
-
-  construct();
-  axes=(my_type*)calloc((nx),sizeof(my_type));
-  if(axes) ax_defined=true;
-
+void data_array::alloc_ax(const int els){
+/* \brief Allocate axis memory
+*
+* Alocate memory for axes
+*/
+  if(els > 0 && els <= this->n_dims*MAX_SIZE){
+    axes=(my_type*)calloc((els),sizeof(my_type));
+    if(axes) ax_defined=true;
+  }else{
+    my_print("Array size exceeds max. Axes alloc failed", mpi_info.rank);
+  }
 }
-data_array::data_array(int nx, int ny) : my_array(nx,ny){
-/**Adds axes to a normal rectangular my array*/
 
-  construct();
-  axes=(my_type*)calloc((nx+ny),sizeof(my_type));
-  if(axes) ax_defined=true;
-
-}
-data_array::data_array(int nx, int ny, int nz) : my_array(nx,ny, nz){
-/**Adds axes to a normal rectangular my array*/
-
-  construct();
-  axes=(my_type*)calloc((nx+ny+nz),sizeof(my_type));
-  if(axes) ax_defined=true;
-
-}
 data_array::data_array(int nx, int ny, int nz, int nt) : my_array(nx,ny, nz, nt){
 /**Adds axes to a normal rectangular my array*/
 
   construct();
-  axes=(my_type*)calloc((nx+ny+nz+nt),sizeof(my_type));
-  if(axes) ax_defined=true;
-
+  int els= this->get_total_axis_elements();
+  //by now this is setup to work
+  alloc_ax(els);
 }
 
 data_array::data_array(std::string filename, bool no_version_check){
@@ -996,6 +983,12 @@ data_array::~data_array(){
 
   if(axes) free(axes);
   axes = NULL; // technically unnecessary as desctructor deletes members.
+  
+
+}
+
+
+data_array::data_array(const data_array &src) : my_array(src){
   
 
 }

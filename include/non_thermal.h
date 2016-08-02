@@ -6,6 +6,9 @@
 #ifndef _non_thermal_h
 #define _non_thermal_h
 
+/** \brief Nonthermal electron description
+*
+*Very small class to hold a non-thermal electron distribution we can operate on. Mainly contains routine to parse from deck.status assuming particular input deck format.*/
 
 class non_thermal{
 
@@ -16,11 +19,11 @@ public:
 
   non_thermal(std::string file_prefix);
   ~non_thermal();
-  calc_type ref_dens;
-  calc_type ref_B;
-  calc_type fraction;
-  calc_type v_par;
-  calc_type v_perp;
+  calc_type ref_dens;/**<Reference density (background)*/
+  calc_type ref_B;/**<Reference B field*/
+  calc_type fraction;/**<Non-thermal fraction*/
+  calc_type v_par;/**<Parallel velocity*/
+  calc_type v_perp;/**Perpendicular velocity*/
 
   void write(std::ofstream &outfile);
 };

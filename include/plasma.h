@@ -56,7 +56,7 @@ private:
   plasma(calc_type ref_B, std::string file_prefix);
   ~plasma();
 
-  void get_density(){;}
+  void get_density(){;}/**< \todo do we need this?*/
   void get_B0(){;}
 
   //obtain these profiles somehow, either from deck or otherwise. ne might be constant... B can get from file 0
@@ -72,7 +72,7 @@ private:
   /*probably want some parameter "which_thing" is some way of specifying what we want, probably via enum or named constants PROBABLY a mask is best, i.e. bitmask with named contants and we get each thing we want. But how to return? Rturn invalid number for those we on't request. Make it optional so by default we get all? Or we return all of: real(DP),intent(out)::mu,mug                   !< refractive index, group
    real(DP),intent(out)::dmudr,dmudth             !< derivs
    real(DP),intent(out)::alpha                    !< angle between k and prop
-   integer(I4B),intent(out)::merror               !< testing for mu
+   integer(I4B),intent(out)::merror               !< testing for mu \todo Clean up these comments
   */
 
   std::vector<calc_type> get_resonant_omega(calc_type x, calc_type v_par, calc_type n);

@@ -19,7 +19,7 @@ extern deck_constants my_const;
 extern const mpi_info_struc mpi_info;
 
 void spectrum::construct(){
-/** \brief Generic specturm contruction actions
+/** \brief Generic spectrum contruction actions
 *
 *These are performed regardless of dimensions
 */

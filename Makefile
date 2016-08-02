@@ -207,12 +207,5 @@ veryclean:
 
 docs:
 	@echo Running Doxygen...
-	@echo "Mode: " $(MODE) "Type: " $(TYPE)
-	@doxygen Doxyfile &> Doxy.log
-	@echo Processing Doxygen output...
-	@./redox.sh
-	@echo Running pdftex...
-	@cd latex ; pdflatex --file-line-error --synctex=1 -interaction nonstopmode ./refman.tex &> ../docs.log; cd ..
-#	@mv ./latex/docs.log .
-	@echo "Docs built. See Doxy.log and docs.log for details"
+	@if ! [[ `which Doxygen` ]]; then echo "Doxygen not found"; else echo "Mode: " $(MODE) "Type: " $(TYPE); doxygen Doxyfile &> Doxy.log; echo Processing Doxygen output...; ./redox.sh; echo Running pdftex...; cd latex ; pdflatex --file-line-error --synctex=1 -interaction nonstopmode ./refman.tex &> ../docs.log; cd ..; echo "Docs built. See Doxy.log and docs.log for details"; fi
 

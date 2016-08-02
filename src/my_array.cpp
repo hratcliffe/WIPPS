@@ -124,7 +124,10 @@ my_array::~my_array(){
 }
 
 my_array::my_array(const my_array &src){
-  
+/** \brief Copy constructor
+*
+*Copy src to a new instance, making a duplicate of data \todo move constructor
+*/
   construct();
   if(!src.dims) return;
   //Stop if src has no dims
@@ -1010,6 +1013,10 @@ data_array::~data_array(){
 }
 
 data_array::data_array(const data_array &src) : my_array(src){
+/** \brief Copy constructor
+*
+*Copy src to a new instance, making a duplicate of data \todo move constructor
+*/
 
   construct();
   //Basic construction of additionals, not already called base class constructor entire

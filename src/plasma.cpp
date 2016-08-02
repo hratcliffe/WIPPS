@@ -138,8 +138,8 @@ mu plasma::get_root(calc_type th, calc_type w, calc_type psi, bool Righthand){
   /** \todo get or calc these...*/
   // FAKENUMBERS
   for(int i=0;i<ncomps; i++){
-    dndr[i] = 1.0;
-    dndth[i] = 1.0;
+    dndr[i] = 0.0;
+    dndth[i] = 0.0;
   }
   dB0dr = 1.0;
   dB0dth = 1.0;
@@ -279,14 +279,14 @@ mu plasma::get_root(calc_type th, calc_type w, calc_type psi, bool Righthand){
   last_th = th;
   last_w = w;
   last_psi = psi;
-  
+  /**< \todo is storing these helpful?*/
   return mu_ret;
 }
 
 calc_type plasma::get_phi(calc_type th, calc_type w, calc_type psi, calc_type alpha, int n, calc_type omega_n){
 /**Get's the Phi defined by Lyons 1974.
 *Will be clumsy for now, because each call recalls mu, and we need to sum over n in the end. And it duplicates the STIX params calcs
-*Also needs particle pitch angle alpha \todo Fix relativistic gamma...
+*Also needs particle pitch angle alpha \todo Fix relativistic gamma... \todo Do we need this??
  */
  
   calc_type wp[ncomps], wp2[ncomps], wc[ncomps];
@@ -746,6 +746,7 @@ Return empty vector if no valid solutions \todo Extend to general case?
   for(size_t i=0; i<ret_vec.size(); ++i) ret_vec[i] *= om_ref_ce;
   //restore factor
   for(size_t i=0; i<ret_vec.size(); ++i){
+  /** \todo Rather than remove, don't ever add*/
     if(std::abs(ret_vec[i]) > std::abs(wc)){
       ret_vec.erase(ret_vec.begin() + i);
       --i;

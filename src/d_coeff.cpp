@@ -23,7 +23,7 @@ diffusion_coeff::diffusion_coeff(int nx, int n_angs):data_array(nx, n_angs){
   n_thetas = 100;
   n_n = 10;
   tag = LOCAL;
-  // FAKENUMBERS
+  // FAKENUMBERS for testing
 }
 
 diffusion_coeff::~diffusion_coeff(){
@@ -53,13 +53,12 @@ bool diffusion_coeff::write_to_file(std::fstream &file){
   data_array::write_to_file(file);
   return 0;
 
-
 }
 
 void diffusion_coeff::make_velocity_axis(){
 /**\brief Set velocity axis
 *
-*Makes suitably binned velocity axis and copies into axes for dim [0]
+*Makes suitably binned velocity axis and copies into axes for dim [0] \todo is this done?
 */
 
   calc_type res = (V_MAX - V_MIN)/this->get_length(0);
@@ -72,7 +71,7 @@ void diffusion_coeff::make_velocity_axis(){
 void diffusion_coeff::make_pitch_axis(){
 /**\brief Set pitch angle axis (tan theta)
 *
-*Makes suitably binned axis and copies into axes for dim [1]
+*Makes suitably binned axis and copies into axes for dim [1] \todo is this done?
 */
 
   calc_type res = (ANG_MAX - ANG_MIN)/this->get_length(1); //To cover range from 0 to 2...
@@ -281,7 +280,6 @@ void diffusion_coeff::copy_ids( spectrum * src){
 /** Copies ID fields from src array to this*/
 
   strcpy(this->block_id, src->block_id);
-  
   std::copy(src->time, src->time + 2, this->time);
   for(int i=0; i < 2; ++i) this->space[i] = src->space[i];
 }

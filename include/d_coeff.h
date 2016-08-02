@@ -45,17 +45,17 @@ public:
   int latitude;/**< Latitude of calculation*/
   int wave_id;/**< ID of wave mode considered*/
   std::string tag; /**<Identifies as local, averaged etc*/
-  void set_ids(float time1, float time2, int space1, int space2, int wave_id, char block_id[10]);
+  void set_ids(float time1, float time2, int space1, int space2, int wave_id, char block_id[ID_SIZE]);
 
   bool write_to_file(std::fstream &file);
 
   void calculate();
   void make_velocity_axis();
   void make_pitch_axis();
-  /** \todo Write these eh*/
+
   int get_min_n(calc_type v_par, my_type k_thresh, calc_type om_ce);
   int get_max_n(calc_type v_par, my_type k_thresh, calc_type om_ce);
-  //Return min and max n worth exploring for largest k_par in range
+  
   void copy_ids(spectrum * spect);
 };
 

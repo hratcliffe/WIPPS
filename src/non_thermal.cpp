@@ -1,7 +1,7 @@
 
 
 //  Created by Heather Ratcliffe on 11/02/2016.
-/** Very small class to hold a non-thermal electron distribution we can operate on. Mainly contains routine to parse from deck.status assuming particular input deck format. Is it worth a class? Fuck it, who cares. */
+/** Very small class to hold a non-thermal electron distribution we can operate on. Mainly contains routine to parse from deck.status assuming particular input deck format.*/
 
 #include <stdio.h>
 #include <cmath>
@@ -16,7 +16,10 @@ extern const mpi_info_struc mpi_info;
 
 
 non_thermal::non_thermal(std::string file_prefix){
-
+/** \brief Construct non-thermal distrib
+*
+*Sets default params
+*/
   ref_dens = 1.0;
   ref_B = 1.0;
   fraction = 0.0;
@@ -38,7 +41,7 @@ non_thermal::~non_thermal(){
 bool non_thermal::configure_from_file(std::string file_prefix){
 /** \brief Setup non-thermal distribution from file
 *
-*Yes this is a duplicate of main's get_deck-constants with different names.
+*Reads a [prefix]deck.status file and parses out the neccessary parameters. Note that this depends on the specific deck format used to get the parameter names \todo Multithermal
 */
 
 
@@ -93,7 +96,10 @@ bool non_thermal::configure_from_file(std::string file_prefix){
 }
 
 void non_thermal::write(std::ofstream &outfile){
-//Tagged names so we can use as source for a redo...
+/**\brief Record non-thermal params
+*
+*Write params to file for e.g. log, or source for a redo
+*/
   outfile<<DENS<<" "<<ref_dens<<"\n";
   outfile<<"B_ref "<<ref_B<<"\n";
   outfile<<DENS_RAT<<" "<<fraction<<"\n";

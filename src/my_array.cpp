@@ -545,9 +545,13 @@ bool my_array::populate_complex_slice(my_type * dat_in, size_t n_dims_in, size_t
 
 
 bool my_array::write_to_file(std::fstream &file){
-/**Takes the version etc info then the whole data array and writes as a stream. It's not portable to other machines necessarily due to float sizes and endianness. It'll do. We'll start the file with a known float for confirmation.
-  *
-  *IMPORTANT: this VERSION specifier links output files to code. If modifying output or order commit and clean build before using. @return 0 (sucess) 1 (error) \todo Record sizeof size_t in output and remove casts \todo record size info so can fully reconstruct
+/** \brief Write array to file
+*
+*Writes array to file. Data is in a few blocks each starting with a number defining their end position in the file. The layout is:
+* Next_block sizeof(size_t) sizeof(my_type) io_verification_code Version string
+*Next_block n_dims dims[n_dims]
+*Next_block data
+  *IMPORTANT: this VERSION specifier links output files to code. If modifying output or order commit and clean build before using. @return 0 (sucess) 1 (error)
 */
   if(!file.is_open() || (this->data ==nullptr)) return 1;
 
@@ -578,7 +582,7 @@ bool my_array::write_to_file(std::fstream &file){
   file.write((char*) & n_dims_tmp, size_sz);
   size_t dim_tmp;
   for(size_t i=0;i<n_dims;i++){
-    dim_tmp = (int) dims[i];
+    dim_tmp = dims[i];
     file.write((char*) &dim_tmp, size_sz);
   }
 
@@ -599,10 +603,13 @@ bool my_array::write_to_file(std::fstream &file){
 }
 
 bool my_array::write_section_to_file(std::fstream &file, std::vector<size_t> bounds){
-/**Takes the version etc info then the section of the data array and writes as a stream. It's not portable to other machines necessarily due to float sizes and endianness. It'll do. We'll start the file with a known float for confirmation.
+/**\brief Write a subsection of array to file
+*
+*See write_to_file for format
+
   * We use lazy method of get_element for each element, less prone to offset errors and memory is already much faster than disk
   *
-  *IMPORTANT: this VERSION specifier links output files to code. If modifying output or order commit and clean build before using. @return 0 (sucess) 1 (error) \todo Probably need arb dims version... \todo Add section info
+  *IMPORTANT: this VERSION specifier links output files to code. If modifying output or order commit and clean build before using. @return 0 (sucess) 1 (error) \todo Probably need arb dims version...
 */
 
   if(!file.is_open() || (this->data ==nullptr)) return 1;
@@ -611,21 +618,44 @@ bool my_array::write_section_to_file(std::fstream &file, std::vector<size_t> bou
     if(bounds[2*i+1] > dims[i]) return 1;
   }
   
+  int size_sz = sizeof(size_t);
+  int my_sz = sizeof(my_type);
+  bool write_err = 0;
+  
+  size_t next_location = (size_t) file.tellg() + size_sz+ 2*sizeof(int)+my_sz + 15*sizeof(char);
+  
   const char tmp_vers[15] = VERSION;
-
-  file.write((char*) &io_verify, sizeof(my_type));
+  file.write((char*) & next_location, size_sz);
+  //Position of next section
+  file.write((char*) & size_sz, sizeof(int));
+  file.write((char*) & my_sz, sizeof(int));
+  file.write((char*) &io_verify, my_sz);
   file.write((char*) &tmp_vers, sizeof(char)*15);
-  //Code version...
+  //Sizeof ints and data, IO verification constant and Code version...
 
-  size_t total_size = get_total_elements();
+  if(file.tellg() != next_location) write_err=1;
+
+  size_t total_size = 1;
   //dimension info
-  int n_dims_tmp = (int) n_dims;
-  file.write((char*) &n_dims_tmp, sizeof(int));
-  int dim_tmp;
-  for(int i=0;i<n_dims;i++){
-    dim_tmp = (int) (bounds[i*2+1]-bounds[i*2]);
-    file.write((char*) &dim_tmp, sizeof(int));
+  next_location += size_sz*(n_dims+2);
+  file.write((char*) & next_location, size_sz);
+  //Position of next section
+  
+  size_t n_dims_tmp = n_dims;
+  file.write((char*) & n_dims_tmp, size_sz);
+
+  size_t dim_tmp;
+  for(size_t i=0;i<n_dims;i++){
+    dim_tmp = (bounds[i*2+1]-bounds[i*2]);
+    file.write((char*) &dim_tmp, size_sz);
+    total_size*=dim_tmp;
   }
+
+  if(file.tellg() != next_location) write_err=1;
+
+  next_location += my_sz*total_size + size_sz;
+  file.write((char*) & next_location, size_sz);
+  //Position of next section
 
   my_type element;
   if(n_dims ==1){
@@ -661,10 +691,14 @@ bool my_array::write_section_to_file(std::fstream &file, std::vector<size_t> bou
       }
     }
   }
+  
+  if(file.tellg() != next_location) write_err=1;
+
+  if(write_err) my_print("Error writing offset positions", mpi_info.rank);
+
   return 0;
 
 }
-
 
 bool my_array::read_from_file(std::fstream &file, bool no_version_check){
 /** \brief File read
@@ -1211,12 +1245,17 @@ void data_array::make_linear_axis(size_t dim, float res, size_t offset){
 }
 
 bool data_array::write_to_file(std::fstream &file){
+/** \brief Write data array to file
+*
+*First write the my_array section, see my_array::write_to_file then add the following
+* Next_block axes
+* Next_block Block_id
 
-/**IMPORTANT: the VERSION specifier links output files to code. If modifying output or order commit and clean build before using.
+IMPORTANT: the VERSION specifier links output files to code. If modifying output or order commit and clean build before using.
 */
 
   if(!file.is_open()) return 1;
-  bool write_err;
+  bool write_err=0;
 
   my_array::write_to_file(file);
   //call base class method to write that data.
@@ -1246,22 +1285,31 @@ bool data_array::write_to_file(std::fstream &file){
 bool data_array::write_section_to_file(std::fstream &file, std::vector<my_type> limits){
 /** \brief Print section of array to file
 *
-*Prints the section defined by the vector limits to supplied file. Limits should contain AXIS values. To use one dimension entire supply values less/greater than min and max axis values.
+*Prints the section defined by the vector limits to supplied file. Limits should contain AXIS values. To use one dimension entire supply values less/greater than min and max axis values. See data_array::write_to_file for format
 */
 
   if(!file.is_open()) return 1;
+  bool write_err = 0;
+
   if(limits.size() != 2*n_dims){
     my_print("Limits vector size does not match array!", mpi_info.rank);
     return 1;
   }
-  file.write(block_id, sizeof(char)*ID_SIZE);
 
   //Identify limits of segment from axes
   std::vector<size_t> index_limits = this->get_bounds(limits);
 
-
   my_array::write_section_to_file(file, index_limits);
   //call base class method to write that data.
+
+  size_t tot_ax = 0;
+  for(size_t i=0; i< n_dims; i++){
+    tot_ax +=(index_limits[2*i +1]-index_limits[2*i]);
+  }
+  
+  size_t next_location = (size_t) file.tellg() + sizeof(size_t) + tot_ax*sizeof(my_type);
+  file.write((char*) & next_location, sizeof(size_t));
+  //Position of next section
 
   size_t len;
   for(size_t i=0; i< n_dims; i++){
@@ -1269,6 +1317,16 @@ bool data_array::write_section_to_file(std::fstream &file, std::vector<my_type> 
 
   }
   //Add axes.
+
+  if(file.tellg() != next_location) write_err=1;
+
+  next_location += sizeof(char)*ID_SIZE + sizeof(size_t);
+  file.write((char*) & next_location, sizeof(size_t));
+  //Position of next section
+  file.write(block_id, sizeof(char)*ID_SIZE);
+
+  if(file.tellg() != next_location) write_err=1;
+  if(write_err) my_print("Error writing offset positions", mpi_info.rank);
 
   return 0;
 }

@@ -559,11 +559,9 @@ bool my_array::write_to_file(std::fstream &file){
   int my_sz = sizeof(my_type);
   bool write_err = 0;
   
-  size_t next_location = (size_t) file.tellg() + size_sz+ 2*sizeof(int)+my_sz + 15*sizeof(char);
+  size_t next_location = (size_t) file.tellg() + 2*sizeof(int)+my_sz + 15*sizeof(char);
   
   const char tmp_vers[15] = VERSION;
-  file.write((char*) & next_location, size_sz);
-  //Position of next section
   file.write((char*) & size_sz, sizeof(int));
   file.write((char*) & my_sz, sizeof(int));
   file.write((char*) &io_verify, my_sz);
@@ -622,11 +620,9 @@ bool my_array::write_section_to_file(std::fstream &file, std::vector<size_t> bou
   int my_sz = sizeof(my_type);
   bool write_err = 0;
   
-  size_t next_location = (size_t) file.tellg() + size_sz+ 2*sizeof(int)+my_sz + 15*sizeof(char);
+  size_t next_location = (size_t) file.tellg() + 2*sizeof(int)+my_sz + 15*sizeof(char);
   
   const char tmp_vers[15] = VERSION;
-  file.write((char*) & next_location, size_sz);
-  //Position of next section
   file.write((char*) & size_sz, sizeof(int));
   file.write((char*) & my_sz, sizeof(int));
   file.write((char*) &io_verify, my_sz);
@@ -1270,6 +1266,8 @@ IMPORTANT: the VERSION specifier links output files to code. If modifying output
   //Add axes.
   if(file.tellg() != next_location) write_err=1;
 
+  size_t hdr_start = next_location + sizeof(size_t);
+
   next_location += sizeof(char)*ID_SIZE + sizeof(size_t);
   file.write((char*) & next_location, sizeof(size_t));
   //Position of next section
@@ -1277,7 +1275,8 @@ IMPORTANT: the VERSION specifier links output files to code. If modifying output
 
   if(file.tellg() != next_location) write_err=1;
   if(write_err) my_print("Error writing offset positions", mpi_info.rank);
-
+  file.write((char*) & hdr_start, sizeof(size_t));
+  //Finish with position of start of footer!
   return 0;
 
 }
@@ -1320,13 +1319,16 @@ bool data_array::write_section_to_file(std::fstream &file, std::vector<my_type> 
 
   if(file.tellg() != next_location) write_err=1;
 
+  size_t hdr_start = next_location  + sizeof(size_t);
   next_location += sizeof(char)*ID_SIZE + sizeof(size_t);
   file.write((char*) & next_location, sizeof(size_t));
   //Position of next section
+  std::cout<<block_id<<'\n';
   file.write(block_id, sizeof(char)*ID_SIZE);
 
   if(file.tellg() != next_location) write_err=1;
   if(write_err) my_print("Error writing offset positions", mpi_info.rank);
+  file.write((char*) & hdr_start, sizeof(size_t));
 
   return 0;
 }
@@ -1406,8 +1408,7 @@ bool data_array::fft_me(data_array * data_out){
     }
   }
 
-  //data_out->copy_ids(this);
-  copy_ids(*data_out);
+  data_out->copy_ids(*this);
   size_t total_size=1; /* Total number of elements in array*/
   for(size_t i=0; i<n_dims;++i) total_size *= dims[i];
 

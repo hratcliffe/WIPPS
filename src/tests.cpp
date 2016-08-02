@@ -665,12 +665,12 @@ int test_entity_get_and_fft::run(){
  // err |=one_d();
 
   //strcpy(block_id, "ay");
- /* strcpy(block_id, "ax");
+  strcpy(block_id, "ax");
 
   if(test_rdr) delete test_rdr;
   test_rdr = new reader("./files/sinAcc", block_id);
   err|= two_d();
-*/
+
   test_bed->report_err(err);
   return err;
 
@@ -1792,6 +1792,7 @@ int test_entity_levelone::basic_tests(){
   int space_dim = space_in[1]-space_in[0];
 
   data_array dat = data_array(space_dim, n_tims);
+  strcpy(dat.block_id, block_id);
 
   if(!dat.is_good()){
     my_print("Data array allocation failed.", mpi_info.rank);
@@ -1879,7 +1880,9 @@ int test_entity_levelone::twod_tests(){
   int space_dim = space_in[1]-space_in[0];
 
   data_array dat = data_array(space_dim, dims_in[1], n_tims);
+  strcpy(dat.block_id, block_id);
 
+std::cout<<dat.block_id<<'\n';
   if(!dat.is_good()){
     my_print("Data array allocation failed.", mpi_info.rank);
     err |= TEST_ASSERT_FAIL;
@@ -1899,6 +1902,8 @@ int test_entity_levelone::twod_tests(){
     return TEST_FATAL_ERR;
   }
   err2 = dat.fft_me(dat_fft);
+std::cout<<dat.block_id<<'\n';
+std::cout<<dat_fft->block_id<<'\n';
 
   test_bed->report_info("FFT returned err_state " + mk_str(err2));
 

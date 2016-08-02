@@ -24,7 +24,7 @@
 #include <math.h>
 #include <boost/math/special_functions.hpp>
 //Provides Bessel functions, erf, and many more
-
+/** \todo Deliberately failing tests to check not doing nothing*/
 
 extern tests * test_bed; /**< Global testbed, define somewhere in your code*/
 
@@ -78,8 +78,8 @@ void tests::setup_tests(){
   add_test(test_obj);
   test_obj = new test_entity_spectrum();
   add_test(test_obj);
-  test_obj = new test_entity_levelone();
-  add_test(test_obj);
+ // test_obj = new test_entity_levelone();
+  //add_test(test_obj);
 
 }
 
@@ -372,6 +372,8 @@ int test_entity_data_array::run(){
   err |= technical_tests();
   if(test_bed->check_for_abort(err)) return err;
   err |= three_d_and_shift();
+  if(test_bed->check_for_abort(err)) return err;
+  err |= io_tests();
   test_bed->report_err(err);
   return err;
 }
@@ -636,6 +638,49 @@ int test_entity_data_array::technical_tests(){
 
   return err;
 
+}
+
+int test_entity_data_array::io_tests(){
+
+  test_bed->report_info("Checking file io", 1);
+  int err = TEST_PASSED;
+  bool err2=false;
+  std::string filename = "./files/test_file.dat";
+  std::fstream file;
+  file.open(filename.c_str(),std::ios::out|std::ios::binary);
+  if(file.is_open()){
+    err2=test_array.write_to_file(file);
+  }
+  file.close();
+  if(err2) test_bed->report_info("Error writing testfile", 1);
+  
+  data_array new_array = test_array;
+  file.open(filename.c_str(),std::ios::in|std::ios::binary);
+  err2=new_array.read_from_file(file);
+  if(err2) test_bed->report_info("Error reading testfile", 1);
+  file.close();
+  
+  if(err2) err|=TEST_ASSERT_FAIL;
+  
+  bool tmp_err;
+  //Now check we match read and write
+  for(int i=0; i<test_array.get_dims(0); i++){
+    for(int j =0; j<test_array.get_dims(1); j++){
+      for(int k =0; k<test_array.get_dims(2); k++){
+        tmp_err=(test_array.get_element(i, j, k) != new_array.get_element(i, j, k));
+        if(tmp_err) err |= TEST_ASSERT_FAIL;
+      }
+    }
+  }
+  for(int i=0; i<test_array.get_dims(); i++){
+    for(int j=0; j< test_array.get_dims(i); j++){
+      tmp_err=(test_array.get_axis_element(i, j) != new_array.get_axis_element(i, j));
+      if(tmp_err) err |= TEST_ASSERT_FAIL;
+
+    }
+  }
+
+  return err;
 }
 
 test_entity_get_and_fft::test_entity_get_and_fft(){
@@ -1503,7 +1548,7 @@ int test_entity_spectrum::setup(){
 int test_entity_spectrum::basic_tests(){
 /** \brief Basic tests of spectrum
 *
-* Read in data, derive spectrum, test against correct result, omitting very low frequencies. \todo The angles are integrating to 0.5 not 1. Which do we want????
+* Read in data, derive spectrum, test against correct result, omitting very low frequencies. \todo The angles are integrating to 0.5 not 1. Which do we want???? \todo How the hell does this work with updated reader code?
 */
   int err = TEST_PASSED;
 
@@ -1882,7 +1927,6 @@ int test_entity_levelone::twod_tests(){
   data_array dat = data_array(space_dim, dims_in[1], n_tims);
   strcpy(dat.block_id, block_id);
 
-std::cout<<dat.block_id<<'\n';
   if(!dat.is_good()){
     my_print("Data array allocation failed.", mpi_info.rank);
     err |= TEST_ASSERT_FAIL;
@@ -1902,8 +1946,6 @@ std::cout<<dat.block_id<<'\n';
     return TEST_FATAL_ERR;
   }
   err2 = dat.fft_me(dat_fft);
-std::cout<<dat.block_id<<'\n';
-std::cout<<dat_fft->block_id<<'\n';
 
   test_bed->report_info("FFT returned err_state " + mk_str(err2));
 

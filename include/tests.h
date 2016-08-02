@@ -119,6 +119,7 @@ class test_entity_data_array : public test_entity{
     int basic_tests();
     int assign();
     int three_d_and_shift();
+    int io_tests();
   public:
     test_entity_data_array();
     virtual ~test_entity_data_array();

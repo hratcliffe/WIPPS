@@ -31,7 +31,7 @@ tmp = FSTAT(filenum)
 POINT_LUN, filenum, start_pos
 id_type ='1234567891'
 id_in = id_type
-;type for block_izes and block id...
+;type for block id...
 
 readu, filenum, id_in
 

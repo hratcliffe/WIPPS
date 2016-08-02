@@ -697,43 +697,64 @@ bool my_array::write_section_to_file(std::fstream &file, std::vector<size_t> bou
 }
 
 bool my_array::read_from_file(std::fstream &file, bool no_version_check){
-/** \brief File read
+/** \brief Read array dump file
 *
-*Reads block id, data and axes from a file. Requires the dimensions of array to be already setup and will check for consistency with those in file \todo Probably need arb dims version... fread? \todo Update
-*/
+*Reads block id, data and axes from a file. Requires the dimensions of array to be already setup and will check for consistency with those in file
 
+*/
+/** sizeof(size_t) sizeof(my_type) io_verification_code Version string
+*Next_block n_dims dims[n_dims]
+*Next_block data
+*/
   char tmp_vers[15];
   my_type verf=0.0;
 
-  int n_dims_in, dim_tmp;
+  size_t n_dims_in, dim_tmp, next_block;
+  int size_sz=0, my_sz=0;
+  file.read((char*) &size_sz, sizeof(int));
+  file.read((char*) &my_sz, sizeof(int));
 
+  if(size_sz !=sizeof(size_t)) my_print("size_t size does not match file", mpi_info.rank);
+  if(my_sz !=sizeof(my_type)) my_print("my_type size does not match file", mpi_info.rank);
+  if(my_sz !=sizeof(my_type) ||size_sz !=sizeof(size_t)) return 1;
+  
   file.read((char*) &verf, sizeof(my_type));
   file.read((char*) &tmp_vers, sizeof(char)*15);
 
   if(verf != io_verify){
   //equality even though floats as should be identical
-    my_print("Bugger, file read error", mpi_info.rank);
-    if(tmp_vers !=VERSION && strcmp(tmp_vers, "IDL data write")!= 0 ) my_print("Incompatible code versions", mpi_info.rank);
+    my_print("File read error", mpi_info.rank);
+    if(strcmp(tmp_vers, VERSION) !=0 && strcmp(tmp_vers, "IDL data write")!= 0 ) my_print("Incompatible code versions", mpi_info.rank);
     return 1;
   }else{
-    if(!no_version_check && tmp_vers !=VERSION) my_print("WARNING: A different code version was used to write this data. Proceed with caution. Fields may not align correctly.", mpi_info.rank);
+    if(!no_version_check && strcmp(tmp_vers, VERSION) !=0){
+       my_print("WARNING: A different code version was used to write this data. Proceed with caution. Fields may not align correctly.", mpi_info.rank);
+      std::string tmp = tmp_vers;
+      my_print(tmp, mpi_info.rank);
+      tmp = VERSION;
+      my_print(tmp, mpi_info.rank);
+    }
   }
 
-  file.read((char*) &n_dims_in, sizeof(int));
+  file.read((char*) &next_block, sizeof(size_t));
+
+  file.read((char*) &n_dims_in, sizeof(size_t));
   if(n_dims_in !=n_dims){
     my_print("Dimensions do not match, aborting read", mpi_info.rank);
     return 1;
   }
-  int tot_els =1;
-  for(int i=0;i<n_dims_in;i++){
-    file.read((char*) &dim_tmp, sizeof(int));
+  size_t tot_els =1;
+  for(size_t i=0;i<n_dims_in;i++){
+    file.read((char*) &dim_tmp, sizeof(size_t));
     if(dim_tmp !=dims[i]){
       my_print("Dimensions do not match, aborting read", mpi_info.rank);
       return 1;
     }
-    tot_els *= dims[i];
+    tot_els *= dim_tmp;
+    //Check dims
   }
-  
+  file.read((char*) &next_block, sizeof(size_t));
+
   file.read((char *) data , sizeof(my_type)*tot_els);
 
   return 0;
@@ -1245,7 +1266,7 @@ bool data_array::write_to_file(std::fstream &file){
 *
 *First write the my_array section, see my_array::write_to_file then add the following
 * Next_block axes
-* Next_block Block_id
+* Next_block Block_id Prev_block
 
 IMPORTANT: the VERSION specifier links output files to code. If modifying output or order commit and clean build before using.
 */
@@ -1362,26 +1383,43 @@ std::vector<size_t> data_array::get_bounds(std::vector<my_type> limits){
 }
 
 bool data_array::read_from_file(std::fstream &file, bool no_version_check){
-/** \brief Test file read
+/** \brief Read data array file dump
 *
-*Spams stuff to screen to check read/write
+*Read a file into a pre-sized data array See also data_array::data_array(std::string filename, bool no_version_check);
+*/
+/*
+*First write the my_array section, see my_array::write_to_file then add the following
+* Next_block axes
+* Next_block Block_id Prev_block
 */
 
   bool err;
-  //First read the block ID
-  char id_in[ID_SIZE];
 
-  file.read(id_in, sizeof(char)*ID_SIZE);
-  strcpy(this->block_id, id_in);
-
-  if(file.good())err=my_array::read_from_file(file, no_version_check);
+  if(file.good()) err=my_array::read_from_file(file, no_version_check);
   else my_print("Read error!", mpi_info.rank);
+  if(err){
+    my_print("File read failed", mpi_info.rank);
+    return err;
+  }
   //call parent class to read data, checking we read id ok first
 
-  size_t tot_els = get_total_elements();
+  size_t next_block=0, end_block=0;
+  file.read((char*) &next_block, sizeof(size_t));
+
+  size_t tot_els = get_total_axis_elements();
 
   if(!err) file.read((char *) this->axes , sizeof(my_type)*(tot_els));
   //If we managed to get dims etc, continue on to get axes
+
+  file.read((char*) &next_block, sizeof(size_t));
+
+  file.seekg(-1*sizeof(size_t), file.end);
+  file.read((char*) &end_block, sizeof(size_t));
+  //First read the block ID
+  char id_in[ID_SIZE];
+  file.seekg(end_block);
+  if(file) file.read(id_in, sizeof(char)*ID_SIZE);
+  strcpy(this->block_id, id_in);
 
   return err;
 

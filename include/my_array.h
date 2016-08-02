@@ -111,7 +111,7 @@ public:
   data_array(size_t nx, size_t ny=0, size_t nz=0, size_t nt=0);
   data_array(const data_array &src);
   data_array & operator=(const data_array& src);
-  data_array(std::string filename, bool no_version_check = 0);
+  data_array(std::string filename, bool no_version_check = false);
   data_array(size_t n_dims, size_t * dims);
   virtual ~data_array();
 

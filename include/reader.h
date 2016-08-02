@@ -42,7 +42,7 @@ public:
 
   bool read_dims(int &n_dims, std::vector<int> &dims);
 
-  int read_data(data_array * my_data_in, int time_range[3], int space_range[2]);
+  int read_data(data_array & my_data_in, int time_range[3], int space_range[2]);
   bool current_block_is_accum();
   int get_file_size();
   

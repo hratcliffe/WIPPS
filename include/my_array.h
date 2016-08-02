@@ -46,7 +46,8 @@ public:
   my_array(size_t n_dims, size_t * dims);
   virtual ~my_array();
   my_array(const my_array &src);
-  virtual bool is_good(){return !defined;}/**< Check memory allocation etc worked*/
+  my_array & operator=(const my_array& src);
+  virtual bool is_good()const {return !defined;}/**< Check memory allocation etc worked*/
 
   size_t get_dims();
   size_t get_dims(size_t dim);
@@ -97,7 +98,7 @@ protected:
   long get_axis_index(size_t dim, size_t pt);
 
   std::vector<size_t> get_bounds(std::vector<my_type> limits);
-  void copy_ids( data_array * src);
+  void copy_ids( const data_array & src);
 
 
 public:
@@ -106,8 +107,10 @@ public:
 
   float time[2];/**< Time range over which data are taken*/
   size_t space[2];/**< Space range over which data are taken*/
+  data_array();
   data_array(size_t nx, size_t ny=0, size_t nz=0, size_t nt=0);
   data_array(const data_array &src);
+  data_array & operator=(const data_array& src);
   data_array(std::string filename, bool no_version_check = 0);
   data_array(size_t n_dims, size_t * dims);
   virtual ~data_array();
@@ -126,7 +129,7 @@ public:
   
   bool fft_me(data_array * data_out);
   bool populate_mirror_fastest(my_type * result_in, size_t total_els);
-  bool check_ids(data_array * src);
+  bool check_ids(const data_array & src);
   virtual bool resize(size_t dim, size_t sz);
   virtual bool shift(size_t dim, long n_els, bool axis=1);
 

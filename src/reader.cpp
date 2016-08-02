@@ -53,7 +53,7 @@ Default and minimum is 4 or the length of first as a string, tries 5-7 also.
 bool reader::read_dims(int &n_dims, std::vector<int> &dims){
 /** \brief Gets dimensions of the block specified in reader.
 *
-*Opens reference file, and gets dimension info. Returns by reference, with 0 for success, 1 for file open or read failure. Note we don't have to read the data, only the block list.
+*Opens reference file, and gets dimension info. Returns by reference, with 0 for success, 1 for file open or read failure. Note we don't have to read the data, only the block list. \todo int or size_t
 
 */
 
@@ -94,17 +94,17 @@ bool reader::read_dims(int &n_dims, std::vector<int> &dims){
   return 0;
 }
 
-int reader::read_data(data_array * my_data_in, int time_range[3], int space_range[2]){
+int reader::read_data(data_array &my_data_in, int time_range[3], int space_range[2]){
 /** \brief Read data into given array
 *
-*This will open the files dictated by time range sequentially, and populate them into the data_array. It'll stop when the end of range is reached, or it goes beyond the size available. Space range upper entry of -1 is taken as respective limit. @return 0 for success, 1 for error 2 for unusual exit, i.e. early termination NB: blocking is only supported on the X axis.
+*This will open the files dictated by time range sequentially, and populate them into the data_array. It'll stop when the end of range is reached, or it goes beyond the size available. Space range upper entry of -1 is taken as respective limit. NB: blocking is only supported on the X axis. @return 0 for success, 1 for error 2 for unusual exit, i.e. early termination
 */
   
-  if(!my_data_in->is_good()){
+  if(!my_data_in.is_good()){
     my_print("Cannot read into invalid array", mpi_info.rank);
     return 1;
   }
-  strcpy(my_data_in->block_id, block_id);
+  strcpy(my_data_in.block_id, block_id);
   //set block id
 
   //Now we start from time_range[0] and run through files to time_range[1], or until file not found.
@@ -136,8 +136,8 @@ int reader::read_data(data_array * my_data_in, int time_range[3], int space_rang
     my_print("Wrong data type detected. Grids will be corrupt", mpi_info.rank);
   }
 
-  for(int i=0; i< my_data_in->get_dims()-1; i++){
-    ax_ptr = my_data_in->get_axis(i, len);
+  for(int i=0; i< my_data_in.get_dims()-1; i++){
+    ax_ptr = my_data_in.get_axis(i, len);
 
     // Mostly c++ way
     std::copy((my_type *) block->grids[i], (my_type *) block->grids[i] + len, ax_ptr);
@@ -148,12 +148,12 @@ int reader::read_data(data_array * my_data_in, int time_range[3], int space_rang
   int source_advance = 1;
   //Simple slices are those where we're slicing only the last spatial dimension. For what we have here, that means 1 space dim or more than one and no slicing. We have no mechanism to slice y etc, only x.
   //Grid dimensions are for staggered grid for subtract 1
-  if(my_data_in->get_dims() ==2 || block->dims[0]-1 == space_range[1]-space_range[0]){
+  if(my_data_in.get_dims() ==2 || block->dims[0]-1 == space_range[1]-space_range[0]){
     simple_slice = true;
   }else{
-    source_sizes = (size_t *) malloc((my_data_in->get_dims()-1)*sizeof(size_t));
+    source_sizes = (size_t *) malloc((my_data_in.get_dims()-1)*sizeof(size_t));
     
-    for(int i=0; i< my_data_in->get_dims()-1; i++){
+    for(int i=0; i< my_data_in.get_dims()-1; i++){
       source_sizes[i] = block->dims[i]-1;
       source_advance*=source_sizes[i];
     }
@@ -162,7 +162,7 @@ int reader::read_data(data_array * my_data_in, int time_range[3], int space_rang
 
   sdf_close(handle);
 
-  ax_ptr = my_data_in->get_axis(my_data_in->get_dims()-1, len);
+  ax_ptr = my_data_in.get_axis(my_data_in.get_dims()-1, len);
   //pointer to last axis, which will be time
   bool accumulated = is_accum(block_id);
   int i;
@@ -172,10 +172,10 @@ int reader::read_data(data_array * my_data_in, int time_range[3], int space_rang
   if(report_interval < 1) report_interval = 1;
     //Say we want to report 10 times over the list, or every 20th file if  more than 200.
 
-  my_data_in->time[0] = time_range[0];
-  my_data_in->time[1] = time_range[1];
-  my_data_in->space[0] = space_range[0];
-  my_data_in->space[1] = space_range[1];
+  my_data_in.time[0] = time_range[0];
+  my_data_in.time[1] = time_range[1];
+  my_data_in.space[0] = space_range[0];
+  my_data_in.space[1] = space_range[1];
   
 
   int rows=0;
@@ -213,13 +213,13 @@ int reader::read_data(data_array * my_data_in, int time_range[3], int space_rang
       if(simple_slice){
         size_t val[1];
         val[0] = i-time_range[0];
-        my_data_in->populate_slice(my_ptr, 1, val);
+        my_data_in.populate_slice(my_ptr, 1, val);
 
   //      my_data_in->populate_row(my_ptr, space_range[1], i-time_range[0]);
       }else{
         size_t val[1];
         val[0] = i-time_range[0];
-        my_data_in->populate_complex_slice(my_ptr, 1, val, source_sizes);
+        my_data_in.populate_complex_slice(my_ptr, 1, val, source_sizes);
 //        my_data_in->populate_row(my_ptr, space_range[1], i-time_range[0]);
       
       }
@@ -242,7 +242,7 @@ int reader::read_data(data_array * my_data_in, int time_range[3], int space_rang
         for(int j=0; j<rows; j++){
           //my_data_in->populate_row(my_ptr, space_range[1], total_reads+j);
           val[0] = total_reads+j;
-          my_data_in->populate_slice(my_ptr, 1, val);
+          my_data_in.populate_slice(my_ptr, 1, val);
 
           my_ptr += block->dims[0];
         }
@@ -252,7 +252,7 @@ int reader::read_data(data_array * my_data_in, int time_range[3], int space_rang
         for(int j=0; j<rows; j++){
           //my_data_in->populate_row(my_ptr, space_range[1], total_reads+j);
           val[0] = total_reads+j;
-          my_data_in->populate_complex_slice(my_ptr, 1, val, source_sizes);
+          my_data_in.populate_complex_slice(my_ptr, 1, val, source_sizes);
 
           my_ptr += block->dims[0];
         }
@@ -267,7 +267,7 @@ int reader::read_data(data_array * my_data_in, int time_range[3], int space_rang
 
   //report if we broke out of loop and print filename
   if(i < time_range[1]){
-    my_data_in->resize(1, total_reads);
+    my_data_in.resize(1, total_reads);
     //trim array to number of lines read... NB 2-D ONLY
     if(!accumulated) my_print("Read stopped by error at file "+file_name, mpi_info.rank);
     else my_print("Read "+mk_str(total_reads)+" rows", mpi_info.rank);

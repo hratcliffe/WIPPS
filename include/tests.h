@@ -15,6 +15,8 @@
 #include <iostream>
 #include <vector>
 #include "support.h"
+#include "my_array.h"
+
 
 /*
 check 2011 paper for whistler mode tests
@@ -41,7 +43,6 @@ const int max_verbos = 4;
 const std::string filename = "tests.log";/**<Test log file*/
 
 class reader;
-class data_array;
 class plasma;
 class controller;
 
@@ -113,7 +114,7 @@ class test_entity_reader : public test_entity{
 /** Test for data array class, assigns values to entry and reads back*/
 class test_entity_data_array : public test_entity{
   private:
-    data_array * test_array;
+    data_array test_array;
     int technical_tests();
     int basic_tests();
     int assign();
@@ -129,8 +130,8 @@ class test_entity_data_array : public test_entity{
 */
 class test_entity_get_and_fft : public test_entity{
   private:
-    data_array * test_dat;
-    data_array * test_dat_fft;
+    data_array test_dat;
+    data_array test_dat_fft;
     reader * test_rdr;
     int one_d();
     int two_d();

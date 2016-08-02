@@ -42,7 +42,7 @@ tests* test_bed;/**<Test bed for testing */
 
 int main(int argc, char *argv[]){
 /**
-*In theory, these classes and functions should be named well enough that the function here is largely clear. Remains to be seen, eh?
+*In theory, these classes and functions should be named well enough that the function here is largely clear. Remains to be seen, eh? \todo Main that starts from FFT or spectrum files
 *
 */
 
@@ -124,9 +124,9 @@ int main(int argc, char *argv[]){
     MPI_Barrier(MPI_COMM_WORLD);
     //--------------THIS will slightly slow down some cores to match the slowest. But it makes output easier. Consider removing if many blocks
 
-    data_array  * dat = new data_array(space_dim, n_tims);
+    data_array  dat = data_array(space_dim, n_tims);
 
-    if(!dat->is_good()){
+    if(!dat.is_good()){
       my_print("Data array allocation failed. Aborting.", mpi_info.rank);
       return 0;
     }
@@ -134,7 +134,7 @@ int main(int argc, char *argv[]){
     err = my_reader->read_data(dat, cmd_line_args.time, my_space);
     if(err == 1) safe_exit();
 
-    if(err == 2) n_tims = dat->get_dims(1);
+    if(err == 2) n_tims = dat.get_dims(1);
     //Check if we had to truncate data array...
     data_array * dat_fft = new data_array(space_dim, n_tims);
 
@@ -143,7 +143,7 @@ int main(int argc, char *argv[]){
       return 0;
     }
 
-    err = dat->fft_me(dat_fft);
+    err = dat.fft_me(dat_fft);
     
     if(mpi_info.rank ==0) MPI_Reduce(MPI_IN_PLACE, &err, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
     else MPI_Reduce(&err, NULL, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
@@ -162,10 +162,17 @@ int main(int argc, char *argv[]){
     contr->add_d(cmd_line_args.d[0], cmd_line_args.d[1]);
     contr->get_current_d()->calculate();
 
-    delete dat;
+//    delete dat;
     delete dat_fft;
 
   }
+  
+  if(false){
+  //this will be the process starting from a spectrum file
+  
+  
+  }
+  
   //-----------------end of per_proc loop---- Now controller holds one spectrum and d per block
   MPI_Barrier(MPI_COMM_WORLD);
   

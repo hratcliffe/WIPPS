@@ -39,7 +39,7 @@ void spectrum::construct(){
 spectrum::spectrum(int * row_lengths, int ny){
 /** \brief Construct spectrum
 *
-*Constructs a spectrum with two independent seperable functions of omega and angle. Spectra are always in the form B^2(omega) g(theta, omega). Here g(theta, omega) = g(theta).
+*Constructs a spectrum with two independent seperable functions of omega and angle. Spectra are always in the form B^2(omega) g(theta, omega). Here g(theta, omega) = g(theta). \todo why not just take 2 ints
 */
   construct();
   this->B_omega_array = new data_array(row_lengths[0]);
@@ -98,7 +98,7 @@ spectrum::~spectrum(){
 bool spectrum::generate_spectrum(data_array * parent, int om_fuzz, int angle_type){
 /**\brief Generate spectrum from data
 *
-*Takes a parent data array and uses the specified ids to generate a spectrum. Windows using the specified wave dispersion and integrates over frequency. Also adopts axes from parent. \todo Ensure !angle_is_function forces all other rows to be equal length... \todo Fill in the rest of logic etc @param parent Data array to read from @param om_fuzz Band width around dispersion curve in percent of central frequency \todo omega vs k, is there some normalising to do?
+*Takes a parent data array and uses the specified ids to generate a spectrum. Windows using the specified wave dispersion and integrates over frequency. Also adopts axes from parent. \todo Ensure !angle_is_function forces all other rows to be equal length... \todo Fill in the rest of logic etc @param parent Data array to read from @param om_fuzz Band width around dispersion curve in percent of central frequency \todo omega vs k, is there some normalising to do? \todo Make parent const ref
 */
 
   if(!g_angle_array->is_good() || !B_omega_array->is_good()){

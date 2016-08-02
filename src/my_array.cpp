@@ -64,7 +64,7 @@ void my_array::alloc_all(const size_t n_dims, const size_t * const dims){
   this->n_dims =n_dims;
   this->dims = (size_t*)malloc(n_dims*sizeof(size_t));
   if(dims){
-  //If allocation succeeds, we can copy in data and allocate data array, else stop
+  //If allocation succeeds, we can copy in dims data and allocate data array, else stop
     std::copy(dims, dims+n_dims, this->dims);
     data=(my_type*)calloc(tot_dims,sizeof(my_type));
   }
@@ -119,8 +119,28 @@ my_array::~my_array(){
 *
 */
   if(data) free(data);
-  data = NULL; // technically unnecessary as desctructor deletes memebers. 
+  data=nullptr;
   if(dims) free(dims);
+  dims=nullptr;
+
+}
+
+my_array & my_array::operator=(const my_array& src){
+  
+  if(this->data) free(data);
+  this->construct();
+  if(!src.dims || src.n_dims==0) return *this;
+  //No copy if src is zero
+  
+  alloc_all(src.n_dims, src.dims);
+  if(data && dims){
+    defined = true;
+  }
+  size_t tot_els = this->get_total_elements();
+  if(this->data && src.data) std::copy(src.data, src.data + tot_els, this->data);
+
+  return *this;
+
 }
 
 my_array::my_array(const my_array &src){
@@ -129,7 +149,7 @@ my_array::my_array(const my_array &src){
 *Copy src to a new instance, making a duplicate of data \todo move constructor
 */
   construct();
-  if(!src.dims) return;
+  if(!src.dims || src.n_dims==0) return;
   //Stop if src has no dims
   
   alloc_all(src.n_dims, src.dims);
@@ -137,7 +157,7 @@ my_array::my_array(const my_array &src){
     defined = true;
   }
   size_t tot_els = this->get_total_elements();
-  if(this->data && src.data) std::copy(src.data, src.data + tot_els, this->data);
+  if(this->data && src.is_good()) std::copy(src.data, src.data + tot_els, this->data);
 
 }
 
@@ -527,26 +547,52 @@ bool my_array::populate_complex_slice(my_type * dat_in, size_t n_dims_in, size_t
 bool my_array::write_to_file(std::fstream &file){
 /**Takes the version etc info then the whole data array and writes as a stream. It's not portable to other machines necessarily due to float sizes and endianness. It'll do. We'll start the file with a known float for confirmation.
   *
-  *IMPORTANT: this VERSION specifier links output files to code. If modifying output or order commit and clean build before using. @return 0 (sucess) 1 (error) \todo Record sizeof size_t in output and remove casts
+  *IMPORTANT: this VERSION specifier links output files to code. If modifying output or order commit and clean build before using. @return 0 (sucess) 1 (error) \todo Record sizeof size_t in output and remove casts \todo record size info so can fully reconstruct
 */
   if(!file.is_open() || (this->data ==nullptr)) return 1;
+
+  int size_sz = sizeof(size_t);
+  int my_sz = sizeof(my_type);
+  bool write_err = 0;
+  
+  size_t next_location = (size_t) file.tellg() + size_sz+ 2*sizeof(int)+my_sz + 15*sizeof(char);
+  
   const char tmp_vers[15] = VERSION;
-
-  file.write((char*) &io_verify, sizeof(my_type));
+  file.write((char*) & next_location, size_sz);
+  //Position of next section
+  file.write((char*) & size_sz, sizeof(int));
+  file.write((char*) & my_sz, sizeof(int));
+  file.write((char*) &io_verify, my_sz);
   file.write((char*) &tmp_vers, sizeof(char)*15);
+  //Sizeof ints and data, IO verification constant and Code version...
 
-  //Code version...
-
+  if(file.tellg() != next_location) write_err=1;
+  
   size_t total_size = get_total_elements();
   //dimension info
-  int n_dims_tmp = (int) n_dims;
-  file.write((char*) & n_dims_tmp, sizeof(int));
-  int dim_tmp;
+  next_location += size_sz*(n_dims+2);
+  file.write((char*) & next_location, size_sz);
+  //Position of next section
+  
+  size_t n_dims_tmp = n_dims;
+  file.write((char*) & n_dims_tmp, size_sz);
+  size_t dim_tmp;
   for(size_t i=0;i<n_dims;i++){
     dim_tmp = (int) dims[i];
-    file.write((char*) &dim_tmp, sizeof(int));
+    file.write((char*) &dim_tmp, size_sz);
   }
-  file.write((char *) data , sizeof(my_type)*total_size);
+
+  if(file.tellg() != next_location) write_err=1;
+
+  next_location += my_sz*total_size + size_sz;
+  file.write((char*) & next_location, size_sz);
+  //Position of next section
+
+  file.write((char *) data , my_sz*total_size);
+
+  if(file.tellg() != next_location) write_err=1;
+
+  if(write_err) my_print("Error writing offset positions", mpi_info.rank);
 
   return 0;
 
@@ -556,7 +602,7 @@ bool my_array::write_section_to_file(std::fstream &file, std::vector<size_t> bou
 /**Takes the version etc info then the section of the data array and writes as a stream. It's not portable to other machines necessarily due to float sizes and endianness. It'll do. We'll start the file with a known float for confirmation.
   * We use lazy method of get_element for each element, less prone to offset errors and memory is already much faster than disk
   *
-  *IMPORTANT: this VERSION specifier links output files to code. If modifying output or order commit and clean build before using. @return 0 (sucess) 1 (error) \todo Probably need arb dims version... Hell, we can copy and resize if we want! 
+  *IMPORTANT: this VERSION specifier links output files to code. If modifying output or order commit and clean build before using. @return 0 (sucess) 1 (error) \todo Probably need arb dims version... \todo Add section info
 */
 
   if(!file.is_open() || (this->data ==nullptr)) return 1;
@@ -580,6 +626,7 @@ bool my_array::write_section_to_file(std::fstream &file, std::vector<size_t> bou
     dim_tmp = (int) (bounds[i*2+1]-bounds[i*2]);
     file.write((char*) &dim_tmp, sizeof(int));
   }
+
   my_type element;
   if(n_dims ==1){
     for(size_t i= bounds[0]; i< bounds[1]; i++){
@@ -622,7 +669,7 @@ bool my_array::write_section_to_file(std::fstream &file, std::vector<size_t> bou
 bool my_array::read_from_file(std::fstream &file, bool no_version_check){
 /** \brief File read
 *
-*Reads block id, data and axes from a file. Requires the dimensions of array to be already setup and will check for consistency with those in file \todo Probably need arb dims version... Hell, we can copy and resize if we want! \todo Copy or move constructor...
+*Reads block id, data and axes from a file. Requires the dimensions of array to be already setup and will check for consistency with those in file \todo Probably need arb dims version... fread? \todo Update
 */
 
   char tmp_vers[15];
@@ -918,9 +965,12 @@ void data_array::alloc_ax(const size_t els){
   }
 }
 
-data_array::data_array(size_t nx, size_t ny, size_t nz, size_t nt) : my_array(nx,ny, nz, nt){
-/**Adds axes to a normal rectangular my array*/
+data_array::data_array() : my_array(){
+  construct();
+}
 
+data_array::data_array(size_t nx, size_t ny, size_t nz, size_t nt) : my_array(nx, ny, nz, nt){
+/**Adds axes to a normal rectangular my array*/
   construct();
   size_t els= this->get_total_axis_elements();
   //by now this is setup to work
@@ -940,7 +990,7 @@ data_array::data_array(size_t n_dims, size_t * dims) : my_array(n_dims, dims){
 data_array::data_array(std::string filename, bool no_version_check){
 /**\brief Create data array from file
 *
-* Create a data array by reading from the named file. If the file does not exist no memory is allocated. Otherwise it reads the dimensions and sets itself up accordingly
+* Create a data array by reading from the named file. If the file does not exist no memory is allocated. Otherwise it reads the dimensions and sets itself up accordingly \todo Update format
 */
 
   std::fstream infile;
@@ -1007,9 +1057,24 @@ data_array::data_array(std::string filename, bool no_version_check){
 
 data_array::~data_array(){
 /**Similarly destructor automatically calls destructor for my_array and frees axes*/
-
   if(axes) free(axes);
   axes = nullptr; // technically unnecessary as desctructor deletes members.
+}
+
+data_array & data_array::operator=(const data_array& src){
+  
+  my_array::operator=(std::move(src));
+  if(this->axes) free(axes);
+  this->construct();
+
+  size_t els= this->get_total_axis_elements();
+  alloc_ax(els);
+  //Allocate axis memory
+  if(axes) std::copy(src.axes, src.axes+els, this->axes);
+  //Copy axes
+  copy_ids(src);
+  return *this;
+
 }
 
 data_array::data_array(const data_array &src) : my_array(src){
@@ -1017,14 +1082,14 @@ data_array::data_array(const data_array &src) : my_array(src){
 *
 *Copy src to a new instance, making a duplicate of data \todo move constructor
 */
-
   construct();
-  //Basic construction of additionals, not already called base class constructor entire
+  //Basic construction of additionals, already called base class copy constructor
   size_t els= this->get_total_axis_elements();
   alloc_ax(els);
   //Allocate axis memory
   if(axes) std::copy(src.axes, src.axes+els, this->axes);
-  //Copy data
+  //Copy axes
+  copy_ids(src);
 }
 
 my_type * data_array::get_axis(size_t dim, size_t & length){
@@ -1151,13 +1216,28 @@ bool data_array::write_to_file(std::fstream &file){
 */
 
   if(!file.is_open()) return 1;
-  file.write(block_id, sizeof(char)*ID_SIZE);
+  bool write_err;
 
   my_array::write_to_file(file);
   //call base class method to write that data.
 
-  file.write((char *) axes , sizeof(my_type)*(get_total_axis_elements()));
+  size_t tot_ax = get_total_axis_elements();
+
+  size_t next_location = (size_t) file.tellg() + sizeof(size_t) + tot_ax*sizeof(my_type);
+  file.write((char*) & next_location, sizeof(size_t));
+  //Position of next section
+
+  file.write((char *) axes , sizeof(my_type)*tot_ax);
   //Add axes.
+  if(file.tellg() != next_location) write_err=1;
+
+  next_location += sizeof(char)*ID_SIZE + sizeof(size_t);
+  file.write((char*) & next_location, sizeof(size_t));
+  //Position of next section
+  file.write(block_id, sizeof(char)*ID_SIZE);
+
+  if(file.tellg() != next_location) write_err=1;
+  if(write_err) my_print("Error writing offset positions", mpi_info.rank);
 
   return 0;
 
@@ -1268,7 +1348,8 @@ bool data_array::fft_me(data_array * data_out){
     }
   }
 
-  data_out->copy_ids(this);
+  //data_out->copy_ids(this);
+  copy_ids(*data_out);
   size_t total_size=1; /* Total number of elements in array*/
   for(size_t i=0; i<n_dims;++i) total_size *= dims[i];
 
@@ -1386,22 +1467,22 @@ bool data_array::populate_mirror_fastest(my_type * result_in, size_t total_els){
   return 0;
 }
 
-void data_array::copy_ids( data_array * src){
+void data_array::copy_ids( const data_array &src){
 /** Copies ID fields from src array to this */
 
-  strcpy(this->block_id, src->block_id);
-  for(size_t i=0; i < 2; ++i) this->time[i] = src->time[i];
+  strcpy(this->block_id, src.block_id);
+  for(size_t i=0; i < 2; ++i) this->time[i] = src.time[i];
   //  std::copy(src->time, src->time + 2, this->time);
-  for(size_t i=0; i < 2; ++i) this->space[i] = src->space[i];
+  for(size_t i=0; i < 2; ++i) this->space[i] = src.space[i];
 }
 
-bool data_array::check_ids( data_array * src){
+bool data_array::check_ids( const data_array & src){
 /** Checks ID fields match src */
 
   bool err=false;
-  if(strcmp(this->block_id, src->block_id) != 0) err =true;
-  for(size_t i=0; i< 2; i++) if(src->time[i] != this->time[i]) err=true;
-  for(size_t i=0; i < 2; ++i) if(this->space[i] != src->space[i]) err=true;
+  if(strcmp(this->block_id, src.block_id) != 0) err =true;
+  for(size_t i=0; i< 2; i++) if(src.time[i] != this->time[i]) err=true;
+  for(size_t i=0; i < 2; ++i) if(this->space[i] != src.space[i]) err=true;
 
   return err;
 }

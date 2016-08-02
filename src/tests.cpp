@@ -236,10 +236,13 @@ void tests::cleanup_tests(){
 
   }
   delete outfile;
+/*//  test_obj * obj;
   for(current_test_id=0; current_test_id< (int)test_list.size(); current_test_id++){
-    delete test_list[current_test_id];
+  //  obj = test_list[current_test_id];
+   // test_list.erase(current_test_id);
+    //delete test_list[current_test_id];
   
-  }
+  }*/
 
   
 }
@@ -293,7 +296,7 @@ int test_entity_reader::run(){
 
   if(!rd_err){
     
-    data_array  * dat = new data_array(dims[0], 40);
+    data_array dat = data_array(dims[0], 40);
     //We know there are at most ten rows per accumulate in our test file and 4 files
     rd_err = accum_reader->read_data(dat, time, space);
     size_t a, b;
@@ -305,22 +308,22 @@ int test_entity_reader::run(){
        //Check a few selected rows are right...
        a=0;
        b=0;
-       tot_errs += !(dat->get_element(a,b) == 0.0);
+       tot_errs += !(dat.get_element(a,b) == 0.0);
        b=1;
-       tot_errs += !(dat->get_element(a,b) == 2.0);
+       tot_errs += !(dat.get_element(a,b) == 2.0);
        b=2;
-       tot_errs += !(dat->get_element(a,b) == 1.0);
+       tot_errs += !(dat.get_element(a,b) == 1.0);
        b=10;
-       tot_errs += !(dat->get_element(a,b) == 9.0);
+       tot_errs += !(dat.get_element(a,b) == 9.0);
        b=11;
-       tot_errs += !(dat->get_element(a,b) == 1.0);
+       tot_errs += !(dat.get_element(a,b) == 1.0);
       
        //Check both ends of a few rows for off by ones etc
        int rows[3] = {1,10,11};
        for(int i = 0; i<3; i++ ){
-         tot_errs += !(dat->get_element(0,rows[i]) == dat->get_element(1,rows[i]));
-         tot_errs += !(dat->get_element(0,rows[i]) == dat->get_element(399,rows[i]));
-         tot_errs += !(dat->get_element(0,rows[i]) == dat->get_element(200,rows[i]));
+         tot_errs += !(dat.get_element(0,rows[i]) == dat.get_element(1,rows[i]));
+         tot_errs += !(dat.get_element(0,rows[i]) == dat.get_element(399,rows[i]));
+         tot_errs += !(dat.get_element(0,rows[i]) == dat.get_element(200,rows[i]));
 
        }
        
@@ -333,7 +336,6 @@ int test_entity_reader::run(){
       err |=TEST_NULL_RESULT;
       test_bed->report_info("Error reading test files", 1);
     }
-    if(dat) delete dat;
     
   }else{
     err |=TEST_NULL_RESULT;
@@ -348,13 +350,12 @@ int test_entity_reader::run(){
 
 test_entity_data_array::test_entity_data_array(){
   name = "data array class";
-  test_array = new data_array(10, 10);
-  
+  test_array = data_array(10, 10);
   
 }
 test_entity_data_array::~test_entity_data_array(){
 
-  delete test_array;
+//  delete test_array;
 }
 
 int test_entity_data_array::run(){
@@ -366,7 +367,6 @@ int test_entity_data_array::run(){
 
   err|=assign();
   if(test_bed->check_for_abort(err)) return err;
-
   err |=basic_tests();
   if(test_bed->check_for_abort(err)) return err;
   err |= technical_tests();
@@ -380,38 +380,38 @@ int test_entity_data_array::assign(){
 /** Set values and check basic assignment worked*/
   int err = TEST_PASSED;
   bool tmp_err;
-  if(!test_array){
+/*  if(!test_array){
     err |= TEST_ASSERT_FAIL;
     err |= TEST_FATAL_ERR;
     return err;
-  }
+  }*/
   int val;
   //assign each element to unique val and axes to position
 
-  for(int i=0; i<test_array->get_dims(0); i++){
-    for(int j =0; j<test_array->get_dims(1); j++){
-      tmp_err=test_array->set_element(i, j, (i+1)*(2*j+1));
+  for(int i=0; i<test_array.get_dims(0); i++){
+    for(int j =0; j<test_array.get_dims(1); j++){
+      tmp_err=test_array.set_element(i, j, (i+1)*(2*j+1));
       if(tmp_err) err |= TEST_ASSERT_FAIL;
     }
   }
-  for(int i=0; i<test_array->get_dims(); i++){
-    for(int j =0; j<test_array->get_dims(i); j++){
-      tmp_err=test_array->set_axis_element(i, j, j*(i+1));
+  for(int i=0; i<test_array.get_dims(); i++){
+    for(int j =0; j<test_array.get_dims(i); j++){
+      tmp_err=test_array.set_axis_element(i, j, j*(i+1));
       if(tmp_err) err |= TEST_ASSERT_FAIL;
     }
   }
 
   //test assignments worked
 
-  for(int i=0; i<test_array->get_dims(0); i++){
-    for(int j =0; j<test_array->get_dims(1); j++){
-      val = test_array->get_element(i,j);
+  for(int i=0; i<test_array.get_dims(0); i++){
+    for(int j =0; j<test_array.get_dims(1); j++){
+      val = test_array.get_element(i,j);
       if(val != (i+1)*(2*j+1)) err |=TEST_WRONG_RESULT;
     }
   }
-  for(int i=0; i<test_array->get_dims(); i++){
-    for(int j =0; j<test_array->get_dims(i); j++){
-      val=test_array->get_axis_element(i, j);
+  for(int i=0; i<test_array.get_dims(); i++){
+    for(int j =0; j<test_array.get_dims(i); j++){
+      val=test_array.get_axis_element(i, j);
       if(val != (i+1)*j) err |=TEST_WRONG_RESULT;
     }
   }
@@ -424,14 +424,14 @@ int test_entity_data_array::basic_tests(){
 
   int err = TEST_PASSED;
   bool tmp_err;
-  if(!test_array) return TEST_ASSERT_FAIL;
+  if(!test_array.is_good()) return TEST_ASSERT_FAIL;
 
   //test maxval function
-  int i0=test_array->get_dims(0)/2, i1=test_array->get_dims(1)/3;
-  my_type current_max = test_array->maxval();
-  test_array->set_element(i0, i1, current_max+10);
+  int i0=test_array.get_dims(0)/2, i1=test_array.get_dims(1)/3;
+  my_type current_max = test_array.maxval();
+  test_array.set_element(i0, i1, current_max+10);
   std::vector<size_t> pos;
-  current_max -= test_array->maxval(pos);
+  current_max -= test_array.maxval(pos);
   if(current_max != -10 || pos.size()!=2||pos[0]!=i0||pos[1]!=i1){
     err |= TEST_WRONG_RESULT;
   }
@@ -440,39 +440,39 @@ int test_entity_data_array::basic_tests(){
 
   int new2=6, new1=7;
   my_type els[4];
-  els[0]=test_array->get_element(2, 3);
-  els[1]=test_array->get_element(1, 5);
-  els[2]=test_array->get_element(6, 5);
-  els[3]=test_array->get_element(4, 4);
+  els[0]=test_array.get_element(2, 3);
+  els[1]=test_array.get_element(1, 5);
+  els[2]=test_array.get_element(6, 5);
+  els[3]=test_array.get_element(4, 4);
   my_type ax_els[4];
-  ax_els[0]=test_array->get_axis_element(0, 3);
-  ax_els[1]=test_array->get_axis_element(1, 0);
-  ax_els[2]=test_array->get_axis_element(0, 6);
-  ax_els[3]=test_array->get_axis_element(1, 5);
+  ax_els[0]=test_array.get_axis_element(0, 3);
+  ax_els[1]=test_array.get_axis_element(1, 0);
+  ax_els[2]=test_array.get_axis_element(0, 6);
+  ax_els[3]=test_array.get_axis_element(1, 5);
 
   //Check some "random" elements
   test_bed->set_colour('*');
   test_bed->report_info("Testing resizer. Suggest using valgrind for memory checks", 2);
   test_bed->set_colour(0);
 
-  test_bed->report_info("Initial size is "+mk_str(test_array->get_dims(0))+" by "+mk_str(test_array->get_dims(1)), 1);
+  test_bed->report_info("Initial size is "+mk_str(test_array.get_dims(0))+" by "+mk_str(test_array.get_dims(1)), 1);
 
-  test_array->resize(1, new2);
-  if(test_array->get_dims(1) !=new2){
+  test_array.resize(1, new2);
+  if(test_array.get_dims(1) !=new2){
     err |=TEST_WRONG_RESULT;
-    test_bed->report_info("Second dim size is "+mk_str(test_array->get_dims(1))+" not "+mk_str(new2), 1);
+    test_bed->report_info("Second dim size is "+mk_str(test_array.get_dims(1))+" not "+mk_str(new2), 1);
   }
-  test_array->resize(0, new1);
-  if(test_array->get_dims(0) !=new1){
+  test_array.resize(0, new1);
+  if(test_array.get_dims(0) !=new1){
     err |=TEST_WRONG_RESULT;
-    test_bed->report_info("First dim size is "+mk_str(test_array->get_dims(0))+" not "+mk_str(new1), 1);
+    test_bed->report_info("First dim size is "+mk_str(test_array.get_dims(0))+" not "+mk_str(new1), 1);
   }
   
-  if(els[0] != test_array->get_element(2, 3)|| els[1]!=test_array->get_element(1, 5) || els[2]!=test_array->get_element(6, 5) || els[3]!=test_array->get_element(4, 4)){
+  if(els[0] != test_array.get_element(2, 3)|| els[1]!=test_array.get_element(1, 5) || els[2]!=test_array.get_element(6, 5) || els[3]!=test_array.get_element(4, 4)){
     err |= TEST_WRONG_RESULT;
     test_bed->report_info("Resizer error, wrong values read", 1);
   }
-  if(ax_els[0] != test_array->get_axis_element(0, 3)|| ax_els[1]!=test_array->get_axis_element(1, 0) || ax_els[2]!=test_array->get_axis_element(0, 6) || ax_els[3]!=test_array->get_axis_element(1, 5)){
+  if(ax_els[0] != test_array.get_axis_element(0, 3)|| ax_els[1]!=test_array.get_axis_element(1, 0) || ax_els[2]!=test_array.get_axis_element(0, 6) || ax_els[3]!=test_array.get_axis_element(1, 5)){
     err |= TEST_WRONG_RESULT;
     test_bed->report_info("Resizer error, wrong values read", 1);
   }
@@ -486,12 +486,11 @@ int test_entity_data_array::three_d_and_shift(){
   int err= TEST_PASSED;
   int tmp_err;
   //And now a 3-d version
-  if(test_array) delete test_array;
-  test_array = new data_array(10, 10, 10);
-  for(int i=0; i<test_array->get_dims(0); i++){
-    for(int j =0; j<test_array->get_dims(1); j++){
-      for(int k =0; k<test_array->get_dims(2); k++){
-        tmp_err=test_array->set_element(i, j, k, (i+1)*(2*j+1)*(4*k+1));
+  test_array = data_array(10, 10, 10);
+  for(int i=0; i<test_array.get_dims(0); i++){
+    for(int j =0; j<test_array.get_dims(1); j++){
+      for(int k =0; k<test_array.get_dims(2); k++){
+        tmp_err=test_array.set_element(i, j, k, (i+1)*(2*j+1)*(4*k+1));
         if(tmp_err) err |= TEST_ASSERT_FAIL;
       }
     }
@@ -500,25 +499,25 @@ int test_entity_data_array::three_d_and_shift(){
   int new2 = 6;//for element choices below to work, this must be >= 6
   my_type els[4];
 
-  els[0]=test_array->get_element(2, 3, 2);
-  els[1]=test_array->get_element(1, 5, 4);
-  els[2]=test_array->get_element(6, 5, 1);
-  els[3]=test_array->get_element(4, 4, 0);
+  els[0]=test_array.get_element(2, 3, 2);
+  els[1]=test_array.get_element(1, 5, 4);
+  els[2]=test_array.get_element(6, 5, 1);
+  els[3]=test_array.get_element(4, 4, 0);
 
 
-  test_array->resize(1, new2);
-  test_array->resize(2, new3);
+  test_array.resize(1, new2);
+  test_array.resize(2, new3);
 
-  if(test_array->get_dims(2) !=new3){
+  if(test_array.get_dims(2) !=new3){
     err |=TEST_WRONG_RESULT;
-    test_bed->report_info("Third dim size is "+mk_str(test_array->get_dims(2))+" not "+mk_str(new3), 1);
+    test_bed->report_info("Third dim size is "+mk_str(test_array.get_dims(2))+" not "+mk_str(new3), 1);
   }
-  if(test_array->get_dims(1) !=new2){
+  if(test_array.get_dims(1) !=new2){
     err |=TEST_WRONG_RESULT;
-    test_bed->report_info("Second dim size is "+mk_str(test_array->get_dims(1))+" not "+mk_str(new2), 1);
+    test_bed->report_info("Second dim size is "+mk_str(test_array.get_dims(1))+" not "+mk_str(new2), 1);
   }
 
-  if(els[0] != test_array->get_element(2, 3, 2)|| els[1]!=test_array->get_element(1, 5, 4) || els[2]!=test_array->get_element(6, 5, 1) || els[3]!=test_array->get_element(4, 4, 0)){
+  if(els[0] != test_array.get_element(2, 3, 2)|| els[1]!=test_array.get_element(1, 5, 4) || els[2]!=test_array.get_element(6, 5, 1) || els[3]!=test_array.get_element(4, 4, 0)){
     err |= TEST_WRONG_RESULT;
     test_bed->report_info("Resizer error, wrong values read", 1);
   }
@@ -527,66 +526,66 @@ int test_entity_data_array::three_d_and_shift(){
 
   my_type tot_pre=0, tot_aft=0;
   int sz=0;
-  sz=test_array->get_dims(1);
-  for(int i=0; i<sz; i++) tot_pre +=test_array->get_element(2,i, 0);
-  test_array->shift(1, 3);
-  for(int i=0; i<sz; i++) tot_aft +=test_array->get_element(2,i, 0);
-  test_array->shift(1, -3);
+  sz=test_array.get_dims(1);
+  for(int i=0; i<sz; i++) tot_pre +=test_array.get_element(2,i, 0);
+  test_array.shift(1, 3);
+  for(int i=0; i<sz; i++) tot_aft +=test_array.get_element(2,i, 0);
+  test_array.shift(1, -3);
 
-  if(tot_pre != tot_aft || els[0] != test_array->get_element(2, 3, 2)|| els[1]!=test_array->get_element(1, 5, 4) || els[2]!=test_array->get_element(6, 5, 1) || els[3]!=test_array->get_element(4, 4, 0)){
+  if(tot_pre != tot_aft || els[0] != test_array.get_element(2, 3, 2)|| els[1]!=test_array.get_element(1, 5, 4) || els[2]!=test_array.get_element(6, 5, 1) || els[3]!=test_array.get_element(4, 4, 0)){
     err |= TEST_WRONG_RESULT;
     test_bed->report_info("Shift error, wrong values read", 1);
   }
   
-  sz=test_array->get_dims(2);
-  for(int i=0; i<sz; i++) tot_pre +=test_array->get_element(2,0, i);
+  sz=test_array.get_dims(2);
+  for(int i=0; i<sz; i++) tot_pre +=test_array.get_element(2,0, i);
 
-  test_array->shift(2, 3);
-  for(int i=0; i<sz; i++) tot_aft +=test_array->get_element(2,0, i);
-  test_array->shift(2, -3);
+  test_array.shift(2, 3);
+  for(int i=0; i<sz; i++) tot_aft +=test_array.get_element(2,0, i);
+  test_array.shift(2, -3);
 
-  if(tot_pre != tot_aft ||els[0] != test_array->get_element(2, 3, 2)|| els[1]!=test_array->get_element(1, 5, 4) || els[2]!=test_array->get_element(6, 5, 1) || els[3]!=test_array->get_element(4, 4, 0)){
+  if(tot_pre != tot_aft ||els[0] != test_array.get_element(2, 3, 2)|| els[1]!=test_array.get_element(1, 5, 4) || els[2]!=test_array.get_element(6, 5, 1) || els[3]!=test_array.get_element(4, 4, 0)){
     err |= TEST_WRONG_RESULT;
     test_bed->report_info("Shift error, wrong values read", 1);
   }
 
 
-  sz=test_array->get_dims(0);
-  for(int i=0; i<sz; i++) tot_pre +=test_array->get_element(i, 2,0);
+  sz=test_array.get_dims(0);
+  for(int i=0; i<sz; i++) tot_pre +=test_array.get_element(i, 2,0);
 
-  test_array->shift(0, 2);
-  for(int i=0; i<sz; i++) tot_aft +=test_array->get_element(i, 2,0);
+  test_array.shift(0, 2);
+  for(int i=0; i<sz; i++) tot_aft +=test_array.get_element(i, 2,0);
 
-  if(els[0] == test_array->get_element(2, 3, 2)|| els[1]==test_array->get_element(1, 5, 4) || els[2]==test_array->get_element(6, 5, 1) || els[3]==test_array->get_element(4, 4, 0)){
+  if(els[0] == test_array.get_element(2, 3, 2)|| els[1]==test_array.get_element(1, 5, 4) || els[2]==test_array.get_element(6, 5, 1) || els[3]==test_array.get_element(4, 4, 0)){
     err |= TEST_WRONG_RESULT;
     test_bed->report_info("Shift error, no shift applied", 1);
   }
 
-  test_array->shift(0, -2);
-  if(tot_pre != tot_aft || els[0] != test_array->get_element(2, 3, 2)|| els[1]!=test_array->get_element(1, 5, 4) || els[2]!=test_array->get_element(6, 5, 1) || els[3]!=test_array->get_element(4, 4, 0)){
+  test_array.shift(0, -2);
+  if(tot_pre != tot_aft || els[0] != test_array.get_element(2, 3, 2)|| els[1]!=test_array.get_element(1, 5, 4) || els[2]!=test_array.get_element(6, 5, 1) || els[3]!=test_array.get_element(4, 4, 0)){
     err |= TEST_WRONG_RESULT;
     test_bed->report_info("Shift error, wrong values read", 1);
   }
 
 
 /*  test_array = new data_array(5, 8);
-  for(int i=0; i<test_array->get_dims(0); i++){
-    for(int j =0; j<test_array->get_dims(1); j++){
-      tmp_err=test_array->set_element(i, j, (i+1)*(2*j+1));
+  for(int i=0; i<test_array.get_dims(0); i++){
+    for(int j =0; j<test_array.get_dims(1); j++){
+      tmp_err=test_array.set_element(i, j, (i+1)*(2*j+1));
       }
     }
-  for(int i=0; i<test_array->get_dims(0); i++){
-    for(int j =0; j<test_array->get_dims(1); j++){
-      std::cout<<test_array->get_element(i, j)<<" ";
+  for(int i=0; i<test_array.get_dims(0); i++){
+    for(int j =0; j<test_array.get_dims(1); j++){
+      std::cout<<test_array.get_element(i, j)<<" ";
     }
     std::cout<<'\n';
   }
-  test_array-> shift(1, 4);
+  test_array. shift(1, 4);
     std::cout<<'\n';
   
-  for(int i=0; i<test_array->get_dims(0); i++){
-    for(int j =0; j<test_array->get_dims(1); j++){
-      std::cout<<test_array->get_element(i, j)<<" ";
+  for(int i=0; i<test_array.get_dims(0); i++){
+    for(int j =0; j<test_array.get_dims(1); j++){
+      std::cout<<test_array.get_element(i, j)<<" ";
     }
     std::cout<<'\n';
   }
@@ -596,7 +595,7 @@ int test_entity_data_array::three_d_and_shift(){
   std::fstream file;
   file.open(filename.c_str(),std::ios::out|std::ios::binary);
   if(file.is_open()){
-    test_array->write_to_file(file);//, lims);
+    test_array.write_to_file(file);//, lims);
   }*/
 
 
@@ -611,25 +610,27 @@ int test_entity_data_array::technical_tests(){
 * Expects a 2-d array and wont be any use if els and axes not set
 */
 
+  test_array = data_array(10, 10);
+
   int err = TEST_PASSED;
-  data_array dat= *(test_array);
+  data_array dat = test_array;
   
   if(dat.get_dims() ==0 || dat.get_dims(0) ==0 || dat.get_dims(1) == 0) err |= TEST_ASSERT_FAIL;
-  if(dat.get_dims() != test_array->get_dims()){
+  if(dat.get_dims() != test_array.get_dims()){
     err |= TEST_WRONG_RESULT;
   }
-  for(int i=0; i< dat.get_dims(); i++) if(dat.get_dims(i) != test_array->get_dims(i)) err |= TEST_WRONG_RESULT;
+  for(int i=0; i< dat.get_dims(); i++) if(dat.get_dims(i) != test_array.get_dims(i)) err |= TEST_WRONG_RESULT;
 
-  for(int i=0; i<test_array->get_dims(0); i++){
-    for(int j =0; j<test_array->get_dims(1); j++){
-      if(test_array->get_element(i,j) != dat.get_element(i, j)) err |=TEST_WRONG_RESULT;
+  for(int i=0; i<test_array.get_dims(0); i++){
+    for(int j =0; j<test_array.get_dims(1); j++){
+      if(test_array.get_element(i,j) != dat.get_element(i, j)) err |=TEST_WRONG_RESULT;
     }
   }
   
   
-  for(int i=0; i<test_array->get_dims(); i++){
-    for(int j=0; j< test_array->get_dims(i); j++){
-      if(test_array->get_axis_element(i,j) != dat.get_axis_element(i, j)) err |=TEST_WRONG_RESULT;
+  for(int i=0; i<test_array.get_dims(); i++){
+    for(int j=0; j< test_array.get_dims(i); j++){
+      if(test_array.get_axis_element(i,j) != dat.get_axis_element(i, j)) err |=TEST_WRONG_RESULT;
     }
   }
 
@@ -641,12 +642,11 @@ test_entity_get_and_fft::test_entity_get_and_fft(){
   name = "read and FFT";
 
 }
-test_entity_get_and_fft::~test_entity_get_and_fft(){
-  if(test_rdr) delete test_rdr;
-  delete test_dat;
-  delete test_dat_fft;
-  
 
+test_entity_get_and_fft::~test_entity_get_and_fft(){
+ 
+  if(test_rdr) delete test_rdr;
+  
 }
 
 int test_entity_get_and_fft::run(){
@@ -660,17 +660,17 @@ int test_entity_get_and_fft::run(){
   char block_id[ID_SIZE]= "ex";
   test_rdr = new reader("./files/sin", block_id);
 
-  err |=one_d();
+  test_dat = data_array(10, 10);
+
+ // err |=one_d();
 
   //strcpy(block_id, "ay");
-  strcpy(block_id, "ax");
+ /* strcpy(block_id, "ax");
 
   if(test_rdr) delete test_rdr;
-  if(test_dat) delete test_dat;
-  if(test_dat_fft) delete test_dat_fft;
   test_rdr = new reader("./files/sinAcc", block_id);
   err|= two_d();
-
+*/
   test_bed->report_err(err);
   return err;
 
@@ -702,19 +702,20 @@ int test_entity_get_and_fft::one_d(){
     //nothing more worth doing right now...
   }
 
-  test_dat = new data_array(dims[0], n_tims);
-  test_dat_fft = new data_array(dims[0], n_tims);
-  if(!test_dat->is_good()||!test_dat_fft->is_good()){
+  test_dat = data_array(dims[0], n_tims);
+  test_dat_fft = data_array(dims[0], n_tims);
+  if(!test_dat.is_good()||!test_dat_fft.is_good()){
     err|=TEST_ASSERT_FAIL;
     return err;
   }
+  return 1;
   
   test_rdr->read_data(test_dat, tim_in, space_in);
 
   {
-    bool tmp_err = test_dat->fft_me(test_dat_fft);
+    bool tmp_err = test_dat.fft_me(&test_dat_fft);
     if(tmp_err) err|=TEST_ASSERT_FAIL;
-    if(test_dat_fft->check_ids(test_dat)) err |= TEST_WRONG_RESULT;
+    if(test_dat_fft.check_ids(test_dat)) err |= TEST_WRONG_RESULT;
     if(err == TEST_PASSED) test_bed->report_info("1D read and FFT reports no error", 1);
 
     //Get primary frequency
@@ -724,21 +725,21 @@ int test_entity_get_and_fft::one_d(){
     my_type expected_max = 1.2566371e-4;
     bool both_freqs_correct = true;
 
-    max_val = test_dat_fft->maxval(max_pos);
+    max_val = test_dat_fft.maxval(max_pos);
     if(max_pos.size() <1) err |=TEST_WRONG_RESULT;
     max_index = max_pos[0];
-    if(std::abs(std::abs(test_dat_fft->get_axis_element(0,max_index)) - expected_max) > PRECISION){
+    if(std::abs(std::abs(test_dat_fft.get_axis_element(0,max_index)) - expected_max) > PRECISION){
       err|= TEST_WRONG_RESULT;
-      test_bed->report_info("Max freq is "+mk_str(test_dat_fft->get_axis_element(0,max_index))+" ("+mk_str(max_index)+")", 1);
+      test_bed->report_info("Max freq is "+mk_str(test_dat_fft.get_axis_element(0,max_index))+" ("+mk_str(max_index)+")", 1);
     }
     else both_freqs_correct = false;
 
-    max_val = test_dat_fft->maxval(max_pos, max_index+1);
+    max_val = test_dat_fft.maxval(max_pos, max_index+1);
     if(max_pos.size() <1) err |=TEST_WRONG_RESULT;
     max_index = max_pos[0];
-    if(std::abs(std::abs(test_dat_fft->get_axis_element(0,max_index)) - expected_max) > PRECISION){
+    if(std::abs(std::abs(test_dat_fft.get_axis_element(0,max_index)) - expected_max) > PRECISION){
       err|= TEST_WRONG_RESULT;
-      test_bed->report_info("Max freq is "+mk_str(test_dat_fft->get_axis_element(0,max_index))+" ("+mk_str(max_index)+")", 1);
+      test_bed->report_info("Max freq is "+mk_str(test_dat_fft.get_axis_element(0,max_index))+" ("+mk_str(max_index)+")", 1);
     }
     else both_freqs_correct = false;
     
@@ -747,12 +748,12 @@ int test_entity_get_and_fft::one_d(){
   //Now size down by 1 element and redo. This checks odd and even total sizes
   {
 
-    test_dat->resize(0, dims[0]-1);
-    test_dat_fft->resize(0, dims[0]-1);
-    bool tmp_err = test_dat->fft_me(test_dat_fft);
+    test_dat.resize(0, dims[0]-1);
+    test_dat_fft.resize(0, dims[0]-1);
+    bool tmp_err = test_dat.fft_me(&test_dat_fft);
 
     if(tmp_err) err|=TEST_ASSERT_FAIL;
-    if(test_dat_fft->check_ids(test_dat)) err |= TEST_WRONG_RESULT;
+    if(test_dat_fft.check_ids(test_dat)) err |= TEST_WRONG_RESULT;
     if(err == TEST_PASSED) test_bed->report_info("1D read and FFT reports no error", 1);
 
     //Get primary frequency
@@ -762,23 +763,23 @@ int test_entity_get_and_fft::one_d(){
     my_type expected_max = 1.2566371e-4;
     bool both_freqs_correct = true;
 
-    max_val = test_dat_fft->maxval(max_pos);
+    max_val = test_dat_fft.maxval(max_pos);
     if(max_pos.size() <1) err |=TEST_WRONG_RESULT;
     max_index = max_pos[0];
-    int sgn = test_dat_fft->get_axis_element(0,max_index)/std::abs(test_dat_fft->get_axis_element(0,max_index));
-    if( !((test_dat_fft->get_axis_element(0,max_index+1) > sgn*expected_max) && (test_dat_fft->get_axis_element(0,max_index-1) < sgn*expected_max))){
+    int sgn = test_dat_fft.get_axis_element(0,max_index)/std::abs(test_dat_fft.get_axis_element(0,max_index));
+    if( !((test_dat_fft.get_axis_element(0,max_index+1) > sgn*expected_max) && (test_dat_fft.get_axis_element(0,max_index-1) < sgn*expected_max))){
       err|= TEST_WRONG_RESULT;
-      test_bed->report_info("Max freq is "+mk_str(test_dat_fft->get_axis_element(0,max_index))+" ("+mk_str(max_index)+")", 1);
+      test_bed->report_info("Max freq is "+mk_str(test_dat_fft.get_axis_element(0,max_index))+" ("+mk_str(max_index)+")", 1);
     }
     else both_freqs_correct = false;
 
-    max_val = test_dat_fft->maxval(max_pos, max_index+1);
+    max_val = test_dat_fft.maxval(max_pos, max_index+1);
     if(max_pos.size() <1) err |=TEST_WRONG_RESULT;
     max_index = max_pos[0];
-    sgn = test_dat_fft->get_axis_element(0,max_index)/std::abs(test_dat_fft->get_axis_element(0,max_index));
-    if(!( (test_dat_fft->get_axis_element(0,max_index+1) > sgn*expected_max) && (test_dat_fft->get_axis_element(0,max_index-1) < sgn*expected_max))){
+    sgn = test_dat_fft.get_axis_element(0,max_index)/std::abs(test_dat_fft.get_axis_element(0,max_index));
+    if(!( (test_dat_fft.get_axis_element(0,max_index+1) > sgn*expected_max) && (test_dat_fft.get_axis_element(0,max_index-1) < sgn*expected_max))){
       err|= TEST_WRONG_RESULT;
-      test_bed->report_info("Max freq is "+mk_str(test_dat_fft->get_axis_element(0,max_index))+" ("+mk_str(max_index)+")", 1);
+      test_bed->report_info("Max freq is "+mk_str(test_dat_fft.get_axis_element(0,max_index))+" ("+mk_str(max_index)+")", 1);
     }
     else both_freqs_correct = false;
     
@@ -815,22 +816,22 @@ int test_entity_get_and_fft::two_d(){
     //nothing more worth doing right now...
   }
 
-  test_dat = new data_array(space_size, n_tims);
-  test_dat_fft = new data_array(space_size, n_tims);
-  if(!test_dat->is_good()||!test_dat_fft->is_good()){
+  test_dat = data_array(space_size, n_tims);
+  test_dat_fft = data_array(space_size, n_tims);
+  if(!test_dat.is_good()||!test_dat_fft.is_good()){
     err|=TEST_ASSERT_FAIL;
     return err;
   }
   
   test_rdr->read_data(test_dat, tim_in, space_in);
 
-  bool tmp_err = test_dat->fft_me(test_dat_fft);
+  bool tmp_err = test_dat.fft_me(&test_dat_fft);
   if(tmp_err) err|=TEST_ASSERT_FAIL;
-  if(test_dat_fft->check_ids(test_dat)) err |= TEST_WRONG_RESULT;
+  if(test_dat_fft.check_ids(test_dat)) err |= TEST_WRONG_RESULT;
   if(err == TEST_PASSED) test_bed->report_info("2D read and FFT reports no error", 1);
   
-//  int shft = test_dat_fft->get_dims(1)/2;
-//  test_dat_fft->shift(1, shft);
+//  int shft = test_dat_fft.get_dims(1)/2;
+//  test_dat_fft.shift(1, shft);
 
   int max_index = 0;
   my_type max_val = 0, tmp=1.0;
@@ -839,20 +840,20 @@ int test_entity_get_and_fft::two_d(){
   bool both_freqs_correct = true;
 
 
-  max_val = test_dat_fft->maxval(max_pos);
+  max_val = test_dat_fft.maxval(max_pos);
 
   if(max_pos.size() <2) err |=TEST_WRONG_RESULT;
   max_index = max_pos[0];
 //  for(int i=0; i<max_pos.size(); i++) std::cout<<max_pos[i]<<" ";
   
-  if(std::abs(std::abs(test_dat_fft->get_axis_element(0,max_index)) - expected_max) > PRECISION){
+  if(std::abs(std::abs(test_dat_fft.get_axis_element(0,max_index)) - expected_max) > PRECISION){
     err|= TEST_WRONG_RESULT;
-    test_bed->report_info("Max freq is "+mk_str(test_dat_fft->get_axis_element(0,max_index))+" ("+mk_str(max_index)+", "+mk_str(max_pos[1])+")", 1);
+    test_bed->report_info("Max freq is "+mk_str(test_dat_fft.get_axis_element(0,max_index))+" ("+mk_str(max_index)+", "+mk_str(max_pos[1])+")", 1);
   }
   else both_freqs_correct = false;
-  if(max_pos[1] != test_dat_fft->get_dims(1)/2){
+  if(max_pos[1] != test_dat_fft.get_dims(1)/2){
     err|= TEST_WRONG_RESULT;
-    test_bed->report_info("Max freq is "+mk_str(test_dat_fft->get_axis_element(1,max_pos[1]))+" ("+mk_str(max_index)+", "+mk_str(max_pos[1])+")", 1);
+    test_bed->report_info("Max freq is "+mk_str(test_dat_fft.get_axis_element(1,max_pos[1]))+" ("+mk_str(max_index)+", "+mk_str(max_pos[1])+")", 1);
   }
   else both_freqs_correct = false;
   
@@ -862,14 +863,14 @@ int test_entity_get_and_fft::two_d(){
   
   std::string filename, time_str;
   int err2;
-  time_str = mk_str(test_dat_fft->time[0], true)+"_"+mk_str(test_dat_fft->time[1],true);
-  std::string block = test_dat_fft->block_id;
+  time_str = mk_str(test_dat_fft.time[0], true)+"_"+mk_str(test_dat_fft.time[1],true);
+  std::string block = test_dat_fft.block_id;
   
-  filename = test_rdr->file_prefix+"FFT2DTest_"+block +"_"+time_str+"_"+mk_str(test_dat_fft->space[0])+"_"+mk_str(test_dat_fft->space[1]) + ".dat";
+  filename = test_rdr->file_prefix+"FFT2DTest_"+block +"_"+time_str+"_"+mk_str(test_dat_fft.space[0])+"_"+mk_str(test_dat_fft.space[1]) + ".dat";
   std::fstream file;
   file.open(filename.c_str(),std::ios::out|std::ios::binary);
   if(file.is_open()){
-      err2 = test_dat_fft->write_to_file(file);
+      err2 = test_dat_fft.write_to_file(file);
     if(err2){
       test_bed->report_info("File writing failed");
       err |=TEST_ASSERT_FAIL;
@@ -1790,9 +1791,9 @@ int test_entity_levelone::basic_tests(){
 
   int space_dim = space_in[1]-space_in[0];
 
-  data_array  * dat = new data_array(space_dim, n_tims);
+  data_array dat = data_array(space_dim, n_tims);
 
-  if(!dat->is_good()){
+  if(!dat.is_good()){
     my_print("Data array allocation failed.", mpi_info.rank);
     err |= TEST_ASSERT_FAIL;
     err |= TEST_FATAL_ERR;
@@ -1800,19 +1801,17 @@ int test_entity_levelone::basic_tests(){
 
   int err2 = my_reader->read_data(dat, time_in, space_in);
   if(err2 == 1){
-    if(dat) delete dat;
     return TEST_FATAL_ERR;
   }
-  if(err2 == 2) n_tims = dat->get_dims(1);
+  if(err2 == 2) n_tims = dat.get_dims(1);
   //Check if we had to truncate data array...
   data_array * dat_fft = new data_array(space_dim, n_tims);
 
   if(!dat_fft->is_good()){
-    if(dat) delete dat;
     if(dat_fft) delete dat_fft;
     return TEST_FATAL_ERR;
   }
-  err2 = dat->fft_me(dat_fft);
+  err2 = dat.fft_me(dat_fft);
 
   test_bed->report_info("FFT returned err_state " + mk_str(err2));
 
@@ -1823,7 +1822,7 @@ int test_entity_levelone::basic_tests(){
   test_contr->add_spectrum(row_lengths, 2);
   test_contr->get_current_spectrum()->make_test_spectrum(time_in, space_in);
   
-  int n_dims = dat->get_dims();
+  int n_dims = dat.get_dims();
   std::vector<my_type> lims;
   if(n_dims >=3){
     lims.push_back(-0.002);
@@ -1847,7 +1846,7 @@ int test_entity_levelone::basic_tests(){
   if(file.is_open()){
 //    dat_fft->write_section_to_file(file, lims);
     dat_fft->write_section_to_file(file, lims);
-//    dat->write_to_file(file);
+//    dat.write_to_file(file);
     if(err2){
       test_bed->report_info("File writing failed");
       err |=TEST_ASSERT_FAIL;
@@ -1859,7 +1858,6 @@ int test_entity_levelone::basic_tests(){
   }
   file.close();
   test_bed->report_info("FFT section output in "+filename, 1);
-  if(dat) delete dat;
   if(dat_fft) delete dat_fft;
 
   return err;
@@ -1880,9 +1878,9 @@ int test_entity_levelone::twod_tests(){
   }
   int space_dim = space_in[1]-space_in[0];
 
-  data_array  * dat = new data_array(space_dim, dims_in[1], n_tims);
+  data_array dat = data_array(space_dim, dims_in[1], n_tims);
 
-  if(!dat->is_good()){
+  if(!dat.is_good()){
     my_print("Data array allocation failed.", mpi_info.rank);
     err |= TEST_ASSERT_FAIL;
     err |= TEST_FATAL_ERR;
@@ -1890,19 +1888,17 @@ int test_entity_levelone::twod_tests(){
 
   int err2 = my_reader->read_data(dat, time_in, space_in);
   if(err2 == 1){
-    if(dat) delete dat;
     return TEST_FATAL_ERR;
   }
-  if(err2 == 2) n_tims = dat->get_dims(1);
+  if(err2 == 2) n_tims = dat.get_dims(1);
   //Check if we had to truncate data array and size FFT accordingly
   data_array  * dat_fft = new data_array(space_dim, dims_in[1], n_tims);
 
   if(!dat_fft->is_good()){
-    if(dat) delete dat;
     if(dat_fft) delete dat_fft;
     return TEST_FATAL_ERR;
   }
-  err2 = dat->fft_me(dat_fft);
+  err2 = dat.fft_me(dat_fft);
 
   test_bed->report_info("FFT returned err_state " + mk_str(err2));
 
@@ -1913,7 +1909,7 @@ int test_entity_levelone::twod_tests(){
   test_contr->add_spectrum(row_lengths, 2);
   test_contr->get_current_spectrum()->make_test_spectrum(time_in, space_in);
   
-  int n_dims = dat->get_dims();
+  int n_dims = dat.get_dims();
   std::vector<my_type> lims;
   if(n_dims >=3){
     lims.push_back(-0.002);
@@ -1936,7 +1932,7 @@ int test_entity_levelone::twod_tests(){
   file.open(filename.c_str(),std::ios::out|std::ios::binary);
   if(file.is_open()){
     dat_fft->write_section_to_file(file, lims);
-//    dat->write_to_file(file);
+//    dat.write_to_file(file);
     if(err2){
       test_bed->report_info("File writing failed");
       err |=TEST_ASSERT_FAIL;
@@ -1948,7 +1944,6 @@ int test_entity_levelone::twod_tests(){
   }
   file.close();
   test_bed->report_info("FFT section output in "+filename, 1);
-  if(dat) delete dat;
   if(dat_fft) delete dat_fft;
 
   return err;

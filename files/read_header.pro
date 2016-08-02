@@ -1,6 +1,6 @@
 function read_header, filenum
 
-;Written for commit ID from 801d57e to ... FILL IN IF IO CHNAGES....
+;Written for commit ID from 801d57e to dc9e387 FILL IN IF IO CHNAGES....
 
 COMPILE_OPT IDL2
 ;force long ints and proper brackets

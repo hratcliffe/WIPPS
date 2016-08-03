@@ -1575,24 +1575,24 @@ int test_entity_spectrum::basic_tests(){
   if(std::abs(ANG_MIN) < PRECISION) is_zero = true;
   
   if(is_symmetric || is_zero){
-    len = test_contr->get_current_spectrum()->get_ang_dims(1);
+    len = test_contr->get_current_spectrum()->get_g_dims(1);
     d_angle = (my_type *) calloc(DEFAULT_N_ANG, sizeof(my_type));
     for(int i=0; i<DEFAULT_N_ANG-1; ++i){
       d_angle[i] = std::abs(test_contr->get_current_spectrum()->get_ang_axis_element(i) - test_contr->get_current_spectrum()->get_ang_axis_element(i+1));
     }
     angle_data = (my_type *) malloc(len*sizeof(my_type));
     for(int i=0; i<len; i++){
-      *(angle_data + i) = test_contr->get_current_spectrum()->get_ang_element(0, i);
+      *(angle_data + i) = test_contr->get_current_spectrum()->get_g_element(0, i);
     }
     
     total_error = integrator(angle_data, len, d_angle);
     test_contr->get_current_spectrum()->make_test_spectrum(tim_in, space_in, FUNCTION_GAUSS);
-    for(int i=0; i<len; i++) *(angle_data + i) = test_contr->get_current_spectrum()->get_ang_element(0, i);
+    for(int i=0; i<len; i++) *(angle_data + i) = test_contr->get_current_spectrum()->get_g_element(0, i);
 
     total_error += integrator(angle_data, len, d_angle);
 
     test_contr->get_current_spectrum()->make_test_spectrum(tim_in, space_in, FUNCTION_ISO);
-    for(int i=0; i<len; i++) *(angle_data + i) = test_contr->get_current_spectrum()->get_ang_element(0, i);
+    for(int i=0; i<len; i++) *(angle_data + i) = test_contr->get_current_spectrum()->get_g_element(0, i);
     total_error += integrator(angle_data, len, d_angle);
     
     my_type expected = is_zero ? 2.0 : 3.0;

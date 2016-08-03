@@ -75,15 +75,28 @@ public:
   bool check_ids( data_array * src);
   bool is_good(){return B_omega_array->is_good() && g_angle_array->is_good();}
   
-  my_type get_B_element(int nx);
-  my_type get_ang_element(int nx, int ny=0);
-  my_type get_B_axis_element(int nx);
-  my_type get_ang_axis_element(int nx);
-  size_t get_ang_dims(int i=-1);
-  size_t get_B_dims(int i=-1);
+  
+  //The following are all wrappers around the getter/setters for the g and B arrays. USE THEM!
+  inline my_type get_B_element(size_t n_om){return B_omega_array-> get_element(n_om);}
+  inline my_type get_g_element(size_t n_ang){return g_angle_array-> get_element((size_t) 0, n_ang);}
+  inline my_type get_g_element(size_t n_om, size_t n_ang){return g_angle_array-> get_element(n_om, n_ang);}
+  inline void set_B_element(size_t n_om, my_type val){B_omega_array-> set_element(n_om, val);}
+  inline void set_g_element(size_t n_ang, my_type val){g_angle_array->set_element(0, n_ang, val);}
+  inline void set_g_element(size_t n_om, size_t n_ang, my_type val){g_angle_array-> set_element(n_om, n_ang, val);}
 
+  inline my_type get_om_axis_element(size_t nx){return B_omega_array-> get_axis_element(0, nx);}
+  inline my_type get_ang_axis_element(size_t nx){return g_angle_array-> get_axis_element(1, nx);}
+
+  inline void set_om_axis_element(size_t nx, my_type val){B_omega_array-> set_axis_element(0, nx, val);g_angle_array-> set_axis_element(0, nx, val);}
+  inline void set_ang_axis_element(size_t nx, my_type val){g_angle_array-> set_axis_element(1, nx, val);}
+
+  inline size_t get_g_dims(){return this->g_angle_array->get_dims();}
+  inline size_t get_g_dims(size_t i){return this->g_angle_array->get_dims(i);}
+  inline size_t get_B_dims(){return this->B_omega_array->get_dims();}
+  inline size_t get_B_dims(size_t i){return this->B_omega_array->get_dims(i);}
   
 };
+
 
 
 #endif

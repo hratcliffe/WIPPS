@@ -1,10 +1,9 @@
-function read_header, filenum
+function read_header, filenum, report=report
 
 ;Written for commit ID from dc9e387 to ... FILL IN IF IO CHNAGES....
 ;* (int)sizeof(size_t) (int)sizeof(my_type) io_verification_code Version string
 ;*Next_block n_dims dims[n_dims]
 ;*Next_block data
-
 
 COMPILE_OPT IDL2
 ;force long ints and proper brackets
@@ -28,7 +27,7 @@ my_sz=0
 readu, filenum, sz_sz
 readu, filenum, my_sz
 
-PRINT, sz_sz, my_sz
+IF(KEYWORD_SET(report)) THEN PRINT, sz_sz, my_sz
 IF(my_sz EQ 4) THEN BEGIN
   hdr_info =create_struct(hdr_info,{my_type:0.0})
 ENDIF ELSE IF(my_sz EQ 8) THEN BEGIN
@@ -56,7 +55,7 @@ next_block = hdr_info.block_type
 
 readu, filenum, io_in
 readu, filenum, commit_in
-print, io_in," ",  commit_in
+IF(KEYWORD_SET(report)) THEN print, io_in," ",  commit_in
 
 IF(io_in NE io_check) THEN BEGIN
   print, "File read error!"

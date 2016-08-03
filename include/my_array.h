@@ -14,7 +14,7 @@
 
 /** \brief A basic array class
 *
-*Contains dimension information and data. Can be rectangular of any n_dims or ragged of 2 (rows of different lengths). Get_index and get_total_elements account for all details of internal layout in memory. For 1-4 dims individual getter/setter functions are given. For larger arrays one must construc the array of indexes. NOTE the backing memory is old style with Fortran style internal ordering (for ease of SDF interfacing). But contigous memory and pointer arithmetic give major speed advantage and we very rarely change size on the fly. However nothing outside this class should need to do anything except access by index and populate by element, slice or entire. Internal ordering is Fortran style (for ease of SDF interfacing).
+*Contains dimension information and data. Can be rectangular of any n_dims or ragged of 2 (rows of different lengths). Get_index and get_total_elements account for all details of internal layout in memory. For 1-4 dims individual getter/setter functions are given. For larger arrays one must construc the array of indexes. NOTE the backing memory is old style with Fortran style internal ordering (for ease of SDF interfacing). But contigous memory and pointer arithmetic give major speed advantage and we very rarely change size on the fly. However nothing outside this class should need to do anything except access by index and populate by element, slice or entire. Internal ordering is Fortran style (for ease of SDF interfacing). \todo Break out data array to file \todo Check a vector works
  \author Heather Ratcliffe \date 21/09/2015
 */
 
@@ -121,7 +121,7 @@ public:
   bool set_axis_element(size_t dim, size_t pt, my_type val);
   bool populate_axis(size_t dim, my_type * dat_in, size_t n_tot);
   my_type * get_axis(size_t dim, size_t & length);
-  void make_linear_axis(size_t dim, float res, size_t offset=0);
+  void make_linear_axis(size_t dim, float res, long offset=0);
 
   virtual bool write_to_file(std::fstream &file);
   virtual bool read_from_file(std::fstream &file, bool no_version_check=0);

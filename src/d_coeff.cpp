@@ -62,9 +62,8 @@ void diffusion_coeff::make_velocity_axis(){
 */
 
   calc_type res = (V_MAX - V_MIN)/this->get_length(0);
-  int offset = std::abs(V_MIN)/res;
+  long offset = std::abs(V_MIN)/res;
   make_linear_axis(0, res, offset);
-  //-2 is for testing so 0th element is > zero...
   // FAKENUMBERS
 }
 

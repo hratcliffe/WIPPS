@@ -289,10 +289,10 @@ int test_entity_reader::run(){
   int sz = test_rdr->get_file_size();
   if(sz != size) err |= TEST_WRONG_RESULT;
   int rd_err;
-  int n_dims;
-  std::vector<int> dims;
+  size_t n_dims;
+  std::vector<size_t> dims;
   rd_err = accum_reader->read_dims(n_dims, dims);
-  int time[3]={0,10, 40}, space[2]={0, dims[0]};
+  int time[3]={0,10, 40}, space[2]={0, (int)dims[0]};
 
   if(!rd_err){
     
@@ -732,8 +732,8 @@ int test_entity_get_and_fft::one_d(){
 
   int n_tims = std::max(tim_in[1]-tim_in[0], 1);
 
-  int n_dims;
-  std::vector<int> dims;
+  size_t n_dims;
+  std::vector<size_t> dims;
   test_rdr->read_dims(n_dims, dims);
 
   space_in[1]=dims[0];
@@ -846,8 +846,9 @@ int test_entity_get_and_fft::two_d(){
 
   int n_tims = tim_in[2];//std::max(tim_in[1]-tim_in[0], 1);
 
-  int n_dims, space_size;
-  std::vector<int> dims;
+  int space_size;
+  size_t n_dims;
+  std::vector<size_t> dims;
   test_rdr->read_dims(n_dims, dims);
 
   space_in[1]=dims[0];
@@ -1548,7 +1549,7 @@ int test_entity_spectrum::setup(){
 int test_entity_spectrum::basic_tests(){
 /** \brief Basic tests of spectrum
 *
-* Read in data, derive spectrum, test against correct result, omitting very low frequencies. \todo The angles are integrating to 0.5 not 1. Which do we want???? \todo How the hell does this work with updated reader code?
+* Read in data, derive spectrum, test against correct result, omitting very low frequencies. \todo The angles are integrating to 0.5 not 1. Which do we want???? \todo CHECK test test spectra we're comparing are not both zero!! \todo Update test file to latest IO
 */
   int err = TEST_PASSED;
 
@@ -1818,8 +1819,8 @@ int test_entity_levelone::setup(){
   my_space[0] = space_in[0];
   my_space[1] = space_in[1];
 
-  int n_dims;
-  std::vector<int> dims;
+  size_t n_dims;
+  std::vector<size_t> dims;
   int err2 = my_reader->read_dims(n_dims, dims);
   if(err2) err |= TEST_FATAL_ERR;
   
@@ -1915,8 +1916,8 @@ int test_entity_levelone::twod_tests(){
 * Reads proper data files, produces FFT, derived spectrum etc*/
   int err = TEST_PASSED;
 
-  int n_dims_in;
-  std::vector<int> dims_in;
+  size_t n_dims_in;
+  std::vector<size_t> dims_in;
   my_reader->read_dims(n_dims_in, dims_in);
   if(n_dims_in != 2){
     test_bed->report_info("Wrong file dimension", 1);
@@ -2008,7 +2009,7 @@ test_entity_d::~test_entity_d(){
 }
 
 int test_entity_d::run(){
-
+/** \todo WRITE!*/
   int err = TEST_PASSED;
 
   return err;

@@ -169,7 +169,7 @@ void print_help(){
   safe_exit();
 }
 
-void divide_domain(std::vector<int> dims, int space[2], int per_proc, int block_num){
+void divide_domain(std::vector<size_t> dims, int space[2], int per_proc, int block_num){
 /** \brief Divide dims evenly between procs
 *
 *Uses the number of space blocks from args (if specified) and the domain size from dims to ensure perfect subdivision and set current proc's bounds. We can ignore incoming space vals as they should be -1

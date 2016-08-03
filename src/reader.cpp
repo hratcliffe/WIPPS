@@ -50,11 +50,10 @@ Default and minimum is 4 or the length of first as a string, tries 5-7 also.
 
 }
 
-bool reader::read_dims(int &n_dims, std::vector<int> &dims){
+bool reader::read_dims(size_t &n_dims, std::vector<size_t> &dims){
 /** \brief Gets dimensions of the block specified in reader.
 *
-*Opens reference file, and gets dimension info. Returns by reference, with 0 for success, 1 for file open or read failure. Note we don't have to read the data, only the block list. \todo int or size_t
-
+*Opens reference file, and gets dimension info. Returns by reference, with 0 for success, 1 for file open or read failure. Note we don't have to read the data, only the block list.
 */
 
   std::string file_name = get_full_name(ref_file_num);
@@ -87,7 +86,7 @@ bool reader::read_dims(int &n_dims, std::vector<int> &dims){
     n_dims = block->ndims -1 ;
     //remove time dimension
   }
-  for(int i=0; i<n_dims; i++) dims.push_back(block->dims[i]);
+  for(size_t i=0; i<n_dims; i++) dims.push_back(block->dims[i]);
   
   sdf_close(handle);
 

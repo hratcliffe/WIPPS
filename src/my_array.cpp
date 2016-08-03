@@ -989,7 +989,6 @@ my_type my_array::maxval(std::vector<size_t> &ind, size_t offset){
 
 }
 
-
 void data_array::construct(){
 /** \brief Common parts for all constructors
 *
@@ -1230,7 +1229,7 @@ float data_array::get_res(size_t i){
 /**Return resolution of axis on dimension i. Assumes linear etc etc. If axis is undefined or zero or one in length, return 1.0 */
   size_t len;
   my_type * axis = this->get_axis(i, len);
-  if(axis && len >1) return std::abs(axis[0]-axis[dims[i]-1])/(dims[i]-1);
+  if(axis && len >1) return std::abs(axis[0]-axis[dims[i]-1])/(float)(dims[i]-1);
   else return 1.0;
 
 }
@@ -1248,7 +1247,7 @@ size_t data_array::get_total_axis_elements(){
 
 }
 
-void data_array::make_linear_axis(size_t dim, float res, size_t offset){
+void data_array::make_linear_axis(size_t dim, float res, long offset){
 /**\brief Make an axis
 *
 *Generates a linear axis for dimension dim, with resolution res, starting at value of  - offset*res @param dim Dimension to build axis for @param res Axis resolution @param offset Number of grid cells to shift downwards (leftwards) by
@@ -1257,8 +1256,9 @@ void data_array::make_linear_axis(size_t dim, float res, size_t offset){
   size_t len;
   my_type * ax_ptr = get_axis(dim, len);
 
-  for(size_t i=0; i<len; i++) *(ax_ptr +i) = ((float) (i-offset)) * res;
-
+  for(long i=0; i<len; i++){
+    *(ax_ptr +i) = ((float) (i-offset)) * res;
+  }
 }
 
 bool data_array::write_to_file(std::fstream &file){
@@ -1428,7 +1428,7 @@ bool data_array::read_from_file(std::fstream &file, bool no_version_check){
 bool data_array::fft_me(data_array * data_out){
 /** \brief FFT data_array
 *
-* Data and axes in this object are FFT'd using FFTW and stored into the instance pointed to by data_out. Data_out must be created with correct dimensions first, but we check and return error (1) if it is not so.
+* Data and axes in this object are FFT'd using FFTW and stored into the instance pointed to by data_out. Data_out must be created with correct dimensions first, but we check and return error (1) if it is not so. \todo extract and make friend
 */
 
   if(!data_out->is_good()){
@@ -1449,9 +1449,6 @@ bool data_array::fft_me(data_array * data_out){
   data_out->copy_ids(*this);
   size_t total_size=1; /* Total number of elements in array*/
   for(size_t i=0; i<n_dims;++i) total_size *= dims[i];
-
-  int fft_dim ;
-  fft_dim = 1;/* Dimension to FFT over, if required*/
 
   ADD_FFTW(plan) p;
   cplx_type *out;

@@ -15,7 +15,7 @@ int local_MPI_setup(int argc, char *argv[]);
 setup_args process_command_line(int argc, char *argv[]);
 void share_consts();
 void print_help();
-void divide_domain(std::vector<int>, int space[2], int per_proc, int block_num);
+void divide_domain(std::vector<size_t>, int space[2], int per_proc, int block_num);
 
 
 #endif

@@ -40,7 +40,7 @@ public:
   reader(std::string file_prefix_in,  char * block_id_in, int first=0);
   ~reader(){;}
 
-  bool read_dims(int &n_dims, std::vector<int> &dims);
+  bool read_dims(size_t &n_dims, std::vector<size_t> &dims);
 
   int read_data(data_array & my_data_in, int time_range[3], int space_range[2]);
   bool current_block_is_accum();

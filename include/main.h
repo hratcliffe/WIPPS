@@ -32,6 +32,8 @@
  * FFTs are handled by the FFTW routines in suitable precision (float or double). Special functions are provided by Boost.
  * \subsection contr Spectrum and D generation
  * The main calculations involving extracting a spectrum from the data read, and turning this into a diffusion coefficient, according to equations in Albert 2005 and/or Lyons 1972. Control of this process, matching spectra and coefficients and providing plasma parameters, is managed by the controller class.
+ *\section prereqs Prerequisites
+ * As well as the code, an install of boost is needed (exists on OSX and most Linux systems) as well as the correct version of FFTW libraries (float for float data, double for double). A copy of the SDF file libraries is needed from any version of EPOCH after about 4.6.3. To generate the docs Doxygen and pdftex are used.
  * \section docs This Documentation
  * These docs describe all classes and methods under the classes section. Helper functions, constants etc are grouped under modules.
  * \section build Building or Editing the Code
@@ -45,5 +47,38 @@
  *
  *\section utils Utilities
  *As well as the main program, some utility programs are defined. These are built using make utils. For example, generate_ffts processes input data and outputs trimmed FFTs, or growth calculates theoretical growth rates of whistlers
- */
+ 
+
+\section cpp Minimally wrong description of C++ as used here
+*\subsection types Types and typedefs
+*There's two ways to do a character string, old C-style array or characters, or a std::string (see below for meaning of std::). Some older functions expect the former, so the .c_str() conversion is used. I use C-strings for some things to match the libraries being used.
+*The special type size_t is defined as an unsigned integer type large enough to count "anything". Unsigned so cannot be negative, but is used for counts, sizes etc.
+* I have also added a typedef for the type in the data files and that to do the calculations in, my_type and calc_type respectively, defined in support.h. I decided to do all calculations as double, but as my data are float I use float versions of the FFTW libraries. 
+*\subsection class Classes
+*For this code, classes are basically structs containing data, with special methods (member functions). These always know the contents of the class and can access bits that might be hidden from the outside (private or protected).
+* One class can extend another, as data_array does to my_array. The former holds just a chunk of data, the latter adds axes and additional functions.
+*Once you have a class instance, i.e. a variable containing a thing of that class, you can call methods on it using the '.'
+*Constructors are functions used to set up a new instance. For instance, if I want to make a 10x10 array, we set the parameters recording the dimension to define a 2-d array with sizes 10 and 10, and we grab some memory to store 10x10=100 data values etc. These special functions look like class_name(parameter list). We also have a destructor, which clean up when the variable is destroyed, and some special things which let us make copies, set one thing equal another and so on. These can be safely ignored.
+*Quick example:
+ data_array dat = data_array(10, 10); //Make a new 10x10 array
+ dat.set_element(5, 5, 2.0); //Set element 5, 5 to 2.0
+ my_type element = dat.get_element(5, 5); //element = 2.0
+*
+*\subsection pointer Pointers * and ->
+*Some classes get rather large, for instance if they hold a lot of data internally. In this case, you might want to pass them about not by value (copying everything) but just by getting a pointer to where they are. Pointer variables are defined like
+class * my_pointer with an asterix. This variable holds only the address. Conversions between pointer and instance are:
+class * my_pointer = new class();
+class my_instance = class();
+my_instance = *(my_pointer); 'dereference' pointer to get value it points to
+my_pointer = &(my_instance); take 'address of' instance to get pointer. 
+The special operator '->' is used to apply a method to a pointer:
+my_instance.set_element(5, 5, 2.0);
+my_pointer->set_element(5, 5, 2.0);
+Some of the core code uses these, none of the stuff in use should.
+*& in a function means that you may pass an instance, but a copy will not be made, the function will just be given the address. For instance the function to read data into an array dat is my_reader.read_data(dat, time, space); But a copy of dat is not made.
+
+*\subsection colon The double colons ::
+* The :: appears either with something like std:: or boost::math:: or with a class name, and means that this refers to the function X in that library, class etc. So there might be a function abs() in the standard std library and in a math library and one must distinguish between them. Or both my_array and data_array have a function called is_good() and the definitions must state which they refer to.
+
+*/
 

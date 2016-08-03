@@ -59,6 +59,105 @@ spectrum::spectrum(int n_om, int n_ang, bool separable){
   }
 }
 
+spectrum::spectrum(std::string filename){
+/** \brief Setup a spectrum from file dump*/
+
+//First we grab the position of close block. Then we attempt to read two arrays. If we reach footer after first we error, or do not after second we warn.
+
+  std::fstream file;
+  file.open(filename, std::ios::in|std::ios::binary);
+  if(!file.is_open()) return;
+
+  bool err = 0, cont = 1;
+  size_t end_block=0, next_block=0;
+  file.seekg(-1*sizeof(size_t), file.end);
+  file.read((char*) &end_block, sizeof(size_t));
+  file.seekg(0, std::ios::beg);
+
+  std::vector<size_t> dims = B_omega_array->read_dims_from_file(file);
+
+  if(dims.size() !=1){
+    my_print("Invalid dimensions for B", mpi_info.rank);
+    cont = 0;
+  }
+  if(cont){
+    //Now set up B correct size
+    file.seekg(0, std::ios::beg);
+    //return to start
+    B_omega_array = new data_array(dims[0]);
+    err = B_omega_array->read_from_file(file);
+  }
+  if(cont && err){
+    my_print("File read failed", mpi_info.rank);
+    cont = 0;
+  }
+  if(cont){
+    file.seekg(-1*sizeof(size_t), std::ios::cur);
+    file.read((char*) &next_block, sizeof(size_t));
+    if(next_block == end_block){
+      //Early termination of file...
+      my_print("Insufficent arrays in file", mpi_info.rank);
+      cont =0;
+    }
+  }
+  if(cont){
+    dims = g_angle_array->read_dims_from_file(file);
+    if(dims.size() !=2){
+      my_print("Wrong dimensions for g", mpi_info.rank);
+      cont = 0;
+    }
+  }
+  if(cont){
+    //Now set up g correct size
+    file.seekg(0, std::ios::beg);
+    //return to start
+
+    if(dims[0] == 1){
+      this->g_angle_array = new data_array(1, dims[1]);
+      angle_is_function = true;
+      function_type = FUNCTION_DELTA;
+      normg = (my_type *) calloc(1, sizeof(my_type));
+      //Single row so only one norm
+    }else{
+      this->g_angle_array = new data_array(dims[0], dims[1]);
+      angle_is_function = false;
+      normg = (my_type *) calloc(dims[1], sizeof(my_type));
+      //Norm each row
+    }
+  
+    err = g_angle_array->read_from_file(file);
+  
+    if(err){
+      my_print("File read failed", mpi_info.rank);
+      cont =0;
+    }
+  }
+  if(cont){
+    file.seekg(-1*sizeof(size_t), std::ios::cur);
+    file.read((char*) &next_block, sizeof(size_t));
+
+    if(next_block != end_block){
+      //File is not done!
+      my_print("Excess arrays in file", mpi_info.rank);
+      cont = 0;
+    }
+  }
+  if(cont){
+    char id_in[ID_SIZE];
+    file.seekg(end_block+sizeof(size_t));
+    if(file) file.read(id_in, sizeof(char)*ID_SIZE);
+    strcpy(this->block_id, id_in);
+  }
+
+  if(!cont){
+    //Something went wrong. Clean up and quit
+    if(B_omega_array) delete B_omega_array;
+    if(g_angle_array) delete g_angle_array;
+    return;
+  }
+}
+
+
 void spectrum::set_ids(float time1, float time2, int space1, int space2, int wave_id, char block_id[ID_SIZE], int function_type){
 /**\brief Set parameters
 *
@@ -259,22 +358,73 @@ std::vector<int> spectrum::all_where(my_type * ax_ptr, int len, my_type target,s
 }
 
 bool spectrum::write_to_file(std::fstream &file){
-/** \brief Write to file*/
+/** \brief Write to file \todo Swap to sentinel*/
 
   if(!file.is_open() || (!this->B_omega_array->is_good())|| (!this->g_angle_array->is_good())) return 1;
 
+  bool err, write_err=0;
+  err |= B_omega_array->write_to_file(file, false);
+  err = g_angle_array->write_to_file(file, false);
+  //Don't close these files. Instead the below writes a single footer
+
+  size_t ftr_start = (size_t) file.tellg() + sizeof(size_t);
+  size_t next_location = ftr_start+ sizeof(char)*ID_SIZE;
+
+  file.write((char*) & next_location, sizeof(size_t));
+  //Position of next section
   file.write(block_id, sizeof(char)*ID_SIZE);
 
-  const char tmp_vers[15] = VERSION;
-  file.write((char*) &io_verify, sizeof(my_type));
-  file.write((char*) &tmp_vers, sizeof(char)*15);
-  int n_blocks = 2;
-  file.write((char*) &n_blocks, sizeof(int));
-  //Write how many smaller arrays there are
-  bool err;
-  err |= B_omega_array->write_to_file(file);
-  err = g_angle_array->write_to_file(file);
+  if(file.tellg() != next_location) write_err=1;
+  if(write_err) my_print("Error writing offset positions", mpi_info.rank);
+  file.write((char*) & ftr_start, sizeof(size_t));
+
   return err;
+
+}
+bool spectrum::read_from_file(std::fstream &file){
+/** \todo WRITR@!!!*/
+
+//First we grab the position of close block. Then we attempt to read two arrays. If we reach footer after first we error, or do not after second we warn. If the arrays in file are the wrong size, we have to error out
+  bool err = 0;
+  size_t end_block=0, next_block=0;
+  file.seekg(-1*sizeof(size_t), file.end);
+  file.read((char*) &end_block, sizeof(size_t));
+  file.seekg(0, std::ios::beg);
+
+  err = B_omega_array->read_from_file(file);
+  if(err){
+    my_print("File read failed", mpi_info.rank);
+    return err;
+  }
+  file.seekg(-1*sizeof(size_t), std::ios::cur);
+  file.read((char*) &next_block, sizeof(size_t));
+  if(next_block == end_block){
+    //Early termination of file...
+    my_print("Insufficent arrays in file", mpi_info.rank);
+    if(B_omega_array) delete B_omega_array;
+    return 1;
+  }
+
+  err = g_angle_array->read_from_file(file);
+  if(err){
+    my_print("File read failed", mpi_info.rank);
+    return err;
+  }
+  file.seekg(-1*sizeof(size_t), std::ios::cur);
+  file.read((char*) &next_block, sizeof(size_t));
+
+  if(next_block != end_block){
+    //File is not done!
+    my_print("Excess arrays in file", mpi_info.rank);
+  }
+
+  char id_in[ID_SIZE];
+  file.seekg(end_block+sizeof(size_t));
+  if(file) file.read(id_in, sizeof(char)*ID_SIZE);
+  strcpy(this->block_id, id_in);
+
+  return err;
+
 
 }
 

@@ -125,9 +125,9 @@ public:
   my_type * get_axis(size_t dim, size_t & length);
   void make_linear_axis(size_t dim, float res, long offset=0);
 
-  virtual bool write_to_file(std::fstream &file);
+  virtual bool write_to_file(std::fstream &file, bool close_file=true);
   virtual bool read_from_file(std::fstream &file, bool no_version_check=0);
-  virtual bool write_section_to_file(std::fstream &file, std::vector<my_type> limits);
+  virtual bool write_section_to_file(std::fstream &file, std::vector<my_type> limits, bool close_file=true);
   
   bool fft_me(data_array * data_out);
   bool populate_mirror_fastest(my_type * result_in, size_t total_els);

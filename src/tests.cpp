@@ -1520,8 +1520,8 @@ int test_entity_spectrum::run(){
   share_consts();
 
   err|= setup();
-  err|= basic_tests();
-  err|= albertGs_tests();
+  if(!test_bed->check_for_abort(err)) err|= basic_tests();
+  if(!test_bed->check_for_abort(err)) err|= albertGs_tests();
   
   test_bed->report_err(err);
 
@@ -1540,7 +1540,11 @@ int test_entity_spectrum::setup(){
 
   int err = TEST_PASSED;
 
-  test_dat_fft = new data_array(file_prefix + "FFT_data.dat");
+  test_dat_fft = new data_array(file_prefix + "FFT_data.dat", true);
+  if(!test_dat_fft->is_good()){
+    err |= TEST_ASSERT_FAIL;
+    err |= TEST_FATAL_ERR;
+  }
 
   test_contr = new controller(file_prefix);
 
@@ -1613,28 +1617,33 @@ int test_entity_spectrum::basic_tests(){
   test_contr->get_current_spectrum()->generate_spectrum(test_dat_fft ,10, FUNCTION_GAUSS);
 
 
-  test_spect = new data_array(file_prefix + "spectrum.dat");
+  test_spect = new data_array(file_prefix + "spectrum.dat", true);
+  if(test_spect->is_good()){
+    //We ignore frequencies below say 0.05 om_ce
+    my_type * ax = test_spect->get_axis(0, len);
+    int min_ind = 0;
+    if(ax) min_ind = where(ax+len/2, len/2, 17588.200*0.05);
+    /**Hard code min freq to match the IDL file with test data generation...*/
+    
+    total_error = 0.0;
+    for(int i=0; i< len/2 - min_ind; i++){
+      total_error += std::abs(test_contr->get_current_spectrum()->get_B_element(i)-test_spect->get_element(i));
+    }
+    for(int i=len/2 + min_ind; i< len; i++){
+      total_error += std::abs(test_contr->get_current_spectrum()->get_B_element(i)-test_spect->get_element(i));
 
-  //We ignore frequencies below say 0.05 om_ce
-  my_type * ax = test_spect->get_axis(0, len);
-  int min_ind = where(ax+len/2, len/2, 17588.200*0.05);
-  /**Hard code min freq to match the IDL file with test data generation...*/
-  total_error = 0.0;
-  for(int i=0; i< len/2 - min_ind; i++){
-    total_error += std::abs(test_contr->get_current_spectrum()->get_B_element(i)-test_spect->get_element(i));
+    }
+    if(total_error > LOW_PRECISION){
+      err |= TEST_WRONG_RESULT;
+      test_bed->report_info("Mismatch between generated spectrum and test spectrum of "+mk_str(total_error));
+    }
+    /* Preserve the spectrum*/
+    outfile.open("spect_out.dat", std::ios::out|std::ios::binary);
+    test_contr->get_current_spectrum()->write_to_file(outfile);
+    outfile.close();
+  }else{
+    err |= TEST_ASSERT_FAIL;
   }
-  for(int i=len/2 + min_ind; i< len; i++){
-    total_error += std::abs(test_contr->get_current_spectrum()->get_B_element(i)-test_spect->get_element(i));
-
-  }
-  if(total_error > LOW_PRECISION){
-    err |= TEST_WRONG_RESULT;
-    test_bed->report_info("Mismatch between generated spectrum and test spectrum of "+mk_str(total_error));
-  }
-  /* Preserve the spectrum*/
-  outfile.open("spect_out.dat", std::ios::out|std::ios::binary);
-  test_contr->get_current_spectrum()->write_to_file(outfile);
-  outfile.close();
   if(err == TEST_PASSED) test_bed->report_info("Generate spectrum OK");
 
   return err;
@@ -1768,23 +1777,22 @@ int test_entity_levelone::run(){
   time_in[2] = 100;
 
   err|= setup();
-  if(test_bed->check_for_abort(err)) return err;
-  err|= basic_tests();
-  if(test_bed->check_for_abort(err)) return err;
+  if(!test_bed->check_for_abort(err)) err|= basic_tests();
   if(my_reader) delete my_reader;
   if(test_contr) delete test_contr;
-  
-  file_prefix = "./files/2dtest/";
-  strcpy(block_id, "ey");
-  space_in[0] = 0;
-  space_in[1] = 1024;
-  time_in[0] = 0;
-  time_in[1] = 50;
-  time_in[2] = 0;
+    
+  if(!test_bed->check_for_abort(err)){
+    file_prefix = "./files/2dtest/";
+    strcpy(block_id, "ey");
+    space_in[0] = 0;
+    space_in[1] = 1024;
+    time_in[0] = 0;
+    time_in[1] = 50;
+    time_in[2] = 0;
 
-  err|=setup();
-  err|= twod_tests();
-  if(test_bed->check_for_abort(err)) return err;
+    err|=setup();
+    if(!test_bed->check_for_abort(err)) err|= twod_tests();
+  }
   
   test_bed->report_err(err);
 

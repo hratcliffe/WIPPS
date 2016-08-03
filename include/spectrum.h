@@ -28,7 +28,8 @@ class spectrum{
 
   controller * my_controller;/**< Links this to a plasma object*/
   void construct();
-  spectrum(int nx, int n_ang, bool seperable);/**< Private because only controllers can create/destroy*/
+  spectrum(int nx, int n_ang, bool separable);/**< Private because only controllers can create/destroy*/
+  spectrum(std::string filename);
   my_type normB;/**< Norm of B(w)*/
   my_type* normg;/**< Norms of g_w(x) for each w*/
   bool normaliseB();/**< Fills normB*/
@@ -61,7 +62,8 @@ public:
   std::vector<int> all_where(my_type * ax_ptr, int len, my_type target, std::function<bool(my_type,my_type)> func = std::greater<my_type>());
   
   bool write_to_file(std::fstream &file);
-
+  bool read_from_file(std::fstream &file);
+  
   void make_test_spectrum(int time[2], int space[2],int angle_type=FUNCTION_DELTA);
 
   calc_type get_G1(calc_type omega);

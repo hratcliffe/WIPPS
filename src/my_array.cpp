@@ -1096,13 +1096,18 @@ data_array::data_array(std::string filename, bool no_version_check){
 
     //Finally read in data and axes using normal routines
     infile.seekg(0, std::ios::beg);
-    this->read_from_file(infile, no_version_check);
+    bool err= this->read_from_file(infile, no_version_check);
+    if(err){
+      my_print("IO error, could not read", mpi_info.rank);
+      if(axes) delete axes;
+      ax_defined = false;
+      if(data) delete data;
+      defined = false;
+    }
   
   }else{
     my_print("Invalid dimensionality in input file", mpi_info.rank);
-  
   }
-
 }
 
 data_array::~data_array(){
@@ -1261,7 +1266,7 @@ void data_array::make_linear_axis(size_t dim, float res, long offset){
   }
 }
 
-bool data_array::write_to_file(std::fstream &file){
+bool data_array::write_to_file(std::fstream &file, bool close_file){
 /** \brief Write data array to file
 *
 *First write the my_array section, see my_array::write_to_file then add the following
@@ -1287,7 +1292,7 @@ IMPORTANT: the VERSION specifier links output files to code. If modifying output
   //Add axes.
   if(file.tellg() != next_location) write_err=1;
 
-  size_t hdr_start = next_location + sizeof(size_t);
+  size_t ftr_start = next_location + sizeof(size_t);
 
   next_location += sizeof(char)*ID_SIZE + sizeof(size_t);
   file.write((char*) & next_location, sizeof(size_t));
@@ -1296,13 +1301,13 @@ IMPORTANT: the VERSION specifier links output files to code. If modifying output
 
   if(file.tellg() != next_location) write_err=1;
   if(write_err) my_print("Error writing offset positions", mpi_info.rank);
-  file.write((char*) & hdr_start, sizeof(size_t));
+  if(close_file) file.write((char*) & ftr_start, sizeof(size_t));
   //Finish with position of start of footer!
   return 0;
 
 }
 
-bool data_array::write_section_to_file(std::fstream &file, std::vector<my_type> limits){
+bool data_array::write_section_to_file(std::fstream &file, std::vector<my_type> limits, bool close_file){
 /** \brief Print section of array to file
 *
 *Prints the section defined by the vector limits to supplied file. Limits should contain AXIS values. To use one dimension entire supply values less/greater than min and max axis values. See data_array::write_to_file for format
@@ -1340,16 +1345,15 @@ bool data_array::write_section_to_file(std::fstream &file, std::vector<my_type> 
 
   if(file.tellg() != next_location) write_err=1;
 
-  size_t hdr_start = next_location  + sizeof(size_t);
+  size_t ftr_start = next_location  + sizeof(size_t);
   next_location += sizeof(char)*ID_SIZE + sizeof(size_t);
   file.write((char*) & next_location, sizeof(size_t));
   //Position of next section
-  std::cout<<block_id<<'\n';
   file.write(block_id, sizeof(char)*ID_SIZE);
 
   if(file.tellg() != next_location) write_err=1;
   if(write_err) my_print("Error writing offset positions", mpi_info.rank);
-  file.write((char*) & hdr_start, sizeof(size_t));
+  if(close_file) file.write((char*) & ftr_start, sizeof(size_t));
 
   return 0;
 }
@@ -1417,7 +1421,7 @@ bool data_array::read_from_file(std::fstream &file, bool no_version_check){
   file.read((char*) &end_block, sizeof(size_t));
   //First read the block ID
   char id_in[ID_SIZE];
-  file.seekg(end_block);
+  file.seekg(end_block+sizeof(size_t));
   if(file) file.read(id_in, sizeof(char)*ID_SIZE);
   strcpy(this->block_id, id_in);
 

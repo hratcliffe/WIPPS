@@ -47,30 +47,17 @@ controller::~controller(){
 
 };
 
-void controller::add_spectrum(int nx, int n_ang){
+void controller::add_spectrum(int nx, int n_ang, bool separable){
 /** \brief Create and add spectrum
 *
-*rectangular spectrum, for when angular distribution depends on omega
+*If separable is true it is assumed the angle distrib does not depend on omega, else it does
 */
   spectrum * tmp_spect;
-  tmp_spect = new spectrum(nx, n_ang);
+  tmp_spect = new spectrum(nx, n_ang, separable);
   tmp_spect->my_controller = this;
   my_spect.push_back(tmp_spect);
   current_spect = my_spect.size()-1;
 
-}
-
-void controller::add_spectrum(int * row_lengths, int ny){
-/** \brief Create and add spectrum
-*
-*Spectrum for when angular distribution does not depend on omega
-*/
-  spectrum * tmp_spect;
-  tmp_spect = new spectrum(row_lengths, ny);
-  tmp_spect->my_controller = this;
-  my_spect.push_back(tmp_spect);
-  current_spect = my_spect.size()-1;
-  
 }
 
 void controller::add_d(int nx, int n_angs, int pos){

@@ -34,8 +34,7 @@ public:
 
   controller(std::string file_prefix);
   ~controller();
-  void add_spectrum(int nx, int n_ang);
-  void add_spectrum(int * row_lengths, int ny);
+  void add_spectrum(int nx, int n_ang,bool separable);
   void add_d(int nx, int n_angs, int pos=-1);
   spectrum * get_current_spectrum();
   diffusion_coeff * get_current_d();

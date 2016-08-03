@@ -69,6 +69,8 @@ public:
 
   virtual bool write_to_file(std::fstream &file);
   virtual bool read_from_file(std::fstream &file, bool no_version_check=0);
+  std::vector<size_t> read_dims_from_file(std::fstream &file, bool no_version_check=0);
+  
   virtual bool write_section_to_file(std::fstream &file, std::vector<size_t> bounds);
   virtual bool resize(size_t dim, size_t sz);
   virtual bool shift(size_t dim, long n_els);
@@ -132,7 +134,6 @@ public:
   bool check_ids(const data_array & src);
   virtual bool resize(size_t dim, size_t sz);
   virtual bool shift(size_t dim, long n_els, bool axis=1);
-
 };
 
 

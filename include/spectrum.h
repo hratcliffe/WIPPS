@@ -23,14 +23,12 @@ class controller;
 *Specialises shape and adds functions to process spectrum, normalise it etc. Can be created/destroyed only by controllers. IMPORTANT: because we are working with FFT data, we assume the angle/frequency axis either covers some small cutout in +ve domain, or is symmetrical in positive and negative values. A few of the specific routines here use this to simplify things. The "angle" axis is stored as tan(theta) for theta the wave normal angle. We seperate forwards and backwards wave modes by \author Heather Ratcliffe \date 24/09/2015 
 */
 class spectrum{
-  friend void controller::add_spectrum(int nx, int n_ang);
-  friend void controller::add_spectrum(int * row_lengths, int ny);
+  friend void controller::add_spectrum(int nx, int n_ang, bool separable);
   friend controller::~controller();
 
   controller * my_controller;/**< Links this to a plasma object*/
   void construct();
-  spectrum(int nx, int n_ang);/**< Private because only controllers can create/destroy*/
-  spectrum(int * row_lengths, int ny);/**< Private because only controllers can create/destroy*/
+  spectrum(int nx, int n_ang, bool seperable);/**< Private because only controllers can create/destroy*/
   my_type normB;/**< Norm of B(w)*/
   my_type* normg;/**< Norms of g_w(x) for each w*/
   bool normaliseB();/**< Fills normB*/
@@ -49,7 +47,6 @@ public:
   int wave_id; /**< ID for which wave mode cutout we're going for. See support.h*/
   bool angle_is_function;/**< Says we impose g(x) rather than have one g for each w*/
   int function_type;/**< Type code for angular function. See support.h */
-  int n_angs;/**< Number of angles to use*/
   void set_ids(float time1, float time2, int space1, int space2, int wave_id, char block_id[10], int function_type=FUNCTION_DELTA);
 
   bool generate_spectrum(data_array * parent, int om_fuzz=10, int angle_type=FUNCTION_DELTA);
@@ -80,8 +77,8 @@ public:
   my_type get_ang_element(int nx, int ny=0);
   my_type get_B_axis_element(int nx);
   my_type get_ang_axis_element(int nx);
-  int get_ang_dims(int i=-1);
-  int get_B_dims(int i=-1);
+  size_t get_ang_dims(int i=-1);
+  size_t get_B_dims(int i=-1);
 
   
 };

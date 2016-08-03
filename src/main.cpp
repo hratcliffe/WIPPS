@@ -84,7 +84,7 @@ int main(int argc, char *argv[]){
 
   return 0;
 #else
-
+#endif
   //Actually do the code...
   my_print("Processing "+mk_str(cmd_line_args.per_proc)+" blocks per core", mpi_info.rank);
 
@@ -147,12 +147,8 @@ int main(int argc, char *argv[]){
     else MPI_Reduce(&err, NULL, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
 
     my_print("FFT returned err_state " + mk_str(err), mpi_info.rank);
-
-    int row_lengths[2];
-    row_lengths[0] = space_dim;
-    row_lengths[1] = DEFAULT_N_ANG;
     
-    contr.add_spectrum(row_lengths, 2);
+    contr.add_spectrum(space_dim, DEFAULT_N_ANG, true);
     contr.get_current_spectrum()->make_test_spectrum(cmd_line_args.time, my_space);
 
     //Now we have some test spectral data we can work with...
@@ -184,7 +180,7 @@ int main(int argc, char *argv[]){
   ADD_FFTW(cleanup());
   MPI_Finalize();
   //call these last...
-#endif
+
 
   exit(0);
 }

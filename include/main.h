@@ -75,6 +75,7 @@ The special operator '->' is used to apply a method to a pointer:
 my_instance.set_element(5, 5, 2.0);
 my_pointer->set_element(5, 5, 2.0);
 Some of the core code uses these, none of the stuff in use should.
+*The special id 'this' inside a class method refers to the instance the method was called on and is a pointer, so uses this->
 *& in a function means that you may pass an instance, but a copy will not be made, the function will just be given the address. For instance the function to read data into an array dat is my_reader.read_data(dat, time, space); But a copy of dat is not made.
 
 *\subsection colon The double colons ::

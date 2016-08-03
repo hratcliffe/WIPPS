@@ -36,40 +36,27 @@ void spectrum::construct(){
 
 }
 
-spectrum::spectrum(int * row_lengths, int ny){
+spectrum::spectrum(int n_om, int n_ang, bool separable){
 /** \brief Construct spectrum
 *
-*Constructs a spectrum with two independent seperable functions of omega and angle. Spectra are always in the form B^2(omega) g(theta, omega). Here g(theta, omega) = g(theta). \todo why not just take 2 ints
-*/
-  construct();
-  this->B_omega_array = new data_array(row_lengths[0]);
-  this->g_angle_array = new data_array(1, row_lengths[1]);
-  //One d and 2-d arrays for the functions
-  
-  angle_is_function = true;
-  n_angs = row_lengths[1];
-  function_type = FUNCTION_DELTA;
-  normg = (my_type *) calloc(1, sizeof(my_type));
-  //Single row so only one norm
-}
-
-spectrum::spectrum(int nx, int n_ang){
-/** \brief Construct spectrum
-*
-*Constructs a spectrum when for instance the angle dependence varies with k. Spectra are always in the form B^2(omega) g(theta, omega). Here we require to hold both an n_omega x 1 array for B plus the n_omega*n_angs array for g.
+*Constructs a spectrum. If the B and angle dependences are seperable (separable = true) then this will be B^2(omega) g(theta). Else it will be B^2(omega) g(omega, theta). Both have a B array of size n_omega, the former has g of 1 x n_angles, the latter n_omega x n_angles
 */
 
   construct();
-  this->B_omega_array = new data_array(nx);
-  this->g_angle_array = new data_array(nx, n_ang);
-  //One d and 2-d arrays for the functions
+  this->B_omega_array = new data_array(n_om);
 
-  angle_is_function = false;
-  n_angs = n_ang;
-  normg = (my_type *) calloc(n_ang, sizeof(my_type));
-  //Norm each row
-
-
+  if(separable){
+    this->g_angle_array = new data_array(1, n_ang);
+    angle_is_function = true;
+    function_type = FUNCTION_DELTA;
+    normg = (my_type *) calloc(1, sizeof(my_type));
+    //Single row so only one norm
+  }else{
+    this->g_angle_array = new data_array(n_om, n_ang);
+    angle_is_function = false;
+    normg = (my_type *) calloc(n_ang, sizeof(my_type));
+    //Norm each row
+  }
 }
 
 void spectrum::set_ids(float time1, float time2, int space1, int space2, int wave_id, char block_id[ID_SIZE], int function_type){
@@ -708,11 +695,11 @@ my_type spectrum::get_ang_axis_element(int nx){
   return g_angle_array-> get_axis_element(1, nx);
 }
 
-int spectrum::get_ang_dims(int i){
+size_t spectrum::get_ang_dims(int i){
   if(i== -1) return this->g_angle_array->get_dims();
   else return this->g_angle_array->get_dims(i);
 }
-int spectrum::get_B_dims(int i){
+size_t spectrum::get_B_dims(int i){
   if(i== -1) return this->B_omega_array->get_dims();
   else return this->B_omega_array->get_dims(i);
 

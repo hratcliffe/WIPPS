@@ -699,13 +699,51 @@ bool my_array::write_section_to_file(std::fstream &file, std::vector<size_t> bou
 bool my_array::read_from_file(std::fstream &file, bool no_version_check){
 /** \brief Read array dump file
 *
-*Reads block id, data and axes from a file. Requires the dimensions of array to be already setup and will check for consistency with those in file
+*Reads dims and data from file. Requires the dimensions of array to be already setup and will check for consistency with those in file
 
 */
 /** sizeof(size_t) sizeof(my_type) io_verification_code Version string
 *Next_block n_dims dims[n_dims]
 *Next_block data
 */
+
+  std::vector<size_t> dims_vec = read_dims_from_file(file, no_version_check);
+
+  size_t next_block;
+  
+  if(dims_vec.size() !=n_dims){
+    my_print("Dimensions do not match, aborting read", mpi_info.rank);
+    return 1;
+  }
+  size_t tot_els =1;
+  for(size_t i=0;i<dims_vec.size();i++){
+    if(dims_vec[i] !=dims[i]){
+      my_print("Dimensions do not match, aborting read", mpi_info.rank);
+      return 1;
+    }
+    tot_els *= dims[i];
+    //Check dims
+  }
+  file.read((char*) &next_block, sizeof(size_t));
+
+  file.read((char *) data , sizeof(my_type)*tot_els);
+
+  return 0;
+
+}
+
+std::vector<size_t> my_array::read_dims_from_file(std::fstream &file, bool no_version_check){
+/** \brief Read array dump file for dimension
+*
+*Reads dims into vector. Returns empty vector on read error
+
+*/
+/** sizeof(size_t) sizeof(my_type) io_verification_code Version string
+*Next_block n_dims dims[n_dims]
+*Next_block data
+*/
+  std::vector<size_t> dims_vec;
+
   char tmp_vers[15];
   my_type verf=0.0;
 
@@ -716,7 +754,7 @@ bool my_array::read_from_file(std::fstream &file, bool no_version_check){
 
   if(size_sz !=sizeof(size_t)) my_print("size_t size does not match file", mpi_info.rank);
   if(my_sz !=sizeof(my_type)) my_print("my_type size does not match file", mpi_info.rank);
-  if(my_sz !=sizeof(my_type) ||size_sz !=sizeof(size_t)) return 1;
+  if(my_sz !=sizeof(my_type) ||size_sz !=sizeof(size_t)) return dims_vec;
   
   file.read((char*) &verf, sizeof(my_type));
   file.read((char*) &tmp_vers, sizeof(char)*15);
@@ -725,7 +763,7 @@ bool my_array::read_from_file(std::fstream &file, bool no_version_check){
   //equality even though floats as should be identical
     my_print("File read error", mpi_info.rank);
     if(strcmp(tmp_vers, VERSION) !=0 && strcmp(tmp_vers, "IDL data write")!= 0 ) my_print("Incompatible code versions", mpi_info.rank);
-    return 1;
+    return dims_vec;
   }else{
     if(!no_version_check && strcmp(tmp_vers, VERSION) !=0){
        my_print("WARNING: A different code version was used to write this data. Proceed with caution. Fields may not align correctly.", mpi_info.rank);
@@ -737,28 +775,15 @@ bool my_array::read_from_file(std::fstream &file, bool no_version_check){
   }
 
   file.read((char*) &next_block, sizeof(size_t));
-
   file.read((char*) &n_dims_in, sizeof(size_t));
-  if(n_dims_in !=n_dims){
-    my_print("Dimensions do not match, aborting read", mpi_info.rank);
-    return 1;
-  }
+
   size_t tot_els =1;
   for(size_t i=0;i<n_dims_in;i++){
     file.read((char*) &dim_tmp, sizeof(size_t));
-    if(dim_tmp !=dims[i]){
-      my_print("Dimensions do not match, aborting read", mpi_info.rank);
-      return 1;
-    }
-    tot_els *= dim_tmp;
-    //Check dims
+    dims_vec.push_back(dim_tmp);
   }
-  file.read((char*) &next_block, sizeof(size_t));
 
-  file.read((char *) data , sizeof(my_type)*tot_els);
-
-  return 0;
-
+  return dims_vec;
 }
 
 bool my_array::resize(size_t dim, size_t sz){
@@ -1047,29 +1072,8 @@ data_array::data_array(std::string filename, bool no_version_check){
   infile.open(filename, std::ios::in|std::ios::binary);
   if(!infile.is_open()) return;
   
-  char id_in[ID_SIZE];
-  char tmp_vers[15];
-  my_type verf=0.0;
-  int n_dims_in, dim_tmp;
-
-  infile.read(id_in, sizeof(char)*ID_SIZE);
-  
-  infile.read((char*) &verf, sizeof(my_type));
-
-  infile.read((char*) &tmp_vers, sizeof(char)*15);
-
-  if(verf != io_verify){
-  //equality even though floats as should be identical
-    my_print("Bugger, file read error", mpi_info.rank);
-    if(tmp_vers !=VERSION && strcmp(tmp_vers, "IDL data write")!= 0) my_print("Incompatible code versions", mpi_info.rank);
-    return;
-  }else{
-    if(!no_version_check && tmp_vers !=VERSION) my_print("WARNING: A different code version was used to write this data. Proceed with caution. Fields may not align correctly.", mpi_info.rank);
-  }
-
-
-  infile.read((char*) &n_dims_in, sizeof(int));
-
+  std::vector<size_t> dims_vec = my_array::read_dims_from_file(infile, no_version_check);
+  size_t n_dims_in = dims_vec.size();
   //Now we have the dimensions, construct
   size_t total_data=1, total_axes=0;
   if(n_dims_in >0){
@@ -1079,9 +1083,7 @@ data_array::data_array(std::string filename, bool no_version_check){
     this->n_dims = n_dims_in;
     this->dims = (size_t*)malloc(n_dims*sizeof(size_t));
     for(size_t i=0;i<n_dims;i++){
-      infile.read((char*) &dim_tmp, sizeof(int));
-
-      dims[i] = (size_t) dim_tmp;
+      dims[i] = dims_vec[i];
       total_axes += dims[i];
       total_data *= dims[i];
       
@@ -1095,13 +1097,11 @@ data_array::data_array(std::string filename, bool no_version_check){
     //Finally read in data and axes using normal routines
     infile.seekg(0, std::ios::beg);
     this->read_from_file(infile, no_version_check);
-
   
   }else{
     my_print("Invalid dimensionality in input file", mpi_info.rank);
   
   }
-
 
 }
 

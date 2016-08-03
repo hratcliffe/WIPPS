@@ -1540,7 +1540,8 @@ int test_entity_spectrum::setup(){
 
   int err = TEST_PASSED;
 
-  test_dat_fft = new data_array(file_prefix + "FFT_data.dat", 1);
+  test_dat_fft = new data_array(file_prefix + "FFT_data.dat");
+
   test_contr = new controller(file_prefix);
 
   return err;
@@ -1554,15 +1555,11 @@ int test_entity_spectrum::basic_tests(){
   int err = TEST_PASSED;
 
   std::fstream outfile;
-
   size_t len=0;
   my_type total_error =0.0;
   my_type * d_angle, * angle_data;
-  int row_lengths[2];
 
-  row_lengths[0] = test_dat_fft->get_dims(0);
-  row_lengths[1] = DEFAULT_N_ANG;
-  test_contr->add_spectrum(row_lengths, 2);
+  test_contr->add_spectrum(test_dat_fft->get_dims(0), DEFAULT_N_ANG, true);
 
   /** Check this test spectrum makes sense \todo HOW????*/
 
@@ -1575,8 +1572,8 @@ int test_entity_spectrum::basic_tests(){
   
   if(is_symmetric || is_zero){
     len = test_contr->get_current_spectrum()->get_ang_dims(1);
-    d_angle = (my_type *) calloc(row_lengths[1], sizeof(my_type));
-    for(int i=0; i<row_lengths[1]-1; ++i){
+    d_angle = (my_type *) calloc(DEFAULT_N_ANG, sizeof(my_type));
+    for(int i=0; i<DEFAULT_N_ANG-1; ++i){
       d_angle[i] = std::abs(test_contr->get_current_spectrum()->get_ang_axis_element(i) - test_contr->get_current_spectrum()->get_ang_axis_element(i+1));
     }
     angle_data = (my_type *) malloc(len*sizeof(my_type));
@@ -1616,17 +1613,17 @@ int test_entity_spectrum::basic_tests(){
   test_contr->get_current_spectrum()->generate_spectrum(test_dat_fft ,10, FUNCTION_GAUSS);
 
 
-  test_spect = new data_array(file_prefix + "spectrum.dat", 1);
+  test_spect = new data_array(file_prefix + "spectrum.dat");
 
   //We ignore frequencies below say 0.05 om_ce
   my_type * ax = test_spect->get_axis(0, len);
   int min_ind = where(ax+len/2, len/2, 17588.200*0.05);
   /**Hard code min freq to match the IDL file with test data generation...*/
   total_error = 0.0;
-  for(int i=0; i< row_lengths[0]/2 - min_ind; i++){
+  for(int i=0; i< len/2 - min_ind; i++){
     total_error += std::abs(test_contr->get_current_spectrum()->get_B_element(i)-test_spect->get_element(i));
   }
-  for(int i=row_lengths[0]/2 + min_ind; i< row_lengths[0]; i++){
+  for(int i=len/2 + min_ind; i< len; i++){
     total_error += std::abs(test_contr->get_current_spectrum()->get_B_element(i)-test_spect->get_element(i));
 
   }
@@ -1650,7 +1647,6 @@ int test_entity_spectrum::albertGs_tests(){
 *
 */
   int err = TEST_PASSED;
-  int row_lengths[2];
 
   calc_type om_ce_local, om_pe_local, G1, G2, G1_analytic, G2_analytic;
   om_ce_local = test_contr->get_plasma()->get_omega_ref("ce");
@@ -1661,9 +1657,7 @@ int test_entity_spectrum::albertGs_tests(){
   size_t n_tests = 10;
   calc_type tmp_omega=0.0, tmp_x;
 
-  row_lengths[0] = 5000;
-  row_lengths[1] = DEFAULT_N_ANG;
-  test_contr->add_spectrum(row_lengths, 2);
+  test_contr->add_spectrum(5000, DEFAULT_N_ANG, true);
 
   if(!test_contr->get_current_spectrum()->is_good()){
     my_print("Spectrum in invalid state. Aborting", mpi_info.rank);
@@ -1862,11 +1856,7 @@ int test_entity_levelone::basic_tests(){
 
   test_bed->report_info("FFT returned err_state " + mk_str(err2));
 
-  int row_lengths[2];
-  row_lengths[0] = space_dim;
-  row_lengths[1] = DEFAULT_N_ANG;
-  
-  test_contr->add_spectrum(row_lengths, 2);
+  test_contr->add_spectrum(space_dim, DEFAULT_N_ANG, true);
   test_contr->get_current_spectrum()->make_test_spectrum(time_in, space_in);
   
   int n_dims = dat.get_dims();
@@ -1950,11 +1940,7 @@ int test_entity_levelone::twod_tests(){
 
   test_bed->report_info("FFT returned err_state " + mk_str(err2));
 
-  int row_lengths[2];
-  row_lengths[0] = space_dim;
-  row_lengths[1] = DEFAULT_N_ANG;
-  
-  test_contr->add_spectrum(row_lengths, 2);
+  test_contr->add_spectrum(space_dim, DEFAULT_N_ANG, true);
   test_contr->get_current_spectrum()->make_test_spectrum(time_in, space_in);
   
   int n_dims = dat.get_dims();

@@ -13,7 +13,7 @@
 #include <algorithm>
 #include "support.h"
 #include "reader.h"
-#include "my_array.h"
+#include "data_array.h"
 #include "sdf.h"
 #include <mpi.h>
 

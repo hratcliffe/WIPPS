@@ -13,10 +13,10 @@
 #include "controller.h"
 #include "spectrum.h"
 #include "my_array.h"
+#include "data_array.h"
 #include "plasma.h"
 
 
-class data_array;
 class spectrum;
 class plasma;
 class controller;

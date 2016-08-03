@@ -2,7 +2,14 @@
 obj/my_array.o:\
 src/my_array.cpp\
 include/support.h\
+include/my_array.h\
+  include/data_array.h\
+
+obj/data_array.o:\
+src/data_array.cpp\
+  include/support.h\
   include/my_array.h\
+  include/data_array.h\
 
 obj/d_coeff.o:\
 src/d_coeff.cpp\
@@ -11,6 +18,7 @@ src/d_coeff.cpp\
   include/controller.h\
   include/spectrum.h\
   include/my_array.h\
+  include/data_array.h\
   include/plasma.h\
 
 obj/spectrum.o:\
@@ -20,6 +28,7 @@ include/support.h\
   include/spectrum.h\
   include/controller.h\
   include/my_array.h\
+  include/data_array.h\
 
 obj/plasma.o:\
 src/plasma.cpp\
@@ -30,11 +39,12 @@ obj/tests.o:\
 src/tests.cpp\
   include/tests.h\
   include/support.h\
+  include/data_array.h\
+  include/my_array.h\
   include/reader.h\
   include/main_support.h\
   include/plasma.h\
   include/controller.h\
-  include/my_array.h\
   include/spectrum.h\
   include/d_coeff.h\
 
@@ -42,6 +52,7 @@ obj/reader.o:\
 src/reader.cpp\
 include/support.h\
 include/reader.h\
+  include/data_array.h\
   include/my_array.h\
 
 obj/controller.o:\
@@ -51,6 +62,7 @@ src/controller.cpp\
   include/my_array.h\
   include/d_coeff.h\
   include/spectrum.h\
+  include/data_array.h\
   include/plasma.h\
 
 obj/non_thermal.o:\

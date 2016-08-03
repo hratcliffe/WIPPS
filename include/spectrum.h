@@ -12,9 +12,9 @@
 #include "support.h"
 #include "controller.h"
 #include "my_array.h"
+#include "data_array.h"
 
 
-class data_array;
 class plasma;
 class controller;
 

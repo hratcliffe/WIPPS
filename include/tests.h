@@ -15,8 +15,7 @@
 #include <iostream>
 #include <vector>
 #include "support.h"
-#include "my_array.h"
-
+#include "data_array.h"
 
 /*
 check 2011 paper for whistler mode tests

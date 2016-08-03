@@ -17,7 +17,7 @@
 #include "main_support.h"
 #include "plasma.h"
 #include "controller.h"
-#include "my_array.h"
+#include "data_array.h"
 #include "spectrum.h"
 #include "d_coeff.h"
 

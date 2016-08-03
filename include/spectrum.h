@@ -1,13 +1,13 @@
 //
-//  spectrum2.h
+//  spectrum.h
 //  
 //
 //  Created by Heather Ratcliffe on 29/07/2016  as refactor of spectrum class
 //
 //
 
-#ifndef _spectrum2_h
-#define _spectrum2_h
+#ifndef _spectrum_h
+#define _spectrum_h
 
 #include "support.h"
 #include "controller.h"
@@ -18,9 +18,10 @@ class data_array;
 class plasma;
 class controller;
 
-/** \brief Specialised data_array to hold spectrum
+/** \brief A spectrum in omega and angle
 *
-*Specialises shape and adds functions to process spectrum, normalise it etc. Can be created/destroyed only by controllers. IMPORTANT: because we are working with FFT data, we assume the angle/frequency axis either covers some small cutout in +ve domain, or is symmetrical in positive and negative values. A few of the specific routines here use this to simplify things. The "angle" axis is stored as tan(theta) for theta the wave normal angle. We seperate forwards and backwards wave modes by \author Heather Ratcliffe \date 24/09/2015 
+*Holds data on the omega and angle distributions. The latter can depend on omega! Can be created/destroyed only by controllers. IMPORTANT: because we are working with FFT data, we assume the angle/frequency axis either covers some small cutout in +ve domain, or is symmetrical in positive and negative values. A few of the specific routines here use this to simplify things. The "angle" axis is stored as tan(theta) for theta the wave normal angle. Access to elements should use the wrappers at the bottom of the file as internal layout may change
+  \author Heather Ratcliffe \date 24/09/2015
 */
 class spectrum{
   friend void controller::add_spectrum(int nx, int n_ang, bool separable);

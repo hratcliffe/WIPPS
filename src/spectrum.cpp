@@ -1,5 +1,5 @@
 //
-//  spectrum2.cpp
+//  spectrum.cpp
 //  
 //
 //  Created by Heather Ratcliffe on 29/07/2016 as refactor of spectrum class
@@ -431,7 +431,7 @@ bool spectrum::read_from_file(std::fstream &file){
 void spectrum::make_test_spectrum(int time[2], int space[2],int angle_type){
 /** \brief Generate dummy spectrum
 *
-*Makes a basic spectrum object with suitable number of points, and twin, symmetric Gaussians centred at fixed k/freq and x value \todo Should we use negative freqs?? @param time Time range (number of points) @param space Space range (number of points) @param angle_type Function to use for angular distrib @param 
+*Makes a basic spectrum object with suitable number of points, and Gaussian(s) centred at fixed k/freq and x value \todo Should we use negative freqs?? If so use the offset as parameter @param time Time range (number of points) @param space Space range (number of points) @param angle_type Function to use for angular distrib
 */
 
   if(!this->B_omega_array->is_good() || !this->g_angle_array->is_good()){
@@ -529,7 +529,7 @@ bool spectrum::truncate_om(my_type om_min, my_type om_max){
 bool spectrum::truncate_x(my_type x_min, my_type x_max){
 /** \brief Truncate angle distribution at x_min and x_max.
 *
-*Zeros all elements outside the range [abs(x_min), abs(x_max)]. Zeros are ignored. x_min must be < x_max. \todo shouldn't this do all rows?
+*Zeros all elements outside the range [abs(x_min), abs(x_max)]. Zeros are ignored. x_min must be < x_max.
 */
 
   if(x_min >= x_max){
@@ -538,18 +538,29 @@ bool spectrum::truncate_x(my_type x_min, my_type x_max){
   }
 
   int index = -1;
-  size_t len = get_g_dims(0);
+  size_t len = get_g_dims(1), om_len = get_g_dims(0);
   size_t el =0;
 
   if(x_min > ANG_MIN){
-    index = where(g_angle_array->get_axis(0, len), len, x_min);
-    if(index != -1) for(size_t i=0; i< index; i++) set_g_element(i, el, 0.0);
+    index = where(g_angle_array->get_axis(1, len), len, x_min);
+    if(index != -1){
+      for(size_t i=0; i< index; i++){
+        for(size_t j=0; j< om_len; j++){
+          set_g_element(i, j, 0.0);
+        }
+      }
+    }
   
   }
   if(x_max < ANG_MAX){
     index = where(g_angle_array->get_axis(0, len), len, x_max);
-    if(index != -1) for(size_t i=index; i< len; i++) set_g_element(i, el, 0.0);
-  
+    if(index != -1){
+      for(size_t i=index; i< len; i++){
+        for(size_t j=0; j< om_len; j++){
+          set_g_element(i, j, 0.0);
+        }
+      }
+    }
   }
 
   return 0;

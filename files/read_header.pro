@@ -28,6 +28,7 @@ my_sz=0
 readu, filenum, sz_sz
 readu, filenum, my_sz
 
+PRINT, sz_sz, my_sz
 IF(my_sz EQ 4) THEN BEGIN
   hdr_info =create_struct(hdr_info,{my_type:0.0})
 ENDIF ELSE IF(my_sz EQ 8) THEN BEGIN

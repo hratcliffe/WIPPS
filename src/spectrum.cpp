@@ -364,10 +364,12 @@ bool spectrum::write_to_file(std::fstream &file){
 
   bool err, write_err=0;
   err |= B_omega_array->write_to_file(file, false);
+  
   err = g_angle_array->write_to_file(file, false);
   //Don't close these files. Instead the below writes a single footer
 
-  size_t ftr_start = (size_t) file.tellg() + sizeof(size_t);
+  size_t ftr_start = (size_t) file.tellg();
+  //Start of ftr means where to start reading block, i.e. location of the next_location tag
   size_t next_location = ftr_start+ sizeof(char)*ID_SIZE;
 
   file.write((char*) & next_location, sizeof(size_t));

@@ -1,18 +1,18 @@
 function read_spect, filename
 
-;Written for commit ID from 00db4e7 to dc9e387 FILL IN IF IO CHNAGES....
+;Written for commit ID from 3b24e7d to  FILL IN IF IO CHNAGES....
 
 COMPILE_OPT IDL2
 ;force long ints and proper brackets
 
 IF((N_ELEMENTS(filename) EQ 0)) THEN return, !NULL
 
-my_type_code = 'f'
-my_type = 0.0
+;my_type_code = 'f'
+;my_type = 0.0
 ;this matches the type of the C code my_type...
 ;Usually float or double. Set code to f for float, d for double...
 
-int_type = 1
+;int_type = 1
 OPENR, filenum,  filename, /GET_LUN
 ;open file
 
@@ -23,13 +23,37 @@ IF(hdr.err) THEN BEGIN
   RETURN, !NULL
 ENDIF
 
-n_blocks = int_type
-readu, filenum, n_blocks
-IF(n_blocks NE 2) THEN BEGIN
-  PRINT, "Spectrum should contain two blocks"
-  RETURN, !NULL
-ENDIF
+hdr_end = hdr.block_type
+POINT_LUN, -filenum, hdr_end
 
+POINT_LUN, filenum, 0
+int_sz=1
+readu, filenum, int_sz
+
+tmp = FSTAT(filenum)
+POINT_LUN, filenum, (tmp.size - int_sz)
+start_pos = hdr.block_type
+readu, filenum, start_pos
+
+POINT_LUN, filenum, hdr_end
+;Grab int size and footer start
+
+spect = {B:read_block(filenum, hdr.my_type, hdr.block_type)}
+;Read one block
+
+next_pos = hdr.block_type
+readu, filenum, next_pos
+PRINT, next_pos
+
+if(next_pos EQ start_pos) THEN BEGIN
+  print, "Insufficient arrays found, spectrum incomplete"
+  return, spect
+end
+
+POINT_LUN, filenum, next_pos
+;Skip on to the next block..
+
+;Now the next complete array
 hdr=read_header(filenum)
 IF(hdr.err) THEN BEGIN
   FREE_LUN, filenum
@@ -37,15 +61,15 @@ IF(hdr.err) THEN BEGIN
   RETURN, !NULL
 ENDIF
 
-spect = {B:read_block(filenum, my_type_code, hdr.block)}
+spect = create_struct({ang:read_block(filenum, hdr.my_type, hdr.block_type)}, spect)
 
-hdr=read_header(filenum)
-IF(hdr.err) THEN BEGIN
-  FREE_LUN, filenum
-  PRINT, "Error reading file header"
-  RETURN, !NULL
-ENDIF
-spect = create_struct({ang:read_block(filenum, my_type_code, hdr.block)}, spect)
+readu, filenum, next_pos
+
+PRINT, next_pos, start_pos, tmp.size
+
+if(next_pos NE start_pos) THEN BEGIN
+  print, "Extra arrays in input file"
+end
 
 return, spect
 END

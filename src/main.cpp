@@ -80,9 +80,9 @@ int main(int argc, char *argv[]){
   test_bed->run_tests();
   delete test_bed;
 
-  MPI_Finalize();
+//  MPI_Finalize();
 
-  return 0;
+//  return 0;
 #else
 #endif
   //Actually do the code...

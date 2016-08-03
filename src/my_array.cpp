@@ -1292,7 +1292,7 @@ IMPORTANT: the VERSION specifier links output files to code. If modifying output
   //Add axes.
   if(file.tellg() != next_location) write_err=1;
 
-  size_t ftr_start = next_location + sizeof(size_t);
+  size_t ftr_start = next_location;
 
   next_location += sizeof(char)*ID_SIZE + sizeof(size_t);
   file.write((char*) & next_location, sizeof(size_t));
@@ -1345,7 +1345,9 @@ bool data_array::write_section_to_file(std::fstream &file, std::vector<my_type> 
 
   if(file.tellg() != next_location) write_err=1;
 
-  size_t ftr_start = next_location  + sizeof(size_t);
+  size_t ftr_start = next_location;
+  //Start of ftr means where to start reading block, i.e. location of the next_location tag
+
   next_location += sizeof(char)*ID_SIZE + sizeof(size_t);
   file.write((char*) & next_location, sizeof(size_t));
   //Position of next section

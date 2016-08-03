@@ -45,7 +45,7 @@ public:
   char block_id[ID_SIZE]; /**< The field name id from SDF file*/
 
   float time[2];/**< Time range over which data are taken*/
-  int space[2];/**< Space range over which data are taken*/
+  size_t space[2];/**< Space range over which data are taken*/
   int wave_id; /**< ID for which wave mode cutout we're going for. See support.h*/
   bool angle_is_function;/**< Says we impose g(x) rather than have one g for each w*/
   int function_type;/**< Type code for angular function. See support.h */

@@ -48,7 +48,7 @@ public:
   data_array(size_t n_dims, size_t * dims);
   virtual ~data_array();
 
-  virtual bool is_good(){return defined && ax_defined;}
+  virtual bool is_good()const{return defined && ax_defined;}
 
   my_type get_axis_element(size_t dim, size_t pt);
   bool set_axis_element(size_t dim, size_t pt, my_type val);
@@ -56,15 +56,15 @@ public:
   my_type * get_axis(size_t dim, size_t & length);
   void make_linear_axis(size_t dim, float res, long offset=0);
 
-  virtual bool write_to_file(std::fstream &file, bool close_file=true);
-  virtual bool read_from_file(std::fstream &file, bool no_version_check=0);
-  virtual bool write_section_to_file(std::fstream &file, std::vector<my_type> limits, bool close_file=true);
+  bool write_to_file(std::fstream &file, bool close_file=true);
+  bool read_from_file(std::fstream &file, bool no_version_check=0);
+  bool write_section_to_file(std::fstream &file, std::vector<my_type> limits, bool close_file=true);
   
   bool fft_me(data_array * data_out);
   bool populate_mirror_fastest(my_type * result_in, size_t total_els);
   bool check_ids(const data_array & src);
-  virtual bool resize(size_t dim, size_t sz);
-  virtual bool shift(size_t dim, long n_els, bool axis=1);
+  bool resize(size_t dim, size_t sz);
+  bool shift(size_t dim, long n_els, bool axis=1);
 };
 
 

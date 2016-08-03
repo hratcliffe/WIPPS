@@ -80,9 +80,11 @@ endif
 
 ifeq ($(strip $(MODE)),debug)
   CFLAGS += $(DEBUG)
+  #CFLAGS += -DDEBUG_DIMS
 else ifeq ($(strip $(MODE)),test)
   CFLAGS += -DRUN_TESTS_AND_EXIT
-  CFLAGS += $(PROFILE)
+  #CFLAGS += $(PROFILE)
+  CFLAGS += $(DEBUG)
   SED_STR_Test = sed -i.bak 's/ NO_RUN_TESTS_AND_EXIT/ RUN_TESTS_AND_EXIT/' Doxyfile
 else ifeq ($(strip $(MODE)),profile)
   CFLAGS += $(PROFILE)

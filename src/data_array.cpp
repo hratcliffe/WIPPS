@@ -74,7 +74,7 @@ data_array::data_array(size_t n_dims, size_t * dims) : my_array(n_dims, dims){
 data_array::data_array(std::string filename, bool no_version_check){
 /**\brief Create data array from file
 *
-* Create a data array by reading from the named file. If the file does not exist no memory is allocated. Otherwise it reads the dimensions and sets itself up accordingly \todo Update format
+* Create a data array by reading from the named file. If the file does not exist no memory is allocated. Otherwise it reads the dimensions and sets itself up accordingly
 */
 
   std::fstream infile;
@@ -270,8 +270,8 @@ void data_array::make_linear_axis(size_t dim, float res, long offset){
   size_t len;
   my_type * ax_ptr = get_axis(dim, len);
 
-  for(long i=0; i<len; i++){
-    *(ax_ptr +i) = ((float) (i-offset)) * res;
+  for(size_t i=0; i<len; i++){
+    *(ax_ptr +i) = ((float) ((long)i-offset)) * res;
   }
 }
 
@@ -299,7 +299,7 @@ IMPORTANT: the VERSION specifier links output files to code. If modifying output
 
   file.write((char *) axes , sizeof(my_type)*tot_ax);
   //Add axes.
-  if(file.tellg() != next_location) write_err=1;
+  if((size_t)file.tellg() != next_location) write_err=1;
 
   size_t ftr_start = next_location;
 
@@ -308,7 +308,7 @@ IMPORTANT: the VERSION specifier links output files to code. If modifying output
   //Position of next section
   file.write(block_id, sizeof(char)*ID_SIZE);
 
-  if(file.tellg() != next_location) write_err=1;
+  if((size_t)file.tellg() != next_location) write_err=1;
   if(write_err) my_print("Error writing offset positions", mpi_info.rank);
   if(close_file) file.write((char*) & ftr_start, sizeof(size_t));
   //Finish with position of start of footer!
@@ -352,7 +352,7 @@ bool data_array::write_section_to_file(std::fstream &file, std::vector<my_type> 
   }
   //Add axes.
 
-  if(file.tellg() != next_location) write_err=1;
+  if((size_t)file.tellg() != next_location) write_err=1;
 
   size_t ftr_start = next_location;
   //Start of ftr means where to start reading block, i.e. location of the next_location tag
@@ -362,7 +362,7 @@ bool data_array::write_section_to_file(std::fstream &file, std::vector<my_type> 
   //Position of next section
   file.write(block_id, sizeof(char)*ID_SIZE);
 
-  if(file.tellg() != next_location) write_err=1;
+  if((size_t)file.tellg() != next_location) write_err=1;
   if(write_err) my_print("Error writing offset positions", mpi_info.rank);
   if(close_file) file.write((char*) & ftr_start, sizeof(size_t));
 
@@ -383,7 +383,7 @@ std::vector<size_t> data_array::get_bounds(std::vector<my_type> limits){
   size_t len;
 //  long index;
   my_type * ax_start;
-  size_t where_val;
+  long where_val;
   for(size_t i=0; i< n_dims; i++){
     ax_start = get_axis(i, len);
     where_val = where(ax_start, len, limits[2*i]);
@@ -408,10 +408,9 @@ bool data_array::read_from_file(std::fstream &file, bool no_version_check){
 * Next_block Block_id Prev_block
 */
 
-  bool err;
+  bool err=1;
 
   if(file.good()) err=my_array::read_from_file(file, no_version_check);
-  else my_print("Read error!", mpi_info.rank);
   if(err){
     my_print("File read failed", mpi_info.rank);
     return err;
@@ -443,7 +442,7 @@ bool data_array::read_from_file(std::fstream &file, bool no_version_check){
 bool data_array::fft_me(data_array * data_out){
 /** \brief FFT data_array
 *
-* Data and axes in this object are FFT'd using FFTW and stored into the instance pointed to by data_out. Data_out must be created with correct dimensions first, but we check and return error (1) if it is not so. \todo extract and make friend
+* Data and axes in this object are FFT'd using FFTW and stored into the instance pointed to by data_out. Data_out must be created with correct dimensions first, but we check and return error (1) if it is not so. \todo extract and make friend?
 */
 
   if(!data_out->is_good()){

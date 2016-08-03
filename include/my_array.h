@@ -14,7 +14,7 @@
 
 /** \brief A basic array class
 *
-*Contains dimension information and data. Can be rectangular of any n_dims or ragged of 2 (rows of different lengths). Get_index and get_total_elements account for all details of internal layout in memory. For 1-4 dims individual getter/setter functions are given. For larger arrays one must construc the array of indexes. NOTE the backing memory is old style with Fortran style internal ordering (for ease of SDF interfacing). But contigous memory and pointer arithmetic give major speed advantage and we very rarely change size on the fly. However nothing outside this class should need to do anything except access by index and populate by element, slice or entire. Internal ordering is Fortran style (for ease of SDF interfacing). \todo Break out data array to file \todo Check a vector works
+*Contains dimension information and data. Can be rectangular of any n_dims or ragged of 2 (rows of different lengths). Get_index and get_total_elements account for all details of internal layout in memory. For 1-4 dims individual getter/setter functions are given. For larger arrays one must construc the array of indexes. NOTE the backing memory is old style with Fortran style internal ordering (for ease of SDF interfacing). But contigous memory and pointer arithmetic give major speed advantage and we very rarely change size on the fly. However nothing outside this class should need to do anything except access by index and populate by element, slice or entire. Internal ordering is Fortran style (for ease of SDF interfacing).\todo Check a vector works
  \author Heather Ratcliffe \date 21/09/2015
 */
 
@@ -67,13 +67,13 @@ public:
   bool populate_slice(my_type * dat_in, size_t n_dims, size_t * offsets);
   bool populate_complex_slice(my_type * dat_in, size_t n_dims, size_t * offsets, size_t* sizes);
 
-  virtual bool write_to_file(std::fstream &file);
-  virtual bool read_from_file(std::fstream &file, bool no_version_check=0);
+  bool write_to_file(std::fstream &file);
+  bool read_from_file(std::fstream &file, bool no_version_check=0);
   std::vector<size_t> read_dims_from_file(std::fstream &file, bool no_version_check=0);
   
-  virtual bool write_section_to_file(std::fstream &file, std::vector<size_t> bounds);
-  virtual bool resize(size_t dim, size_t sz);
-  virtual bool shift(size_t dim, long n_els);
+  bool write_section_to_file(std::fstream &file, std::vector<size_t> bounds);
+  bool resize(size_t dim, size_t sz);
+  bool shift(size_t dim, long n_els);
   
   my_type minval(size_t offset=0);
   my_type maxval(size_t offset=0);

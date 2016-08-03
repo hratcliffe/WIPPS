@@ -387,17 +387,17 @@ int test_entity_data_array::assign(){
     err |= TEST_FATAL_ERR;
     return err;
   }*/
-  int val;
+  my_type val;
   //assign each element to unique val and axes to position
 
-  for(int i=0; i<test_array.get_dims(0); i++){
-    for(int j =0; j<test_array.get_dims(1); j++){
+  for(size_t i=0; i<test_array.get_dims(0); i++){
+    for(size_t j =0; j<test_array.get_dims(1); j++){
       tmp_err=test_array.set_element(i, j, (i+1)*(2*j+1));
       if(tmp_err) err |= TEST_ASSERT_FAIL;
     }
   }
-  for(int i=0; i<test_array.get_dims(); i++){
-    for(int j =0; j<test_array.get_dims(i); j++){
+  for(size_t i=0; i<test_array.get_dims(); i++){
+    for(size_t j =0; j<test_array.get_dims(i); j++){
       tmp_err=test_array.set_axis_element(i, j, j*(i+1));
       if(tmp_err) err |= TEST_ASSERT_FAIL;
     }
@@ -405,14 +405,14 @@ int test_entity_data_array::assign(){
 
   //test assignments worked
 
-  for(int i=0; i<test_array.get_dims(0); i++){
-    for(int j =0; j<test_array.get_dims(1); j++){
+  for(size_t i=0; i<test_array.get_dims(0); i++){
+    for(size_t j =0; j<test_array.get_dims(1); j++){
       val = test_array.get_element(i,j);
       if(val != (i+1)*(2*j+1)) err |=TEST_WRONG_RESULT;
     }
   }
-  for(int i=0; i<test_array.get_dims(); i++){
-    for(int j =0; j<test_array.get_dims(i); j++){
+  for(size_t i=0; i<test_array.get_dims(); i++){
+    for(size_t j =0; j<test_array.get_dims(i); j++){
       val=test_array.get_axis_element(i, j);
       if(val != (i+1)*j) err |=TEST_WRONG_RESULT;
     }
@@ -425,11 +425,10 @@ int test_entity_data_array::basic_tests(){
 /** \todo Change to random selec and check by definition?*/
 
   int err = TEST_PASSED;
-  bool tmp_err;
   if(!test_array.is_good()) return TEST_ASSERT_FAIL;
 
   //test maxval function
-  int i0=test_array.get_dims(0)/2, i1=test_array.get_dims(1)/3;
+  size_t i0=test_array.get_dims(0)/2, i1=test_array.get_dims(1)/3;
   my_type current_max = test_array.maxval();
   test_array.set_element(i0, i1, current_max+10);
   std::vector<size_t> pos;
@@ -440,7 +439,7 @@ int test_entity_data_array::basic_tests(){
 
   //test resizer
 
-  int new2=6, new1=7;
+  size_t new2=6, new1=7;
   my_type els[4];
   els[0]=test_array.get_element(2, 3);
   els[1]=test_array.get_element(1, 5);
@@ -489,16 +488,16 @@ int test_entity_data_array::three_d_and_shift(){
   int tmp_err;
   //And now a 3-d version
   test_array = data_array(10, 10, 10);
-  for(int i=0; i<test_array.get_dims(0); i++){
-    for(int j =0; j<test_array.get_dims(1); j++){
-      for(int k =0; k<test_array.get_dims(2); k++){
+  for(size_t i=0; i<test_array.get_dims(0); i++){
+    for(size_t j =0; j<test_array.get_dims(1); j++){
+      for(size_t k =0; k<test_array.get_dims(2); k++){
         tmp_err=test_array.set_element(i, j, k, (i+1)*(2*j+1)*(4*k+1));
         if(tmp_err) err |= TEST_ASSERT_FAIL;
       }
     }
   }
-  int new3 = 5;
-  int new2 = 6;//for element choices below to work, this must be >= 6
+  size_t new3 = 5;
+  size_t new2 = 6;//for element choices below to work, this must be >= 6
   my_type els[4];
 
   els[0]=test_array.get_element(2, 3, 2);
@@ -527,11 +526,11 @@ int test_entity_data_array::three_d_and_shift(){
   //Now test the shift function
 
   my_type tot_pre=0, tot_aft=0;
-  int sz=0;
+  size_t sz=0;
   sz=test_array.get_dims(1);
-  for(int i=0; i<sz; i++) tot_pre +=test_array.get_element(2,i, 0);
+  for(size_t i=0; i<sz; i++) tot_pre +=test_array.get_element(2,i, 0);
   test_array.shift(1, 3);
-  for(int i=0; i<sz; i++) tot_aft +=test_array.get_element(2,i, 0);
+  for(size_t i=0; i<sz; i++) tot_aft +=test_array.get_element(2,i, 0);
   test_array.shift(1, -3);
 
   if(tot_pre != tot_aft || els[0] != test_array.get_element(2, 3, 2)|| els[1]!=test_array.get_element(1, 5, 4) || els[2]!=test_array.get_element(6, 5, 1) || els[3]!=test_array.get_element(4, 4, 0)){
@@ -540,10 +539,10 @@ int test_entity_data_array::three_d_and_shift(){
   }
   
   sz=test_array.get_dims(2);
-  for(int i=0; i<sz; i++) tot_pre +=test_array.get_element(2,0, i);
+  for(size_t i=0; i<sz; i++) tot_pre +=test_array.get_element(2,0, i);
 
   test_array.shift(2, 3);
-  for(int i=0; i<sz; i++) tot_aft +=test_array.get_element(2,0, i);
+  for(size_t i=0; i<sz; i++) tot_aft +=test_array.get_element(2,0, i);
   test_array.shift(2, -3);
 
   if(tot_pre != tot_aft ||els[0] != test_array.get_element(2, 3, 2)|| els[1]!=test_array.get_element(1, 5, 4) || els[2]!=test_array.get_element(6, 5, 1) || els[3]!=test_array.get_element(4, 4, 0)){
@@ -553,10 +552,10 @@ int test_entity_data_array::three_d_and_shift(){
 
 
   sz=test_array.get_dims(0);
-  for(int i=0; i<sz; i++) tot_pre +=test_array.get_element(i, 2,0);
+  for(size_t i=0; i<sz; i++) tot_pre +=test_array.get_element(i, 2,0);
 
   test_array.shift(0, 2);
-  for(int i=0; i<sz; i++) tot_aft +=test_array.get_element(i, 2,0);
+  for(size_t i=0; i<sz; i++) tot_aft +=test_array.get_element(i, 2,0);
 
   if(els[0] == test_array.get_element(2, 3, 2)|| els[1]==test_array.get_element(1, 5, 4) || els[2]==test_array.get_element(6, 5, 1) || els[3]==test_array.get_element(4, 4, 0)){
     err |= TEST_WRONG_RESULT;
@@ -621,17 +620,17 @@ int test_entity_data_array::technical_tests(){
   if(dat.get_dims() != test_array.get_dims()){
     err |= TEST_WRONG_RESULT;
   }
-  for(int i=0; i< dat.get_dims(); i++) if(dat.get_dims(i) != test_array.get_dims(i)) err |= TEST_WRONG_RESULT;
+  for(size_t i=0; i< dat.get_dims(); i++) if(dat.get_dims(i) != test_array.get_dims(i)) err |= TEST_WRONG_RESULT;
 
-  for(int i=0; i<test_array.get_dims(0); i++){
-    for(int j =0; j<test_array.get_dims(1); j++){
+  for(size_t i=0; i<test_array.get_dims(0); i++){
+    for(size_t j =0; j<test_array.get_dims(1); j++){
       if(test_array.get_element(i,j) != dat.get_element(i, j)) err |=TEST_WRONG_RESULT;
     }
   }
   
   
-  for(int i=0; i<test_array.get_dims(); i++){
-    for(int j=0; j< test_array.get_dims(i); j++){
+  for(size_t i=0; i<test_array.get_dims(); i++){
+    for(size_t j=0; j< test_array.get_dims(i); j++){
       if(test_array.get_axis_element(i,j) != dat.get_axis_element(i, j)) err |=TEST_WRONG_RESULT;
     }
   }
@@ -664,16 +663,16 @@ int test_entity_data_array::io_tests(){
   
   bool tmp_err;
   //Now check we match read and write
-  for(int i=0; i<test_array.get_dims(0); i++){
-    for(int j =0; j<test_array.get_dims(1); j++){
-      for(int k =0; k<test_array.get_dims(2); k++){
+  for(size_t i=0; i<test_array.get_dims(0); i++){
+    for(size_t j =0; j<test_array.get_dims(1); j++){
+      for(size_t k =0; k<test_array.get_dims(2); k++){
         tmp_err=(test_array.get_element(i, j, k) != new_array.get_element(i, j, k));
         if(tmp_err) err |= TEST_ASSERT_FAIL;
       }
     }
   }
-  for(int i=0; i<test_array.get_dims(); i++){
-    for(int j=0; j< test_array.get_dims(i); j++){
+  for(size_t i=0; i<test_array.get_dims(); i++){
+    for(size_t j=0; j< test_array.get_dims(i); j++){
       tmp_err=(test_array.get_axis_element(i, j) != new_array.get_axis_element(i, j));
       if(tmp_err) err |= TEST_ASSERT_FAIL;
 
@@ -765,7 +764,7 @@ int test_entity_get_and_fft::one_d(){
 
     //Get primary frequency
     int max_index = 0;
-    my_type max_val = 0, tmp=1.0;
+    my_type max_val = 0;
     std::vector<size_t> max_pos;
     my_type expected_max = 1.2566371e-4;
     bool both_freqs_correct = true;
@@ -803,7 +802,7 @@ int test_entity_get_and_fft::one_d(){
 
     //Get primary frequency
     int max_index = 0;
-    my_type max_val = 0, tmp=1.0;
+    my_type max_val = 0;
     std::vector<size_t> max_pos;
     my_type expected_max = 1.2566371e-4;
     bool both_freqs_correct = true;
@@ -880,7 +879,7 @@ int test_entity_get_and_fft::two_d(){
 //  test_dat_fft.shift(1, shft);
 
   int max_index = 0;
-  my_type max_val = 0, tmp=1.0;
+  my_type max_val = 0;
   std::vector<size_t> max_pos;
   my_type expected_max = 1.2566371e-4;
   bool both_freqs_correct = true;
@@ -1194,7 +1193,7 @@ int test_entity_plasma::resonant_freq(){
   om_pe_local = plas->get_omega_ref("pe");
 
 
-  calc_type cos_theta, mu_tmp1, mu_tmp2, tmp_omega_n;
+  calc_type cos_theta, mu_tmp1, mu_tmp2, tmp_omega_n=0;
   calc_type gamma, gamma2;
 
   test_bed->report_info("Testing resonant frequency solver", 1);
@@ -1252,7 +1251,7 @@ int test_entity_plasma::high_density(){
   int err=TEST_PASSED;
 
   calc_type om_ce_local, om_pe_local;
-  calc_type mu_tmp1, mu_tmp2;
+  calc_type mu_tmp2;
 
   om_ce_local = plas->get_omega_ref("ce");
   om_pe_local = plas->get_omega_ref("pe");
@@ -1332,7 +1331,7 @@ int test_entity_plasma::other_modes(){
   int err=TEST_PASSED;
 
   calc_type om_ce_local, om_pe_local;
-  calc_type mu_tmp1, mu_tmp2;
+  calc_type mu_tmp2;
 
   om_ce_local = plas->get_omega_ref("ce");
   om_pe_local = plas->get_omega_ref("pe");
@@ -1342,10 +1341,9 @@ int test_entity_plasma::other_modes(){
   size_t n_tests = 10;
   mu_dmudom my_mu;
   mu my_mu_all;
-  int err_cnt=0;
 
   /**Try plasma wave modes in solvers, perpendicular propagation*/
-  calc_type tmp_omega = om_pe_local, tmp_omega_n;
+  calc_type tmp_omega = om_pe_local, tmp_omega_n=0;
   calc_type tmp_theta = pi/2.0;
   for(size_t i =0; i<n_tests; i++){
     tmp_omega += std::abs(om_pe_local)/(calc_type)(n_tests + 1);
@@ -1414,7 +1412,6 @@ int test_entity_plasma::phi_dom(){
 
   mu_dmudom my_mu, my_mu_p;
   mu my_mu_all, my_mu_all_p;
-  int err_cnt=0;
 
   calc_type tmp_omega = 0.0, tmp_theta=pi/(calc_type)(n_tests), tmp_omega_n=0.0;
 
@@ -1494,7 +1491,6 @@ The reason for using the better dispersion solver is a) to avoid any numerical d
 test_entity_spectrum::test_entity_spectrum(){
 
   name = "spectrum checks";
-  char block_id[ID_SIZE]= "ex";
   file_prefix = "./files/";
   
 }
@@ -1577,22 +1573,22 @@ int test_entity_spectrum::basic_tests(){
   if(is_symmetric || is_zero){
     len = test_contr->get_current_spectrum()->get_g_dims(1);
     d_angle = (my_type *) calloc(DEFAULT_N_ANG, sizeof(my_type));
-    for(int i=0; i<DEFAULT_N_ANG-1; ++i){
+    for(size_t i=0; i<DEFAULT_N_ANG-1; ++i){
       d_angle[i] = std::abs(test_contr->get_current_spectrum()->get_ang_axis_element(i) - test_contr->get_current_spectrum()->get_ang_axis_element(i+1));
     }
     angle_data = (my_type *) malloc(len*sizeof(my_type));
-    for(int i=0; i<len; i++){
+    for(size_t i=0; i<len; i++){
       *(angle_data + i) = test_contr->get_current_spectrum()->get_g_element(0, i);
     }
     
     total_error = integrator(angle_data, len, d_angle);
     test_contr->get_current_spectrum()->make_test_spectrum(tim_in, space_in, FUNCTION_GAUSS);
-    for(int i=0; i<len; i++) *(angle_data + i) = test_contr->get_current_spectrum()->get_g_element(0, i);
+    for(size_t i=0; i<len; i++) *(angle_data + i) = test_contr->get_current_spectrum()->get_g_element(0, i);
 
     total_error += integrator(angle_data, len, d_angle);
 
     test_contr->get_current_spectrum()->make_test_spectrum(tim_in, space_in, FUNCTION_ISO);
-    for(int i=0; i<len; i++) *(angle_data + i) = test_contr->get_current_spectrum()->get_g_element(0, i);
+    for(size_t i=0; i<len; i++) *(angle_data + i) = test_contr->get_current_spectrum()->get_g_element(0, i);
     total_error += integrator(angle_data, len, d_angle);
     
     my_type expected = is_zero ? 2.0 : 3.0;
@@ -1626,10 +1622,10 @@ int test_entity_spectrum::basic_tests(){
     /**Hard code min freq to match the IDL file with test data generation...*/
     
     total_error = 0.0;
-    for(int i=0; i< len/2 - min_ind; i++){
+    for(size_t i=0; i< len/2 - min_ind; i++){
       total_error += std::abs(test_contr->get_current_spectrum()->get_B_element(i)-test_spect->get_element(i));
     }
-    for(int i=len/2 + min_ind; i< len; i++){
+    for(size_t i=len/2 + min_ind; i< len; i++){
       total_error += std::abs(test_contr->get_current_spectrum()->get_B_element(i)-test_spect->get_element(i));
 
     }
@@ -1691,7 +1687,7 @@ int test_entity_spectrum::albertGs_tests(){
   
   my_type width=0.1*om_peak;
   
-  for(int i=0; i< n_tests;i++){
+  for(size_t i=0; i< n_tests;i++){
     tmp_omega = std::abs(om_ce_local)/10.0 + 89.0/100.0 * om_max * (1.0 - exp(-i));
     //Cover range from small to just below om_ce...
     G1 = test_contr->get_current_spectrum()->get_G1(tmp_omega);
@@ -1714,7 +1710,7 @@ int test_entity_spectrum::albertGs_tests(){
 
 
   tmp_omega = 0.6 * std::abs(om_ce_local);
-  for(int i=0; i< n_tests;i++){
+  for(size_t i=0; i< n_tests;i++){
 
     tmp_x = ANG_MIN + i * (ANG_MAX - ANG_MIN)/(n_tests-1);
     

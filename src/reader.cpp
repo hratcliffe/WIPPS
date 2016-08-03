@@ -135,7 +135,7 @@ int reader::read_data(data_array &my_data_in, int time_range[3], int space_range
     my_print("Wrong data type detected. Grids will be corrupt", mpi_info.rank);
   }
 
-  for(int i=0; i< my_data_in.get_dims()-1; i++){
+  for(size_t i=0; i< my_data_in.get_dims()-1; i++){
     ax_ptr = my_data_in.get_axis(i, len);
 
     // Mostly c++ way
@@ -152,7 +152,7 @@ int reader::read_data(data_array &my_data_in, int time_range[3], int space_range
   }else{
     source_sizes = (size_t *) malloc((my_data_in.get_dims()-1)*sizeof(size_t));
     
-    for(int i=0; i< my_data_in.get_dims()-1; i++){
+    for(size_t i=0; i< my_data_in.get_dims()-1; i++){
       source_sizes[i] = block->dims[i]-1;
       source_advance*=source_sizes[i];
     }

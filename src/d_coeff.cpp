@@ -166,7 +166,7 @@ Get mu, dmu/domega which are used to:
 //We have deep nested loops. Move ANYTHING that can be as far up tree as possible
 
 //  for(int i =0; i< ((1< dims[0]) ? 1:dims[0]); ++i){
-  for(int i =0; i< dims[0]; ++i){
+  for(size_t i =0; i< dims[0]; ++i){
     //particle parallel velocity
     v_par = get_axis_element(0, i);
     //Get limits on n for each velocity
@@ -181,7 +181,7 @@ Get mu, dmu/domega which are used to:
     }
 
 //    for(int k =0; k< ((1 <dims[1]) ? 1: dims[1]); k++){
-    for(int k =0; k< dims[1]; k++){
+    for(size_t k =0; k< dims[1]; k++){
       //particle pitch angle
       alpha = get_axis_element(1, k);
       s2alpha = std::pow(std::sin(alpha), 2);

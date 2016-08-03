@@ -430,13 +430,13 @@ bool my_array::set_element(size_t nx, size_t ny, size_t nz, size_t nt, my_type v
   }
   
 }
-bool my_array::set_element(size_t n_dims, size_t * dim, my_type val){
+bool my_array::set_element(size_t n_dims_in, size_t * dims_in, my_type val){
 /** \brief Sets array element
 *
 *Sets elements at nx, ny, nz, nt, @return 1 if out of range, wrong number of args, 0 else.
 */
 
-  long index = get_index(n_dims, dims);
+  long index = get_index(n_dims_in, dims_in);
   if(index >= 0){
     data[index] = val;
     return 0;
@@ -530,7 +530,7 @@ bool my_array::populate_complex_slice(my_type * dat_in, size_t n_dims_in, size_t
     dest_inds_vec = get_index_from_offset(dest_ind);
     //Source index
     input_ind = dest_inds_vec[0];
-    for(int j=1; j < input_n_dims; j++) input_ind += sizes[j-1]*dest_inds_vec[i];
+    for(size_t j=1; j < input_n_dims; j++) input_ind += sizes[j-1]*dest_inds_vec[i];
 
     std::copy(dat_in + input_ind, dat_in+input_ind +1, data + dest_ind);
   }
@@ -565,7 +565,7 @@ bool my_array::write_to_file(std::fstream &file){
   file.write((char*) &tmp_vers, sizeof(char)*15);
   //Sizeof ints and data, IO verification constant and Code version...
 
-  if(file.tellg() != next_location) write_err=1;
+  if((size_t)file.tellg() != next_location) write_err=1;
   
   size_t total_size = get_total_elements();
   //dimension info
@@ -581,7 +581,7 @@ bool my_array::write_to_file(std::fstream &file){
     file.write((char*) &dim_tmp, size_sz);
   }
 
-  if(file.tellg() != next_location) write_err=1;
+  if((size_t)file.tellg() != next_location) write_err=1;
 
   next_location += my_sz*total_size + size_sz;
   file.write((char*) & next_location, size_sz);
@@ -589,7 +589,7 @@ bool my_array::write_to_file(std::fstream &file){
 
   file.write((char *) data , my_sz*total_size);
 
-  if(file.tellg() != next_location) write_err=1;
+  if((size_t)file.tellg() != next_location) write_err=1;
 
   if(write_err) my_print("Error writing offset positions", mpi_info.rank);
 
@@ -626,7 +626,7 @@ bool my_array::write_section_to_file(std::fstream &file, std::vector<size_t> bou
   file.write((char*) &tmp_vers, sizeof(char)*15);
   //Sizeof ints and data, IO verification constant and Code version...
 
-  if(file.tellg() != next_location) write_err=1;
+  if((size_t)file.tellg() != next_location) write_err=1;
 
   size_t total_size = 1;
   //dimension info
@@ -644,7 +644,7 @@ bool my_array::write_section_to_file(std::fstream &file, std::vector<size_t> bou
     total_size*=dim_tmp;
   }
 
-  if(file.tellg() != next_location) write_err=1;
+  if((size_t)file.tellg() != next_location) write_err=1;
 
   next_location += my_sz*total_size + size_sz;
   file.write((char*) & next_location, size_sz);
@@ -685,7 +685,7 @@ bool my_array::write_section_to_file(std::fstream &file, std::vector<size_t> bou
     }
   }
   
-  if(file.tellg() != next_location) write_err=1;
+  if((size_t)file.tellg() != next_location) write_err=1;
 
   if(write_err) my_print("Error writing offset positions", mpi_info.rank);
 
@@ -774,7 +774,6 @@ std::vector<size_t> my_array::read_dims_from_file(std::fstream &file, bool no_ve
   file.read((char*) &next_block, sizeof(size_t));
   file.read((char*) &n_dims_in, sizeof(size_t));
 
-  size_t tot_els =1;
   for(size_t i=0;i<n_dims_in;i++){
     file.read((char*) &dim_tmp, sizeof(size_t));
     dims_vec.push_back(dim_tmp);
@@ -869,9 +868,10 @@ A 3-d 5x3x2 is
   //By now n_els guaranteed >= 0
   
   my_type * new_data;
-  size_t part_sz, sub_sz = 1;
+  size_t sub_sz = 1;
 
 /*  if(dim == n_dims -1){
+    size_t part_sz =0;
     //Special case else we'd be copying up to the whole array at once
     //We extract one chunk, hold it aside while we slot the rest into place and then put it back
     for(size_t i=0; i<dim-1; ++i) sub_sz*= dims[i];

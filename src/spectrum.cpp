@@ -196,7 +196,7 @@ bool spectrum::generate_spectrum(data_array * parent, int om_fuzz, int angle_typ
     //First we read axes from parent
     this->copy_ids(parent);
     this->function_type = angle_type;
-    size_t len, lenk;
+    size_t len;
 
     my_type *ax_ptr = parent->get_axis(1, len);
     //y-axis to work with
@@ -213,7 +213,7 @@ bool spectrum::generate_spectrum(data_array * parent, int om_fuzz, int angle_typ
     max_om /= this->get_length(0);*/
     //for(int i=0; i<this->get_length(0); ++i) this->set_axis_element(0, i, )
 
-    for(int i=0; i<get_B_dims(0); ++i){
+    for(size_t i=0; i<get_B_dims(0); ++i){
       om_disp = get_omega(parent->get_axis_element(0,i), WAVE_WHISTLER);
       
       set_om_axis_element(i, om_disp);
@@ -309,7 +309,7 @@ bool spectrum::make_angle_distrib(){
   }else if(function_type ==FUNCTION_ISO){
 
     val = 1.0/ (ANG_MAX - ANG_MIN)*get_g_dims(1)/(get_g_dims(1)-1);
-    for(int i=0; i<len; ++i) set_g_element(i,val);
+    for(size_t i=0; i<len; ++i) set_g_element(i,val);
 
   }else{
   
@@ -360,9 +360,9 @@ bool spectrum::write_to_file(std::fstream &file){
   if(!file.is_open() || (!this->B_omega_array->is_good())|| (!this->g_angle_array->is_good())) return 1;
 
   bool err, write_err=0;
-  err |= B_omega_array->write_to_file(file, false);
+  err = B_omega_array->write_to_file(file, false);
   
-  err = g_angle_array->write_to_file(file, false);
+  err |= g_angle_array->write_to_file(file, false);
   //Don't close these files. Instead the below writes a single footer
 
   size_t ftr_start = (size_t) file.tellg();
@@ -373,7 +373,7 @@ bool spectrum::write_to_file(std::fstream &file){
   //Position of next section
   file.write(block_id, sizeof(char)*ID_SIZE);
 
-  if(file.tellg() != next_location) write_err=1;
+  if((size_t)file.tellg() != next_location) write_err=1;
   if(write_err) my_print("Error writing offset positions", mpi_info.rank);
   file.write((char*) & ftr_start, sizeof(size_t));
 
@@ -443,7 +443,7 @@ void spectrum::make_test_spectrum(int time[2], int space[2],int angle_type){
   this->set_ids(time[0], time[1], space[0], space[1], WAVE_WHISTLER, id, angle_type);
   
   //setup axes
-  size_t len0, len1;
+  size_t len0;
   my_type * ax_ptr;
 
   ax_ptr = B_omega_array->get_axis(0, len0);
@@ -455,7 +455,7 @@ void spectrum::make_test_spectrum(int time[2], int space[2],int angle_type){
   //res to cover range from offset to max in len0 steps
 
   //Rough value for length of
-  for(int i=0; i<len0; i++) *(ax_ptr+i) = res*((my_type)i - (my_type)offset *(my_type)len0/2.);
+  for(size_t i=0; i<len0; i++) *(ax_ptr+i) = res*((my_type)i - (my_type)offset *(my_type)len0/2.);
 
   make_angle_distrib();
 
@@ -471,15 +471,15 @@ void spectrum::make_test_spectrum(int time[2], int space[2],int angle_type){
   ax_tmp = ax_ptr;
 
   if(offset){
-    for(int i=0; i<=len0/2; i++, ax_tmp++, data_tmp++){
+    for(size_t i=0; i<=len0/2; i++, ax_tmp++, data_tmp++){
       *(data_tmp) = exp(-pow((*(ax_tmp) + centre), 2)/width/width) + background;
     }
     data_tmp--;
     //we've gone one past our termination condition...
-    for(int i=1; i<len0/2; i++) *(data_tmp + i) = *(data_tmp - i);
+    for(size_t i=1; i<len0/2; i++) *(data_tmp + i) = *(data_tmp - i);
   }else{
   
-    for(int i=0; i<len0; i++, ax_tmp++, data_tmp++){
+    for(size_t i=0; i<len0; i++, ax_tmp++, data_tmp++){
       *(data_tmp) = exp(-pow((*(ax_tmp) - centre), 2)/width/width) + background;
     }
   }
@@ -539,12 +539,11 @@ bool spectrum::truncate_x(my_type x_min, my_type x_max){
 
   int index = -1;
   size_t len = get_g_dims(1), om_len = get_g_dims(0);
-  size_t el =0;
 
   if(x_min > ANG_MIN){
     index = where(g_angle_array->get_axis(1, len), len, x_min);
     if(index != -1){
-      for(size_t i=0; i< index; i++){
+      for(size_t i=0; i< (size_t)index; i++){
         for(size_t j=0; j< om_len; j++){
           set_g_element(i, j, 0.0);
         }
@@ -679,7 +678,7 @@ calc_type spectrum::get_G1(calc_type omega){
 
   ax_val = (my_type) omega;
   
-  offset = where(B_omega_array->get_axis(0, len), len, ax_val);
+  offset = where(axis, len, ax_val);
   //Interpolate if possible, else use the end
   if(offset > 0 && offset < len){
     data_bit[0] = get_B_element(offset-1);
@@ -809,7 +808,7 @@ calc_type spectrum::get_peak_omega(){
 
   calc_type value = -1.0, tmp;
   int index;
-  for(int i=0; i<get_B_dims(0); ++i){
+  for(size_t i=0; i<get_B_dims(0); ++i){
     tmp = get_B_element(i);
     if(tmp > value){
       index = i;

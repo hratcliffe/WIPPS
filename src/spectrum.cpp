@@ -184,7 +184,7 @@ spectrum & spectrum::operator=(const spectrum& src){
 spectrum::spectrum(const spectrum &src){
 /** \brief Copy constructor
 *
-*Copy src to a new instance. Requires we copy the normg block \todo move constructor
+*Copy src to a new instance. Requires we copy the normg block
 */
   construct();
   if(!is_good()) return;
@@ -217,7 +217,7 @@ void spectrum::set_ids(float time1, float time2, int space1, int space2, int wav
 bool spectrum::generate_spectrum(data_array &parent, int om_fuzz, int angle_type){
 /**\brief Generate spectrum from data
 *
-*Takes a parent data array and uses the specified ids to generate a spectrum. Windows using the specified wave dispersion and integrates over frequency. Also adopts axes from parent. \todo Fill in the rest of logic etc @param parent Data array to read from @param om_fuzz Band width around dispersion curve in percent of central frequency \todo omega vs k, is there some normalising to do? \todo Make parent const ref
+*Takes a parent data array and uses the specified ids to generate a spectrum. Windows using the specified wave dispersion and integrates over frequency. Also adopts axes from parent. \todo Fill in the rest of logic etc @param parent Data array to read from @param om_fuzz Band width around dispersion curve in percent of central frequency \todo omega vs k, is there some normalising to do?
 */
 
   if(!this->is_good()){
@@ -415,7 +415,10 @@ bool spectrum::write_to_file(std::fstream &file){
 }
 
 bool spectrum::read_from_file(std::fstream &file){
-/** \todo test*/
+/** \brief Initialise spectrum from dump
+*
+*Reads a dump file which is expected to contain two arrays, first B then g, as written by spectrum->write_to_file and constructs spectrum from data
+*/
 
 //First we grab the position of close block. Then we attempt to read two arrays. If we reach footer after first we error, or do not after second we warn. If the arrays in file are the wrong size, we have to error out
   bool err = 0;

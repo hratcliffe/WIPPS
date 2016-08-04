@@ -18,7 +18,7 @@ class data_array;
 /** \brief Reads SDF files into data_array
 
 *
-*Takes file prefixes, block id (see SDF documentation) and time and space ranges and a data_array pointer to fill and does so. The data array is not stored here.
+*Takes file prefixes, block id (see SDF documentation) and time and space ranges and a data_array to fill and does so. NOTE dumped arrays etc can be read directly, see e.g. data_array(std::string filename);
 * @author Heather Ratcliffe @date 02/10/2015
 */
 class reader{

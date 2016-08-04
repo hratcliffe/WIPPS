@@ -16,7 +16,6 @@
 #include <vector>
 #include "support.h"
 #include "data_array.h"
-
 /*
 check 2011 paper for whistler mode tests
 Bortnik, 
@@ -234,6 +233,8 @@ class test_entity_levelone: public test_entity{
 /** Spectrum to D test. Setup sample data in a spectrum with analytic solvable form. Calculate resulting D. Cross check*/
 class test_entity_d : public test_entity{
   private:
+    controller * test_contr;
+    std::string file_prefix;
 
   public:
     test_entity_d();

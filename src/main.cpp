@@ -84,7 +84,6 @@ int main(int argc, char *argv[]){
 
 //  return 0;
 #else
-#endif
   //Actually do the code...
   my_print("Processing "+mk_str(cmd_line_args.per_proc)+" blocks per core", mpi_info.rank);
 
@@ -174,6 +173,7 @@ int main(int argc, char *argv[]){
   contr.save_spectra(cmd_line_args.file_prefix);
   contr.save_D(cmd_line_args.file_prefix);
 
+#endif
 
   std::cout<<"Grep for FAKENUMBERS !!!!"<<std::endl;
 

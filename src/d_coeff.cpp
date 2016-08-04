@@ -51,6 +51,10 @@ bool diffusion_coeff::write_to_file(std::fstream &file){
 
   if(!file.is_open()) return 1;
   data_array::write_to_file(file);
+  file.seekg(-1*sizeof(size_t), std::ios::cur);
+  size_t ftr_start = 0;
+  file.read((char*) &ftr_start, sizeof(size_t));
+  std::cout<<ftr_start<<'\n';
   return 0;
 
 }
@@ -76,7 +80,7 @@ void diffusion_coeff::make_pitch_axis(){
   make_linear_axis(1, res, offset);
 }
 
-void diffusion_coeff::calculate(){
+void diffusion_coeff::calculate(bool quiet){
 /** \brief Calculate D from wave spectrum and plasma
 *
 *Uses the data available via my_controller to calculate D, the raw diffusion coefficient as function of particle velocity and pitch angle.
@@ -108,6 +112,7 @@ Get mu, dmu/domega which are used to:
   if(my_controller){
     plas = my_controller->get_plasma();
     spect = my_controller->get_current_spectrum();
+    /** \todo FIX! We should connect these better*/
   }
   else{
     my_print("No controller", mpi_info.rank);
@@ -169,14 +174,15 @@ Get mu, dmu/domega which are used to:
     //Get limits on n for each velocity
     n_min = get_min_n(v_par, k_thresh, om_ce_ref);
     n_max = get_max_n(v_par, k_thresh, om_ce_ref);
-    my_print("Velocity "+mk_str(v_par/v0, true)+" c", mpi_info.rank);
+    if(!quiet){
+      my_print("Velocity "+mk_str(v_par/v0, true)+" c", mpi_info.rank);
 
-    if((i-last_report) >= report_interval){
-      my_print("i "+mk_str(i), mpi_info.rank);
+      if((i-last_report) >= report_interval){
+        my_print("i "+mk_str(i), mpi_info.rank);
   
-      last_report = i;
+        last_report = i;
+      }
     }
-
 //    for(int k =0; k< ((1 <dims[1]) ? 1: dims[1]); k++){
     for(size_t k =0; k< dims[1]; k++){
       //particle pitch angle

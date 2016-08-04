@@ -36,7 +36,7 @@ class spectrum{
   ~spectrum();/**< Private because only controllers can create/destroy*/
   spectrum & operator=(const spectrum& src);/**<For setting one spectrum equal another*/
   spectrum(const spectrum &src);/**<For copying a spectrum*/
-  
+  spectrum(spectrum && src) = default;
   my_type normB;/**< Norm of B(w)*/
   my_type* normg;/**< Norms of g_w(x) for each w*/
   bool normaliseB();/**< Fills normB*/

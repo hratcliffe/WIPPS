@@ -214,7 +214,7 @@ bool controller::save_D(std::string pref){
     //Don't bother saving these...
     else if(my_d[i]->tag == GLOBAL) filename = pref+"D_"+tmp +"_"+mk_str(my_d[i]->time[0]) + "_"+mk_str(my_d[i]->time[1])+"_global.dat";
     
-    file.open(filename.c_str(),std::ios::out|std::ios::binary);
+    file.open(filename.c_str(),std::ios::out|std::ios::binary|std::ios::in|std::ios::trunc);
     if(file.is_open()) my_d[i]->write_to_file(file);
     else return 1;
     file.close();

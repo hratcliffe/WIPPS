@@ -301,6 +301,33 @@ void get_deck_constants(std::string file_prefix){
 
 /** @} */
 
+void log_code_constants(std::string file_prefix){
+/** \brief Log internal constants
+*
+*Records ID codes etc as name value pairs \todo Updates?
+*/
+  std::ofstream file;
+  std::string filename = file_prefix +"constants.dump";
+  file.open(filename.c_str());
+  if(file.is_open()){
+  
+    file<<"WAVE_WHISTLER "<<WAVE_WHISTLER<<'\n';
+    file<<"WAVE_PLASMA "<<WAVE_PLASMA<<'\n';
+    file<<"WAVE_O "<<WAVE_O<<'\n';
+    file<<"FUNCTION_NULL "<<FUNCTION_NULL<<'\n';
+    file<<"FUNCTION_DELTA "<<FUNCTION_DELTA<<'\n';
+    file<<"FUNCTION_GAUSS "<<FUNCTION_GAUSS<<'\n';
+    file<<"FUNCTION_ISO "<<FUNCTION_ISO<<'\n';
+    file<<"V_MIN "<<V_MIN<<'\n';
+    file<<"V_MAX "<<V_MAX<<'\n';
+    file<<"ANG_MIN "<<ANG_MIN<<'\n';
+    file<<"ANG_MAX "<<ANG_MAX<<'\n';
+    file<<"SPECTRUM_ANG_STDDEV "<<SPECTRUM_ANG_STDDEV<<'\n';
+    file<<"SPECTRUM_THRESHOLD "<<SPECTRUM_THRESHOLD<<'\n';
+
+  }
+  file.close();
+}
 
 bool parse_name_val(std::string in, std::string &name, std::string &val){
 /** \brief Parse x=y strings

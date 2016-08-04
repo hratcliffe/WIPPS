@@ -27,6 +27,8 @@ my_sz=0
 readu, filenum, sz_sz
 readu, filenum, my_sz
 
+hdr_info =create_struct(hdr_info,{int_sz: sz_sz})
+
 IF(KEYWORD_SET(report)) THEN PRINT, sz_sz, my_sz
 IF(my_sz EQ 4) THEN BEGIN
   hdr_info =create_struct(hdr_info,{my_type:0.0})

@@ -23,6 +23,9 @@ diffusion_coeff::diffusion_coeff(int nx, int n_angs):data_array(nx, n_angs){
   n_thetas = 100;
   n_n = 10;
   tag = LOCAL;
+  wave_id = 0;
+  latitude = 0;
+  tag="";
   // FAKENUMBERS for testing
 }
 
@@ -50,11 +53,46 @@ bool diffusion_coeff::write_to_file(std::fstream &file){
 /** \todo Add any additionals */
 
   if(!file.is_open()) return 1;
+  
   data_array::write_to_file(file);
   file.seekg(-1*sizeof(size_t), std::ios::cur);
-  size_t ftr_start = 0;
+  size_t ftr_start = 0, ftr_end=0;
+
   file.read((char*) &ftr_start, sizeof(size_t));
-  std::cout<<ftr_start<<'\n';
+  //Ftr start is position of footer start.
+  file.seekg(-1*sizeof(size_t), std::ios::cur);
+
+  //Now we add the other tags
+  //First the wave id, then the first 10 chars of the tag string
+  file.write((char*) &wave_id, sizeof(int));
+
+  char buffer[10];
+  size_t n_char = std::min((size_t)10, tag.size());
+  strncpy(buffer, tag.c_str(), n_char);
+  file.write(buffer, 10*sizeof(char));
+
+  ftr_end = (size_t) file.tellg();
+  file.write((char*)&ftr_start, sizeof(size_t));
+  //Finish file with position of ftr start
+  
+  file.seekg(ftr_start);
+  file.write((char*) &ftr_end, sizeof(size_t));
+  //Go back and correct the next_block entry
+
+/*    std::cout<<"end is "<<ftr_end<<'\n';
+  file.seekg(ftr_start);
+
+  int wave;
+  file.read((char*) &ftr_start, sizeof(size_t));
+  std::cout<<"start is "<<ftr_start<<'\n';
+
+  file.read((char*) &buffer, 10*sizeof(char));
+std::cout<<buffer<<'\n';
+  file.read((char*) &wave, sizeof(int));
+  std::cout<<wave<<'\n';
+  file.read((char*) &buffer, 10*sizeof(char));
+std::cout<<buffer<<'\n';*/
+  
   return 0;
 
 }

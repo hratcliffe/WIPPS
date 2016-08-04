@@ -69,6 +69,8 @@ int main(int argc, char *argv[]){
   share_consts();
   /** Get constants from deck and share to other procs*/
 
+  log_code_constants(cmd_line_args.file_prefix);
+
 #ifdef RUN_TESTS_AND_EXIT
   my_print("Running basic tests", mpi_info.rank);
 

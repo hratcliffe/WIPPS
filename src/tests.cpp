@@ -78,8 +78,8 @@ void tests::setup_tests(){
   add_test(test_obj);
   test_obj = new test_entity_spectrum();
   add_test(test_obj);
-  test_obj = new test_entity_levelone();
-  add_test(test_obj);
+ // test_obj = new test_entity_levelone();
+  //add_test(test_obj);
   test_obj = new test_entity_d();
   add_test(test_obj);
 
@@ -1549,7 +1549,7 @@ int test_entity_spectrum::basic_tests1(){
   }else{
     test_bed->report_info("Cannot test assymmetric spectrum");
   }
-  outfile.open("spect_testy.dat", std::ios::binary);
+  outfile.open("spect_testy.dat", std::ios::binary|std::ios::out);
   test_contr->get_current_spectrum()->write_to_file(outfile);
   outfile.close();
   if(err == TEST_PASSED) test_bed->report_info("Test spectrum OK");
@@ -1591,7 +1591,7 @@ int test_entity_spectrum::basic_tests2(){
       test_bed->report_info("Mismatch between generated spectrum and test spectrum of "+mk_str(total_error));
     }
     /* Preserve the spectrum*/
-    outfile.open("spect_out.dat", std::ios::binary);
+    outfile.open("spect_out.dat", std::ios::binary|std::ios::out);
     test_contr->get_current_spectrum()->write_to_file(outfile);
     outfile.close();
   }else{
@@ -1978,7 +1978,14 @@ int test_entity_d::run(){
   test_contr->add_d(20, 20);
   test_contr->get_current_d()->calculate(true);
 
+  test_bed->report_info("Writing test file", mpi_info.rank);
 
+  std::fstream file;
+  file.open("test_d.dat", std::ios::binary|std::ios::trunc|std::ios::out|std::ios::in);
+  if(file) test_contr->get_current_d()->write_to_file(file);
+  file.close();
+  
+  
   return err;
 
 }

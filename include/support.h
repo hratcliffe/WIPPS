@@ -217,6 +217,7 @@ inline calc_type gamma_rel(calc_type v){
   return sqrt(1.0 - v*v/v0/v0);
 }
 
+void log_code_constants(std::string file_prefix);
 
 /** @} */
 //----------- END HELPER TYPE FUNCTION DECLARATIONS -----------

@@ -1,4 +1,4 @@
-function read_data, filename
+function read_data, filename, is_d=is_d
 
 ;Written for commit ID from dc9e387 to ... FILL IN IF IO CHNAGES....
 
@@ -19,6 +19,13 @@ ENDIF
 
 data = read_block(filenum, hdr.my_type, hdr.block_type)
 
+tmp = FSTAT(filenum)
+POINT_LUN, filenum, (tmp.size - hdr.int_sz)
+start_pos = hdr.block_type
+readu, filenum, start_pos
+POINT_LUN, filenum, start_pos
+
+next_block = start_pos
 readu, filenum, next_block
 
 id_type ='1234567891'
@@ -27,6 +34,16 @@ id_in = id_type
 
 readu, filenum, id_in
 data=create_struct(data, {block:id_in})
+
+if(KEYWORD_SET(is_d)) THEN BEGIN
+  wave_in = 1l
+  readu, filenum, wave_in
+
+  tag_in = id_type
+  readu, filenum, tag_in
+  data=create_struct(data, {wave_id: wave_in, tag:tag_in})
+
+END
 
 FREE_LUN, filenum
 

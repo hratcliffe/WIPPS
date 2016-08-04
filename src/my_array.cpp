@@ -194,8 +194,7 @@ long my_array::get_index(size_t nx)const{
 A 3-d 5x3x2 is
 [|ooooo||ooooo||ooooo|][|ooooo||ooooo||ooooo|]
 <--------'slice'------>
-Etc \todo We may get speedup from removing checks. If so, wrap them in a debug IFDEF for fiddling vs running
-*/
+Etc */
 
   if(n_dims != 1){
 #ifdef DEBUG_DIMS
@@ -308,13 +307,6 @@ size_t my_array::get_dims(size_t dim)const{
     return dims[dim];
   
   }else{return 0;}
-}
-
-size_t my_array::get_length(size_t dim){
-/** \brief Get size of dimension dim
-*
-**/
-  return get_dims(dim);
 }
 
 my_type my_array::get_element(size_t nx)const{

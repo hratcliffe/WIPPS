@@ -58,25 +58,22 @@ bool diffusion_coeff::write_to_file(std::fstream &file){
 void diffusion_coeff::make_velocity_axis(){
 /**\brief Set velocity axis
 *
-*Makes suitably binned velocity axis and copies into axes for dim [0] \todo is this done?
+*Makes linear axis between V_MIN and V_MAX
 */
-
-  calc_type res = (V_MAX - V_MIN)/this->get_length(0);
+  calc_type res = (V_MAX - V_MIN)/this->get_dims(0);
   long offset = std::abs(V_MIN)/res;
   make_linear_axis(0, res, offset);
-  // FAKENUMBERS
 }
 
 void diffusion_coeff::make_pitch_axis(){
 /**\brief Set pitch angle axis (tan theta)
 *
-*Makes suitably binned axis and copies into axes for dim [1] \todo is this done?
+*Makes linear axis between ANG_MIN and ANG_MAX
 */
 
-  calc_type res = (ANG_MAX - ANG_MIN)/this->get_length(1); //To cover range from 0 to 2...
-  int offset = ANG_MIN/res;
+  calc_type res = (ANG_MAX - ANG_MIN)/this->get_dims(1); //To cover range from Min to Max
+  long offset = ANG_MIN/res;
   make_linear_axis(1, res, offset);
-  // FAKENUMBERS
 }
 
 void diffusion_coeff::calculate(){
@@ -254,7 +251,7 @@ int diffusion_coeff::get_min_n(calc_type v_par, my_type k_thresh, calc_type om_c
 * Uses the maximum k and the velocity to give min/max n to consider (note signs) \todo Is there a tighter limt? This is quite weak...
 */
 
-  calc_type gamma = 1.0;
+  calc_type gamma = gamma_rel(v_par);
   /** \todo FIX!!! */
 
   return std::max(-(int)(gamma * k_thresh * std::abs(v_par / om_ce)), -n_n);
@@ -267,7 +264,7 @@ int diffusion_coeff::get_max_n(calc_type v_par, my_type k_thresh, calc_type om_c
 * Uses the maximum k and the velocity to give min/max n to consider (note signs)
 */
 
-  calc_type gamma = 1.0;
+  calc_type gamma = gamma_rel(v_par);
   /** \todo FIX!!! */
 
   return std::min((int)(gamma * k_thresh * std::abs(v_par / om_ce)), n_n);

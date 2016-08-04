@@ -390,7 +390,7 @@ bool spectrum::write_to_file(std::fstream &file){
 
   size_t ftr_start = (size_t) file.tellg();
   //Start of ftr means where to start reading block, i.e. location of the next_location tag
-  size_t next_location = ftr_start+ sizeof(char)*ID_SIZE;
+  size_t next_location = ftr_start+ sizeof(char)*ID_SIZE +sizeof(size_t);
 
   file.write((char*) & next_location, sizeof(size_t));
   //Position of next section

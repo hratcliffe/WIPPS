@@ -171,8 +171,6 @@ int reader::read_data(data_array &my_data_in, int time_range[3], int space_range
   if(report_interval < 1) report_interval = 1;
     //Say we want to report 10 times over the list, or every 20th file if  more than 200.
 
-  my_data_in.time[0] = time_range[0];
-  my_data_in.time[1] = time_range[1];
   my_data_in.space[0] = space_range[0];
   my_data_in.space[1] = space_range[1];
   
@@ -263,6 +261,13 @@ int reader::read_data(data_array &my_data_in, int time_range[3], int space_range
   }
 
   if(source_sizes) free(source_sizes);
+
+  {
+    size_t n_dims = my_data_in.get_dims();
+    my_data_in.time[0] = my_data_in.get_axis_element(n_dims-1, 0);
+    my_data_in.time[1] = my_data_in.get_axis_element(n_dims-1, my_data_in.get_dims(n_dims-1)-1);
+    //Set times to be first and final time axis elements
+  }
 
   //report if we broke out of loop and print filename
   if(i < time_range[1]){

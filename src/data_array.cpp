@@ -83,16 +83,17 @@ data_array::data_array(std::string filename, bool no_version_check){
 
   std::fstream infile;
   infile.open(filename, std::ios::in|std::ios::binary);
-  if(!infile.is_open()) return;
   
+  construct();
+
+  if(!infile.is_open()) return;
+
   std::vector<size_t> dims_vec = my_array::read_dims_from_file(infile, no_version_check);
   size_t n_dims_in = dims_vec.size();
   //Now we have the dimensions, construct
   size_t total_data=1, total_axes=0;
   if(n_dims_in >0){
     
-    construct();
-
     this->n_dims = n_dims_in;
     this->dims = (size_t*)malloc(n_dims*sizeof(size_t));
     for(size_t i=0;i<n_dims;i++){

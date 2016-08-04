@@ -110,7 +110,9 @@ class test_entity_reader : public test_entity{
 
 };
 
-bool compare_2d(data_array &lhs, data_array &rhs);
+bool compare_2d(data_array &lhs, data_array &rhs, bool no_dims_match=false);
+bool compare_3d(data_array &lhs, data_array &rhs, bool no_dims_match=false);
+
 /** Test for data array class, assigns values to entry and reads back*/
 class test_entity_data_array : public test_entity{
   private:

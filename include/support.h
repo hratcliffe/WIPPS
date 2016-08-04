@@ -15,6 +15,8 @@
 #include <iostream>
 #include <stdio.h>
 #include <vector>
+#include <cmath>
+
 
 /** \defgroup type TypeDefs
 *@{ */
@@ -211,7 +213,10 @@ calc_type square_integrator(calc_type * start, int len, calc_type * increment);
 
 std::vector<calc_type> cubic_solve(calc_type a, calc_type b, calc_type c);
 
-inline my_type gamma(my_type v);
+inline calc_type gamma_rel(calc_type v){
+  return sqrt(1.0 - v*v/v0/v0);
+}
+
 
 /** @} */
 //----------- END HELPER TYPE FUNCTION DECLARATIONS -----------

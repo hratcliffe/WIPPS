@@ -559,7 +559,3 @@ template<typename T> T interpolate(T* axis, T* vals, T target, int pts){
 template float interpolate(float*, float*, float, int);
 template double interpolate(double*, double*, double, int);
 
-inline my_type gamma(my_type v){
-  return sqrt(1.0 - v*v/v0/v0);
-}
-

@@ -37,7 +37,7 @@ public:
   //friend class spectrum;/**< \todo Can we remove this plz?*/
   char block_id[ID_SIZE]; /**< The field name id from SDF file*/
 
-  float time[2];/**< Time range over which data are taken*/
+  my_type time[2];/**< Time range over which data are taken*/
   size_t space[2];/**< Space range over which data are taken*/
   data_array();
   data_array(size_t nx, size_t ny=0, size_t nz=0, size_t nt=0);

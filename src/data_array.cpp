@@ -24,12 +24,11 @@
 extern const mpi_info_struc mpi_info;
 
 void data_array::construct(){
-/** \brief Common parts for all constructors
+/** \brief Common constructor logic
 *
-*
+*Sets fields for empty, dimensionless array
 */
   axes=nullptr;
-  ax_defined = false;
   time[0]=0; time[1]=1;
   space[0]=0; space[1]=1;
   memset((void *) block_id, 0, ID_SIZE*sizeof(char));
@@ -39,36 +38,41 @@ void data_array::construct(){
 void data_array::alloc_ax(const size_t els){
 /* \brief Allocate axis memory
 *
-* Alocate memory for axes and set the defined flag
+* Alocate memory for axes
 */
   if(els > 0 && els <= this->n_dims*MAX_SIZE){
     axes=(my_type*)calloc((els),sizeof(my_type));
-    if(axes) ax_defined=true;
   }else{
     my_print("Array size exceeds max. Axes alloc failed", mpi_info.rank);
   }
 }
 
 data_array::data_array() : my_array(){
+/** \brief Default constructor
+*
+*Create an empty, dimensionless array
+*/
   construct();
 }
 
 data_array::data_array(size_t nx, size_t ny, size_t nz, size_t nt) : my_array(nx, ny, nz, nt){
-/**Adds axes to a normal rectangular my array*/
+/**\brief Construct 1-4 d array
+*
+*Adds axes to a normal rectangular my array of correct size
+*/
   construct();
   size_t els= this->get_total_axis_elements();
-  //by now this is setup to work
   alloc_ax(els);
 }
 
 data_array::data_array(size_t n_dims, size_t * dims) : my_array(n_dims, dims){
-
+/** \brief Construct arbitrary dimension array
+*
+*Construct an array of n_dims rank with dimensions dims
+*/
   construct();
   size_t els= this->get_total_axis_elements();
-  //by now this is setup to work
   alloc_ax(els);
-
-
 }
 
 data_array::data_array(std::string filename, bool no_version_check){
@@ -99,9 +103,7 @@ data_array::data_array(std::string filename, bool no_version_check){
     }
     
     data=(my_type*)calloc(total_data,sizeof(my_type));
-    if(data) defined=true;
     axes=(my_type*)calloc(total_axes,sizeof(my_type));
-    if(axes) ax_defined=true;
 
     //Finally read in data and axes using normal routines
     infile.seekg(0, std::ios::beg);
@@ -109,9 +111,7 @@ data_array::data_array(std::string filename, bool no_version_check){
     if(err){
       my_print("IO error, could not read", mpi_info.rank);
       if(axes) delete axes;
-      ax_defined = false;
       if(data) delete data;
-      defined = false;
     }
   
   }else{
@@ -120,15 +120,23 @@ data_array::data_array(std::string filename, bool no_version_check){
 }
 
 data_array::~data_array(){
-/**Similarly destructor automatically calls destructor for my_array and frees axes*/
+/**\brief Destructor 
+*
+*Free axis memory
+**/
   if(axes) free(axes);
   axes = nullptr; // technically unnecessary as desctructor deletes members.
 }
 
 data_array & data_array::operator=(const data_array& src){
-  
-  my_array::operator=(std::move(src));
+/** \brief Copy assignment
+*
+*Set this equal to src by copying src including data
+*/
+
   if(this->axes) free(axes);
+
+  my_array::operator=(src);
   this->construct();
 
   size_t els= this->get_total_axis_elements();
@@ -141,10 +149,19 @@ data_array & data_array::operator=(const data_array& src){
 
 }
 
+data_array::data_array(data_array && src) : my_array(src){
+/** \brief Move constructor
+*
+*Move src to new location. Copies data pointers but does not reallocate memory
+*/
+  this->axes = src.axes;
+  copy_ids(src);
+}
+
 data_array::data_array(const data_array &src) : my_array(src){
 /** \brief Copy constructor
 *
-*Copy src to a new instance, making a duplicate of data \todo move constructor
+*Copy src to a new instance, making a duplicate of data
 */
   construct();
   //Basic construction of additionals, already called base class copy constructor
@@ -162,7 +179,7 @@ my_type * data_array::get_axis(size_t dim, size_t & length){
 *Returns pointer to given axis and its length. If axes don't exist or dimension is out of range, returns nullptr
 */
 
-  if(!ax_defined || (dim >= n_dims)) return nullptr;
+  if(!axes || (dim >= n_dims)) return nullptr;
 
   long index = get_axis_index(dim, 0);
   //Get index of 0th element

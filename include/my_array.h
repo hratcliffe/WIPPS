@@ -24,7 +24,6 @@ protected:
   size_t n_dims;/**< Number of dimensions*/
   size_t * dims;/**< Array dimensions*/
   my_type *data;/**< The data */
-  bool defined; /**< Flag to check memory allocation sucess*/
 
   virtual void construct();
   virtual void alloc_all(const size_t n_dims, const size_t * const dims);
@@ -42,12 +41,12 @@ public:
 
   my_array();
   my_array(size_t nx, size_t ny=0, size_t nz=0, size_t nt=0);
-//  my_array(size_t * row_lengths, size_t ny);
   my_array(size_t n_dims, size_t * dims);
   virtual ~my_array();
   my_array(const my_array &src);
+  my_array(my_array && src);
   my_array & operator=(const my_array& src);
-  virtual bool is_good()const {return !defined;}/**< Check memory allocation etc worked*/
+  virtual bool is_good()const {return (data && dims);}/**< Check memory allocation etc worked*/
 
   size_t get_dims()const;
   size_t get_dims(size_t dim)const;

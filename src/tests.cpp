@@ -358,6 +358,25 @@ test_entity_data_array::~test_entity_data_array(){
 //  delete test_array;
 }
 
+bool compare_2d(data_array &lhs, data_array &rhs){
+/**Helper to compare two arrays in 2-d. Will early quit on first difference*/
+  if(lhs.get_dims() != rhs.get_dims()) return 1;
+  for(size_t i=0; i< lhs.get_dims(); i++) if(lhs.get_dims(i) != rhs.get_dims(i)) return 1;
+
+  for(size_t i=0; i<lhs.get_dims(0); i++){
+    for(size_t j =0; j<lhs.get_dims(1); j++){
+      if(lhs.get_element(i,j) != rhs.get_element(i, j)) return 1;
+    }
+  }
+  for(size_t i=0; i<lhs.get_dims(); i++){
+    for(size_t j=0; j< rhs.get_dims(i); j++){
+      if(lhs.get_axis_element(i,j) != rhs.get_axis_element(i, j)) return 1;
+    }
+  }
+  return 0;
+
+}
+
 int test_entity_data_array::run(){
 /** \brief Puts data into selected elements of a data array and reads back. Checks indexing, and bounds.
 *
@@ -422,7 +441,7 @@ int test_entity_data_array::assign(){
 }
 
 int test_entity_data_array::basic_tests(){
-/** \todo Change to random selec and check by definition?*/
+/** \todo Change to random selec and check by definition? Or copy and compare all*/
 
   int err = TEST_PASSED;
   if(!test_array.is_good()) return TEST_ASSERT_FAIL;
@@ -615,25 +634,19 @@ int test_entity_data_array::technical_tests(){
 
   int err = TEST_PASSED;
   data_array dat = test_array;
+  err |= compare_2d(test_array, dat);
   
-  if(dat.get_dims() ==0 || dat.get_dims(0) ==0 || dat.get_dims(1) == 0) err |= TEST_ASSERT_FAIL;
-  if(dat.get_dims() != test_array.get_dims()){
-    err |= TEST_WRONG_RESULT;
-  }
-  for(size_t i=0; i< dat.get_dims(); i++) if(dat.get_dims(i) != test_array.get_dims(i)) err |= TEST_WRONG_RESULT;
+  std::vector<data_array> my_vec;
+  std::cout<<"created"<<'\n';
+  my_vec.push_back(test_array);
+  std::cout<<"pushed"<<'\n';
+  my_vec.push_back(test_array);
+  std::cout<<"pushed"<<'\n';
+  my_vec.push_back(test_array);
+  std::cout<<"done pushed"<<'\n';
 
-  for(size_t i=0; i<test_array.get_dims(0); i++){
-    for(size_t j =0; j<test_array.get_dims(1); j++){
-      if(test_array.get_element(i,j) != dat.get_element(i, j)) err |=TEST_WRONG_RESULT;
-    }
-  }
-  
-  
-  for(size_t i=0; i<test_array.get_dims(); i++){
-    for(size_t j=0; j< test_array.get_dims(i); j++){
-      if(test_array.get_axis_element(i,j) != dat.get_axis_element(i, j)) err |=TEST_WRONG_RESULT;
-    }
-  }
+  my_vec.resize(100);
+//  my_vec.resize(10);
 
   return err;
 

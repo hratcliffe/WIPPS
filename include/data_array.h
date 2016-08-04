@@ -21,7 +21,6 @@ class data_array : public my_array{
 
 protected:
 
-  bool ax_defined;/**< Flag showing whether axes are fully defined*/
   my_type *axes;/**< 1-d array in sections, so can be arbitary length and dims*/
 
   virtual void construct();
@@ -43,12 +42,14 @@ public:
   data_array();
   data_array(size_t nx, size_t ny=0, size_t nz=0, size_t nt=0);
   data_array(const data_array &src);
+  data_array(data_array && src);
+
   data_array & operator=(const data_array& src);
   data_array(std::string filename, bool no_version_check = false);
   data_array(size_t n_dims, size_t * dims);
   virtual ~data_array();
 
-  virtual bool is_good()const{return defined && ax_defined;}
+  virtual bool is_good()const{return my_array::is_good() && axes;}
 
   my_type get_axis_element(size_t dim, size_t pt)const;
   bool set_axis_element(size_t dim, size_t pt, my_type val);

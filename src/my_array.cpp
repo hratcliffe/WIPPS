@@ -28,7 +28,6 @@ void my_array::construct(){
 *
 *Sets default values of things
 */
-  defined = false;
   n_dims = 0;
   data=nullptr;
   dims=nullptr;
@@ -92,28 +91,21 @@ my_array::my_array(size_t nx, size_t ny, size_t nz, size_t nt){
   
   free(dims_in);
   
-  if(data && dims){
-    defined = true;
-  }
 }
 
 my_array::my_array(size_t n_dims, size_t * dims ){
-/** \brief arbitrary dim rectangular array
+/** \brief Arbitrary dim rectangular array
 *
-*Sets up a n-d rectangular array and allocates data arrays.
+*Sets up a n_dims array of dimensions dims and allocates data arrays.
 */
   construct();
   alloc_all(n_dims, dims);
-  
-  if(data && dims){
-    defined = true;
-  }
 }
 
 my_array::~my_array(){
-/** Clean up explicit allocations
+/** \brief Destructor
 *
-*
+*Clean up explicit allocations
 */
   if(data) free(data);
   data=nullptr;
@@ -123,16 +115,18 @@ my_array::~my_array(){
 }
 
 my_array & my_array::operator=(const my_array& src){
-  
+/** \brief Copy assignment
+*
+*Sets this equal to a copy of source
+*/
   if(this->data) free(data);
+  if(this->dims) free(dims);
+  //Clean up in case this was already a thing
   this->construct();
-  if(!src.dims || src.n_dims==0) return *this;
+  if(!src.is_good()) return *this;
   //No copy if src is zero
   
   alloc_all(src.n_dims, src.dims);
-  if(data && dims){
-    defined = true;
-  }
   size_t tot_els = this->get_total_elements();
   if(this->data && src.data) std::copy(src.data, src.data + tot_els, this->data);
 
@@ -140,10 +134,24 @@ my_array & my_array::operator=(const my_array& src){
 
 }
 
+my_array::my_array(my_array && src){
+/** \brief Move constructor
+*
+*Move src to a new instance i.e. copy fields but don't move memory
+*/
+
+  if(!src.dims || src.n_dims==0) return;
+  //Stop if src has no dims
+  
+  this->n_dims = src.n_dims;
+  this->dims = src.dims;
+  this->data = src.data;
+}
+
 my_array::my_array(const my_array &src){
 /** \brief Copy constructor
 *
-*Copy src to a new instance, making a duplicate of data \todo move constructor
+*Copy src to a new instance, making a duplicate of data
 */
 
   construct();
@@ -151,9 +159,6 @@ my_array::my_array(const my_array &src){
   //Stop if src has no dims
   
   alloc_all(src.n_dims, src.dims);
-  if(data && dims){
-    defined = true;
-  }
   size_t tot_els = this->get_total_elements();
   if(this->data && src.is_good()) std::copy(src.data, src.data + tot_els, this->data);
 

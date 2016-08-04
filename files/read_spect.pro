@@ -66,7 +66,11 @@ spect = create_struct({ang:read_block(filenum, hdr.my_type, hdr.block_type)}, sp
 readu, filenum, next_pos
 if(next_pos NE start_pos) THEN BEGIN
   print, "Extra arrays in input file"
+  return, spect
 end
+
+POINT_LUN, filenum, start_pos
+readu, filenum, next_pos
 
 id_type ='1234567891'
 id_in = id_type

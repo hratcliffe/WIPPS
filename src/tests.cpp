@@ -1486,7 +1486,6 @@ int test_entity_spectrum::setup(){
     err |= TEST_ASSERT_FAIL;
     err |= TEST_FATAL_ERR;
   }
-
   test_contr = new controller(file_prefix);
 
   return err;

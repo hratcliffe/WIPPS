@@ -30,9 +30,6 @@ protected:
   long get_axis_index(size_t dim, size_t pt)const;
 
   std::vector<size_t> get_bounds(std::vector<my_type> limits);
-  void copy_ids( const data_array & src);
-
-
 public:
   //friend class spectrum;/**< \todo Can we remove this plz?*/
   char block_id[ID_SIZE]; /**< The field name id from SDF file*/
@@ -50,6 +47,7 @@ public:
   virtual ~data_array();
 
   virtual bool is_good()const{return my_array::is_good() && axes;}
+  void copy_ids( const data_array & src);
 
   my_type get_axis_element(size_t dim, size_t pt)const;
   bool set_axis_element(size_t dim, size_t pt, my_type val);

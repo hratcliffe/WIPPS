@@ -44,6 +44,7 @@ spect = {B:read_block(filenum, hdr.my_type, hdr.block_type)}
 next_pos = hdr.block_type
 readu, filenum, next_pos
 
+PRINT, next_pos, start_pos, fstat(filenum)
 if(next_pos EQ start_pos) THEN BEGIN
   print, "Insufficient arrays found, spectrum incomplete"
   return, spect
@@ -63,10 +64,18 @@ ENDIF
 spect = create_struct({ang:read_block(filenum, hdr.my_type, hdr.block_type)}, spect)
 
 readu, filenum, next_pos
-
 if(next_pos NE start_pos) THEN BEGIN
   print, "Extra arrays in input file"
 end
+
+id_type ='1234567891'
+id_in = id_type
+;type for block_izes and block id...
+
+readu, filenum, id_in
+PRINT, id_in
+spect=create_struct(spect, {block:id_in})
+
 
 return, spect
 END

@@ -47,6 +47,18 @@ controller::~controller(){
 
 };
 
+void controller::add_spectrum(std::string file){
+
+  spectrum * tmp_spect = new spectrum(file);
+  if(tmp_spect->is_good()){
+    tmp_spect->my_controller = this;
+    my_spect.push_back(tmp_spect);
+    current_spect = my_spect.size()-1;
+  }else{
+    my_print("Spectrum construction failed", mpi_info.rank);
+  }
+}
+
 void controller::add_spectrum(int nx, int n_ang, bool separable){
 /** \brief Create and add spectrum
 *
@@ -54,10 +66,13 @@ void controller::add_spectrum(int nx, int n_ang, bool separable){
 */
   spectrum * tmp_spect;
   tmp_spect = new spectrum(nx, n_ang, separable);
-  tmp_spect->my_controller = this;
-  my_spect.push_back(tmp_spect);
-  current_spect = my_spect.size()-1;
-
+  if(tmp_spect->is_good()){
+    tmp_spect->my_controller = this;
+    my_spect.push_back(tmp_spect);
+    current_spect = my_spect.size()-1;
+  }else{
+    my_print("Spectrum construction failed", mpi_info.rank);
+  }
 }
 
 void controller::add_d(int nx, int n_angs, int pos){

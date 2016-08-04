@@ -25,6 +25,7 @@ class controller;
 */
 class spectrum{
   friend void controller::add_spectrum(int nx, int n_ang, bool separable);
+  friend void controller::add_spectrum(std::string file);
   friend controller::~controller();
 
   controller * my_controller;/**< Links this to a plasma object*/
@@ -41,6 +42,9 @@ class spectrum{
   bool normaliseB();/**< Fills normB*/
   bool normaliseg(my_type omega);/**< Fills normg for omega*/
   my_type max_power;/**<Value of maximum in spectral power*/
+  bool angle_is_function;/**< Says we impose g(x) rather than have one g for each w*/
+  int function_type;/**< Type code for angular function. See support.h */
+
   data_array g_angle_array;
   data_array B_omega_array;
 
@@ -50,11 +54,9 @@ public:
   my_type time[2];/**< Time range over which data are taken*/
   size_t space[2];/**< Space range over which data are taken*/
   int wave_id; /**< ID for which wave mode cutout we're going for. See support.h*/
-  bool angle_is_function;/**< Says we impose g(x) rather than have one g for each w*/
-  int function_type;/**< Type code for angular function. See support.h */
   void set_ids(float time1, float time2, int space1, int space2, int wave_id, char block_id[10], int function_type=FUNCTION_DELTA);
 
-  bool generate_spectrum(data_array * parent, int om_fuzz=10, int angle_type=FUNCTION_DELTA);
+  bool generate_spectrum(data_array& parent, int om_fuzz=10, int angle_type=FUNCTION_DELTA);
   bool truncate_om(my_type om_min, my_type om_max);
   bool truncate_x(my_type x_min, my_type x_max);
 
@@ -75,8 +77,8 @@ public:
   calc_type check_upper();
   calc_type get_peak_omega();
   
-  void copy_ids(data_array * src);
-  bool check_ids( data_array * src);
+  void copy_ids(data_array & src);
+  bool check_ids( data_array & src);
   inline bool is_good(){return B_omega_array.is_good() && g_angle_array.is_good() && normg;}
   
   
@@ -98,6 +100,9 @@ public:
   inline size_t get_g_dims(size_t i)const{return this->g_angle_array.get_dims(i);}
   inline size_t get_B_dims()const{return this->B_omega_array.get_dims();}
   inline size_t get_B_dims(size_t i)const{return this->B_omega_array.get_dims(i);}
+  
+  data_array  copy_out_B();
+  data_array  copy_out_g();
   
 };
 

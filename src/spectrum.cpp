@@ -59,7 +59,7 @@ spectrum::spectrum(int n_om, int n_ang, bool separable){
 }
 
 spectrum::spectrum(std::string filename){
-/** \brief Setup a spectrum from file dump \todo test!!!*/
+/** \brief Setup a spectrum from file dump*/
 
 //First we grab the position of close block. Then we attempt to read two arrays. If we reach footer after first we error, or do not after second we warn.
 
@@ -69,6 +69,7 @@ spectrum::spectrum(std::string filename){
 
   bool err = 0, cont = 1;
   size_t end_block=0, next_block=0;
+  size_t jump_pos=0;
   file.seekg(-1*sizeof(size_t), file.end);
   file.read((char*) &end_block, sizeof(size_t));
   file.seekg(0, std::ios::beg);
@@ -78,6 +79,9 @@ spectrum::spectrum(std::string filename){
   if(dims.size() !=1){
     my_print("Invalid dimensions for B", mpi_info.rank);
     cont = 0;
+  }else{
+    my_print("B size "+mk_str(dims[0]), mpi_info.rank);
+  
   }
   if(cont){
     //Now set up B correct size
@@ -91,7 +95,6 @@ spectrum::spectrum(std::string filename){
     cont = 0;
   }
   if(cont){
-    file.seekg(-1*sizeof(size_t), std::ios::cur);
     file.read((char*) &next_block, sizeof(size_t));
     if(next_block == end_block){
       //Early termination of file...
@@ -100,17 +103,23 @@ spectrum::spectrum(std::string filename){
     }
   }
   if(cont){
+    file.seekg(-1*sizeof(size_t), std::ios::cur);
+    //Last read was invalid, so we seek back
+
+    jump_pos = (size_t)file.tellg();
     dims = g_angle_array.read_dims_from_file(file);
+
     if(dims.size() !=2){
       my_print("Wrong dimensions for g", mpi_info.rank);
       cont = 0;
+    }else{
+      my_print("g size "+mk_str(dims[0])+'x'+mk_str(dims[1]), mpi_info.rank);
     }
+  
   }
   if(cont){
+    file.seekg(jump_pos);
     //Now set up g correct size
-    file.seekg(0, std::ios::beg);
-    //return to start
-
     if(dims[0] == 1){
       this->g_angle_array = data_array(1, dims[1]);
       angle_is_function = true;
@@ -132,10 +141,10 @@ spectrum::spectrum(std::string filename){
     }
   }
   if(cont){
-    file.seekg(-1*sizeof(size_t), std::ios::cur);
     file.read((char*) &next_block, sizeof(size_t));
-
-    if(next_block != end_block){
+    next_block= (size_t)file.tellg() - sizeof(size_t);
+    //If we're done, this should be the
+     if(next_block != end_block){
       //File is not done!
       my_print("Excess arrays in file", mpi_info.rank);
       cont = 0;
@@ -154,8 +163,9 @@ spectrum::spectrum(std::string filename){
     B_omega_array = data_array();
     //Return to size-less state
     
-    return;
   }
+  return;
+
 }
 
 spectrum & spectrum::operator=(const spectrum& src){
@@ -204,7 +214,7 @@ void spectrum::set_ids(float time1, float time2, int space1, int space2, int wav
   this->function_type = function_type;
 }
 
-bool spectrum::generate_spectrum(data_array * parent, int om_fuzz, int angle_type){
+bool spectrum::generate_spectrum(data_array &parent, int om_fuzz, int angle_type){
 /**\brief Generate spectrum from data
 *
 *Takes a parent data array and uses the specified ids to generate a spectrum. Windows using the specified wave dispersion and integrates over frequency. Also adopts axes from parent. \todo Fill in the rest of logic etc @param parent Data array to read from @param om_fuzz Band width around dispersion curve in percent of central frequency \todo omega vs k, is there some normalising to do? \todo Make parent const ref
@@ -215,15 +225,15 @@ bool spectrum::generate_spectrum(data_array * parent, int om_fuzz, int angle_typ
     return 1;
   }
 
-  if(parent && angle_is_function){
+  if(parent.is_good() && angle_is_function){
     //First we read axes from parent
     this->copy_ids(parent);
     this->function_type = angle_type;
     size_t len;
 
-    my_type *ax_ptr = parent->get_axis(1, len);
+    my_type *ax_ptr = parent.get_axis(1, len);
     //y-axis to work with
-//    my_type *k_ax_ptr = parent->get_axis(0, lenk);
+//    my_type *k_ax_ptr = parent.get_axis(0, lenk);
 
     //Now we loop across x, calculate the wave cutout bounds, and total, putting result into data
 
@@ -232,12 +242,12 @@ bool spectrum::generate_spectrum(data_array * parent, int om_fuzz, int angle_typ
     my_type om_disp, max=0.0;
     my_type tolerance = om_fuzz/100.0;
     my_type total;
-/*    my_type max_om = parent->get_axis_element(1, len-1);
+/*    my_type max_om = parent.get_axis_element(1, len-1);
     max_om /= this->get_length(0);*/
     //for(int i=0; i<this->get_length(0); ++i) this->set_axis_element(0, i, )
 
     for(size_t i=0; i<get_B_dims(0); ++i){
-      om_disp = get_omega(parent->get_axis_element(0,i), WAVE_WHISTLER);
+      om_disp = get_omega(parent.get_axis_element(0,i), WAVE_WHISTLER);
       
       set_om_axis_element(i, om_disp);
       
@@ -249,7 +259,7 @@ bool spectrum::generate_spectrum(data_array * parent, int om_fuzz, int angle_typ
       }
       //now total the part of the array between these bnds
       total=0.0;
-      for(j=low_bnd; j<high_bnd; j++) total += parent->get_element(i,j);
+      for(j=low_bnd; j<high_bnd; j++) total += parent.get_element(i,j);
       set_B_element(i,total);
       if(total > max) max = total;
     }
@@ -257,16 +267,16 @@ bool spectrum::generate_spectrum(data_array * parent, int om_fuzz, int angle_typ
     make_angle_distrib();
     this->max_power = total;
 
-  }else if(parent){
+  }else if(parent.is_good()){
  /** \todo general spectrum extracttion routine */
   //TODO in this case we have to extract spectrim and angle data somehow......
 
     //First we read axes from parent
     size_t len;
 
-    my_type * ax_ptr = parent->get_axis(0, len);
+    my_type * ax_ptr = parent.get_axis(0, len);
     //memcpy ((void *)this->axes, (void *)ax_ptr, len*sizeof(my_type));
-    ax_ptr = parent->get_axis(1, len);
+    ax_ptr = parent.get_axis(1, len);
     //y-axis to work with
 
     //Generate angle axis to work with
@@ -393,7 +403,7 @@ bool spectrum::write_to_file(std::fstream &file){
   size_t next_location = ftr_start+ sizeof(char)*ID_SIZE +sizeof(size_t);
 
   file.write((char*) & next_location, sizeof(size_t));
-  //Position of next section
+  //Position of next section, i.e. of file end val
   file.write(block_id, sizeof(char)*ID_SIZE);
 
   if((size_t)file.tellg() != next_location) write_err=1;
@@ -844,25 +854,36 @@ calc_type spectrum::get_peak_omega(){
 
 }
 
-void spectrum::copy_ids( data_array * src){
+void spectrum::copy_ids( data_array & src){
 /** Copies ID fields from src array to this */
 
-  strcpy(this->block_id, src->block_id);
+  strcpy(this->block_id, src.block_id);
   
-  std::copy(src->time, src->time + 2, this->time);
-  for(int i=0; i < 2; ++i) this->space[i] = src->space[i];
+  std::copy(src.time, src.time + 2, this->time);
+  for(int i=0; i < 2; ++i) this->space[i] = src.space[i];
   //if(angle)
 }
 
-bool spectrum::check_ids( data_array * src){
+bool spectrum::check_ids( data_array & src){
 /** Checks ID fields match src */
 
   bool err=false;
-  if(strcmp(this->block_id, src->block_id) != 0) err =true;
-  for(int i=0; i< 3; i++) if(src->time[i] != this->time[i]) err=true;
-  for(int i=0; i < 2; ++i) if(this->space[i] != src->space[i]) err=true;
+  if(strcmp(this->block_id, src.block_id) != 0) err =true;
+  for(int i=0; i< 3; i++) if(src.time[i] != this->time[i]) err=true;
+  for(int i=0; i < 2; ++i) if(this->space[i] != src.space[i]) err=true;
 
   return err;
 }
 
+data_array spectrum::copy_out_B(){
+  
+  data_array B_copy = this->B_omega_array;
+  return B_copy;
 
+}
+data_array spectrum::copy_out_g(){
+  
+  data_array g_copy = this->g_angle_array;
+  return g_copy;
+
+}

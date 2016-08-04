@@ -194,13 +194,14 @@ class test_entity_plasma : public test_entity{
 /** Check spectrum calculations, such as test spectrum derivation etc */
 class test_entity_spectrum : public test_entity{
   private:
-    data_array * test_dat_fft;
-    data_array * test_spect;
+    data_array test_dat_fft;
+    data_array test_spect;
     controller * test_contr;
     std::string file_prefix;
     int tim_in[3], space_in[2];
     int setup();
-    int basic_tests();
+    int basic_tests1();
+    int basic_tests2();
     int albertGs_tests();
 
   public:

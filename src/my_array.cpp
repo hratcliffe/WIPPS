@@ -119,10 +119,13 @@ my_array & my_array::operator=(const my_array& src){
 *
 *Sets this equal to a copy of source
 */
+
+
   if(this->data) free(data);
   if(this->dims) free(dims);
   //Clean up in case this was already a thing
-  this->construct();
+  my_array::construct();
+
   if(!src.is_good()) return *this;
   //No copy if src is zero
   

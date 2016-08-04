@@ -374,6 +374,7 @@ bool compare_2d(data_array &lhs, data_array &rhs, bool no_dims_match){
       if(lhs.get_axis_element(i,j) != rhs.get_axis_element(i, j)) return 1;
     }
   }
+  if(lhs.check_ids(rhs)) return 1;
   return 0;
 
 }
@@ -396,6 +397,8 @@ bool compare_3d(data_array &lhs, data_array &rhs, bool no_dims_match){
       if(lhs.get_axis_element(i,j) != rhs.get_axis_element(i, j)) return 1;
     }
   }
+  if(lhs.check_ids(rhs)) return 1;
+
   return 0;
 
 }
@@ -1439,9 +1442,7 @@ test_entity_spectrum::test_entity_spectrum(){
 }
 test_entity_spectrum::~test_entity_spectrum(){
 
-  delete test_dat_fft;
-  delete test_spect;
-  delete test_contr;
+  if(test_contr) delete test_contr;
 
 }
 
@@ -1459,7 +1460,8 @@ int test_entity_spectrum::run(){
   share_consts();
 
   err|= setup();
-  if(!test_bed->check_for_abort(err)) err|= basic_tests();
+  if(!test_bed->check_for_abort(err)) err|= basic_tests1();
+  if(!test_bed->check_for_abort(err)) err|= basic_tests2();
   if(!test_bed->check_for_abort(err)) err|= albertGs_tests();
   
   test_bed->report_err(err);
@@ -1479,8 +1481,8 @@ int test_entity_spectrum::setup(){
 
   int err = TEST_PASSED;
 
-  test_dat_fft = new data_array(file_prefix + "FFT_data.dat", true);
-  if(!test_dat_fft->is_good()){
+  test_dat_fft = data_array(file_prefix + "FFT_data.dat", true);
+  if(!test_dat_fft.is_good()){
     err |= TEST_ASSERT_FAIL;
     err |= TEST_FATAL_ERR;
   }
@@ -1490,10 +1492,10 @@ int test_entity_spectrum::setup(){
   return err;
 }
 
-int test_entity_spectrum::basic_tests(){
+int test_entity_spectrum::basic_tests1(){
 /** \brief Basic tests of spectrum
 *
-* Read in data, derive spectrum, test against correct result, omitting very low frequencies. \todo The angles are integrating to 0.5 not 1. Which do we want???? \todo CHECK test test spectra we're comparing are not both zero!! \todo Update test file to latest IO
+*Test test_spectrum and angle generation \todo The angles are integrating to 0.5 not 1. Which do we want????
 */
   int err = TEST_PASSED;
 
@@ -1502,7 +1504,7 @@ int test_entity_spectrum::basic_tests(){
   my_type total_error =0.0;
   my_type * d_angle, * angle_data;
 
-  test_contr->add_spectrum(test_dat_fft->get_dims(0), DEFAULT_N_ANG, true);
+  test_contr->add_spectrum(test_dat_fft.get_dims(0), DEFAULT_N_ANG, true);
 
   /** Check this test spectrum makes sense \todo HOW????*/
 
@@ -1552,24 +1554,35 @@ int test_entity_spectrum::basic_tests(){
   if(err == TEST_PASSED) test_bed->report_info("Test spectrum OK");
   
   /** Now make the real spectrum from data and check the result matches the plain text test file*/
+  return err;
+}
+int test_entity_spectrum::basic_tests2(){
+/**\brief Test spectrum extraction
+*
+*Compare extracted spectrum from FFT'd data file to test file
+*/
+  int err = TEST_PASSED;
+
+  std::fstream outfile, infile;
+  size_t len=0;
+  my_type total_error =0.0;
 
   test_contr->get_current_spectrum()->generate_spectrum(test_dat_fft ,10, FUNCTION_GAUSS);
 
-
-  test_spect = new data_array(file_prefix + "spectrum.dat", true);
-  if(test_spect->is_good()){
+  test_spect = data_array(file_prefix + "spectrum.dat", true);
+  if(test_spect.is_good()){
     //We ignore frequencies below say 0.05 om_ce
-    my_type * ax = test_spect->get_axis(0, len);
+    my_type * ax = test_spect.get_axis(0, len);
     int min_ind = 0;
     if(ax) min_ind = where(ax+len/2, len/2, 17588.200*0.05);
     /**Hard code min freq to match the IDL file with test data generation...*/
     
     total_error = 0.0;
     for(size_t i=0; i< len/2 - min_ind; i++){
-      total_error += std::abs(test_contr->get_current_spectrum()->get_B_element(i)-test_spect->get_element(i));
+      total_error += std::abs(test_contr->get_current_spectrum()->get_B_element(i)-test_spect.get_element(i));
     }
     for(size_t i=len/2 + min_ind; i< len; i++){
-      total_error += std::abs(test_contr->get_current_spectrum()->get_B_element(i)-test_spect->get_element(i));
+      total_error += std::abs(test_contr->get_current_spectrum()->get_B_element(i)-test_spect.get_element(i));
 
     }
     if(total_error > LOW_PRECISION){
@@ -1584,6 +1597,15 @@ int test_entity_spectrum::basic_tests(){
     err |= TEST_ASSERT_FAIL;
   }
   if(err == TEST_PASSED) test_bed->report_info("Generate spectrum OK");
+  
+  data_array old_B = test_contr->get_current_spectrum()->copy_out_B();
+  //Now dump to file and read back in and compare
+  test_contr->add_spectrum("spect_out.dat");
+  data_array new_B = test_contr->get_current_spectrum()->copy_out_B();
+  if(!old_B.is_good() || !new_B.is_good() || compare_2d(old_B, new_B)){
+    test_bed->report_info("Error or Mismatch in read", 0);
+    err|= TEST_WRONG_RESULT;
+  }
 
   return err;
 

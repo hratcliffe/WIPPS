@@ -34,6 +34,7 @@ public:
 
   controller(std::string file_prefix);
   ~controller();
+  void add_spectrum(std::string file);
   void add_spectrum(int nx, int n_ang,bool separable);
   void add_d(int nx, int n_angs, int pos=-1);
   spectrum * get_current_spectrum();

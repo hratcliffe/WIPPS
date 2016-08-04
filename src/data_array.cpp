@@ -137,15 +137,17 @@ data_array & data_array::operator=(const data_array& src){
 
   if(this->axes) free(axes);
 
-  my_array::operator=(src);
   this->construct();
+  my_array::operator=(src);
 
-  size_t els= this->get_total_axis_elements();
-  alloc_ax(els);
-  //Allocate axis memory
-  if(axes) std::copy(src.axes, src.axes+els, this->axes);
-  //Copy axes
-  copy_ids(src);
+  if(this->dims){
+    size_t els= this->get_total_axis_elements();
+    alloc_ax(els);
+    //Allocate axis memory
+    if(axes) std::copy(src.axes, src.axes+els, this->axes);
+    //Copy axes
+    copy_ids(src);
+  }
   return *this;
 
 }
@@ -435,7 +437,7 @@ bool data_array::read_from_file(std::fstream &file, bool no_version_check){
   }
   //call parent class to read data, checking we read id ok first
 
-  size_t next_block=0, end_block=0;
+  size_t next_block=0, end_block=0, end_pos=0;
   file.read((char*) &next_block, sizeof(size_t));
 
   size_t tot_els = get_total_axis_elements();
@@ -443,16 +445,19 @@ bool data_array::read_from_file(std::fstream &file, bool no_version_check){
   if(!err) file.read((char *) this->axes , sizeof(my_type)*(tot_els));
   //If we managed to get dims etc, continue on to get axes
 
+//  end_pos = (size_t) file.tellg();
+
   file.read((char*) &next_block, sizeof(size_t));
 
-  file.seekg(-1*sizeof(size_t), file.end);
-  file.read((char*) &end_block, sizeof(size_t));
+//  file.seekg(-1*sizeof(size_t), file.end);
+//  file.read((char*) &end_block, sizeof(size_t));
   //First read the block ID
   char id_in[ID_SIZE];
-  file.seekg(end_block+sizeof(size_t));
+//  file.seekg(end_block+sizeof(size_t));
   if(file) file.read(id_in, sizeof(char)*ID_SIZE);
   strcpy(this->block_id, id_in);
 
+  //file.seekg(end_pos);
   return err;
 
 }

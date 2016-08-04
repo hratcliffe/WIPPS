@@ -50,7 +50,10 @@ void diffusion_coeff::set_ids(float time1, float time2, int space1, int space2, 
 
 
 bool diffusion_coeff::write_to_file(std::fstream &file){
-/** \todo Add any additionals */
+/** \brief Write diffusion coeff to file
+*
+* Writes file dump of a diffusion coefficient. NB the file passed in must be opened for input and output. \todo Read routine
+*/
 
   if(!file.is_open()) return 1;
   

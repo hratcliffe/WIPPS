@@ -79,7 +79,6 @@ private:
 
   calc_type get_omega_ref(std::string code);
   calc_type get_dispersion(my_type k, int wave_type, bool reverse=0, bool deriv=0);
-  void write(std::ofstream &outfile);
 
 };
 

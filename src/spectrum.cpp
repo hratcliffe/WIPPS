@@ -638,22 +638,21 @@ bool spectrum::normaliseB(){
 bool spectrum::normaliseg(my_type omega){
 /** \brief Normalise g_w(x)
 *
-*Calculate the norm of g used in e.g. denom of Albert eq 3 or calc'd in derivations.tex. We assume omega, x are off the axes already so no interpolation  \todo Catch zero norms \todo CHECK and FIXXXX and test
+*Calculate the norm of g used in e.g. denom of Albert eq 3 or calc'd in derivations.tex. We assume omega, x are off the axes already so no interpolation.  \todo Catch zero norms \todo test
 */
 
-  size_t len = get_g_dims(0);
+  size_t len = get_g_dims(1);
   plasma * plas =my_controller->get_plasma();
 
   my_type * d_axis = (my_type *) calloc(len, sizeof(my_type));
   my_type * integrand = (my_type *) calloc(len, sizeof(my_type));
 
-  for(size_t i=0; i<len-1; i++) d_axis[i] = get_om_axis_element(i+1) - get_om_axis_element(i);
-  //Construct dx axis for integration /** \todo omega or ang???*/
+  for(size_t i=0; i<len-1; i++) d_axis[i] = get_ang_axis_element(i+1) - get_ang_axis_element(i);
+  //Construct dx axis for integration
 
   mu my_mu;
 
-  int om_ind = 1;
-  //skip over B data
+  long om_ind = 0;
   
   size_t lena = get_B_dims(0);
   if(!angle_is_function){
@@ -663,20 +662,14 @@ bool spectrum::normaliseg(my_type omega){
   //break if Omega is out of range
 
   my_type x, psi;
-  size_t inda, indb;
 
-  //Addressing changes if we have g(x) or g(w, x)
-  angle_is_function ? indb=om_ind: inda=om_ind;
-  /** \todo Not anymore!!! */
   for(size_t i=0; i<len; i++){
     x = get_ang_axis_element(i);
     psi = atan(x);
     my_mu = plas->get_root(0.0, omega, psi);
 
-    angle_is_function ? inda=i: indb=i;
-
     if(!my_mu.err){
-      integrand[i] = get_g_element(inda, indb) * x * std::pow((std::pow(x, 2)+1.0), -1.5)*std::pow(my_mu.mu, 2) * std::abs( my_mu.mu + omega*my_mu.dmudom);
+      integrand[i] = get_g_element(om_ind, i) * x * std::pow((std::pow(x, 2)+1.0), -1.5)*std::pow(my_mu.mu, 2) * std::abs( my_mu.mu + omega*my_mu.dmudom);
     }
     //product of g(theta) * x (x^2+1)^-(3/2) * mu^2 |mu+omega dmu/domega|
   }
@@ -684,9 +677,7 @@ bool spectrum::normaliseg(my_type omega){
   //integrate
   my_type normg_tmp = integrator(integrand, len, d_axis);
 
-  if(angle_is_function) om_ind -=1;
   normg[om_ind] = normg_tmp;
-  //store into right place
   
   //clean up
   free(d_axis);
@@ -755,13 +746,14 @@ calc_type spectrum::get_G2(calc_type omega, calc_type x){
     om_ind = where(B_omega_array.get_axis(0, len), len, omega);
   }
   else om_ind = 0;
+  
   if(om_ind>=0 && normg[om_ind] == 0.0){
     normaliseg(omega);
   }
  // std::cout<< normg[0]<<" "<<std::endl;
   
   //Bump up to miss B row
-  my_type * axis = g_angle_array.get_axis(0, len);
+  my_type * axis = g_angle_array.get_axis(1, len);
   offset = where(axis, len, x);
   
   //Interpolate if possible, else use the end

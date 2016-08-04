@@ -29,13 +29,12 @@ void spectrum::construct(){
   normB = 0;
   normg = nullptr;
   max_power=0.0;
-  g_angle_array = nullptr;
-  B_omega_array = nullptr;
   memset((void *) block_id, 0, ID_SIZE*sizeof(char));
-
-
 }
 
+spectrum::spectrum(){
+  construct();
+}
 spectrum::spectrum(int n_om, int n_ang, bool separable){
 /** \brief Construct spectrum
 *
@@ -43,16 +42,16 @@ spectrum::spectrum(int n_om, int n_ang, bool separable){
 */
 
   construct();
-  this->B_omega_array = new data_array(n_om);
+  this->B_omega_array = data_array(n_om);
 
   if(separable){
-    this->g_angle_array = new data_array(1, n_ang);
+    this->g_angle_array = data_array(1, n_ang);
     angle_is_function = true;
     function_type = FUNCTION_DELTA;
     normg = (my_type *) calloc(1, sizeof(my_type));
     //Single row so only one norm
   }else{
-    this->g_angle_array = new data_array(n_om, n_ang);
+    this->g_angle_array = data_array(n_om, n_ang);
     angle_is_function = false;
     normg = (my_type *) calloc(n_ang, sizeof(my_type));
     //Norm each row
@@ -74,7 +73,7 @@ spectrum::spectrum(std::string filename){
   file.read((char*) &end_block, sizeof(size_t));
   file.seekg(0, std::ios::beg);
 
-  std::vector<size_t> dims = B_omega_array->read_dims_from_file(file);
+  std::vector<size_t> dims = B_omega_array.read_dims_from_file(file);
 
   if(dims.size() !=1){
     my_print("Invalid dimensions for B", mpi_info.rank);
@@ -84,8 +83,8 @@ spectrum::spectrum(std::string filename){
     //Now set up B correct size
     file.seekg(0, std::ios::beg);
     //return to start
-    B_omega_array = new data_array(dims[0]);
-    err = B_omega_array->read_from_file(file);
+    B_omega_array = data_array(dims[0]);
+    err = B_omega_array.read_from_file(file);
   }
   if(cont && err){
     my_print("File read failed", mpi_info.rank);
@@ -101,7 +100,7 @@ spectrum::spectrum(std::string filename){
     }
   }
   if(cont){
-    dims = g_angle_array->read_dims_from_file(file);
+    dims = g_angle_array.read_dims_from_file(file);
     if(dims.size() !=2){
       my_print("Wrong dimensions for g", mpi_info.rank);
       cont = 0;
@@ -113,19 +112,19 @@ spectrum::spectrum(std::string filename){
     //return to start
 
     if(dims[0] == 1){
-      this->g_angle_array = new data_array(1, dims[1]);
+      this->g_angle_array = data_array(1, dims[1]);
       angle_is_function = true;
       function_type = FUNCTION_DELTA;
       normg = (my_type *) calloc(1, sizeof(my_type));
       //Single row so only one norm
     }else{
-      this->g_angle_array = new data_array(dims[0], dims[1]);
+      this->g_angle_array = data_array(dims[0], dims[1]);
       angle_is_function = false;
       normg = (my_type *) calloc(dims[1], sizeof(my_type));
       //Norm each row
     }
   
-    err = g_angle_array->read_from_file(file);
+    err = g_angle_array.read_from_file(file);
   
     if(err){
       my_print("File read failed", mpi_info.rank);
@@ -151,12 +150,44 @@ spectrum::spectrum(std::string filename){
 
   if(!cont){
     //Something went wrong. Clean up and quit
-    if(B_omega_array) delete B_omega_array;
-    if(g_angle_array) delete g_angle_array;
+    g_angle_array = data_array();
+    B_omega_array = data_array();
+    //Return to size-less state
+    
     return;
   }
 }
 
+spectrum & spectrum::operator=(const spectrum& src){
+  
+  if(this->normg) free(normg);
+  construct();
+  if(!is_good()) return *this;
+  //Stop if src not good
+
+  size_t g_sz = src.get_g_dims(0);
+  normg = (my_type *) calloc(g_sz, sizeof(my_type));
+  std::copy(src.normg, src.normg + g_sz, this->normg);
+  return *this;
+}
+
+spectrum::spectrum(const spectrum &src){
+/** \brief Copy constructor
+*
+*Copy src to a new instance. Requires we copy the normg block \todo move constructor
+*/
+  construct();
+  if(!is_good()) return;
+  //Stop if src not good
+
+  size_t g_sz = src.get_g_dims(0);
+  normg = (my_type *) calloc(g_sz, sizeof(my_type));
+  std::copy(src.normg, src.normg + g_sz, this->normg);
+}
+
+spectrum::~spectrum(){
+  if(normg) free(normg);
+}
 
 void spectrum::set_ids(float time1, float time2, int space1, int space2, int wave_id, char block_id[ID_SIZE], int function_type){
 /**\brief Set parameters
@@ -173,22 +204,14 @@ void spectrum::set_ids(float time1, float time2, int space1, int space2, int wav
   this->function_type = function_type;
 }
 
-spectrum::~spectrum(){
-
-  free(normg);
-  if(g_angle_array) delete g_angle_array;
-  if(B_omega_array) delete B_omega_array;
-
-}
-
 bool spectrum::generate_spectrum(data_array * parent, int om_fuzz, int angle_type){
 /**\brief Generate spectrum from data
 *
-*Takes a parent data array and uses the specified ids to generate a spectrum. Windows using the specified wave dispersion and integrates over frequency. Also adopts axes from parent. \todo Ensure !angle_is_function forces all other rows to be equal length... \todo Fill in the rest of logic etc @param parent Data array to read from @param om_fuzz Band width around dispersion curve in percent of central frequency \todo omega vs k, is there some normalising to do? \todo Make parent const ref
+*Takes a parent data array and uses the specified ids to generate a spectrum. Windows using the specified wave dispersion and integrates over frequency. Also adopts axes from parent. \todo Fill in the rest of logic etc @param parent Data array to read from @param om_fuzz Band width around dispersion curve in percent of central frequency \todo omega vs k, is there some normalising to do? \todo Make parent const ref
 */
 
-  if(!g_angle_array->is_good() || !B_omega_array->is_good()){
-    my_print("Angle or omega arrays invalid. Returning", mpi_info.rank);
+  if(!this->is_good()){
+    my_print("Spectrum object invalid. Returning", mpi_info.rank);
     return 1;
   }
 
@@ -249,7 +272,7 @@ bool spectrum::generate_spectrum(data_array * parent, int om_fuzz, int angle_typ
     //Generate angle axis to work with
   {int res = 1;
   //set axis resolution somehow... TODO this
-  g_angle_array->make_linear_axis(0, res, 0);
+  g_angle_array.make_linear_axis(0, res, 0);
   }
 
   //and now we extract the data at each angle...
@@ -277,7 +300,7 @@ bool spectrum::make_angle_distrib(){
     my_print("Angular distrib is not a function. Returning", mpi_info.rank);
     return 1;
   }
-  if(!g_angle_array->is_good()){
+  if(!g_angle_array.is_good()){
     my_print("Angular array invalid. Returning", mpi_info.rank);
     return 1;
   }
@@ -285,7 +308,7 @@ bool spectrum::make_angle_distrib(){
   calc_type res = (ANG_MAX - ANG_MIN)/get_g_dims(1);
   size_t len;
   int offset = -ANG_MIN/res;
-  g_angle_array->make_linear_axis(1, res, offset);
+  g_angle_array.make_linear_axis(1, res, offset);
   len = get_g_dims(1);
   my_type val;
 
@@ -293,7 +316,7 @@ bool spectrum::make_angle_distrib(){
   
     for(size_t i=0; i<len; ++i) set_g_element(i,0.0);
     val = 1.0/res;
-    int zero = where(g_angle_array->get_axis(1, len), len, 0.0);
+    int zero = where(g_angle_array.get_axis(1, len), len, 0.0);
     //Set_element checks bnds automagically
     set_g_element(zero, val);
 
@@ -355,14 +378,14 @@ std::vector<int> spectrum::all_where(my_type * ax_ptr, int len, my_type target,s
 }
 
 bool spectrum::write_to_file(std::fstream &file){
-/** \brief Write to file \todo Swap to sentinel*/
+/** \brief Write to file*/
 
-  if(!file.is_open() || (!this->B_omega_array->is_good())|| (!this->g_angle_array->is_good())) return 1;
+  if(!file.is_open() || (!this->B_omega_array.is_good())|| (!this->g_angle_array.is_good())) return 1;
 
   bool err, write_err=0;
-  err = B_omega_array->write_to_file(file, false);
+  err = B_omega_array.write_to_file(file, false);
   
-  err |= g_angle_array->write_to_file(file, false);
+  err |= g_angle_array.write_to_file(file, false);
   //Don't close these files. Instead the below writes a single footer
 
   size_t ftr_start = (size_t) file.tellg();
@@ -391,7 +414,7 @@ bool spectrum::read_from_file(std::fstream &file){
   file.read((char*) &end_block, sizeof(size_t));
   file.seekg(0, std::ios::beg);
 
-  err = B_omega_array->read_from_file(file);
+  err = B_omega_array.read_from_file(file);
   if(err){
     my_print("File read failed", mpi_info.rank);
     return err;
@@ -401,11 +424,11 @@ bool spectrum::read_from_file(std::fstream &file){
   if(next_block == end_block){
     //Early termination of file...
     my_print("Insufficent arrays in file", mpi_info.rank);
-    if(B_omega_array) delete B_omega_array;
+    B_omega_array = data_array();
     return 1;
   }
 
-  err = g_angle_array->read_from_file(file);
+  err = g_angle_array.read_from_file(file);
   if(err){
     my_print("File read failed", mpi_info.rank);
     return err;
@@ -434,8 +457,8 @@ void spectrum::make_test_spectrum(int time[2], int space[2],int angle_type){
 *Makes a basic spectrum object with suitable number of points, and Gaussian(s) centred at fixed k/freq and x value \todo Should we use negative freqs?? If so use the offset as parameter @param time Time range (number of points) @param space Space range (number of points) @param angle_type Function to use for angular distrib
 */
 
-  if(!this->B_omega_array->is_good() || !this->g_angle_array->is_good()){
-    my_print("Array allocations failed, cannot make spectrum", mpi_info.rank);
+  if(!this->is_good()){
+    my_print("Spectrum object invalid, returning", mpi_info.rank);
     return;
   }
   char id[ID_SIZE] = "ex";
@@ -446,7 +469,7 @@ void spectrum::make_test_spectrum(int time[2], int space[2],int angle_type){
   size_t len0;
   my_type * ax_ptr;
 
-  ax_ptr = B_omega_array->get_axis(0, len0);
+  ax_ptr = B_omega_array.get_axis(0, len0);
   my_type res;
   bool offset = true;
   //whether to have even ±pm axes or start from 0;
@@ -483,7 +506,7 @@ void spectrum::make_test_spectrum(int time[2], int space[2],int angle_type){
       *(data_tmp) = exp(-pow((*(ax_tmp) - centre), 2)/width/width) + background;
     }
   }
-  this->B_omega_array->populate_data(data_ptr, len0);
+  this->B_omega_array.populate_data(data_ptr, len0);
   free(data_ptr);
   //reflect onto +ve axis
 //+ 0.25*exp(-pow((*(ax_tmp) + centre), 2)/width*50.0)
@@ -541,7 +564,7 @@ bool spectrum::truncate_x(my_type x_min, my_type x_max){
   size_t len = get_g_dims(1), om_len = get_g_dims(0);
 
   if(x_min > ANG_MIN){
-    index = where(g_angle_array->get_axis(1, len), len, x_min);
+    index = where(g_angle_array.get_axis(1, len), len, x_min);
     if(index != -1){
       for(size_t i=0; i< (size_t)index; i++){
         for(size_t j=0; j< om_len; j++){
@@ -552,7 +575,7 @@ bool spectrum::truncate_x(my_type x_min, my_type x_max){
   
   }
   if(x_max < ANG_MAX){
-    index = where(g_angle_array->get_axis(0, len), len, x_max);
+    index = where(g_angle_array.get_axis(0, len), len, x_max);
     if(index != -1){
       for(size_t i=index; i< len; i++){
         for(size_t j=0; j< om_len; j++){
@@ -573,9 +596,9 @@ int spectrum::where_omega(my_type omega){
 */
   int index;
   size_t len;
-  B_omega_array->get_axis(0, len);
+  B_omega_array.get_axis(0, len);
 
-  index = where(B_omega_array->get_axis(0, len), len, omega);
+  index = where(B_omega_array.get_axis(0, len), len, omega);
   return index;
 
 }
@@ -602,7 +625,7 @@ bool spectrum::normaliseB(){
 bool spectrum::normaliseg(my_type omega){
 /** \brief Normalise g_w(x)
 *
-*Calculate the norm of g used in e.g. denom of Albert eq 3 or calc'd in derivations.tex. We assume omega, x are off the axes already so no interpolation  \todo Catch zero norms \todo CHECK
+*Calculate the norm of g used in e.g. denom of Albert eq 3 or calc'd in derivations.tex. We assume omega, x are off the axes already so no interpolation  \todo Catch zero norms \todo CHECK and FIXXXX and test
 */
 
   size_t len = get_g_dims(0);
@@ -621,7 +644,7 @@ bool spectrum::normaliseg(my_type omega){
   
   size_t lena = get_B_dims(0);
   if(!angle_is_function){
-    om_ind = where(B_omega_array->get_axis(0, lena), lena, omega);
+    om_ind = where(B_omega_array.get_axis(0, lena), lena, omega);
   }
   if(om_ind<0) return 1;
   //break if Omega is out of range
@@ -662,7 +685,7 @@ calc_type spectrum::get_G1(calc_type omega){
 /** \brief G1 from Albert 2005.
 *
 *Gets the value of B(w) (interpolated if necessary) and the normalising constant from normB
-\todo Does it matter that our k is limited? Do waves really go to low intensity in bit we see \todo Do we need the vg conversion factor?
+\todo Does it matter that our k is limited? Do waves really go to low intensity in bit we see \todo Do we need the vg conversion factor? \todo CHECK and FIXXXX and test
 */
 
   calc_type B2;
@@ -671,7 +694,7 @@ calc_type spectrum::get_G1(calc_type omega){
   size_t len, offset;
   my_type data_bit[2];
   my_type ax_val;
-  my_type * axis = B_omega_array->get_axis(0, len);
+  my_type * axis = B_omega_array.get_axis(0, len);
 
   //If we have B(k) we need to change to B(w)
   my_type change_of_vars = 1.0;
@@ -683,7 +706,7 @@ calc_type spectrum::get_G1(calc_type omega){
   if(offset > 0 && offset < len){
     data_bit[0] = get_B_element(offset-1);
     data_bit[1] = get_B_element(offset);
-    tmpB2 = interpolate(B_omega_array->get_axis(0, len) + offset-1, data_bit, ax_val, 2);
+    tmpB2 = interpolate(B_omega_array.get_axis(0, len) + offset-1, data_bit, ax_val, 2);
     //tmpB2 = data_bit[0];
   }else if(offset == 0){
     //we're right at end, can't meaningfully interpolate, use raw
@@ -704,7 +727,7 @@ calc_type spectrum::get_G1(calc_type omega){
 calc_type spectrum::get_G2(calc_type omega, calc_type x){
 /** \brief Get G2 from Albert 2005
 *
-* Gets the value of g(w, x) and the normalising constant from normg \todo IS THIS OMEGA OR do we calc omega according to conditions on integral??? \todo interpolate on omega? or angle or both. Or fix angle axis as matched to D. In some sense we want to minimise work here...
+* Gets the value of g(w, x) and the normalising constant from normg \todo IS THIS OMEGA OR do we calc omega according to conditions on integral??? \todo interpolate on omega? or angle or both. Or fix angle axis as matched to D. In some sense we want to minimise work here... \todo CHECK and FIXXXX and test
 */
 
 
@@ -716,7 +739,7 @@ calc_type spectrum::get_G2(calc_type omega, calc_type x){
   len = get_B_dims(0);
 
   if(!angle_is_function){
-    om_ind = where(B_omega_array->get_axis(0, len), len, omega);
+    om_ind = where(B_omega_array.get_axis(0, len), len, omega);
   }
   else om_ind = 0;
   if(om_ind>=0 && normg[om_ind] == 0.0){
@@ -725,7 +748,7 @@ calc_type spectrum::get_G2(calc_type omega, calc_type x){
  // std::cout<< normg[0]<<" "<<std::endl;
   
   //Bump up to miss B row
-  my_type * axis = g_angle_array->get_axis(0, len);
+  my_type * axis = g_angle_array.get_axis(0, len);
   offset = where(axis, len, x);
   
   //Interpolate if possible, else use the end

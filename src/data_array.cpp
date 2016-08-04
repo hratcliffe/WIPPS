@@ -166,19 +166,19 @@ my_type * data_array::get_axis(size_t dim, size_t & length){
 
   long index = get_axis_index(dim, 0);
   //Get index of 0th element
-  length = get_length(dim);
+  length = get_dims(dim);
   if(index != -1) return axes + index;
   else return nullptr;
 
 }
 
-long data_array::get_axis_index(size_t dim, size_t pt){
+long data_array::get_axis_index(size_t dim, size_t pt)const{
 /** \brief Get index for location
 *
 *Takes care of all bounds checking and disposition in memory. Returns -1 if out of range of any sort, otherwise, suitable index. Let this function do all bounds checks.
 */
 
-  if(dim >=n_dims || pt >=get_length(dim)) return -1;
+  if(dim >=n_dims || pt >=get_dims(dim)) return -1;
   //Out of range error
   
   long offset = 0;
@@ -187,7 +187,7 @@ long data_array::get_axis_index(size_t dim, size_t pt){
 
 }
 
-my_type data_array::get_axis_element(size_t dim, size_t pt){
+my_type data_array::get_axis_element(size_t dim, size_t pt)const{
 /** \brief Get axis value
 *
 *Returns value at pt in dimension dim if in range, else 0.0

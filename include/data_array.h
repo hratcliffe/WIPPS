@@ -28,7 +28,7 @@ protected:
   void alloc_ax(const size_t els);
   float get_res(size_t i);
   size_t get_total_axis_elements();
-  long get_axis_index(size_t dim, size_t pt);
+  long get_axis_index(size_t dim, size_t pt)const;
 
   std::vector<size_t> get_bounds(std::vector<my_type> limits);
   void copy_ids( const data_array & src);
@@ -50,7 +50,7 @@ public:
 
   virtual bool is_good()const{return defined && ax_defined;}
 
-  my_type get_axis_element(size_t dim, size_t pt);
+  my_type get_axis_element(size_t dim, size_t pt)const;
   bool set_axis_element(size_t dim, size_t pt, my_type val);
   bool populate_axis(size_t dim, my_type * dat_in, size_t n_tot);
   my_type * get_axis(size_t dim, size_t & length);

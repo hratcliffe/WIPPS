@@ -145,6 +145,7 @@ my_array::my_array(const my_array &src){
 *
 *Copy src to a new instance, making a duplicate of data \todo move constructor
 */
+
   construct();
   if(!src.dims || src.n_dims==0) return;
   //Stop if src has no dims
@@ -158,7 +159,7 @@ my_array::my_array(const my_array &src){
 
 }
 
-long my_array::get_index(size_t n_dims, size_t * inds_in){
+long my_array::get_index(size_t n_dims, size_t * inds_in)const{
 /** Passing integer array and loop so going to be slower
 */
   if(n_dims != this-> n_dims) return -1;
@@ -176,7 +177,7 @@ long my_array::get_index(size_t n_dims, size_t * inds_in){
   return ind;
   
 }
-long my_array::get_index(size_t nx){
+long my_array::get_index(size_t nx)const{
 /** \brief Get index for location
 *
 *Takes care of all bounds checking and disposition in memory. Returns -1 if out of range of any sort, otherwise, suitable index. NB. Let this function do all bounds checks. Just call it plain. This function is called often so we make it as simple as possible and write one for each number of args
@@ -205,7 +206,7 @@ Etc \todo We may get speedup from removing checks. If so, wrap them in a debug I
   }
 
 }
-long my_array::get_index(size_t nx, size_t ny){
+long my_array::get_index(size_t nx, size_t ny)const{
 /** \brief Get index for location
 *
 *Takes care of all bounds checking and disposition in memory. Returns -1 if out of range of any sort, otherwise, suitable index. NB. Let this function do all bounds checks. Just call it plain. This function is called often so we make it as simple as possible and write one for each number of args
@@ -233,7 +234,7 @@ Etc
     return -1;
   }
 }
-long my_array::get_index(size_t nx, size_t ny, size_t nz){
+long my_array::get_index(size_t nx, size_t ny, size_t nz)const{
 /** \brief Get index for location
 *
 *Takes care of all bounds checking and disposition in memory. Returns -1 if out of range of any sort, otherwise, suitable index. NB. Let this function do all bounds checks. Just call it plain. This function is called often so we make it as simple as possible and write one for each number of args
@@ -252,7 +253,7 @@ long my_array::get_index(size_t nx, size_t ny, size_t nz){
     return -1;
   }
 }
-long my_array::get_index(size_t nx, size_t ny, size_t nz, size_t nt){
+long my_array::get_index(size_t nx, size_t ny, size_t nz, size_t nt)const{
 /** \brief Get index for location
 *
 *Takes care of all bounds checking and disposition in memory. Returns -1 if out of range of any sort, otherwise, suitable index. NB. Let this function do all bounds checks. Just call it plain. This function is called often so we make it as simple as possible and write one for each number of args
@@ -271,7 +272,7 @@ long my_array::get_index(size_t nx, size_t ny, size_t nz, size_t nt){
   }
 }
 
-std::vector<size_t> my_array::get_index_from_offset(size_t offset){
+std::vector<size_t> my_array::get_index_from_offset(size_t offset)const{
 
   std::vector<size_t> pos;
   pos.resize(n_dims);
@@ -291,10 +292,10 @@ std::vector<size_t> my_array::get_index_from_offset(size_t offset){
   return pos;
 }
 
-size_t my_array::get_dims(){
+size_t my_array::get_dims()const{
   return n_dims;
 }
-size_t my_array::get_dims(size_t dim){
+size_t my_array::get_dims(size_t dim)const{
 /** \brief Return size of dimension dim
 *
 */
@@ -311,7 +312,7 @@ size_t my_array::get_length(size_t dim){
   return get_dims(dim);
 }
 
-my_type my_array::get_element(size_t nx){
+my_type my_array::get_element(size_t nx)const{
 /** Return element at nx, ny. Out of range etc will return 0.0*/
   long ind = get_index(nx);
   if(ind  != -1){
@@ -321,7 +322,7 @@ my_type my_array::get_element(size_t nx){
   }
 
 }
-my_type my_array::get_element(size_t nx, size_t ny){
+my_type my_array::get_element(size_t nx, size_t ny)const{
 /** Return element at nx, ny. Out of range etc will return 0.0*/
   long ind = get_index(nx, ny);
   if(ind  != -1){
@@ -330,7 +331,7 @@ my_type my_array::get_element(size_t nx, size_t ny){
     return 0.0;
   }
 }
-my_type my_array::get_element(size_t nx, size_t ny, size_t nz){
+my_type my_array::get_element(size_t nx, size_t ny, size_t nz)const{
 /** Return element at nx, ny, nz. Out of range etc will return 0.0*/
   long ind = get_index(nx, ny, nz);
   if(ind  != -1){
@@ -340,7 +341,7 @@ my_type my_array::get_element(size_t nx, size_t ny, size_t nz){
   }
 
 }
-my_type my_array::get_element(size_t nx, size_t ny, size_t nz, size_t nt){
+my_type my_array::get_element(size_t nx, size_t ny, size_t nz, size_t nt)const{
 /** Return element at nx, ny, nz, nt. Out of range etc will return 0.0*/
   long ind = get_index(nx, ny, nz, nt);
   if(ind  != -1){
@@ -350,7 +351,7 @@ my_type my_array::get_element(size_t nx, size_t ny, size_t nz, size_t nt){
   }
 
 }
-my_type my_array::get_element(size_t n_dims, size_t* dims){
+my_type my_array::get_element(size_t n_dims, size_t* dims)const{
 /** Return element at nx, ny. Out of range etc will return 0.0*/
   long ind = get_index(n_dims, dims);
   if(ind  != -1){
@@ -361,7 +362,7 @@ my_type my_array::get_element(size_t n_dims, size_t* dims){
 
 }
 
-size_t my_array::get_total_elements(){
+size_t my_array::get_total_elements()const{
 /** Return total size of array */
   size_t tot_els=1;
 
@@ -539,7 +540,6 @@ bool my_array::populate_complex_slice(my_type * dat_in, size_t n_dims_in, size_t
   return 0;
 
 }
-
 
 bool my_array::write_to_file(std::fstream &file){
 /** \brief Write array to file

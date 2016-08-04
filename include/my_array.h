@@ -29,14 +29,14 @@ protected:
   virtual void construct();
   virtual void alloc_all(const size_t n_dims, const size_t * const dims);
   
-  virtual std::vector<size_t> get_index_from_offset(size_t offset);
-  virtual long get_index(size_t n_dims, size_t * dim);
-  long get_index(size_t nx);
-  long get_index(size_t nx, size_t ny);
-  long get_index(size_t nx, size_t ny, size_t nz);
-  long get_index(size_t nx, size_t ny, size_t nz, size_t nt);
+  virtual std::vector<size_t> get_index_from_offset(size_t offset)const;
+  virtual long get_index(size_t n_dims, size_t * dim)const;
+  long get_index(size_t nx)const;
+  long get_index(size_t nx, size_t ny)const;
+  long get_index(size_t nx, size_t ny, size_t nz)const;
+  long get_index(size_t nx, size_t ny, size_t nz, size_t nt)const;
 
-  size_t get_total_elements();
+  size_t get_total_elements()const;
 
 public:
 
@@ -49,14 +49,14 @@ public:
   my_array & operator=(const my_array& src);
   virtual bool is_good()const {return !defined;}/**< Check memory allocation etc worked*/
 
-  size_t get_dims();
-  size_t get_dims(size_t dim);
+  size_t get_dims()const;
+  size_t get_dims(size_t dim)const;
   size_t get_length(size_t dim);
-  my_type get_element(size_t nx);
-  my_type get_element(size_t nx, size_t ny);
-  my_type get_element(size_t nx, size_t ny, size_t nz);
-  my_type get_element(size_t nx, size_t ny, size_t nz, size_t nt);
-  my_type get_element(size_t n_dims, size_t * dim);
+  my_type get_element(size_t nx)const;
+  my_type get_element(size_t nx, size_t ny)const;
+  my_type get_element(size_t nx, size_t ny, size_t nz)const;
+  my_type get_element(size_t nx, size_t ny, size_t nz, size_t nt)const;
+  my_type get_element(size_t n_dims, size_t * dim)const;
   bool set_element(size_t nx, my_type val);
   bool set_element(size_t nx, size_t ny, my_type val);
   bool set_element(size_t nx, size_t ny, size_t nz, my_type val);

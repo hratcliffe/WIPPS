@@ -29,22 +29,25 @@ class spectrum{
 
   controller * my_controller;/**< Links this to a plasma object*/
   void construct();
+  spectrum();
   spectrum(int nx, int n_ang, bool separable);/**< Private because only controllers can create/destroy*/
   spectrum(std::string filename);
+  ~spectrum();/**< Private because only controllers can create/destroy*/
+  spectrum & operator=(const spectrum& src);/**<For setting one spectrum equal another*/
+  spectrum(const spectrum &src);/**<For copying a spectrum*/
+  
   my_type normB;/**< Norm of B(w)*/
   my_type* normg;/**< Norms of g_w(x) for each w*/
   bool normaliseB();/**< Fills normB*/
   bool normaliseg(my_type omega);/**< Fills normg for omega*/
-  virtual ~spectrum();/**< Private because only controllers can create/destroy*/
   my_type max_power;/**<Value of maximum in spectral power*/
-//  my_type k_thresh;/**<K value of where spectrum crosses threshold (noise) value*/
-  data_array * g_angle_array;/**< \todo refactor to non-pointer*/
-  data_array * B_omega_array;
+  data_array g_angle_array;
+  data_array B_omega_array;
 
 public:
   char block_id[ID_SIZE]; /**< The field name id from SDF file*/
 
-  float time[2];/**< Time range over which data are taken*/
+  float time[2];/**< Time range over which data are taken \todo why float*/
   size_t space[2];/**< Space range over which data are taken*/
   int wave_id; /**< ID for which wave mode cutout we're going for. See support.h*/
   bool angle_is_function;/**< Says we impose g(x) rather than have one g for each w*/
@@ -74,27 +77,27 @@ public:
   
   void copy_ids(data_array * src);
   bool check_ids( data_array * src);
-  bool is_good(){return B_omega_array->is_good() && g_angle_array->is_good();}
+  inline bool is_good(){return B_omega_array.is_good() && g_angle_array.is_good() && normg;}
   
   
   //The following are all wrappers around the getter/setters for the g and B arrays. USE THEM!
-  inline my_type get_B_element(size_t n_om){return B_omega_array-> get_element(n_om);}
-  inline my_type get_g_element(size_t n_ang){return g_angle_array-> get_element((size_t) 0, n_ang);}
-  inline my_type get_g_element(size_t n_om, size_t n_ang){return g_angle_array-> get_element(n_om, n_ang);}
-  inline void set_B_element(size_t n_om, my_type val){B_omega_array-> set_element(n_om, val);}
-  inline void set_g_element(size_t n_ang, my_type val){g_angle_array->set_element(0, n_ang, val);}
-  inline void set_g_element(size_t n_om, size_t n_ang, my_type val){g_angle_array-> set_element(n_om, n_ang, val);}
+  inline my_type get_B_element(size_t n_om)const{return B_omega_array. get_element(n_om);}
+  inline my_type get_g_element(size_t n_ang)const{return g_angle_array. get_element((size_t) 0, n_ang);}
+  inline my_type get_g_element(size_t n_om, size_t n_ang)const{return g_angle_array. get_element(n_om, n_ang);}
+  inline void set_B_element(size_t n_om, my_type val){B_omega_array. set_element(n_om, val);}
+  inline void set_g_element(size_t n_ang, my_type val){g_angle_array.set_element(0, n_ang, val);}
+  inline void set_g_element(size_t n_om, size_t n_ang, my_type val){g_angle_array. set_element(n_om, n_ang, val);}
 
-  inline my_type get_om_axis_element(size_t nx){return B_omega_array-> get_axis_element(0, nx);}
-  inline my_type get_ang_axis_element(size_t nx){return g_angle_array-> get_axis_element(1, nx);}
+  inline my_type get_om_axis_element(size_t nx)const{return B_omega_array. get_axis_element(0, nx);}
+  inline my_type get_ang_axis_element(size_t nx)const{return g_angle_array. get_axis_element(1, nx);}
 
-  inline void set_om_axis_element(size_t nx, my_type val){B_omega_array-> set_axis_element(0, nx, val);g_angle_array-> set_axis_element(0, nx, val);}
-  inline void set_ang_axis_element(size_t nx, my_type val){g_angle_array-> set_axis_element(1, nx, val);}
+  inline void set_om_axis_element(size_t nx, my_type val){B_omega_array. set_axis_element(0, nx, val);g_angle_array. set_axis_element(0, nx, val);}
+  inline void set_ang_axis_element(size_t nx, my_type val){g_angle_array. set_axis_element(1, nx, val);}
 
-  inline size_t get_g_dims(){return this->g_angle_array->get_dims();}
-  inline size_t get_g_dims(size_t i){return this->g_angle_array->get_dims(i);}
-  inline size_t get_B_dims(){return this->B_omega_array->get_dims();}
-  inline size_t get_B_dims(size_t i){return this->B_omega_array->get_dims(i);}
+  inline size_t get_g_dims()const{return this->g_angle_array.get_dims();}
+  inline size_t get_g_dims(size_t i)const{return this->g_angle_array.get_dims(i);}
+  inline size_t get_B_dims()const{return this->B_omega_array.get_dims();}
+  inline size_t get_B_dims(size_t i)const{return this->B_omega_array.get_dims(i);}
   
 };
 

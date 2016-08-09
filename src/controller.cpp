@@ -26,6 +26,8 @@ controller::controller(std::string file_prefix){
 *
 * Create plasma object and initialise
 */
+
+  my_plas = nullptr;
   my_plas = new plasma(-1, file_prefix);
   current_spect=0;
   current_d=0;
@@ -48,10 +50,14 @@ controller::~controller(){
 };
 
 void controller::add_spectrum(std::string file){
-
+/** \brief Add spectrum from dump
+*
+*Add spectrum read from file dump
+*/
   spectrum * tmp_spect = new spectrum(file);
   if(tmp_spect->is_good()){
     tmp_spect->my_controller = this;
+    tmp_spect->init();
     my_spect.push_back(tmp_spect);
     current_spect = my_spect.size()-1;
   }else{

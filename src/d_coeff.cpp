@@ -215,6 +215,7 @@ Get mu, dmu/domega which are used to:
     //Get limits on n for each velocity
     n_min = get_min_n(v_par, k_thresh, om_ce_ref);
     n_max = get_max_n(v_par, k_thresh, om_ce_ref);
+    std::cout<<n_min<<" "<<n_max<<'\n';
     if(!quiet){
       my_print("Velocity "+mk_str(v_par/v0, true)+" c", mpi_info.rank);
 
@@ -301,6 +302,8 @@ int diffusion_coeff::get_min_n(calc_type v_par, my_type k_thresh, calc_type om_c
   calc_type gamma = gamma_rel(v_par);
   /** \todo FIX!!! */
 
+  std::cout<<(gamma * k_thresh * std::abs(v_par / om_ce))<<'\n';
+
   return std::max(-(int)(gamma * k_thresh * std::abs(v_par / om_ce)), -n_n);
 
 }
@@ -313,7 +316,7 @@ int diffusion_coeff::get_max_n(calc_type v_par, my_type k_thresh, calc_type om_c
 
   calc_type gamma = gamma_rel(v_par);
   /** \todo FIX!!! */
-
+  std::cout<<(int)(gamma * k_thresh * std::abs(v_par / om_ce))<< " "<<n_n<<om_ce<<'\n';
   return std::min((int)(gamma * k_thresh * std::abs(v_par / om_ce)), n_n);
 
 

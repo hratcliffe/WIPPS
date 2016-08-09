@@ -63,6 +63,7 @@ spectrum::spectrum(std::string filename){
 
 //First we grab the position of close block. Then we attempt to read two arrays. If we reach footer after first we error, or do not after second we warn.
 
+  construct();
   std::fstream file;
   file.open(filename, std::ios::in|std::ios::binary);
   if(!file.is_open()) return;
@@ -214,6 +215,21 @@ void spectrum::set_ids(float time1, float time2, int space1, int space2, int wav
   this->function_type = function_type;
 }
 
+void spectrum::init(){
+/** \brief Cache spectrum values
+*
+*Fill cached values for max power, norms etc*/
+
+  max_power = B_omega_array.maxval();
+  normaliseB();
+  size_t n = get_B_dims();
+  my_type omega;
+  for(size_t i=0; i< n; i++){
+    omega = get_om_axis_element(i);
+    normaliseg(omega);
+  }
+}
+
 bool spectrum::generate_spectrum(data_array &parent, int om_fuzz, int angle_type){
 /**\brief Generate spectrum from data
 *
@@ -241,7 +257,7 @@ bool spectrum::generate_spectrum(data_array &parent, int om_fuzz, int angle_type
     int low_bnd, high_bnd;
     my_type om_disp, max=0.0;
     my_type tolerance = om_fuzz/100.0;
-    my_type total;
+    my_type total = 0.0;
 /*    my_type max_om = parent.get_axis_element(1, len-1);
     max_om /= this->get_length(0);*/
     //for(int i=0; i<this->get_length(0); ++i) this->set_axis_element(0, i, )
@@ -642,7 +658,8 @@ bool spectrum::normaliseg(my_type omega){
 */
 
   size_t len = get_g_dims(1);
-  plasma * plas =my_controller->get_plasma();
+  if(!my_controller) return 1;
+  plasma * plas = my_controller->get_plasma();
 
   my_type * d_axis = (my_type *) calloc(len, sizeof(my_type));
   my_type * integrand = (my_type *) calloc(len, sizeof(my_type));
@@ -788,14 +805,10 @@ calc_type spectrum::check_upper(){
   size_t stride = 1;
   size_t ax_len = get_B_dims(0);
   size_t len = ax_len/2 - stride;
-  my_type threshold = SPECTRUM_THRESHOLD*this->max_power, k_thresh;
-  size_t index=0;
+  my_type threshold = SPECTRUM_THRESHOLD*this->max_power;
+  size_t index = 0;
 
-  //Naive check for symmetric or +ve only. Allow up to 2 d ax mismatch for odd/even lengths
-  my_type d_axis = std::abs(get_om_axis_element(1) -get_om_axis_element(2));
-
-  if(std::abs(get_om_axis_element(1) + get_om_axis_element(ax_len-1)) > 2.0 * d_axis){
-
+  if(get_om_axis_element(1) < get_om_axis_element(2)){
   //Axis presumed to be +ve only, move in from top
     for(size_t i=0; i< ax_len; i+=stride){
       if((get_B_element(ax_len - i) < threshold && get_B_element(ax_len - i - stride) > threshold)){
@@ -816,16 +829,15 @@ calc_type spectrum::check_upper(){
     }
   }
   //get omega value and convert to k...
-  if(index != 0){
-    my_type tmp = std::abs(get_om_axis_element(index));
-    k_thresh = get_k(tmp, WAVE_WHISTLER);
-  }else{
-  //there either isn't a peak, or isn't waves or whatever. So we pick something arbitrary...
-    my_type tmp = my_const.omega_ce * 0.999;
-    k_thresh = get_k(tmp, WAVE_WHISTLER);
+  my_type omega_max;
   
+  if(index != 0){
+    omega_max = std::abs(get_om_axis_element(index));
+  }else{
+  //there either isn't a peak, or isn't waves or whatever. So we return axis end
+    omega_max = get_om_axis_element(ax_len-1);
   }
-  return k_thresh;
+  return get_k(omega_max, WAVE_WHISTLER);
 }
 
 calc_type spectrum::get_peak_omega(){

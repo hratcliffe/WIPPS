@@ -55,6 +55,7 @@ public:
   size_t space[2];/**< Space range over which data are taken*/
   int wave_id; /**< ID for which wave mode cutout we're going for. See support.h*/
   void set_ids(float time1, float time2, int space1, int space2, int wave_id, char block_id[10], int function_type=FUNCTION_DELTA);
+  void init();
 
   bool generate_spectrum(data_array& parent, int om_fuzz=10, int angle_type=FUNCTION_DELTA);
   bool truncate_om(my_type om_min, my_type om_max);
@@ -79,22 +80,22 @@ public:
   
   void copy_ids(data_array & src);
   bool check_ids( data_array & src);
-  inline bool is_good(){return B_omega_array.is_good() && g_angle_array.is_good() && normg;}
+  inline bool is_good(){return (B_omega_array.is_good() && g_angle_array.is_good() && normg);}
   
   
   //The following are all wrappers around the getter/setters for the g and B arrays. USE THEM!
-  inline my_type get_B_element(size_t n_om)const{return B_omega_array. get_element(n_om);}
-  inline my_type get_g_element(size_t n_ang)const{return g_angle_array. get_element((size_t) 0, n_ang);}
-  inline my_type get_g_element(size_t n_om, size_t n_ang)const{return g_angle_array. get_element(n_om, n_ang);}
-  inline void set_B_element(size_t n_om, my_type val){B_omega_array. set_element(n_om, val);}
+  inline my_type get_B_element(size_t n_om)const{return B_omega_array.get_element(n_om);}
+  inline my_type get_g_element(size_t n_ang)const{return g_angle_array.get_element((size_t) 0, n_ang);}
+  inline my_type get_g_element(size_t n_om, size_t n_ang)const{return g_angle_array.get_element(n_om, n_ang);}
+  inline void set_B_element(size_t n_om, my_type val){B_omega_array.set_element(n_om, val);}
   inline void set_g_element(size_t n_ang, my_type val){g_angle_array.set_element(0, n_ang, val);}
-  inline void set_g_element(size_t n_om, size_t n_ang, my_type val){g_angle_array. set_element(n_om, n_ang, val);}
+  inline void set_g_element(size_t n_om, size_t n_ang, my_type val){g_angle_array.set_element(n_om, n_ang, val);}
 
-  inline my_type get_om_axis_element(size_t nx)const{return B_omega_array. get_axis_element(0, nx);}
-  inline my_type get_ang_axis_element(size_t nx)const{return g_angle_array. get_axis_element(1, nx);}
+  inline my_type get_om_axis_element(size_t nx)const{return B_omega_array.get_axis_element(0, nx);}
+  inline my_type get_ang_axis_element(size_t nx)const{return g_angle_array.get_axis_element(1, nx);}
 
-  inline void set_om_axis_element(size_t nx, my_type val){B_omega_array. set_axis_element(0, nx, val);g_angle_array. set_axis_element(0, nx, val);}
-  inline void set_ang_axis_element(size_t nx, my_type val){g_angle_array. set_axis_element(1, nx, val);}
+  inline void set_om_axis_element(size_t nx, my_type val){B_omega_array.set_axis_element(0, nx, val);g_angle_array.set_axis_element(0, nx, val);}
+  inline void set_ang_axis_element(size_t nx, my_type val){g_angle_array.set_axis_element(1, nx, val);}
 
   inline size_t get_g_dims()const{return this->g_angle_array.get_dims();}
   inline size_t get_g_dims(size_t i)const{return this->g_angle_array.get_dims(i);}

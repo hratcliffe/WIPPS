@@ -1969,14 +1969,19 @@ test_entity_d::~test_entity_d(){
 int test_entity_d::run(){
 /** \todo WRITE!*/
   int err = TEST_PASSED;
+  
+  deck_constants const_tmp = my_const;
+  if(mpi_info.rank == 0) get_deck_constants(file_prefix);
+  share_consts();
 
   test_contr = new controller(file_prefix);
   test_bed->report_info("Reading spectrum", mpi_info.rank);
   //Now dump to file and read back in and compare
   test_contr->add_spectrum("spect_out.dat");
+  
   test_bed->report_info("Calculating test D", mpi_info.rank);
-  test_contr->add_d(20, 20);
-  test_contr->get_current_d()->calculate(true);
+  test_contr->add_d(5, 5);
+  test_contr->get_current_d()->calculate();
 
   test_bed->report_info("Writing test file", mpi_info.rank);
 
@@ -1985,9 +1990,13 @@ int test_entity_d::run(){
   if(file) test_contr->get_current_d()->write_to_file(file);
   file.close();
   
-  
-  return err;
+  my_const = const_tmp;
+  share_consts();
 
+  test_bed->report_err(err);
+
+  return err;
+  
 }
 
 test_entity_bounce::test_entity_bounce(){

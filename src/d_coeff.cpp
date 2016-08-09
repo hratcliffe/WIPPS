@@ -296,16 +296,12 @@ Get mu, dmu/domega which are used to:
 int diffusion_coeff::get_min_n(calc_type v_par, my_type k_thresh, calc_type om_ce){
 /** \brief Limits on n 
 *
-* Uses the maximum k and the velocity to give min/max n to consider (note signs) \todo Is there a tighter limt? This is quite weak...
+* Uses the maximum k and the velocity to give min/max n to consider (note signs). Note always has abs value ge 1. \todo Is there a tighter limt? This is quite weak...
 */
 
   calc_type gamma = gamma_rel(v_par);
-  /** \todo FIX!!! */
-
-  std::cout<<(gamma * k_thresh * std::abs(v_par / om_ce))<<'\n';
-
-  return std::max(-(int)(gamma * k_thresh * std::abs(v_par / om_ce)), -n_n);
-
+  int n = std::max(-(int)(gamma * k_thresh * std::abs(v_par / om_ce)), -n_n);
+  return std::min(-1, n);
 }
 
 int diffusion_coeff::get_max_n(calc_type v_par, my_type k_thresh, calc_type om_ce){
@@ -315,11 +311,8 @@ int diffusion_coeff::get_max_n(calc_type v_par, my_type k_thresh, calc_type om_c
 */
 
   calc_type gamma = gamma_rel(v_par);
-  /** \todo FIX!!! */
-  std::cout<<(int)(gamma * k_thresh * std::abs(v_par / om_ce))<< " "<<n_n<<om_ce<<'\n';
-  return std::min((int)(gamma * k_thresh * std::abs(v_par / om_ce)), n_n);
-
-
+  int n = std::min((int)(gamma * k_thresh * std::abs(v_par / om_ce)), n_n);
+  return std::max(1, n);
 }
 
 void diffusion_coeff::copy_ids( spectrum * src){

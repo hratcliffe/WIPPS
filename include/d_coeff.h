@@ -49,7 +49,7 @@ public:
 
   bool write_to_file(std::fstream &file);
 
-  void calculate(bool quiet=0);
+  d_report calculate(bool quiet=0);
   void make_velocity_axis();
   void make_pitch_axis();
 

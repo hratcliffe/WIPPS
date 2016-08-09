@@ -121,7 +121,7 @@ void diffusion_coeff::make_pitch_axis(){
   make_linear_axis(1, res, offset);
 }
 
-void diffusion_coeff::calculate(bool quiet){
+d_report diffusion_coeff::calculate(bool quiet){
 /** \brief Calculate D from wave spectrum and plasma
 *
 *Uses the data available via my_controller to calculate D, the raw diffusion coefficient as function of particle velocity and pitch angle.
@@ -150,6 +150,12 @@ Get mu, dmu/domega which are used to:
 
   plasma * plas;
   spectrum * spect;
+  d_report report;
+  report.n_solutions = 0;
+  report.n_fails = 0;
+  report.error = true;
+  report.n_av = 0;
+  
   if(my_controller){
     plas = my_controller->get_plasma();
     spect = my_controller->get_current_spectrum();
@@ -157,8 +163,9 @@ Get mu, dmu/domega which are used to:
   }
   else{
     my_print("No controller", mpi_info.rank);
-    return;
+    return report;
   }
+
 
   this->copy_ids(spect);
   //copy block id, ranges etc from spect.
@@ -204,7 +211,7 @@ Get mu, dmu/domega which are used to:
   if(report_interval < 1) report_interval = 1;
 
   int counter = 0, non_counter = 0;
-
+  size_t n_av = 0, n_omega=0;
 //-------------------Main loops here----------------------------
 //We have deep nested loops. Move ANYTHING that can be as far up tree as possible
 
@@ -215,7 +222,8 @@ Get mu, dmu/domega which are used to:
     //Get limits on n for each velocity
     n_min = get_min_n(v_par, k_thresh, om_ce_ref);
     n_max = get_max_n(v_par, k_thresh, om_ce_ref);
-    std::cout<<n_min<<" "<<n_max<<'\n';
+    n_av += n_max;
+
     if(!quiet){
       my_print("Velocity "+mk_str(v_par/v0, true)+" c", mpi_info.rank);
 
@@ -240,33 +248,36 @@ Get mu, dmu/domega which are used to:
         for(int n=n_min; n<n_max; ++n){
           // n is resonant number
           omega_calc = plas->get_resonant_omega(x[j], v_par, (calc_type) n);
+          n_omega = omega_calc.size();
+          if(n_omega > 0){
+          //With loop if is redundant but we might want to log the failure
+            for(size_t ii =0; ii< n_omega; ++ii){
+            //each solution
+              //std::cout<<"Freq is "<<omega_calc[ii]/my_const.omega_ce<<std::endl;
 
-          for(size_t ii =0; ii< omega_calc.size(); ++ii){
-          //each solution
-            //std::cout<<"Freq is "<<omega_calc[ii]/my_const.omega_ce<<std::endl;
-
-            my_mu = plas->get_high_dens_phi_mu_om(omega_calc[ii], theta, alpha, n, omega_n);
-            if(my_mu.err){
-              //Once angle is included we have no solution
-              non_counter++;
-              continue;
+              my_mu = plas->get_high_dens_phi_mu_om(omega_calc[ii], theta, alpha, n, omega_n);
+              if(my_mu.err){
+                //Once angle is included we have no solution
+                non_counter++;
+                continue;
+                
+              }else{
+                counter ++;
+              }
+              //No solution
               
-            }else{
-              counter ++;
+              mu_dom_mu = my_mu.mu + omega_calc[ii] * my_mu.dmudom;
+              dmudx = my_mu.dmudtheta *c2th;
+              //Chain rule...
+
+              // FAKENUMBERS
+              Eq6 = omega_calc[ii]/(omega_calc[ii] - omega_n)* my_mu.mu/mu_dom_mu;
+
+              Eq7 = -1.0* (my_mu.mu*omega_n/(omega_calc[ii]*(omega_calc[ii]-omega_n)) - my_mu.dmudom)/(my_mu.mu *std::sin(theta)*std::cos(theta) - dmudx);
+              //Need this iff we use second expression in Eq 5
+              numerator = std::pow( -s2alpha + omega_n/omega_calc[ii], 2);
+              D_tmp += numerator * my_mu.phi/std::abs(1.0 - Eq6)*spect->get_G1(omega_calc[ii])*spect->get_G2(omega_calc[ii], x[j]); // FAKENUMBERS This will be the n summed D so add onto it each n iteration
             }
-            //No solution
-            
-            mu_dom_mu = my_mu.mu + omega_calc[ii] * my_mu.dmudom;
-            dmudx = my_mu.dmudtheta *c2th;
-            //Chain rule...
-
-            // FAKENUMBERS
-            Eq6 = omega_calc[ii]/(omega_calc[ii] - omega_n)* my_mu.mu/mu_dom_mu;
-
-            Eq7 = -1.0* (my_mu.mu*omega_n/(omega_calc[ii]*(omega_calc[ii]-omega_n)) - my_mu.dmudom)/(my_mu.mu *std::sin(theta)*std::cos(theta) - dmudx);
-            //Need this iff we use second expression in Eq 5
-            numerator = std::pow( -s2alpha + omega_n/omega_calc[ii], 2);
-            D_tmp += numerator * my_mu.phi/std::abs(1.0 - Eq6)*spect->get_G1(omega_calc[ii])*spect->get_G2(omega_calc[ii], x[j]); // FAKENUMBERS This will be the n summed D so add onto it each n iteration
           }
         }
         //Store into theta array. Might not need tmp in the end
@@ -289,7 +300,13 @@ Get mu, dmu/domega which are used to:
   free(x);
   free(D_theta);
   
+  report.n_solutions = counter;
+  report.n_fails = non_counter;
+  report.error = false;
+  report.n_av = n_av/dims[0];
   my_print(mk_str(counter) + " solutions vs "+ mk_str(non_counter), mpi_info.rank);
+  
+  return report;
   
 }
 

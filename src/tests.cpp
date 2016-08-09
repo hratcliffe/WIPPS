@@ -1981,8 +1981,8 @@ int test_entity_d::run(){
   
   test_bed->report_info("Calculating test D", mpi_info.rank);
   test_contr->add_d(5, 5);
-  test_contr->get_current_d()->calculate();
-
+  d_report report = test_contr->get_current_d()->calculate();
+  err |= report.error;
   test_bed->report_info("Writing test file", mpi_info.rank);
 
   std::fstream file;

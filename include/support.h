@@ -179,6 +179,17 @@ struct setup_args{
   int d[2];/**< Dimensions of D to produce*/
 };
 
+/** \brief D coefficient report
+*
+*Contains ...
+*/
+struct d_report{
+  bool error;/**<Whether IO or setup errors occured*/
+  size_t n_solutions;/**< How many mu calculations had solutions*/
+  size_t n_fails;/**< How many mu calculations had no solution*/
+  size_t n_av;/**< Average n_max used for calc*/
+
+};
 /** @} */
 //-----------END STRUCTURES ---------------------------------
 

@@ -115,7 +115,7 @@ diffusion_coeff * controller::get_current_d(){
 /** \brief Return current D
 *
 *Returns pointer because D list may be empty
-*/  
+*/
   if(!my_list.empty()) return my_list[current_spect].second;
   else return nullptr;
 }
@@ -123,10 +123,10 @@ diffusion_coeff * controller::get_current_d(){
 void controller::bounce_average(){
 /** \brief Bounce average D
 *
-*Assumes the list contains D in order across space and performs bounce average to create special D. \todo Finish
+*Assumes the list contains D in order across space and performs bounce average to create special D. \todo Finish integrand \todo test case?
 */
-  if(my_list.size() ==1) return;
-  //No averaging to do. Are there any factors to multiply?
+  if(my_list.size() ==0) return;
+  //Empty list, nothing to do.
 
   int dims[2];
   get_size(dims);
@@ -143,16 +143,15 @@ void controller::bounce_average(){
     for(int k=0; k<dims[1]; k++){
       val = 0;
       for(size_t i=0; i<my_list.size() -1; i++){
-        val += my_list[i].second->get_element(j, k);
-        
+        val += my_list[i].second->get_element(j, k); //* integrand!
+        //Sum up the blocks done on this processor
       }
-// FAKENUMBERS      val *= integrand extras!!!
       d_specials[current_d]->set_element(j, k, val);
 
     }
   }
   handle_d_mpi();
-  //Now mpi reduce the results
+  //Now mpi reduce the results to get a global average
   
 }
 
@@ -161,7 +160,8 @@ void controller::handle_d_mpi(){
 *
 * Creates an MPI Summed d on the root node
 */
-  //Make a reduced d on root, but leaving the current_d counter unchanged.
+
+//Make a reduced d on root, but leaving the current_d counter unchanged.
   int dims[2];
   get_size(dims);
   int total = dims[0]*dims[1];

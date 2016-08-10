@@ -462,28 +462,28 @@ bool data_array::read_from_file(std::fstream &file, bool no_version_check){
 
 }
 
-bool data_array::fft_me(data_array * data_out){
+bool data_array::fft_me(data_array & data_out){
 /** \brief FFT data_array
 *
 * Data and axes in this object are FFT'd using FFTW and stored into the instance pointed to by data_out. Data_out must be created with correct dimensions first, but we check and return error (1) if it is not so. \todo extract and make friend?
 */
 
-  if(!data_out->is_good()){
+  if(!data_out.is_good()){
     my_print("Output array for FFT undefined", mpi_info.rank);
     return 1;
   }
-  if(data_out->n_dims != this->n_dims){
+  if(data_out.n_dims != this->n_dims){
     my_print("Wrong output dimensions for FFT", mpi_info.rank);
     return 1;
   }
   for(size_t i=0; i<n_dims;++i){
-    if(data_out->dims[i] != this->dims[i]){
+    if(data_out.dims[i] != this->dims[i]){
       my_print("Wrong output dimensions for FFT", mpi_info.rank);
       return 1;
     }
   }
 
-  data_out->copy_ids(*this);
+  data_out.copy_ids(*this);
   size_t total_size=1; /* Total number of elements in array*/
   for(size_t i=0; i<n_dims;++i) total_size *= dims[i];
 
@@ -540,7 +540,7 @@ bool data_array::fft_me(data_array * data_out){
   //Absolute square of out array to produce final result of type my_type
   
   bool err=false;
-  err = data_out->populate_mirror_fastest(result, total_size);
+  err = data_out.populate_mirror_fastest(result, total_size);
   //Copy result into out array
 
   if(err){
@@ -557,8 +557,8 @@ bool data_array::fft_me(data_array * data_out){
   //do shifts for all but 0th dim
   size_t shft = 0;
   for(size_t i=1; i< n_dims; i++){
-    shft = data_out->get_dims(i)/2;
-    data_out->shift(i, shft, 0);
+    shft = data_out.get_dims(i)/2;
+    data_out.shift(i, shft, 0);
   }
 
 
@@ -568,7 +568,7 @@ bool data_array::fft_me(data_array * data_out){
 
   for(size_t i=0;i<n_dims;++i){
   //Loop over the dimensions and construct each axis in place. We KNOW now that data_out has correct dimensions. We checked before getting here. We don't need to check len. It is the same as dims[i] each time. Perhaps we will anyway? :)
-    tmp_axis = data_out->get_axis(i, len);
+    tmp_axis = data_out.get_axis(i, len);
     if(len != dims[i]) return 1;
 
     N2 = ((float) dims[i])/2.0;

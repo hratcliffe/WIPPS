@@ -265,6 +265,7 @@ void tests::run_tests(){
   this->set_colour();
 
 }
+//----------------------------------------------------------------
 
 test_entity_reader::test_entity_reader(){
   name = "reader class";
@@ -350,6 +351,7 @@ int test_entity_reader::run(){
 
 }
 
+//----------------------------------------------------------------
 test_entity_data_array::test_entity_data_array(){
   name = "data array class";
   test_array = data_array(10, 10);
@@ -640,6 +642,8 @@ int test_entity_data_array::io_tests(){
   return err;
 }
 
+//----------------------------------------------------------------
+
 test_entity_get_and_fft::test_entity_get_and_fft(){
   name = "read and FFT";
 
@@ -711,7 +715,7 @@ int test_entity_get_and_fft::one_d(){
   test_rdr->read_data(test_dat, tim_in, space_in);
 
   {
-    bool tmp_err = test_dat.fft_me(&test_dat_fft);
+    bool tmp_err = test_dat.fft_me(test_dat_fft);
     if(tmp_err) err|=TEST_ASSERT_FAIL;
     if(test_dat_fft.check_ids(test_dat)) err |= TEST_WRONG_RESULT;
     if(err == TEST_PASSED) test_bed->report_info("1D read and FFT reports no error", 1);
@@ -748,7 +752,7 @@ int test_entity_get_and_fft::one_d(){
 
     test_dat.resize(0, dims[0]-1);
     test_dat_fft.resize(0, dims[0]-1);
-    bool tmp_err = test_dat.fft_me(&test_dat_fft);
+    bool tmp_err = test_dat.fft_me(test_dat_fft);
 
     if(tmp_err) err|=TEST_ASSERT_FAIL;
     if(test_dat_fft.check_ids(test_dat)) err |= TEST_WRONG_RESULT;
@@ -824,7 +828,7 @@ int test_entity_get_and_fft::two_d(){
   
   test_rdr->read_data(test_dat, tim_in, space_in);
 
-  bool tmp_err = test_dat.fft_me(&test_dat_fft);
+  bool tmp_err = test_dat.fft_me(test_dat_fft);
   if(tmp_err) err|=TEST_ASSERT_FAIL;
   if(test_dat_fft.check_ids(test_dat)) err |= TEST_WRONG_RESULT;
   if(err == TEST_PASSED) test_bed->report_info("2D read and FFT reports no error", 1);
@@ -882,6 +886,7 @@ int test_entity_get_and_fft::two_d(){
   return err;
 
 }
+//----------------------------------------------------------------
 
 test_entity_basic_maths::test_entity_basic_maths(){
 /** \todo Add setup and teardown so these are alloced before run but not on construction*/
@@ -1096,6 +1101,7 @@ int test_entity_extern_maths::run(){
   return err;
 
 }
+//----------------------------------------------------------------
 
 test_entity_plasma::test_entity_plasma(){
   name = "plasma";
@@ -1435,6 +1441,7 @@ For getting the resonant frequency to consider errors will matter, but the noise
 The reason for using the better dispersion solver is a) to avoid any numerical derivatives in general and b) because some of the calculation depends on derivs of the refractive index
 
 *So basically I am using the easy approx where a) it’s a genuine nightmare to do better (10-14th order polynomial) and b) I expect other errors to be similar or more important and c) I really hope it’s linear or polynomial in error*/
+//----------------------------------------------------------------
 
 test_entity_spectrum::test_entity_spectrum(){
 
@@ -1697,6 +1704,7 @@ int test_entity_spectrum::albertGs_tests(){
 
   return err;
 }
+//----------------------------------------------------------------
 
 test_entity_levelone::test_entity_levelone(){
 
@@ -1816,10 +1824,9 @@ int test_entity_levelone::basic_tests(){
   }
   if(err2 == 2) n_tims = dat.get_dims(1);
   //Check if we had to truncate data array...
-  data_array * dat_fft = new data_array(space_dim, n_tims);
+  data_array dat_fft = data_array(space_dim, n_tims);
 
-  if(!dat_fft->is_good()){
-    if(dat_fft) delete dat_fft;
+  if(!dat_fft.is_good()){
     return TEST_FATAL_ERR;
   }
   err2 = dat.fft_me(dat_fft);
@@ -1845,14 +1852,14 @@ int test_entity_levelone::basic_tests(){
   
 //Set cutout limits on FFT
   std::string filename, time_str;
-  time_str = mk_str(dat_fft->time[0], true)+"_"+mk_str(this->n_tims);
+  time_str = mk_str(dat_fft.time[0], true)+"_"+mk_str(this->n_tims);
   std::string block = block_id;
-  filename = file_prefix+"FFT_"+block +"_"+time_str+"_"+mk_str(dat_fft->space[0])+"_"+mk_str(dat_fft->space[1]) + ".dat";
+  filename = file_prefix+"FFT_"+block +"_"+time_str+"_"+mk_str(dat_fft.space[0])+"_"+mk_str(dat_fft.space[1]) + ".dat";
   std::fstream file;
   file.open(filename.c_str(),std::ios::out|std::ios::binary);
   if(file.is_open()){
-//    dat_fft->write_section_to_file(file, lims);
-    dat_fft->write_section_to_file(file, lims);
+//    dat_fft.write_section_to_file(file, lims);
+    dat_fft.write_section_to_file(file, lims);
 //    dat.write_to_file(file);
     if(err2){
       test_bed->report_info("File writing failed");
@@ -1865,11 +1872,11 @@ int test_entity_levelone::basic_tests(){
   }
   file.close();
   test_bed->report_info("FFT section output in "+filename, 1);
-  if(dat_fft) delete dat_fft;
 
   return err;
 
 }
+
 int test_entity_levelone::twod_tests(){
 /** \brief Basic tests of process to make levl-1 data from 2-d input
 *
@@ -1900,10 +1907,9 @@ int test_entity_levelone::twod_tests(){
   }
   if(err2 == 2) n_tims = dat.get_dims(1);
   //Check if we had to truncate data array and size FFT accordingly
-  data_array  * dat_fft = new data_array(space_dim, dims_in[1], n_tims);
+  data_array  dat_fft = data_array(space_dim, dims_in[1], n_tims);
 
-  if(!dat_fft->is_good()){
-    if(dat_fft) delete dat_fft;
+  if(!dat_fft.is_good()){
     return TEST_FATAL_ERR;
   }
   err2 = dat.fft_me(dat_fft);
@@ -1929,13 +1935,13 @@ int test_entity_levelone::twod_tests(){
   
 //Set cutout limits on FFT
   std::string filename, time_str;
-  time_str = mk_str(dat_fft->time[0], true)+"_"+mk_str(this->n_tims);
+  time_str = mk_str(dat_fft.time[0], true)+"_"+mk_str(this->n_tims);
   std::string block = block_id;
-  filename = file_prefix+"FFT_"+block +"_"+time_str+"_"+mk_str(dat_fft->space[0])+"_"+mk_str(dat_fft->space[1]) + ".dat";
+  filename = file_prefix+"FFT_"+block +"_"+time_str+"_"+mk_str(dat_fft.space[0])+"_"+mk_str(dat_fft.space[1]) + ".dat";
   std::fstream file;
   file.open(filename.c_str(),std::ios::out|std::ios::binary);
   if(file.is_open()){
-    dat_fft->write_section_to_file(file, lims);
+    dat_fft.write_section_to_file(file, lims);
 //    dat.write_to_file(file);
     if(err2){
       test_bed->report_info("File writing failed");
@@ -1948,12 +1954,12 @@ int test_entity_levelone::twod_tests(){
   }
   file.close();
   test_bed->report_info("FFT section output in "+filename, 1);
-  if(dat_fft) delete dat_fft;
 
   return err;
 
 }
 
+//----------------------------------------------------------------
 
 test_entity_d::test_entity_d(){
 
@@ -1998,6 +2004,8 @@ int test_entity_d::run(){
   return err;
   
 }
+
+//----------------------------------------------------------------
 
 test_entity_bounce::test_entity_bounce(){
 

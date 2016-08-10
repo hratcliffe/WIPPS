@@ -59,7 +59,7 @@ public:
   bool read_from_file(std::fstream &file, bool no_version_check=0);
   bool write_section_to_file(std::fstream &file, std::vector<my_type> limits, bool close_file=true);
   
-  bool fft_me(data_array * data_out);
+  bool fft_me(data_array & data_out);
   bool populate_mirror_fastest(my_type * result_in, size_t total_els);
   bool check_ids(const data_array & src);
   bool resize(size_t dim, size_t sz);

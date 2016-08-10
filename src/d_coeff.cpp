@@ -159,7 +159,6 @@ Get mu, dmu/domega which are used to:
   if(my_controller){
     plas = my_controller->get_plasma();
     spect = my_controller->get_current_spectrum();
-    /** \todo FIX! We should connect these better*/
   }
   else{
     my_print("No controller", mpi_info.rank);

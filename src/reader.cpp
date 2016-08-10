@@ -20,6 +20,16 @@
 
 extern const mpi_info_struc mpi_info;
 
+reader::reader(){
+  n_z =0;
+  ref_file_num = 0;
+  file_prefix="";
+
+  time_range[0]=0; time_range[1]=0; time_range[2]=0;
+  space_range[0]=0; space_range[1]=1;
+  memset((void *) block_id, 0, ID_SIZE*sizeof(char));
+  
+}
 reader::reader(std::string file_prefix_in,  char * block_id_in, int first){
 /** \brief Create reader
 *
@@ -331,4 +341,3 @@ bool reader::is_accum(std::string block_id){
   return false;
 
 }
-

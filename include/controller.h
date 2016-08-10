@@ -37,6 +37,7 @@ public:
 
   controller(std::string file_prefix);
   ~controller();
+  void set_plasma_B0(my_type Bx_ref){my_plas.set_B0(Bx_ref);}
   void add_spectrum(std::string file);
   void add_spectrum(int nx, int n_ang,bool separable);
   void add_d(int nx, int n_angs);

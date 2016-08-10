@@ -77,7 +77,7 @@ public:
   my_type maxval(size_t offset=0);
   my_type minval(std::vector<size_t> &ind, size_t offset=0);
   my_type maxval(std::vector<size_t> &ind, size_t offset=0);
-
+  my_type avval();
 };
 
 #endif /* defined(____my_array__) */

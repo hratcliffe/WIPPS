@@ -509,6 +509,14 @@ int test_entity_data_array::basic_tests(){
     err |= TEST_WRONG_RESULT;
     test_bed->report_info("Resizer error, wrong values read", 1);
   }
+  
+  //resize to 7x1 and test average fn
+  test_array.resize(1, 1);
+  my_type av = test_array.avval();
+  my_type expected_av = ((new1-1)/2.0 + 1);
+  //Average of (i+1) for i=0 to new1
+
+  if(av != expected_av) err |= TEST_WRONG_RESULT;
   return err;
 }
 
@@ -1105,7 +1113,7 @@ int test_entity_extern_maths::run(){
 
 test_entity_plasma::test_entity_plasma(){
   name = "plasma";
-  plas = new plasma(-1.0, "./files/test");
+  plas = new plasma("./files/test");
 
 }
 test_entity_plasma::~test_entity_plasma(){
@@ -1435,7 +1443,7 @@ int test_entity_plasma::phi_dom(){
 
 }
 
-/**
+/*
 For getting the resonant frequency to consider errors will matter, but the noise in spectra can be expected to be a similar sort of error
 *
 The reason for using the better dispersion solver is a) to avoid any numerical derivatives in general and b) because some of the calculation depends on derivs of the refractive index
@@ -1710,20 +1718,14 @@ test_entity_levelone::test_entity_levelone(){
 
   name = "level-one derivation";
   
-  test_dat = nullptr;
-  test_dat_fft=nullptr;
   test_contr=nullptr;
   my_reader=nullptr;
   
 }
 test_entity_levelone::~test_entity_levelone(){
 
-  if(test_dat) delete test_dat;
-  delete test_dat_fft;
   delete test_contr;
   delete my_reader;
-
-
 }
 
 int test_entity_levelone::run(){
@@ -1809,7 +1811,7 @@ int test_entity_levelone::basic_tests(){
 
   int space_dim = space_in[1]-space_in[0];
 
-  data_array dat = data_array(space_dim, n_tims);
+  dat = data_array(space_dim, n_tims);
   strcpy(dat.block_id, block_id);
 
   if(!dat.is_good()){
@@ -1824,7 +1826,7 @@ int test_entity_levelone::basic_tests(){
   }
   if(err2 == 2) n_tims = dat.get_dims(1);
   //Check if we had to truncate data array...
-  data_array dat_fft = data_array(space_dim, n_tims);
+  dat_fft = data_array(space_dim, n_tims);
 
   if(!dat_fft.is_good()){
     return TEST_FATAL_ERR;
@@ -1892,7 +1894,7 @@ int test_entity_levelone::twod_tests(){
   }
   int space_dim = space_in[1]-space_in[0];
 
-  data_array dat = data_array(space_dim, dims_in[1], n_tims);
+  dat = data_array(space_dim, dims_in[1], n_tims);
   strcpy(dat.block_id, block_id);
 
   if(!dat.is_good()){
@@ -1907,7 +1909,7 @@ int test_entity_levelone::twod_tests(){
   }
   if(err2 == 2) n_tims = dat.get_dims(1);
   //Check if we had to truncate data array and size FFT accordingly
-  data_array  dat_fft = data_array(space_dim, dims_in[1], n_tims);
+  dat_fft = data_array(space_dim, dims_in[1], n_tims);
 
   if(!dat_fft.is_good()){
     return TEST_FATAL_ERR;

@@ -14,15 +14,26 @@
 extern deck_constants my_const;
 extern const mpi_info_struc mpi_info;
 
-plasma::plasma( calc_type ref_B, std::string file_prefix){
+plasma::plasma(std::string file_prefix, my_type Bx_local){
+/** \brief Set up plasma
+*
+*Sets up components from file_prefix+plasma.conf. If a Bx_local is given, store and calc local cyclotron frequency from this. Else use the cyclotron frequency from deck constants.
+*/
+  configure_from_file(file_prefix);//Sets up plasma components
+  
+  if(Bx_local == -1){
+  //Use reference B0
+    B0 = my_const.omega_ce * me/std::abs(q0);
+  }else{
+    B0 = Bx_local;
+  }
+  
+  this->om_ce_ref = my_const.omega_ce;
+  this->om_ce_local = std::abs(q0) * B0 / me;
 
-  configure_from_file(file_prefix);
-  B0 = ref_B;
-  if(ref_B == -1.0) B0 = my_const.omega_ce * me/std::abs(q0);
-
-  this->om_ce = (pcharge[0]) * this->B0 / pmass[0]; /*reference electron cyclotron freq \todo FIX! FAKENUMBERS */
   is_setup = true;
 }
+
 plasma::~plasma(){
 
 
@@ -116,6 +127,12 @@ On error we continue using defaults set below
     return 0;
   }
 
+}
+
+void plasma::set_B0(my_type B0){
+
+  this->B0 = B0;
+  this->om_ce_local = std::abs(q0) * B0 / me;
 }
 
 mu plasma::get_root(calc_type th, calc_type w, calc_type psi, bool Righthand){
@@ -269,70 +286,12 @@ mu plasma::get_root(calc_type th, calc_type w, calc_type psi, bool Righthand){
 //  this->my_mu = mu_ret;
 //  mu_set = true;
 //store away mu for furture use, along with key params used. 
-  last_mu = mu_ret;
+/*  last_mu = mu_ret;
   last_th = th;
   last_w = w;
-  last_psi = psi;
+  last_psi = psi;*/
   /**< \todo is storing these helpful?*/
   return mu_ret;
-}
-
-calc_type plasma::get_phi(calc_type th, calc_type w, calc_type psi, calc_type alpha, int n, calc_type omega_n){
-/**Get's the Phi defined by Lyons 1974.
-*Will be clumsy for now, because each call recalls mu, and we need to sum over n in the end. And it duplicates the STIX params calcs
-*Also needs particle pitch angle alpha \todo Fix relativistic gamma... \todo Do we need this??
- */
- 
-  calc_type wp[ncomps], wp2[ncomps], wc[ncomps];
-  calc_type R, L, P, S, D, ret, term1, term2, term3, denom, tmp_bes, bessel_arg, sin2psi, D_mu2S, gamma;
-
-  for(int i=0; i<ncomps; ++i){
-    wp[i] = my_const.omega_pe;
-    wp2[i] = wp[i]*wp[i];
-    wc[i] = my_const.omega_ce;
-  }
-  for(int i=0; i<ncomps; i++){
-    R = R - wp2[i]/(w*(w + wc[i]));
-    L = L - wp2[i]/(w*(w - wc[i]));
-    P = P - wp2[i]/(w*w);
-  }
-
-  S = 0.5*(R + L);
-  D = 0.5*(R - L);
-
-  mu my_mu;
-
-  if((last_th != th) || (last_w != w) || (last_psi != psi)){
-    my_print("Regetting", mpi_info.rank, -1);
-    my_mu = this->get_root(th, w, psi);}
-  else{my_mu = last_mu;}
-  
-  calc_type mu2 = pow(my_mu.mu, 2);
-
-  sin2psi = pow(sin(psi), 2);
-  D_mu2S = D / (mu2 - S);
-  gamma = 1;
-  omega_n = -1.0 * n * my_const.omega_ce/gamma;
-  //temporaries for simplicity
-
-  term1 = (mu2* sin2psi - P)/(mu2);
-  
-  denom = pow(D_mu2S*term1, 2) + pow((P*cos(psi)/mu2), 2);
-  
-  bessel_arg = n* tan(psi)*tan(alpha) * (w - omega_n)/omega_n;// n x tan alpha (om - om_n)/om_n
-  
-  tmp_bes = boost::math::cyl_bessel_j(n+1, bessel_arg);
-  term2 = (1 + D_mu2S)*tmp_bes;
-  
-  tmp_bes = boost::math::cyl_bessel_j(n-1, bessel_arg);
-  term2 += (1 - D_mu2S)*tmp_bes;
-
-  tmp_bes = boost::math::cyl_bessel_j(n, bessel_arg);
-  term3 = sin(psi)*cos(psi)*tmp_bes/tan(alpha);
-
-  ret = pow((0.5*term1*term2 + term3), 2)/denom;
-  return ret;
-
 }
 
 mu_dmudom plasma::get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int n, calc_type omega_n, bool Righthand)const{
@@ -754,11 +713,12 @@ Return empty vector if no valid solutions \todo Extend to general case?
 calc_type plasma::get_omega_ref(std::string code)const{
 /** \brief Reference plasma and cyclotron frequencies
 *
-*Takes a two char code string and returns the specified frequency at local position.
+*Takes a two char code string and returns the specified frequency at local position. ce is actual Cyclotron freq. c0 is a reference value
 */
 
-  if(code == "ce") return this->om_ce;
+  if(code == "c0") return this->om_ce_ref;
   if(code == "pe") return my_const.omega_pe;
+  if(code == "ce") return this->om_ce_local;
   else return 0.0;
 
 
@@ -767,7 +727,7 @@ calc_type plasma::get_omega_ref(std::string code)const{
 calc_type plasma::get_dispersion(my_type in, int wave_type, bool reverse, bool deriv)const{
 /** \brief Gets omega for given k
 *
-* Uses local refernce cyclotron and plasma frequencies and works with UNNORMALISED quantitites. Assumes parallel prop, and Em in unmagentised \todo Fix to take angle also @param k Wavenumber @param wave_type wave species (see support.h) @param deriv Whether to instead return anayltic v_g \todo Finish cases in this function \todo What should signs be. Vg?? \todo Sensible outof range error??? \todo K and omega use different eqns....\todo Seems k and omega give different derivs?
+* Uses local refernce cyclotron and plasma frequencies and works with UNNORMALISED quantitites. Assumes parallel prop, and Em in unmagentised \todo Fix to take angle also @param k Wavenumber @param wave_type wave species (see support.h) @param deriv Whether to instead return anayltic v_g \todo Finish cases in this function \todo What should signs be. Vg?? \todo Sensible outof range error??? \todo K and omega use different eqns....\todo Seems k and omega give different derivs? \todo om_ce_loc should be local not reference
 */
   calc_type ret = 0.0;
   calc_type om_ce_loc, om_pe_loc;

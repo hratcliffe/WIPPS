@@ -12,6 +12,7 @@
 #include <iomanip>
 #include <cstdlib>
 #include <cmath>
+#include <numeric>
 #include "support.h"
 #include "my_array.h"
 #include "data_array.h"
@@ -988,17 +989,15 @@ my_type my_array::minval(std::vector<size_t> &ind, size_t offset){
 }
 
 my_type my_array::maxval(size_t offset){
-/** Find minimum value of data, allows linear search through contiguous memory*/
+/** Find maximum value of data, allows linear search through contiguous memory*/
 
   size_t total_size=get_total_elements();
   if(offset > total_size) return std::numeric_limits<my_type>::max();
 
   return *(std::max_element(data+offset, data+total_size));
-
-
 }
 my_type my_array::maxval(std::vector<size_t> &ind, size_t offset){
-/** Find minimum value of data, allows linear search through contiguous memory*/
+/** Find maximum value of data, allows linear search through contiguous memory*/
 
   size_t total_size=get_total_elements();
   if(offset > total_size) return std::numeric_limits<my_type>::max();
@@ -1010,4 +1009,11 @@ my_type my_array::maxval(std::vector<size_t> &ind, size_t offset){
   return *(it);
 
 }
+my_type my_array::avval(){
+/** Find average value of data */
+  my_type av = 0.0;
+  size_t total_size=get_total_elements();
 
+  av=std::accumulate(data, data+total_size, 0.0);
+  return av/total_size;
+}

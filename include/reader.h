@@ -36,7 +36,7 @@ public:
   int time_range[3];/**< Time range to extract*/
 
   char block_id[ID_SIZE];/**< Name of block to extract*/
-
+  reader();
   reader(std::string file_prefix_in,  char * block_id_in, int first=0);
   ~reader(){;}
 

@@ -16,6 +16,7 @@
 #include <vector>
 #include "support.h"
 #include "data_array.h"
+#include "reader.h"
 /*
 check 2011 paper for whistler mode tests
 Bortnik, 
@@ -40,7 +41,6 @@ const calc_type LOW_PRECISION = 5e-3;/**< Constant for equality at low precision
 const int max_verbos = 4;
 const std::string filename = "tests.log";/**<Test log file*/
 
-class reader;
 class plasma;
 class controller;
 
@@ -212,8 +212,8 @@ class test_entity_spectrum : public test_entity{
 /** Full check of deriving a "level one" FFT and spectrum from the various input data formats */
 class test_entity_levelone: public test_entity{
   private:
-    data_array * test_dat_fft;
-    data_array * test_dat;
+    data_array dat_fft;
+    data_array dat;
     controller * test_contr;
     reader * my_reader;
     std::string file_prefix;

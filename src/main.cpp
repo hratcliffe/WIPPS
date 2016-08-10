@@ -170,13 +170,6 @@ int main(int argc, char *argv[]){
 
 
   }
-  
-  if(false){
-  //this will be the process starting from a spectrum file
-  
-  
-  }
-  
   //-----------------end of per_proc loop---- Now controller holds one spectrum and d per block
   MPI_Barrier(MPI_COMM_WORLD);
   

@@ -90,6 +90,7 @@ void controller::add_d(int nx, int n_angs){
   
   my_list[current_spect].second = tmp_d;
 }
+
 void controller::add_d_special(int nx, int n_angs){
 
   diffusion_coeff * tmp_d;
@@ -101,6 +102,7 @@ void controller::add_d_special(int nx, int n_angs){
   d_specials.push_back(tmp_d);
   current_d = d_specials.size()-1;
 }
+
 spectrum * controller::get_current_spectrum(){
 /** \brief Return current spectrum
 *

@@ -25,6 +25,7 @@
 #include "controller.h"
 #include "plasma.h"
 #include "my_array.h"
+#include "data_array.h"
 #include "d_coeff.h"
 #include "spectrum.h"
 #include "tests.h"
@@ -74,8 +75,8 @@ int main(int argc, char *argv[]){
   my_space[0] = cmd_line_args.space[0];
   my_space[1] = cmd_line_args.space[1];
 
-  int n_dims;
-  std::vector<int> dims;
+  size_t n_dims;
+  std::vector<size_t> dims;
   err = my_reader->read_dims(n_dims, dims);
   if(err) safe_exit();
   int space_dim = dims[0];
@@ -96,9 +97,9 @@ int main(int argc, char *argv[]){
     
     MPI_Barrier(MPI_COMM_WORLD);
     //--------------THIS will slightly slow down some cores to match the slowest. But it makes output easier. Consider removing if many blocks
-    data_array  * dat = new data_array(space_dim, n_tims);
+    data_array dat = data_array(space_dim, n_tims);
 
-    if(!dat->is_good()){
+    if(!dat.is_good()){
       my_print("Data array allocation failed. Aborting.", mpi_info.rank);
       return 0;
     }
@@ -106,30 +107,26 @@ int main(int argc, char *argv[]){
     err = my_reader->read_data(dat, cmd_line_args.time, my_space);
     if(err == 1) safe_exit();
 
-    if(err == 2) n_tims = dat->get_dims(1);
+    if(err == 2) n_tims = dat.get_dims(1);
     //Check if we had to truncate data array...
-    data_array * dat_fft = new data_array(space_dim, n_tims);
+    data_array dat_fft = data_array(space_dim, n_tims);
 
-    if(!dat_fft->is_good()){
+    if(!dat_fft.is_good()){
       my_print("Data array allocation failed. Aborting.", mpi_info.rank);
       return 0;
     }
-    err = dat->fft_me(dat_fft);
+    err = dat.fft_me(dat_fft);
 
     if(mpi_info.rank ==0) MPI_Reduce(MPI_IN_PLACE, &err, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
     else MPI_Reduce(&err, NULL, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
 
     my_print("FFT returned err_state " + mk_str(err), mpi_info.rank);
 
-    int row_lengths[2];
-    row_lengths[0] = space_dim;
-    row_lengths[1] = DEFAULT_N_ANG;
-    
-    contr->add_spectrum(row_lengths, 2);
+    contr->add_spectrum(space_dim, DEFAULT_N_ANG, true);
     contr->get_current_spectrum()->make_test_spectrum(cmd_line_args.time, my_space);
     
     //Set cutout limits on FFT
-    int n_dims = dat->get_dims();
+    int n_dims = dat.get_dims();
     std::vector<my_type> lims;
     if(n_dims >=3){
       lims.push_back(-0.002);
@@ -144,20 +141,17 @@ int main(int argc, char *argv[]){
     }
     //Construct filename. Since the MPI is using block-wise domain decomposition, different processors can't overlap on blocks
     std::string filename, time_str;
-    time_str = mk_str(dat_fft->time[0], true)+"_"+mk_str(n_tims);
+    time_str = mk_str(dat_fft.time[0], true)+"_"+mk_str(n_tims);
     std::string block = block_id;
-    filename = cmd_line_args.file_prefix+"FFT_"+block +"_"+time_str+"_"+mk_str(dat_fft->space[0])+"_"+mk_str(dat_fft->space[1]) + ".dat";
+    filename = cmd_line_args.file_prefix+"FFT_"+block +"_"+time_str+"_"+mk_str(dat_fft.space[0])+"_"+mk_str(dat_fft.space[1]) + ".dat";
     std::fstream file;
     file.open(filename.c_str(),std::ios::out|std::ios::binary);
     if(file.is_open()){
-      dat_fft->write_section_to_file(file, lims);
+      dat_fft.write_section_to_file(file, lims);
     }
     file.close();
     my_print( "FFT section output in "+filename, mpi_info.rank);
     if(logfile) my_print(&logfile, "FFT section output in "+filename, mpi_info.rank);
-
-    delete dat;
-    delete dat_fft;
 
   }
   //-----------------end of per_proc loop---- Now controller holds one spectrum and d per block

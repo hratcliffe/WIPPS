@@ -29,7 +29,6 @@ controller::controller(std::string file_prefix){
   my_plas = plasma(file_prefix);
   current_spect=0;
   current_d=0;
-
 };
 
 controller::~controller(){
@@ -72,6 +71,7 @@ void controller::add_spectrum(int nx, int n_ang, bool separable){
     tmp_spect->my_controller = this;
     my_list.push_back(std::make_pair(tmp_spect, nullptr));
     current_spect = my_list.size()-1;
+
   }else{
     my_print("Spectrum construction failed", mpi_info.rank);
   }
@@ -99,7 +99,7 @@ void controller::add_d_special(int nx, int n_angs){
   tmp_d->make_pitch_axis();
   
   d_specials.push_back(tmp_d);
-  current_d ++;
+  current_d = d_specials.size()-1;
 }
 spectrum * controller::get_current_spectrum(){
 /** \brief Return current spectrum
@@ -193,7 +193,7 @@ void controller::get_size(int dims[2]){
 bool controller::save_spectra(std::string pref){
 /** \brief Save spectra to files (one per chunk)
 *
-* Writes each spectrum object to a file, identified by space range and time.
+* Writes each spectrum object to a file, identified by space range and time. \todo Add logging?
 */
 
   std::fstream file;
@@ -201,14 +201,11 @@ bool controller::save_spectra(std::string pref){
   for(size_t i=0; i<my_list.size(); ++i){
     tmp = my_list[i].first->block_id;
     filename = pref+"spec_"+tmp +"_"+mk_str(my_list[i].first->time[0]) + "_"+mk_str(my_list[i].first->time[1])+"_"+mk_str(my_list[i].first->space[0])+"_"+mk_str(my_list[i].first->space[1])+".dat";
-    std::cout<<filename<<std::endl;
     file.open(filename.c_str(),std::ios::out|std::ios::binary);
     if(file.is_open()) my_list[i].first->write_to_file(file);
     else return 1;
     file.close();
-  
   }
-  
   return 0;
 }
 

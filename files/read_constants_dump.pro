@@ -17,12 +17,12 @@ const=0
 str=''
 WHILE (~EOF(filenum)) DO BEGIN
   READF, filenum, str
-  nv=parse_name_val_space(str)
+  nv=parse_name_val(str, delim=' ')
   if((SIZE(nv))[1] LT 2) THEN CONTINUE
   IF( ISA(const, 'struct')) THEN BEGIN
-    const = create_struct(const, nv[0], DOUBLE(nv[1]))
+    const = create_struct(const, nv[0], nv[1])
   ENDIF ELSE BEGIN
-    const = create_struct(nv[0], DOUBLE(nv[1])) 
+    const = create_struct(nv[0], nv[1]) 
   ENDELSE
 
 ENDWHILE
@@ -31,12 +31,3 @@ close, filenum
 RETURN, const
 
 END
-
-function parse_name_val_space, str
-;Actually very simple but make function in case of complication eh?
-  
-  name_val =strtrim(strsplit(str, ' ', /extract), 2)
-
-  return, name_val
-END
-

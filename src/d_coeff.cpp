@@ -69,7 +69,8 @@ bool diffusion_coeff::write_to_file(std::fstream &file){
   //First the wave id, then the first 10 chars of the tag string
   file.write((char*) &wave_id, sizeof(int));
 
-  char buffer[10];
+  char buffer[10]="";//Initialise to empty
+
   size_t n_char = std::min((size_t)10, tag.size());
   strncpy(buffer, tag.c_str(), n_char);
   file.write(buffer, 10*sizeof(char));

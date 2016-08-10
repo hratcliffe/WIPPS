@@ -21,6 +21,7 @@ plasma::plasma( calc_type ref_B, std::string file_prefix){
   if(ref_B == -1.0) B0 = my_const.omega_ce * me/std::abs(q0);
 
   this->om_ce = (pcharge[0]) * this->B0 / pmass[0]; /*reference electron cyclotron freq \todo FIX! FAKENUMBERS */
+  is_setup = true;
 }
 plasma::~plasma(){
 
@@ -334,7 +335,7 @@ calc_type plasma::get_phi(calc_type th, calc_type w, calc_type psi, calc_type al
 
 }
 
-mu_dmudom plasma::get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int n, calc_type omega_n, bool Righthand){
+mu_dmudom plasma::get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int n, calc_type omega_n, bool Righthand)const{
 /**Get's the Phi defined by Lyons 1974, and mu, dmu/dom i.e. the set needed for D.
 *Also needs particle pitch angle alpha \todo Fix relativistic gamma... WATCH for Clares version which uses a different alpha entirely...
 
@@ -510,7 +511,7 @@ mu_dmudom plasma::get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int
   return my_mu;
 }
 
-mu_dmudom plasma::get_high_dens_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int n, calc_type omega_n, bool Righthand){
+mu_dmudom plasma::get_high_dens_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int n, calc_type omega_n, bool Righthand)const{
   calc_type term1, term2, term3, denom, tmp_bes, tmp_besp, tmp_besm, bessel_arg, D_mu2S, gamma, w2, w3;
 /**Gets the Phi defined by Lyons 1974, and mu, dmu/dom i.e. the set needed for D, using high-density approx to the dispersion relation to match resonant frequency cubic solver. We change as little as possible from get_phi_mu_omega, simply reduce the expressions for the original Stix params
 *Also needs particle pitch angle alpha \todo Fix relativistic gamma... \todo Multispecies???? */
@@ -684,7 +685,7 @@ mu_dmudom plasma::get_high_dens_phi_mu_om(calc_type w, calc_type psi, calc_type 
   return my_mu;
 }
 
-std::vector<calc_type> plasma::get_resonant_omega(calc_type x, calc_type v_par, calc_type n){
+std::vector<calc_type> plasma::get_resonant_omega(calc_type x, calc_type v_par, calc_type n)const{
 /**Get resonant frequency for particular x, v_parallel, n
 *
 *Solve high density approx to get omega. for pure electron proton plasma....
@@ -750,7 +751,7 @@ Return empty vector if no valid solutions \todo Extend to general case?
 
 }
 
-calc_type plasma::get_omega_ref(std::string code){
+calc_type plasma::get_omega_ref(std::string code)const{
 /** \brief Reference plasma and cyclotron frequencies
 *
 *Takes a two char code string and returns the specified frequency at local position.
@@ -763,7 +764,7 @@ calc_type plasma::get_omega_ref(std::string code){
 
 }
 
-calc_type plasma::get_dispersion(my_type in, int wave_type, bool reverse, bool deriv){
+calc_type plasma::get_dispersion(my_type in, int wave_type, bool reverse, bool deriv)const{
 /** \brief Gets omega for given k
 *
 * Uses local refernce cyclotron and plasma frequencies and works with UNNORMALISED quantitites. Assumes parallel prop, and Em in unmagentised \todo Fix to take angle also @param k Wavenumber @param wave_type wave species (see support.h) @param deriv Whether to instead return anayltic v_g \todo Finish cases in this function \todo What should signs be. Vg?? \todo Sensible outof range error??? \todo K and omega use different eqns....\todo Seems k and omega give different derivs?

@@ -51,11 +51,14 @@ private:
   mu last_mu;
   calc_type last_th, last_w, last_psi;
   bool configure_from_file(std::string file_prefix);
-  public:
+  bool is_setup;
+public:
 
+  plasma(){is_setup = false;}
   plasma(calc_type ref_B, std::string file_prefix);
   ~plasma();
 
+  bool is_good(){return is_setup;}/**<Whether everything is setup*/
   void get_density(){;}/**< \todo do we need this?*/
   void get_B0(){;}
 
@@ -66,8 +69,8 @@ private:
   //But one call per ptich angle and frequency might turn out to be time consuming. Profiling necessary...
   mu get_root(calc_type th, calc_type w, calc_type psi, bool Righthand=true);
   calc_type get_phi( calc_type th, calc_type w, calc_type psi, calc_type alpha, int n, calc_type omega_n=0);
-  mu_dmudom get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int n, calc_type omega_n=0, bool Righthand=true);
-  mu_dmudom get_high_dens_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int n, calc_type omega_n, bool Righthand=true);
+  mu_dmudom get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int n, calc_type omega_n=0, bool Righthand=true)const;
+  mu_dmudom get_high_dens_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int n, calc_type omega_n, bool Righthand=true)const;
 
   /*probably want some parameter "which_thing" is some way of specifying what we want, probably via enum or named constants PROBABLY a mask is best, i.e. bitmask with named contants and we get each thing we want. But how to return? Rturn invalid number for those we on't request. Make it optional so by default we get all? Or we return all of: real(DP),intent(out)::mu,mug                   !< refractive index, group
    real(DP),intent(out)::dmudr,dmudth             !< derivs
@@ -75,10 +78,10 @@ private:
    integer(I4B),intent(out)::merror               !< testing for mu \todo Clean up these comments
   */
 
-  std::vector<calc_type> get_resonant_omega(calc_type x, calc_type v_par, calc_type n);
+  std::vector<calc_type> get_resonant_omega(calc_type x, calc_type v_par, calc_type n)const;
 
-  calc_type get_omega_ref(std::string code);
-  calc_type get_dispersion(my_type k, int wave_type, bool reverse=0, bool deriv=0);
+  calc_type get_omega_ref(std::string code)const;
+  calc_type get_dispersion(my_type k, int wave_type, bool reverse=0, bool deriv=0)const;
 
 };
 

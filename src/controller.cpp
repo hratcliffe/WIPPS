@@ -15,7 +15,6 @@
 #include "d_coeff.h"
 #include "spectrum.h"
 #include "my_array.h"
-#include "plasma.h"
 
 
 extern deck_constants my_const;
@@ -27,16 +26,13 @@ controller::controller(std::string file_prefix){
 * Create plasma object and initialise
 */
 
-  my_plas = nullptr;
-  my_plas = new plasma(-1, file_prefix);
+  my_plas = plasma(-1, file_prefix);
   current_spect=0;
   current_d=0;
 
 };
 
 controller::~controller(){
-
-  if(my_plas) delete my_plas;
   
   for(size_t i=0; i<my_spect.size(); i++){
     delete my_spect[i];

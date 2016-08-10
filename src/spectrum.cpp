@@ -233,7 +233,7 @@ void spectrum::init(){
 bool spectrum::generate_spectrum(data_array &parent, int om_fuzz, int angle_type){
 /**\brief Generate spectrum from data
 *
-*Takes a parent data array and uses the specified ids to generate a spectrum. Windows using the specified wave dispersion and integrates over frequency. Also adopts axes from parent. \todo Fill in the rest of logic etc @param parent Data array to read from @param om_fuzz Band width around dispersion curve in percent of central frequency \todo omega vs k, is there some normalising to do?
+*Takes a parent data array and uses the specified ids to generate a spectrum. Windows using the specified wave dispersion and integrates over frequency. Also adopts axes from parent. \todo Fill in the rest of logic etc @param parent Data array to read from @param om_fuzz Band width around dispersion curve in percent of central frequency \todo omega vs k, is there some normalising to do? \todo Did we do negative omega properly?
 */
 
   if(!this->is_good()){
@@ -376,7 +376,7 @@ my_type spectrum::get_omega(my_type k, int wave_type, bool deriv){
 *
 * Calls to plasma because approximations for density etc etc should be made there. @param k Wavenumber @param wave_type Wave species @param deriv Return v_g instead
 */
-  if(my_controller && (my_controller->get_plasma())) return (my_type) my_controller->get_plasma()->get_dispersion(k, wave_type, 0, deriv);
+  if(my_controller && (my_controller->is_good())) return (my_type) my_controller->get_plasma().get_dispersion(k, wave_type, 0, deriv);
   else return 0.0;
 }
 
@@ -385,7 +385,7 @@ my_type spectrum::get_k(my_type omega, int wave_type, bool deriv){
 *
 * Calls to plasma because approximations for density etc etc should be made there. @param k Wavenumber @param wave_type Wave species @param deriv Return v_g instead
 */
-  if(my_controller && (my_controller->get_plasma())) return (my_type) my_controller->get_plasma()->get_dispersion(omega, wave_type, 1, deriv);
+  if(my_controller && my_controller->is_good()) return (my_type) my_controller->get_plasma().get_dispersion(omega, wave_type, 1, deriv);
   else return 0.0;
 }
 
@@ -480,10 +480,10 @@ bool spectrum::read_from_file(std::fstream &file){
 
 }
 
-void spectrum::make_test_spectrum(int time[2], int space[2],int angle_type){
+void spectrum::make_test_spectrum(int time[2], int space[2],int angle_type, bool two_sided, my_type om_ce){
 /** \brief Generate dummy spectrum
 *
-*Makes a basic spectrum object with suitable number of points, and Gaussian(s) centred at fixed k/freq and x value \todo Should we use negative freqs?? If so use the offset as parameter @param time Time range (number of points) @param space Space range (number of points) @param angle_type Function to use for angular distrib
+*Makes a basic spectrum object with suitable number of points, and Gaussian(s) centred at fixed k/freq and x value @param time Time range (number of points) @param space Space range (number of points) @param angle_type Function to use for angular distrib @param two_sided Whether to generate symmetric spectrum or one-sided
 */
 
   if(!this->is_good()){
@@ -499,30 +499,28 @@ void spectrum::make_test_spectrum(int time[2], int space[2],int angle_type){
   my_type * ax_ptr;
 
   ax_ptr = B_omega_array.get_axis(0, len0);
-  my_type res;
-  bool offset = true;
-  //whether to have even ±pm axes or start from 0;
-  res = 17000.0*1.0/(my_type)len0;
-  offset= false;
-  //res to cover range from offset to max in len0 steps
+  my_type res = om_ce*(1.0+(my_type)two_sided)/(my_type)len0;
+  //res to cover range from either 0 or -max to max in len0 steps
 
-  //Rough value for length of
-  for(size_t i=0; i<len0; i++) *(ax_ptr+i) = res*((my_type)i - (my_type)offset *(my_type)len0/2.);
+  //Generate axes for one or two-sided
+  for(size_t i=0; i<len0; i++) *(ax_ptr+i) = res*((my_type)i - (my_type)two_sided *(my_type)len0/2.);
 
   make_angle_distrib();
-
-  //Generate the negative k data
   
   my_type centre, width, background = 0.0;
-  centre = 14000, width=0.1*centre;
+  centre = om_ce*14.0/17.0, width=0.1*centre;
+  //Matches our test spectrum data
   
   my_type * data_tmp, *ax_tmp;
   my_type * data_ptr;
   data_ptr = (my_type *) malloc(len0*sizeof(my_type));
+
+  //Initial values
   data_tmp = data_ptr;
   ax_tmp = ax_ptr;
 
-  if(offset){
+  if(two_sided){
+    //Fill a two-sided spectrum with peaks where specified
     for(size_t i=0; i<=len0/2; i++, ax_tmp++, data_tmp++){
       *(data_tmp) = exp(-pow((*(ax_tmp) + centre), 2)/width/width) + background;
     }
@@ -537,8 +535,7 @@ void spectrum::make_test_spectrum(int time[2], int space[2],int angle_type){
   }
   this->B_omega_array.populate_data(data_ptr, len0);
   free(data_ptr);
-  //reflect onto +ve axis
-//+ 0.25*exp(-pow((*(ax_tmp) + centre), 2)/width*50.0)
+
   max_power = 1.0;
   //Store value of maximum
 }
@@ -546,42 +543,38 @@ void spectrum::make_test_spectrum(int time[2], int space[2],int angle_type){
 bool spectrum::truncate_om(my_type om_min, my_type om_max){
 /** \brief Truncate omega distribution at om_min and om_max.
 *
-*Zeros all elements outside the range [abs(om_min), abs(om_max)]. Zeros are ignored. om_min must be < om_max.
+*Zeros all elements outside the range [om_min, om_max]. Zeros are ignored. om_min must be < om_max. Om_min or max out of axis range does nothing on that end. NB B is renormalised after the truncation
 */
 
-  if(om_min < 0) om_min = std::abs(om_min);
-  if(om_max < 0) om_max = std::abs(om_max);
   if(om_min >= om_max){
     my_print("Invalid omega range, aborting truncate", mpi_info.rank);
     return 1;
-  
   }
 
   int index = -1;
   int len = get_B_dims(0);
 
-  if(om_min != 0.0){
+  if(om_min > get_om_axis_element(1)){
     index=where_omega(om_min);
     if(index != -1) for(int i=0; i< index; i++) set_B_element(i, 0.0);
     //Zero up to om_min
   }
 
-  if(om_max != 0.0 && om_max < get_om_axis_element(len-1)){
+  if(om_max < get_om_axis_element(len-1)){
     index=where_omega(om_max);
     if(index != -1) for(int i = index; i< len; i++) set_B_element(i, 0.0);
-    //Zero after to om_max
+    //Zero after om_max
   }
 
   normaliseB();
   //Re-do normalisation
   return 0;
-
 }
 
 bool spectrum::truncate_x(my_type x_min, my_type x_max){
 /** \brief Truncate angle distribution at x_min and x_max.
 *
-*Zeros all elements outside the range [abs(x_min), abs(x_max)]. Zeros are ignored. x_min must be < x_max.
+*Zeros all elements outside the range [x_min, x_max]. x_min must be < x_max. If x_min or max are out of range, nothing is done at that end. \todo Should we renorm. g now?
 */
 
   if(x_min >= x_max){
@@ -654,12 +647,12 @@ bool spectrum::normaliseB(){
 bool spectrum::normaliseg(my_type omega){
 /** \brief Normalise g_w(x)
 *
-*Calculate the norm of g used in e.g. denom of Albert eq 3 or calc'd in derivations.tex. We assume omega, x are off the axes already so no interpolation.  \todo Catch zero norms \todo test
+*Calculate the norm of g used in e.g. denom of Albert eq 3 or calc'd in derivations.tex. We assume omega, x are off the axes already so no interpolation.  \todo Catch zero norms \todo test \todo Taking omega wont work how we want
 */
 
   size_t len = get_g_dims(1);
   if(!my_controller) return 1;
-  plasma * plas = my_controller->get_plasma();
+  plasma plas = my_controller->get_plasma();
 
   my_type * d_axis = (my_type *) calloc(len, sizeof(my_type));
   my_type * integrand = (my_type *) calloc(len, sizeof(my_type));
@@ -683,7 +676,7 @@ bool spectrum::normaliseg(my_type omega){
   for(size_t i=0; i<len; i++){
     x = get_ang_axis_element(i);
     psi = atan(x);
-    my_mu = plas->get_root(0.0, omega, psi);
+    my_mu = plas.get_root(0.0, omega, psi);
 
     if(!my_mu.err){
       integrand[i] = get_g_element(om_ind, i) * x * std::pow((std::pow(x, 2)+1.0), -1.5)*std::pow(my_mu.mu, 2) * std::abs( my_mu.mu + omega*my_mu.dmudom);
@@ -797,10 +790,8 @@ calc_type spectrum::get_G2(calc_type omega, calc_type x){
 calc_type spectrum::check_upper(){
 /** \brief Check upper k limit of spectral power
 *
-* Checks the upper bound of region of significant spectral power, i.e. above SPECTRUM_THRESHOLD*peak_power \todo This wont work with +ve only spectrum
+* Checks the upper bound of region of significant spectral power, i.e. above SPECTRUM_THRESHOLD*peak_power
 */
-
-//First move up from bottom in strides and find where _first_ rises above threshold. Specifcally upwards.
 
   size_t stride = 1;
   size_t ax_len = get_B_dims(0);
@@ -809,18 +800,15 @@ calc_type spectrum::check_upper(){
   size_t index = 0;
 
   if(get_om_axis_element(1) < get_om_axis_element(2)){
-  //Axis presumed to be +ve only, move in from top
+  //Axis presumed to be +ve only, move in from top to find first rise above threshold
     for(size_t i=0; i< ax_len; i+=stride){
       if((get_B_element(ax_len - i) < threshold && get_B_element(ax_len - i - stride) > threshold)){
         index = i;
         break;
       }
     }
-  
-  
   }else{
-  //Axis presumed to be symmetrical
-
+  //Axis presumed to be symmetrical. Move in from both ends
     for(size_t i=0; i< len; i+=stride){
       if((get_B_element(i) < threshold && get_B_element(i+stride) > threshold) ||(get_B_element(ax_len - i) < threshold && get_B_element(ax_len - i - stride) > threshold)){
         index = i;
@@ -828,7 +816,7 @@ calc_type spectrum::check_upper(){
       }
     }
   }
-  //get omega value and convert to k...
+  //get omega value and convert to k.
   my_type omega_max;
   
   if(index != 0){

@@ -148,7 +148,7 @@ Get mu, dmu/domega which are used to:
 
   //We probably want to set the n and theta ranges in another routine... or using UI data
 
-  plasma * plas;
+  plasma plas;
   spectrum * spect;
   d_report report;
   report.n_solutions = 0;
@@ -177,7 +177,7 @@ Get mu, dmu/domega which are used to:
   std::vector<calc_type> omega_calc;
   mu_dmudom my_mu;
   
-  calc_type om_ce_ref = plas->get_omega_ref("ce");
+  calc_type om_ce_ref = plas.get_omega_ref("ce");
   calc_type D_consts = 0.5* pi*om_ce_ref*pow(v0, 3);
   //Time saving constant
 
@@ -247,7 +247,7 @@ Get mu, dmu/domega which are used to:
         D_tmp = 0.0;
         for(int n=n_min; n<n_max; ++n){
           // n is resonant number
-          omega_calc = plas->get_resonant_omega(x[j], v_par, (calc_type) n);
+          omega_calc = plas.get_resonant_omega(x[j], v_par, (calc_type) n);
           n_omega = omega_calc.size();
           if(n_omega > 0){
           //With loop if is redundant but we might want to log the failure
@@ -255,7 +255,7 @@ Get mu, dmu/domega which are used to:
             //each solution
               //std::cout<<"Freq is "<<omega_calc[ii]/my_const.omega_ce<<std::endl;
 
-              my_mu = plas->get_high_dens_phi_mu_om(omega_calc[ii], theta, alpha, n, omega_n);
+              my_mu = plas.get_high_dens_phi_mu_om(omega_calc[ii], theta, alpha, n, omega_n);
               if(my_mu.err){
                 //Once angle is included we have no solution
                 non_counter++;

@@ -10,9 +10,9 @@
 #define _controller_h
 
 #include "support.h"
+#include "plasma.h"
 
 class spectrum;
-class plasma;
 class diffusion_coeff;
 /*Circular dependencies, don't include headers*/
 
@@ -23,7 +23,7 @@ class diffusion_coeff;
 */
 
 class controller{
-  plasma * my_plas; /**< Plasma object*/
+  plasma my_plas; /**< Plasma object*/
 
   std::vector<spectrum *> my_spect;/**< Spectrum object or vector thereof?*/
   std::vector<diffusion_coeff *> my_d;/**< Diffusion coefficient object or vector thereof?*/
@@ -39,12 +39,12 @@ public:
   void add_d(int nx, int n_angs, int pos=-1);
   spectrum * get_current_spectrum();
   diffusion_coeff * get_current_d();
-  plasma * get_plasma(){return my_plas;};
+  const plasma& get_plasma(){return my_plas;};
   void bounce_average();
   void handle_d_mpi();
   bool save_spectra(std::string pref);
   bool save_D(std::string pref);
-
+  bool is_good(){return my_plas.is_good();}/**< Whether controller is fully setup*/
 };
 
 

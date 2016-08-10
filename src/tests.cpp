@@ -78,8 +78,8 @@ void tests::setup_tests(){
   add_test(test_obj);
   test_obj = new test_entity_spectrum();
   add_test(test_obj);
- // test_obj = new test_entity_levelone();
-  //add_test(test_obj);
+  test_obj = new test_entity_levelone();
+  add_test(test_obj);
   test_obj = new test_entity_d();
   add_test(test_obj);
 
@@ -1620,8 +1620,8 @@ int test_entity_spectrum::albertGs_tests(){
   int err = TEST_PASSED;
 
   calc_type om_ce_local, om_pe_local, G1, G2, G1_analytic, G2_analytic;
-  om_ce_local = test_contr->get_plasma()->get_omega_ref("ce");
-  om_pe_local = test_contr->get_plasma()->get_omega_ref("pe");
+  om_ce_local = test_contr->get_plasma().get_omega_ref("ce");
+  om_pe_local = test_contr->get_plasma().get_omega_ref("pe");
 
   calc_type mass_ratio = 1836.2;
 

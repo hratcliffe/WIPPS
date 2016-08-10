@@ -22,11 +22,14 @@ class diffusion_coeff;
 * @author Heather Ratcliffe @date 19/11/2015.
 */
 
+typedef std::pair<spectrum*, diffusion_coeff*> spect_D_pair;
+
 class controller{
   plasma my_plas; /**< Plasma object*/
 
-  std::vector<spectrum *> my_spect;/**< Spectrum object or vector thereof?*/
-  std::vector<diffusion_coeff *> my_d;/**< Diffusion coefficient object or vector thereof?*/
+  std::vector<spect_D_pair> my_list;/**< pairs of spectrum and corresponding D*/
+  std::vector<diffusion_coeff *> d_specials;/**< Special D's for bounce averaging etc*/
+  
   size_t current_spect;
   size_t current_d;
   void get_size(int dims[2]);
@@ -36,7 +39,8 @@ public:
   ~controller();
   void add_spectrum(std::string file);
   void add_spectrum(int nx, int n_ang,bool separable);
-  void add_d(int nx, int n_angs, int pos=-1);
+  void add_d(int nx, int n_angs);
+  void add_d_special(int nx, int n_angs);
   spectrum * get_current_spectrum();
   diffusion_coeff * get_current_d();
   const plasma& get_plasma(){return my_plas;};

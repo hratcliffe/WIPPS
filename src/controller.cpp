@@ -33,16 +33,16 @@ controller::controller(std::string file_prefix){
 };
 
 controller::~controller(){
-  
-  for(size_t i=0; i<my_spect.size(); i++){
-    delete my_spect[i];
-    my_spect[i] = nullptr;
+/** \brief Delete 
+*
+*Destroys all the D and spectrum objects
+*/
+  for(size_t i=0; i<my_list.size(); i++){
+    if(my_list[i].first) delete my_list[i].first;
+    if(my_list[i].second) delete my_list[i].second;
+    my_list[i].first = nullptr;
+    my_list[i].second = nullptr;
   }
-  for(size_t i=0; i<my_d.size(); i++){
-    delete my_d[i];
-    my_d[i] = nullptr;
-  }
-
 };
 
 void controller::add_spectrum(std::string file){
@@ -54,8 +54,8 @@ void controller::add_spectrum(std::string file){
   if(tmp_spect->is_good()){
     tmp_spect->my_controller = this;
     tmp_spect->init();
-    my_spect.push_back(tmp_spect);
-    current_spect = my_spect.size()-1;
+    my_list.push_back(std::make_pair(tmp_spect, nullptr));
+    current_spect = my_list.size()-1;
   }else{
     my_print("Spectrum construction failed", mpi_info.rank);
   }
@@ -70,72 +70,84 @@ void controller::add_spectrum(int nx, int n_ang, bool separable){
   tmp_spect = new spectrum(nx, n_ang, separable);
   if(tmp_spect->is_good()){
     tmp_spect->my_controller = this;
-    my_spect.push_back(tmp_spect);
-    current_spect = my_spect.size()-1;
+    my_list.push_back(std::make_pair(tmp_spect, nullptr));
+    current_spect = my_list.size()-1;
   }else{
     my_print("Spectrum construction failed", mpi_info.rank);
   }
 }
 
-void controller::add_d(int nx, int n_angs, int pos){
-/** \brief Create and addd diffusion_coefficient and create it's basic axes etc
+void controller::add_d(int nx, int n_angs){
+/** \brief Create and add diffusion_coefficient
 *
-*
+*Creates a diffusion coefficient of size nx x n_angs, paired with the last spectrum that was added.
 */
   diffusion_coeff * tmp_d;
   tmp_d = new diffusion_coeff(nx, n_angs);
   tmp_d->my_controller = this;
   tmp_d->make_velocity_axis();
   tmp_d->make_pitch_axis();
-  if(pos == -1 || pos == (int)my_d.size()){
-    my_d.push_back(tmp_d);
-    current_d = my_d.size()-1;
-  }
-  else if(pos >=0 && pos< (int)my_d.size()){
-    //insert at position specified
-    my_d.insert(my_d.begin() + pos, tmp_d);
-    current_d = pos;
-  }
+  
+  my_list[current_spect].second = tmp_d;
 }
+void controller::add_d_special(int nx, int n_angs){
 
+  diffusion_coeff * tmp_d;
+  tmp_d = new diffusion_coeff(nx, n_angs);
+  tmp_d->my_controller = this;
+  tmp_d->make_velocity_axis();
+  tmp_d->make_pitch_axis();
+  
+  d_specials.push_back(tmp_d);
+  current_d ++;
+}
 spectrum * controller::get_current_spectrum(){
-
-  if(!my_spect.empty()) return my_spect[current_spect];
+/** \brief Return current spectrum
+*
+*Returns pointer because spectra vector may be empty
+*/
+  if(!my_list.empty()) return my_list[current_spect].first;
   else return nullptr;
 
 }
 
 diffusion_coeff * controller::get_current_d(){
-  
-  if(!my_d.empty()) return my_d[current_d];
+/** \brief Return current D
+*
+*Returns pointer because D list may be empty
+*/  
+  if(!my_list.empty()) return my_list[current_spect].second;
   else return nullptr;
 }
 
 void controller::bounce_average(){
-  /** \todo finish this!!*/
-  if(my_d.size() ==1) return;
-  //No averaging to do! Is that true??
+/** \brief Bounce average D
+*
+*Assumes the list contains D in order across space and performs bounce average to create special D. \todo Finish
+*/
+  if(my_list.size() ==1) return;
+  //No averaging to do. Are there any factors to multiply?
 
   int dims[2];
   get_size(dims);
-  char blck[ID_SIZE];
-  strcpy(blck, my_d[current_d]->block_id);
-  add_d(dims[0], dims[1]);
+  
+  add_d_special(dims[0], dims[1]);
   //Add new averaged D
-  my_d[current_d]->tag = BOUNCE_AV;
-  strcpy(my_d[current_d]->block_id, blck);
+  d_specials[current_d]->tag = BOUNCE_AV;
+  strcpy(d_specials[current_d]->block_id, my_list[current_spect].second->block_id);
+  //Tag as bounce av'd and copy block id from block used
 
-    //Flatten down each d onto this one with all integrand included...
+  //Flatten down each d onto this one with all integrand included...
   my_type val;
   for(int j=0; j< dims[0]; j++){
     for(int k=0; k<dims[1]; k++){
       val = 0;
-      for(size_t i=0; i<my_d.size() -1; i++){
-        val += my_d[i]->get_element(j, k);
+      for(size_t i=0; i<my_list.size() -1; i++){
+        val += my_list[i].second->get_element(j, k);
         
       }
 // FAKENUMBERS      val *= integrand extras!!!
-      my_d[current_d]->set_element(j, k, val);
+      d_specials[current_d]->set_element(j, k, val);
 
     }
   }
@@ -153,28 +165,28 @@ void controller::handle_d_mpi(){
   int dims[2];
   get_size(dims);
   int total = dims[0]*dims[1];
-  char blck[ID_SIZE];
-  strcpy(blck, my_d[current_d]->block_id);
 
-  int current_d_keep = current_d;
+  int prev_current_d = current_d;
   if(mpi_info.rank ==0){
-    add_d(dims[0], dims[1], 0);
-    my_d[current_d]->tag = GLOBAL;
-    strcpy(my_d[current_d]->block_id, blck);
-
+  //Add a new global value on root only
+    add_d_special(dims[0], dims[1]);
+    //Copy roots bounce average into this
+    *(d_specials[current_d]) = *(d_specials[prev_current_d]);
+    d_specials[current_d]->tag = GLOBAL;
   }
-  current_d = current_d_keep;
-  
-  //Reduce onto this new root d so we preserve all the local versions too
+  //reset current_d (affects root only)
+  int root_global_d = current_d;
+  current_d = prev_current_d;
 
-  MPI_Reduce(my_d[0]->data, get_current_d()->data, total, MPI_MYTYPE, MPI_SUM, 0, MPI_COMM_WORLD);
+  //Reduce onto this new root d so we preserve all the local versions too
+  MPI_Reduce(get_current_d()->data, d_specials[root_global_d]->data , total, MPI_MYTYPE, MPI_SUM, 0, MPI_COMM_WORLD);
   
 }
 
 void controller::get_size(int dims[2]){
 
-  dims[0] = my_d[current_d]->get_dims(0);
-  dims[1] = my_d[current_d]->get_dims(1);
+  dims[0] = my_list[current_spect].second->get_dims(0);
+  dims[1] = my_list[current_spect].second->get_dims(1);
 
 }
 
@@ -186,12 +198,12 @@ bool controller::save_spectra(std::string pref){
 
   std::fstream file;
   std::string filename, tmp;
-  for(size_t i=0; i<my_spect.size(); ++i){
-    tmp = my_spect[i]->block_id;
-    filename = pref+"spec_"+tmp +"_"+mk_str(my_spect[i]->time[0]) + "_"+mk_str(my_spect[i]->time[1])+"_"+mk_str(my_spect[i]->space[0])+"_"+mk_str(my_spect[i]->space[1])+".dat";
+  for(size_t i=0; i<my_list.size(); ++i){
+    tmp = my_list[i].first->block_id;
+    filename = pref+"spec_"+tmp +"_"+mk_str(my_list[i].first->time[0]) + "_"+mk_str(my_list[i].first->time[1])+"_"+mk_str(my_list[i].first->space[0])+"_"+mk_str(my_list[i].first->space[1])+".dat";
     std::cout<<filename<<std::endl;
     file.open(filename.c_str(),std::ios::out|std::ios::binary);
-    if(file.is_open()) my_spect[i]->write_to_file(file);
+    if(file.is_open()) my_list[i].first->write_to_file(file);
     else return 1;
     file.close();
   
@@ -208,23 +220,30 @@ bool controller::save_D(std::string pref){
 
   std::fstream file;
   std::string filename, tmp;
-  for(size_t i=0; i<my_d.size(); ++i){
-    tmp = my_d[i]->block_id;
+
+  //Do local list
+  for(size_t i=0; i<my_list.size(); ++i){
+    tmp = my_list[i].second->block_id;
     //They might have different blocks
-    if(my_d[i]->tag == LOCAL) filename = pref+"D_"+tmp +"_"+mk_str(my_d[i]->time[0]) + "_"+mk_str(my_d[i]->time[1])+"_"+mk_str(my_d[i]->space[0])+"_"+mk_str(my_d[i]->space[1])+".dat";
-    else if(my_d[i]->tag == BOUNCE_AV) continue;
+    filename = pref+"D_"+tmp +"_"+mk_str(my_list[i].second->time[0]) + "_"+mk_str(my_list[i].second->time[1])+"_"+mk_str(my_list[i].second->space[0])+"_"+mk_str(my_list[i].second->space[1])+".dat";
     //Don't bother saving these...
-    else if(my_d[i]->tag == GLOBAL) filename = pref+"D_"+tmp +"_"+mk_str(my_d[i]->time[0]) + "_"+mk_str(my_d[i]->time[1])+"_global.dat";
     
     file.open(filename.c_str(),std::ios::out|std::ios::binary|std::ios::in|std::ios::trunc);
-    if(file.is_open()) my_d[i]->write_to_file(file);
+    if(file.is_open()) my_list[i].second->write_to_file(file);
     else return 1;
     file.close();
   
   }
 
+  //Save global D from root only
+  int d_global = d_specials.size()-1;
+  if(mpi_info.rank == 0 ){
+    filename = pref+"D_"+tmp +"_"+mk_str(d_specials[d_global]->time[0]) + "_"+mk_str(d_specials[d_global]->time[1])+"_global.dat";
+    file.open(filename.c_str(),std::ios::out|std::ios::binary|std::ios::in|std::ios::trunc);
+    if(file.is_open()) d_specials[d_global]->write_to_file(file);
+    else return 1;
+    file.close();
+  }
   return 0;
-
-
 }
 

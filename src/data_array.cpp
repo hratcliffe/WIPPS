@@ -16,6 +16,7 @@
 #include <limits.h>
 #include <fftw3.h>
 #include <cmath>
+#include <cstring>
 #include "support.h"
 #include "my_array.h"
 #include "data_array.h"

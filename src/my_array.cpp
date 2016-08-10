@@ -12,7 +12,10 @@
 #include <iomanip>
 #include <cstdlib>
 #include <cmath>
+#include <limits>
+#include <cstring>
 #include <numeric>
+#include <algorithm>
 #include "support.h"
 #include "my_array.h"
 #include "data_array.h"

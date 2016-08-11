@@ -130,8 +130,13 @@ int reader::read_data(data_array &my_data_in, int time_range[3], int space_range
 
   sdf_read_blocklist(handle);
 
+  std::string grid_name = "grid";
+  if(current_block_is_accum()) grid_name = "grid_accum";
+  
+  std::cout<<this->block_id<<" "<<grid_name<<'\n';
+  
   //first we open first file and do grids.
-  block = sdf_find_block_by_id(handle, "grid");
+  block = sdf_find_block_by_id(handle, grid_name.c_str());
   handle->current_block = block;
 
   //checks type is plain i/e/ even gridded mesh
@@ -142,14 +147,16 @@ int reader::read_data(data_array &my_data_in, int time_range[3], int space_range
 
   if(block->datatype != my_sdf_type){
     //Axis type doesn't match expected, we'll get nonsense
-    my_print("Wrong data type detected. Grids will be corrupt", mpi_info.rank);
+    my_print("Wrong data type detected. Converting grids", mpi_info.rank);
   }
 
   for(size_t i=0; i< my_data_in.get_dims()-1; i++){
     ax_ptr = my_data_in.get_axis(i, len);
 
     // Mostly c++ way
-    std::copy((my_type *) block->grids[i], (my_type *) block->grids[i] + len, ax_ptr);
+    if(block->datatype != my_sdf_type) std::copy((other_type *) block->grids[i], (other_type *) block->grids[i] + len, ax_ptr);
+    else std::copy((my_type *) block->grids[i], (my_type *) block->grids[i] + len, ax_ptr);
+    //We assume if the type does not match then it's the other of double or float
     //Get space axes
   }
   bool simple_slice=false;
@@ -234,14 +241,18 @@ int reader::read_data(data_array &my_data_in, int time_range[3], int space_range
 
     }
     else{
-      ax_block = sdf_find_block_by_id(handle, "grid_accum");
+      ax_block = sdf_find_block_by_id(handle, grid_name.c_str());
       handle->current_block = ax_block;
       sdf_read_data(handle);
 
       rows = ax_block->dims[block->ndims-1];
       if(total_reads + rows >= time_range[2]) rows = time_range[2]- total_reads;
       //don't read more than time[2] rows
-      if(ax_ptr) std::copy((my_type *) ax_block->grids[1], (my_type *) ax_block->grids[1] + rows, ax_ptr +total_reads);
+      //if(ax_ptr) std::copy((my_type *) ax_block->grids[1], (my_type *) ax_block->grids[1] + rows, ax_ptr +total_reads);
+      if(ax_ptr){
+        if(ax_block->datatype != my_sdf_type) std::copy((other_type *) ax_block->grids[1], (other_type *) ax_block->grids[1] + rows, ax_ptr+total_reads);
+        else std::copy((my_type *) ax_block->grids[1], (my_type *) ax_block->grids[1] + rows, ax_ptr+total_reads);
+      }
       //Copy time grid out
       
       if(simple_slice){

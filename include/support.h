@@ -26,6 +26,7 @@
 #define ADD_FFTW(x) fftwf_ ## x /**< Add the correct FFTW library prefix to function/variable names */
 #define cplx_type ADD_FFTW(complex) /**< Suitable complex type for FFTW work*/
 #define my_type float /**< Input data type*/
+#define other_type double/**< The other of double and float*/
 #define my_sdf_type SDF_DATATYPE_REAL4 /**< SDF type matching \ref my_type*/
 #define MPI_MYTYPE MPI_FLOAT /**< MPI type matching \ref my_type*/
 
@@ -34,6 +35,7 @@
 #define ADD_FFTW(x) fftw_ ## x /**< Add the correct FFTW library prefix to function/variable names */
 #define cplx_type ADD_FFTW(complex)/**< Suitable complex type for FFTW work*/
 #define my_type double /**< Input data type*/
+#define other_type float/**< The other of double and float*/
 #define my_sdf_type SDF_DATATYPE_REAL8 /**< SDF type matching \ref my_type*/
 #define MPI_MYTYPE MPI_DOUBLE /**< MPI type matching \ref my_type*/
 

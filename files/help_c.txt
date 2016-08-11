@@ -2,7 +2,7 @@
 -f <string> filepath (prepended to in, out and deck.status files)
 -in <string> input file name
 -out <string> Output file name. If absent [inputfile] is used with trim inserted before extension
--lims <int int ...> The limits to cutout. Should be one pair per dimension. Pairs except the last are assumed to be wavenumber and normed to ..., the last pair are normed to omega_ce. Normalising constants are taken from [filepath]deck.status> Decimals must start with a number, not '.'
+-lims <int int ...> The limits to cutout. Should be one pair per dimension. Pairs except the last are assumed to be wavenumber and normed to ..., the last pair are normed to omega_ce. Normalising constants are taken from [filepath]deck.status>
 
 Sample usage:
 make utils TYPE=float

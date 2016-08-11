@@ -60,10 +60,10 @@ int main(int argc, char *argv[]){
     //Set cutout limits on FFT
     int n_dims = FFT_in.get_dims();
 
-/*    for(int i=0; i< my_args.limits.size(); i++){
+    for(int i=0; i< my_args.limits.size(); i++){
       std::cout<<my_args.limits[i]<<' ';
     }
-    std::cout<<my_args.file_prefix<<" "<<my_args.file_in<<" "<<my_args.file_out<<'\n';*/
+    std::cout<<my_args.file_prefix<<" "<<my_args.file_in<<" "<<my_args.file_out<<'\n';
     
     if(my_args.limits.size() !=2*n_dims){
       my_print("******Please supply 2 limits per dimension*****", mpi_info.rank);
@@ -113,7 +113,7 @@ cutout_args cutout_process_command_line(int argc, char *argv[]){
     if(strcmp(argv[i], "-in")==0 && i < argc-1) values.file_in = argv[i+1];
     if(strcmp(argv[i], "-out")==0 && i < argc-1) values.file_out = argv[i+1];
     if(strcmp(argv[i], "-lims")==0 && i < argc-1){
-      while(i<argc-1 && (argv[i+1][0]!= '-'  || (argv[i+1][1] >='0' && argv[i+1][1] <='9'))){
+      while(i<argc-1 && (argv[i+1][0]!= '-'  || ((argv[i+1][1] >='0' && argv[i+1][1] <='9') || argv[i+1][1] =='.'))){
         //Checks if next argument is a new flag, but allows negative numbers
         values.limits.push_back(atof(argv[i+1]));
         i++;

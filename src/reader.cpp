@@ -132,9 +132,7 @@ int reader::read_data(data_array &my_data_in, int time_range[3], int space_range
 
   std::string grid_name = "grid";
   if(current_block_is_accum()) grid_name = "grid_accum";
-  
-  std::cout<<this->block_id<<" "<<grid_name<<'\n';
-  
+    
   //first we open first file and do grids.
   block = sdf_find_block_by_id(handle, grid_name.c_str());
   handle->current_block = block;

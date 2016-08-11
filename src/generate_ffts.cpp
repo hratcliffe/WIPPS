@@ -78,7 +78,10 @@ int main(int argc, char *argv[]){
   size_t n_dims;
   std::vector<size_t> dims;
   err = my_reader->read_dims(n_dims, dims);
-  if(err) safe_exit();
+  if(err){
+    my_print("File read error, aborting", mpi_info.rank);
+    safe_exit();
+  }
   int space_dim = dims[0];
   
   controller * contr;
@@ -122,8 +125,8 @@ int main(int argc, char *argv[]){
 
     my_print("FFT returned err_state " + mk_str(err), mpi_info.rank);
 
-    contr->add_spectrum(space_dim, DEFAULT_N_ANG, true);
-    contr->get_current_spectrum()->make_test_spectrum(cmd_line_args.time, my_space);
+//    contr->add_spectrum(space_dim, DEFAULT_N_ANG, true);
+//    contr->get_current_spectrum()->make_test_spectrum(cmd_line_args.time, my_space);
     
     //Set cutout limits on FFT
     int n_dims = dat.get_dims();
@@ -133,8 +136,8 @@ int main(int argc, char *argv[]){
       lims.push_back(0.002);
     }
     if(n_dims >=2){
-      lims.push_back(-0.002);
-      lims.push_back(0.002);
+      lims.push_back(-0.0015);
+      lims.push_back(0.0015);
       lims.push_back(-5.0*my_const.omega_ce);
       lims.push_back(5.0*my_const.omega_ce);
     
@@ -157,7 +160,7 @@ int main(int argc, char *argv[]){
   //-----------------end of per_proc loop---- Now controller holds one spectrum and d per block
   MPI_Barrier(MPI_COMM_WORLD);
   
-  contr->save_spectra(cmd_line_args.file_prefix);
+  //contr->save_spectra(cmd_line_args.file_prefix);
 
   logfile.close();
   //Cleanup objects etc

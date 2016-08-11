@@ -30,16 +30,18 @@ const=0
 WHILE (~EOF(filenum) AND ~(strcmp(tag, str, sz))) DO BEGIN
   READF, filenum, str
   nv=parse_name_val(str)
-  if((SIZE(nv))[1] LT 2) THEN CONTINUE
+  IF(~ ISA(nv, 'LIST')) THEN CONTINUE
+  IF((SIZE(nv))[1] LT 2) THEN CONTINUE
+
   IF( ISA(const, 'struct')) THEN BEGIN
-    const = create_struct(const, nv[0], DOUBLE(nv[1]))
+    const = create_struct(const, nv[0], nv[1])
   ENDIF ELSE BEGIN
-    const = create_struct(nv[0], DOUBLE(nv[1])) 
+    const = create_struct(nv[0], nv[1])
   ENDELSE
 
 ENDWHILE
 
-close, 1
+close, filenum
 RETURN, const
 
 END

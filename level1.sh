@@ -5,8 +5,8 @@
 
 #These generally constant on one run-----------------------------------
 program='./generate_ffts'
-rows=500
-#Number of times
+rows=512
+#Number of times Power of 2 means better FFT performance
 fil_pref=$1
 #File path
 n_files=10
@@ -19,22 +19,24 @@ allblocks=('ay' 'az' 'aby' 'abz')
 #Which blocks to do
 start_stride=10
 #First start with file 0, then file 0+start_stride etc
-end_num=101
+end_num=111
+#Last file to start with (i.e. uses files up to end_num+n_files)
 
 start=0
 n_blocks=${#allblocks[@]}
 
-block_ctr=0
-while [ $block_ctr -lt $n_blocks ]; do
-	block=${allblocks[$block_ctr]}
-	current_start=$start
-	while [ $current_start -lt $end_num ]; do
-	  allstring="$program -n $n_space -start $current_start -end $(($current_start+$n_files)) -rows $rows -f $fil_pref -block $block"
-	  echo $allstring
-	  let current_start=current_start+start_stride
-	  $allstring
+current_start=$start
+
+while [ $current_start -lt $end_num ]; do
+	block_ctr=0
+	while [ $block_ctr -lt $n_blocks ]; do
+		block=${allblocks[$block_ctr]}
+		allstring="$program -n $n_space -start $current_start -end $(($current_start+$n_files)) -rows $rows -f $fil_pref -block $block"
+		echo $allstring
+		$allstring
+		let block_ctr=block_ctr+1
 	done
-	let block_ctr=block_ctr+1
+	let current_start=current_start+start_stride
 done
 
 

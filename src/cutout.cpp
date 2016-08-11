@@ -112,8 +112,9 @@ cutout_args cutout_process_command_line(int argc, char *argv[]){
     if(strcmp(argv[i], "-f")==0 && i < argc-1) values.file_prefix = argv[i+1];
     if(strcmp(argv[i], "-in")==0 && i < argc-1) values.file_in = argv[i+1];
     if(strcmp(argv[i], "-out")==0 && i < argc-1) values.file_out = argv[i+1];
-    if(strcmp(argv[i], "-lim")==0 && i < argc-1){
+    if(strcmp(argv[i], "-lims")==0 && i < argc-1){
       while(i<argc-1 && (argv[i+1][0]!= '-'  || (argv[i+1][1] >='0' && argv[i+1][1] <='9'))){
+        //Checks if next argument is a new flag, but allows negative numbers
         values.limits.push_back(atof(argv[i+1]));
         i++;
       }

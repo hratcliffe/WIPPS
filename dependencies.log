@@ -74,3 +74,56 @@ obj/main_support.o:\
 src/main_support.cpp\
   include/support.h\
   include/main_support.h\
+
+obj/main.o:\
+src/main.cpp\
+  include/main.h\
+  include/support.h\
+  include/reader.h\
+  include/controller.h\
+  include/plasma.h\
+  include/my_array.h\
+  include/d_coeff.h\
+  include/spectrum.h\
+  include/data_array.h\
+  include/tests.h\
+  include/main_support.h\
+
+obj/main_growth.o:\
+src/main_growth.cpp\
+  include/support.h\
+  include/main_support.h\
+  include/reader.h\
+  include/controller.h\
+  include/plasma.h\
+  include/my_array.h\
+  include/d_coeff.h\
+  include/spectrum.h\
+  include/data_array.h\
+  include/non_thermal.h\
+
+obj/generate_ffts.o:\
+src/generate_ffts.cpp\
+  include/main.h\
+  include/support.h\
+  include/reader.h\
+  include/controller.h\
+  include/plasma.h\
+  include/data_array.h\
+  include/my_array.h\
+  include/d_coeff.h\
+  include/spectrum.h\
+  include/main_support.h\
+
+obj/cutout.o:\
+src/cutout.cpp\
+  include/main.h\
+  include/support.h\
+  include/reader.h\
+  include/data_array.h\
+  include/my_array.h\
+  include/d_coeff.h\
+  include/controller.h\
+  include/plasma.h\
+  include/spectrum.h\
+  include/main_support.h\

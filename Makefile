@@ -36,7 +36,7 @@ SOURCE := $(INCLS:.h=.cpp)
 OBJS := $(SOURCE:.cpp=.o)
 #make lists of source and object files from INCLS list
 MAINSOURCE := main.cpp main_growth.cpp
-UTILSSOURCE := generate_ffts.cpp
+UTILSSOURCE := generate_ffts.cpp cutout.cpp
 #List of source files containing a main.
 #Valid program contains one and only one of these!
 #Add a rule to the Main rules section to build a different one
@@ -104,6 +104,7 @@ MAINSOURCE := $(addprefix $(SRCDIR)/, $(MAINSOURCE))
 UTILS :=$(UTILSSOURCE:.cpp=)
 UTILSOBJS := $(UTILSSOURCE:.cpp=.o)
 UTILSOBJS := $(addprefix $(OBJDIR)/, $(UTILSOBJS))
+UTILSSOURCE := $(addprefix $(SRCDIR)/, $(UTILSSOURCE))
 
 #We need these for clean etc
 INCLS := $(addprefix include/, $(INCLS))
@@ -168,9 +169,10 @@ echo_deps :
 	@touch dependencies.log
 	@rm dependencies.log
   #touch so must exist before rm
-	@for var in $(SOURCE); do $(CC) $(INCLUDE) $(DEPSFLAGS) -MM $$var |fmt -1 >> dependencies.log 2>&1;\
+	@for var in $(SOURCE) $(MAINSOURCE) $(UTILSSOURCE); do $(CC) $(INCLUDE) $(DEPSFLAGS) -MM $$var |fmt -1 >> dependencies.log 2>&1;\
     done
   #-M dumps dependencies to file, -MM excludes system headers;
+  #Recursive dependencies are also resolved
 	@cp dependencies.log dependencies.log.bak
 	@./process_deps.sh
   #post processing to fix up lines and remove irrelevant deps
@@ -198,7 +200,7 @@ list:
 
 #Refresh dependencies before building the tarball
 tar: dependencies.log
-	tar --no-recursion -cvzf Source.tgz $(SOURCE) $(INCLS) $(MAINSOURCE) ./files/* Makefile redox.sh process_deps.sh dependencies.log
+	tar --no-recursion -cvzf Source.tgz $(SOURCE) $(INCLS) $(MAINSOURCE) $(UTILSSOURCE) ./files/* Makefile redox.sh process_deps.sh dependencies.log
 
 clean:
 	@rm -f main $(UTILS) $(OBJS) $(MAINOBJS)

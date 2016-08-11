@@ -153,15 +153,17 @@ setup_args process_command_line(int argc, char *argv[]){
   return values;
 }
 
-void print_help(){
+void print_help(char code){
 /** \brief Print command line help
 *
-*Prints contents of halp_file from rank zero and calls safe exit.
+*Prints contents of halp_file from rank zero and calls safe exit. Input single character utility name code to get specific help (assumed to be in halp_file_[c]
 */
   std::ifstream halp;
   
-  halp.open(halp_file);
-  if(mpi_info.rank == 0){
+  std::string file = halp_file;
+  if(code !=0) file = append_into_string(file, "_"+std::string(1, code));
+  halp.open(file);
+  if(mpi_info.rank == 0 && halp){
     std::cout<<"Command line options: "<<std::endl;
     std::cout<<halp.rdbuf();
     std::cout<<'\n';
@@ -277,6 +279,10 @@ void get_deck_constants(std::string file_prefix){
   std::string name, val;
   bool parse_err;
   float val_f;
+  
+  my_const.omega_ce = 0;
+  my_const.omega_pe = 0;
+  
   for(size_t i=0; i< lines.size(); i++){
 
     parse_err = parse_name_val(lines[i], name, val);
@@ -386,6 +392,21 @@ void my_print(std::fstream * handle, std::string text, int rank, int rank_to_wri
 
   }
 
+}
+
+std::string append_into_string(const std::string &in, const std::string &infix){
+/** \brief Insert infix in string
+*
+*Inserts the infix string into in BEFORE the first file extension. If no '.' is found in string, append to end. First char being . is not an extension.
+*/
+  size_t start = in.substr(1, in.size()).find_first_of('.') +1;
+  std::string in_copy = in;
+  if(start !=std::string::npos){
+    in_copy.insert(start, infix);
+    return in_copy;
+  }else{
+    return in+infix;
+  }
 }
 
 std::string mk_str(int i){

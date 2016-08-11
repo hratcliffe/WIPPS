@@ -11,6 +11,8 @@
 
 #include <stdlib.h>
 #include <vector>
+#include <fftw3.h> //Include here so propagates to anywhere used
+
 #include "my_array.h"
 
 /** \brief Extended my_array class including axes

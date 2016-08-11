@@ -14,7 +14,6 @@
 #include <algorithm>
 #include <complex.h>
 #include <limits.h>
-#include <fftw3.h>
 #include <cmath>
 #include <cstring>
 #include "support.h"

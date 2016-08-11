@@ -5,11 +5,13 @@ obj/
 main
 read_test
 growth
+generate_ffts
+cutout
 test_reading_code.cpp
 Code.xcworkspace
 *.txt
 Derivations.*
-main.dSYM
+*.dSYM
 html/
 latex/
 profiler/
@@ -18,3 +20,5 @@ profiler/
 *.log
 files/l1/
 files/2dtest/
+callgrind*
+*.tgz

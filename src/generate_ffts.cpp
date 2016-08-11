@@ -24,11 +24,9 @@
 #include "reader.h"
 #include "controller.h"
 #include "plasma.h"
-#include "my_array.h"
 #include "data_array.h"
 #include "d_coeff.h"
 #include "spectrum.h"
-#include "tests.h"
 #include "main_support.h"
 
 deck_constants my_const;/**< Physical constants*/
@@ -138,8 +136,8 @@ int main(int argc, char *argv[]){
     if(n_dims >=2){
       lims.push_back(-0.0015);
       lims.push_back(0.0015);
-      lims.push_back(-5.0*my_const.omega_ce);
-      lims.push_back(5.0*my_const.omega_ce);
+      lims.push_back(-3.0*my_const.omega_ce);
+      lims.push_back(3.0*my_const.omega_ce);
     
     }
     //Construct filename. Since the MPI is using block-wise domain decomposition, different processors can't overlap on blocks

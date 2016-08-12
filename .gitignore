@@ -7,6 +7,7 @@ read_test
 growth
 generate_ffts
 cutout
+FFT_to_spectrum
 test_reading_code.cpp
 Code.xcworkspace
 *.txt

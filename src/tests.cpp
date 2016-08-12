@@ -1534,7 +1534,7 @@ int test_entity_spectrum::basic_tests1(){
 
   /** Check this test spectrum makes sense \todo HOW????*/
 
-  test_contr->get_current_spectrum()->make_test_spectrum(tim_in, space_in, FUNCTION_DELTA);
+  test_contr->get_current_spectrum()->make_test_spectrum(FUNCTION_DELTA);
   //Check angle distrib integrates to 1 for each case
   //NOTE we can only do this if MIN_ANG is either 0 or is - MAX_ANG. otherwise we're into erf and bunk
   bool is_symmetric=false, is_zero = false;
@@ -1553,12 +1553,12 @@ int test_entity_spectrum::basic_tests1(){
     }
     
     total_error = integrator(angle_data, len, d_angle);
-    test_contr->get_current_spectrum()->make_test_spectrum(tim_in, space_in, FUNCTION_GAUSS);
+    test_contr->get_current_spectrum()->make_test_spectrum(FUNCTION_GAUSS);
     for(size_t i=0; i<len; i++) *(angle_data + i) = test_contr->get_current_spectrum()->get_g_element(0, i);
 
     total_error += integrator(angle_data, len, d_angle);
 
-    test_contr->get_current_spectrum()->make_test_spectrum(tim_in, space_in, FUNCTION_ISO);
+    test_contr->get_current_spectrum()->make_test_spectrum(FUNCTION_ISO);
     for(size_t i=0; i<len; i++) *(angle_data + i) = test_contr->get_current_spectrum()->get_g_element(0, i);
     total_error += integrator(angle_data, len, d_angle);
     
@@ -1662,7 +1662,7 @@ int test_entity_spectrum::albertGs_tests(){
     return err;
   }
 
-  test_contr->get_current_spectrum()->make_test_spectrum(tim_in, space_in, FUNCTION_GAUSS);
+  test_contr->get_current_spectrum()->make_test_spectrum(FUNCTION_GAUSS);
   
   my_type om_min, om_max, x_min, x_max, om_peak;
   om_min = 12000.0;
@@ -1846,7 +1846,7 @@ int test_entity_levelone::basic_tests(){
   test_bed->report_info("FFT returned err_state " + mk_str(err2));
 
   test_contr->add_spectrum(space_dim, DEFAULT_N_ANG, true);
-  test_contr->get_current_spectrum()->make_test_spectrum(time_in, space_in);
+  test_contr->get_current_spectrum()->make_test_spectrum();
   
   int n_dims = dat.get_dims();
   std::vector<my_type> lims;
@@ -1929,7 +1929,7 @@ int test_entity_levelone::twod_tests(){
   test_bed->report_info("FFT returned err_state " + mk_str(err2));
 
   test_contr->add_spectrum(space_dim, DEFAULT_N_ANG, true);
-  test_contr->get_current_spectrum()->make_test_spectrum(time_in, space_in);
+  test_contr->get_current_spectrum()->make_test_spectrum();
   
   int n_dims = dat.get_dims();
   std::vector<my_type> lims;

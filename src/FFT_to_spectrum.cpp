@@ -58,13 +58,15 @@ int main(int argc, char *argv[]){
     return 0;
   }
 
-  size_t Bx_ref = 1.0*my_const.omega_ce;
-  if(data_in.Bx_ref != 0.0 ) Bx_ref = data_in.Bx_ref;
+  size_t B_ref = 0.0;
+  if(data_in.B_ref != 0.0) B_ref = data_in.B_ref;
+  else B_ref = my_const.omega_ce * me/std::abs(q0);
+  //Use reference B from file if non-zero, else use deck constants
   
   size_t k_len = data_in.get_dims(0);//K_x length
   contr.add_spectrum(k_len, my_args.n_ang, (my_args.ang != FUNCTION_NULL));
   
-  contr.set_plasma_B0(Bx_ref);
+  contr.set_plasma_B0(B_ref);
   contr.get_current_spectrum()->generate_spectrum(data_in, my_args.fuzz, my_args.ang);
   
   std::fstream outfile;

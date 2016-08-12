@@ -609,17 +609,27 @@ template<typename T> T interpolate(T* axis, T* vals, T target, int pts){
 template float interpolate(float*, float*, float, int);
 template double interpolate(double*, double*, double, int);
 
-my_type get_Bx_ref(setup_args args_in){
-/** Read reference B_x from the same files*/
-  char block_id[ID_SIZE] = "bx";
-
-  reader bx_reader = reader(args_in.file_prefix, block_id);
+my_type get_ref_Bx(std::string file_prefix, int space_in[2], int time_0, bool is_acc){
+/** Read reference B_x from the specfied file prefix as given, dump number time_0*/
+  my_print("Getting ref B");
+  char block_id[ID_SIZE];
+  if(!is_acc) strcpy(block_id, "bx");
+  else strcpy(block_id, "abx");
+  
+  reader bx_reader = reader(file_prefix, block_id);
   //We use this to get the local average B field
-  int bx_times[2] = {0, 1};
-  
-  data_array bx = data_array(args_in.space[1] - args_in.space[0], 1);
-  
-  bx_reader.read_data(bx, bx_times, args_in.space);
+  int bx_times[3] = {time_0, time_0+1, 1};
+  //use specified file and read one row
+  size_t n_dims;
+  std::vector<size_t> dims;
+  bool err = bx_reader.read_dims(n_dims, dims);
+  if(err) return 0.0;
 
-  return bx.avval();
+  data_array bx = data_array(dims[0], 1);
+  if(!bx.is_good()) return 0.0;
+  
+  err = bx_reader.read_data(bx, bx_times, space_in);
+  
+  if(!err) return bx.avval();
+  else return 0.0;
 }

@@ -1799,10 +1799,6 @@ int test_entity_levelone::setup(){
     n_tims = time_in[2];
   }
 
-  int my_space[2];
-  my_space[0] = space_in[0];
-  my_space[1] = space_in[1];
-
   size_t n_dims;
   std::vector<size_t> dims;
   int err2 = my_reader->read_dims(n_dims, dims);
@@ -1841,12 +1837,15 @@ int test_entity_levelone::basic_tests(){
   if(!dat_fft.is_good()){
     return TEST_FATAL_ERR;
   }
+  dat.B_ref = get_ref_Bx(file_prefix, space_in, 1);
+  //Use first file. 0th accumulator is perhaps broken
   err2 = dat.fft_me(dat_fft);
 
   test_bed->report_info("FFT returned err_state " + mk_str(err2));
 
+  test_contr->set_plasma_B0(dat.B_ref);
   test_contr->add_spectrum(space_dim, DEFAULT_N_ANG, true);
-  test_contr->get_current_spectrum()->make_test_spectrum();
+  test_contr->get_current_spectrum()->generate_spectrum(dat_fft);
   
   int n_dims = dat.get_dims();
   std::vector<my_type> lims;

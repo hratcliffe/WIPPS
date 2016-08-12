@@ -111,6 +111,7 @@ int main(int argc, char *argv[]){
   err = my_reader.read_dims(n_dims, dims);
   if(err) safe_exit();
   int space_dim = dims[0];
+  /* This replaces any -1 in space input with suitable sizes*/
   
   controller contr = controller(cmd_line_args.file_prefix);
 
@@ -125,7 +126,7 @@ int main(int argc, char *argv[]){
 
     data_array dat = data_array(space_dim, n_tims);
 
-    if(!dat.is_good() || !bx.is_good()){
+    if(!dat.is_good()){
       my_print("Data array allocation failed. Aborting.", mpi_info.rank);
       return 0;
     }
@@ -136,7 +137,8 @@ int main(int argc, char *argv[]){
     if(err == 2) n_tims = dat.get_dims(1);
     //Check if we had to truncate data array...
     
-    dat.Bx_ref = get_Bx_ref(cmd_line_args);
+    dat.B_ref = get_ref_Bx(cmd_line_args.file_prefix, cmd_line_args.space, cmd_line_args.time[0] == 0 ? cmd_line_args.time[0] :1);
+    //Get ref B using specfied file but skip 1st ones as they seem broken
     data_array dat_fft = data_array(space_dim, n_tims);
   
     if(!dat_fft.is_good()){
@@ -151,7 +153,7 @@ int main(int argc, char *argv[]){
 
     my_print("FFT returned err_state " + mk_str(err), mpi_info.rank);
     
-    contr.set_plasma_B0(dat.Bx_ref);
+    contr.set_plasma_B0(dat.B_ref);
     contr.add_spectrum(space_dim, DEFAULT_N_ANG, true);
 
     contr.get_current_spectrum()->make_test_spectrum();

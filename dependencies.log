@@ -132,3 +132,8 @@ obj/FFT_to_spectrum.o:\
 src/FFT_to_spectrum.cpp\
 include/support.h\
   include/main_support.h\
+  include/data_array.h\
+  include/my_array.h\
+  include/controller.h\
+  include/plasma.h\
+  include/spectrum.h\

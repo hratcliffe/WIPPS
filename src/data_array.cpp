@@ -32,6 +32,7 @@ void data_array::construct(){
   time[0]=0; time[1]=1;
   space[0]=0; space[1]=1;
   memset((void *) block_id, 0, ID_SIZE*sizeof(char));
+  B_ref = 0;
   
 }
 
@@ -323,6 +324,13 @@ IMPORTANT: the VERSION specifier links output files to code. If modifying output
 
   size_t ftr_start = next_location;
 
+  next_location += sizeof(my_type)*3 + sizeof(size_t)*2 + sizeof(size_t);
+  file.write((char*) & next_location, sizeof(size_t));
+  //Position of next section
+  file.write((char *)time, sizeof(my_type)*2);
+  file.write((char *)space, sizeof(size_t)*2);
+  file.write((char *) &B_ref, sizeof(my_type));
+
   next_location += sizeof(char)*ID_SIZE + sizeof(size_t);
   file.write((char*) & next_location, sizeof(size_t));
   //Position of next section
@@ -376,6 +384,13 @@ bool data_array::write_section_to_file(std::fstream &file, std::vector<my_type> 
 
   size_t ftr_start = next_location;
   //Start of ftr means where to start reading block, i.e. location of the next_location tag
+
+  next_location += sizeof(my_type)*3 + sizeof(size_t)*2 + sizeof(size_t);
+  file.write((char*) & next_location, sizeof(size_t));
+  //Position of next section
+  file.write((char *) time, sizeof(my_type)*2);
+  file.write((char *) space, sizeof(size_t)*2);
+  file.write((char *) &B_ref, sizeof(my_type));
 
   next_location += sizeof(char)*ID_SIZE + sizeof(size_t);
   file.write((char*) & next_location, sizeof(size_t));
@@ -451,7 +466,15 @@ bool data_array::read_from_file(std::fstream &file, bool no_version_check){
 
 //  file.seekg(-1*sizeof(size_t), file.end);
 //  file.read((char*) &end_block, sizeof(size_t));
-  //First read the block ID
+
+  //Position of next section
+  file.read((char *) time, sizeof(my_type)*2);
+  file.read((char *) space, sizeof(size_t)*2);
+  file.read((char *) &B_ref, sizeof(my_type));
+
+  file.read((char*) &next_block, sizeof(size_t));
+
+  //Now read the block ID
   char id_in[ID_SIZE];
 //  file.seekg(end_block+sizeof(size_t));
   if(file) file.read(id_in, sizeof(char)*ID_SIZE);
@@ -609,6 +632,7 @@ void data_array::copy_ids( const data_array &src){
   for(size_t i=0; i < 2; ++i) this->time[i] = src.time[i];
   //  std::copy(src->time, src->time + 2, this->time);
   for(size_t i=0; i < 2; ++i) this->space[i] = src.space[i];
+  this->B_ref = src.B_ref;
 }
 
 bool data_array::check_ids( const data_array & src){
@@ -618,7 +642,7 @@ bool data_array::check_ids( const data_array & src){
   if(strcmp(this->block_id, src.block_id) != 0) err =true;
   for(size_t i=0; i< 2; i++) if(src.time[i] != this->time[i]) err=true;
   for(size_t i=0; i < 2; ++i) if(this->space[i] != src.space[i]) err=true;
-
+  err |= this->B_ref != src.B_ref;
   return err;
 }
 

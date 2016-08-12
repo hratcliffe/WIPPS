@@ -1,4 +1,5 @@
-function read_data, filename, is_d=is_d
+function read_data, filename, is_d=is_d, ext=ext
+;The ext keyword is a temporary as some files have additional info in (commit after 3e3b01c)
 
 ;Written for commit ID from dc9e387 to ... FILL IN IF IO CHNAGES....
 
@@ -27,6 +28,20 @@ POINT_LUN, filenum, start_pos
 
 next_block = start_pos
 readu, filenum, next_block
+
+IF(KEYWORD_SET(EXT)) THEN BEGIN
+  ;Read in the time and space fields and the B_ref
+  space_in = [hdr.block_type, hdr.block_type]
+  time_in = [hdr.my_type, hdr.my_type]
+  B_ref = hdr.my_type
+
+  readu, filenum, time_in
+  readu, filenum, space_in
+  readu, filenum, B_ref
+  data=create_struct(data, {time: time_in, space:space_in, B_ref: B_ref})
+readu, filenum, next_block
+
+ENDIF
 
 id_type ='1234567891'
 id_in = id_type

@@ -38,6 +38,7 @@ public:
 
   my_type time[2];/**< Time range over which data are taken*/
   size_t space[2];/**< Space range over which data are taken*/
+  my_type B_ref;/**< Reference average B field by location*/
   data_array();
   data_array(size_t nx, size_t ny=0, size_t nz=0, size_t nt=0);
   data_array(const data_array &src);

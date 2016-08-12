@@ -397,9 +397,9 @@ void my_print(std::fstream * handle, std::string text, int rank, int rank_to_wri
 std::string append_into_string(const std::string &in, const std::string &infix){
 /** \brief Insert infix in string
 *
-*Inserts the infix string into in BEFORE the first file extension. If no '.' is found in string, append to end. First char being . is not an extension.
+*Inserts the infix string into in BEFORE the last file extension. If no '.' is found in string, append to end. First char being . is not an extension.
 */
-  size_t start = in.substr(1, in.size()).find_first_of('.') +1;
+  size_t start = in.substr(1, in.size()).find_last_of('.') +1;
   std::string in_copy = in;
   if(start !=std::string::npos){
     in_copy.insert(start, infix);

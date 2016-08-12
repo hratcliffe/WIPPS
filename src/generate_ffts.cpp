@@ -136,7 +136,7 @@ int main(int argc, char *argv[]){
     if(n_dims >=2){
       lims.push_back(-0.0015);
       lims.push_back(0.0015);
-      lims.push_back(-3.0*my_const.omega_ce);
+      lims.push_back(0.0*my_const.omega_ce);//Negative values just repeat what we had
       lims.push_back(3.0*my_const.omega_ce);
     
     }

@@ -1012,6 +1012,26 @@ my_type my_array::maxval(std::vector<size_t> &ind, size_t offset){
   return *(it);
 
 }
+
+my_type my_array::partial_maxval(std::vector<std::pair<size_t, size_t> > ranges, std::vector<size_t> &ind){
+/** \brief Maximum value over part of range
+*
+* WARNING: this is slow. Perhaps very slow. I'm using routines I have to knock it up quickly. Beware!!!
+*/
+
+  if(ranges.size() != this->n_dims) return std::numeric_limits<my_type>::max();
+
+  my_array tmp = *(this);
+  //Work on a copy
+  for(size_t i=0; i< ranges.size(); i++){
+    tmp.shift(i, -ranges[i].first);
+    tmp.resize(i, (ranges[i].second-ranges[i].first));
+  }
+  my_type val = tmp.maxval(ind);
+  for(size_t i=0; i< ranges.size(); i++) ind[i] +=ranges[i].first;
+  return val;
+
+}
 my_type my_array::avval(){
 /** Find average value of data */
   my_type av = 0.0;

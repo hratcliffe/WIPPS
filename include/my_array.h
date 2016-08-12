@@ -78,6 +78,7 @@ public:
   my_type minval(std::vector<size_t> &ind, size_t offset=0);
   my_type maxval(std::vector<size_t> &ind, size_t offset=0);
   my_type avval();
+  my_type partial_maxval(std::vector<std::pair<size_t, size_t> > ranges,std::vector<size_t> &ind);
 };
 
 #endif /* defined(____my_array__) */

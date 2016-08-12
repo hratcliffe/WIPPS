@@ -741,8 +741,8 @@ int test_entity_get_and_fft::one_d(){
     if(std::abs(std::abs(test_dat_fft.get_axis_element(0,max_index)) - expected_max) > PRECISION){
       err|= TEST_WRONG_RESULT;
       test_bed->report_info("Max freq is "+mk_str(test_dat_fft.get_axis_element(0,max_index))+" ("+mk_str(max_index)+")", 1);
+      both_freqs_correct = false;
     }
-    else both_freqs_correct = false;
 
     max_val = test_dat_fft.maxval(max_pos, max_index+1);
     if(max_pos.size() <1) err |=TEST_WRONG_RESULT;
@@ -750,10 +750,10 @@ int test_entity_get_and_fft::one_d(){
     if(std::abs(std::abs(test_dat_fft.get_axis_element(0,max_index)) - expected_max) > PRECISION){
       err|= TEST_WRONG_RESULT;
       test_bed->report_info("Max freq is "+mk_str(test_dat_fft.get_axis_element(0,max_index))+" ("+mk_str(max_index)+")", 1);
+      both_freqs_correct = false;
     }
-    else both_freqs_correct = false;
     
-    if(!both_freqs_correct) test_bed->report_info("FFT Frequency correct!", 1);
+    if(both_freqs_correct) test_bed->report_info("FFT Frequency correct!", 1);
   }
   //Now size down by 1 element and redo. This checks odd and even total sizes
   {
@@ -780,9 +780,9 @@ int test_entity_get_and_fft::one_d(){
     if( !((test_dat_fft.get_axis_element(0,max_index+1) > sgn*expected_max) && (test_dat_fft.get_axis_element(0,max_index-1) < sgn*expected_max))){
       err|= TEST_WRONG_RESULT;
       test_bed->report_info("Max freq is "+mk_str(test_dat_fft.get_axis_element(0,max_index))+" ("+mk_str(max_index)+")", 1);
+      both_freqs_correct = false;
     }
-    else both_freqs_correct = false;
-
+  
     max_val = test_dat_fft.maxval(max_pos, max_index+1);
     if(max_pos.size() <1) err |=TEST_WRONG_RESULT;
     max_index = max_pos[0];
@@ -790,10 +790,10 @@ int test_entity_get_and_fft::one_d(){
     if(!( (test_dat_fft.get_axis_element(0,max_index+1) > sgn*expected_max) && (test_dat_fft.get_axis_element(0,max_index-1) < sgn*expected_max))){
       err|= TEST_WRONG_RESULT;
       test_bed->report_info("Max freq is "+mk_str(test_dat_fft.get_axis_element(0,max_index))+" ("+mk_str(max_index)+")", 1);
+      both_freqs_correct = false;
     }
-    else both_freqs_correct = false;
     
-    if(!both_freqs_correct) test_bed->report_info("FFT Frequency correct!", 1);
+    if(both_freqs_correct) test_bed->report_info("FFT Frequency correct!", 1);
   }
   
   return err;
@@ -841,15 +841,11 @@ int test_entity_get_and_fft::two_d(){
   if(test_dat_fft.check_ids(test_dat)) err |= TEST_WRONG_RESULT;
   if(err == TEST_PASSED) test_bed->report_info("2D read and FFT reports no error", 1);
   
-//  int shft = test_dat_fft.get_dims(1)/2;
-//  test_dat_fft.shift(1, shft);
-
   int max_index = 0;
   my_type max_val = 0;
   std::vector<size_t> max_pos;
   my_type expected_max = 1.2566371e-4;
   bool both_freqs_correct = true;
-
 
   max_val = test_dat_fft.maxval(max_pos);
 
@@ -859,16 +855,30 @@ int test_entity_get_and_fft::two_d(){
   
   if(std::abs(std::abs(test_dat_fft.get_axis_element(0,max_index)) - expected_max) > PRECISION){
     err|= TEST_WRONG_RESULT;
-    test_bed->report_info("Max freq is "+mk_str(test_dat_fft.get_axis_element(0,max_index))+" ("+mk_str(max_index)+", "+mk_str(max_pos[1])+")", 1);
+    test_bed->report_info("Max wavenum is "+mk_str(test_dat_fft.get_axis_element(0,max_index))+" ("+mk_str(max_index)+", "+mk_str(max_pos[1])+")", 1);
+    both_freqs_correct = false;
   }
-  else both_freqs_correct = false;
+
   if(max_pos[1] != test_dat_fft.get_dims(1)/2){
     err|= TEST_WRONG_RESULT;
     test_bed->report_info("Max freq is "+mk_str(test_dat_fft.get_axis_element(1,max_pos[1]))+" ("+mk_str(max_index)+", "+mk_str(max_pos[1])+")", 1);
+    both_freqs_correct = false;
   }
-  else both_freqs_correct = false;
+
+  std::vector<std::pair<size_t, size_t> > ranges;
+  ranges.push_back(std::make_pair<size_t, size_t>(test_dat_fft.get_dims(0)/2, test_dat_fft.get_dims(0)));
+  ranges.push_back(std::make_pair<size_t, size_t>(0, test_dat_fft.get_dims(1)));
+  //Now check in upper half. I know the test data is assymetric. 
+
+  max_val = test_dat_fft.partial_maxval(ranges, max_pos);
+  if(std::abs(std::abs(test_dat_fft.get_axis_element(0,max_pos[0])) - expected_max) > PRECISION){
+    err|= TEST_WRONG_RESULT;
+    test_bed->report_info("Max wavenum is "+mk_str(test_dat_fft.get_axis_element(0,max_pos[0]))+" ("+mk_str(max_pos[0])+", "+mk_str(max_pos[1])+")", 1);
+    both_freqs_correct = false;
+  }
+
   
-  if(!both_freqs_correct) test_bed->report_info("FFT Frequency correct!", 1);
+  if(both_freqs_correct) test_bed->report_info("FFT Frequency correct!", 1);
   
   std::string filename, time_str;
   int err2;

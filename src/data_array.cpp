@@ -581,20 +581,24 @@ bool data_array::fft_me(data_array & data_out){
 }
 
 bool data_array::populate_mirror_fastest(my_type * result_in, size_t total_els){
+/** \brief Copy FFTW data into array
 
-//  int total_size=1;
-//  for(int i=0; i< n_dims; i++) total_size*=dims[i];
-
-//  return this->populate_data(result_in, total_els);
-  size_t last_size = dims[0]/2 + 1;
-  size_t num_strides = total_els/dims[0];
-  //std::cout<<total_els<<" "<<last_size<<" "<<dims[0]<<" "<<num_strides<<" "<<this->get_total_elements()<<'\n';
+*
+*For real data an FFT has a redundant half so FFTW returns array od size (dims[0]/2 +1)*dims[...]*dims[n-1] (Note that our first dim is FFTWs last). Since we want all k we have to mirror this to obey H(-f, -g) = H(f, g). Data is assumed unshifted. \todo Which side is negative k?
+*/
+  size_t last_size = floor(dims[0]/2) + 1;
+  size_t num_strides = total_els/dims[0];//Always integer
  
   for(size_t i=0; i< num_strides; i++){
-    //std::cout<<i*dims[0]+last_size-1<<" "<<i*dims[0]+last_size-1+last_size<<'\n';
-    std::copy(result_in+ i*last_size, result_in+(i+1)*last_size -1, data+i*dims[0]+last_size-1);
+    //Reverse the result into place (left side)
     std::reverse_copy(result_in+ i*last_size, result_in+(i+1)*last_size-1, data+i*dims[0]+1);
   }
+  //Now fill the redundant side. Zero stays as zero, we flip the rest.
+  std::reverse_copy(data+1, data+last_size, data+last_size-1);
+  for(size_t i=1; i< num_strides; i++){
+      std::reverse_copy(data+i*dims[0]+1, data+i*dims[0]+last_size, data+(num_strides-i)*dims[0]+last_size-1);
+  }
+
   return 0;
 }
 

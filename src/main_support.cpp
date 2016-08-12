@@ -15,6 +15,8 @@
 
 #include "support.h"
 #include "main_support.h"
+#include "data_array.h"
+#include "reader.h"
 
 mpi_info_struc mpi_info = mpi_info_null;/**< MPI data Not const as defined from output of MPI_Init. Use "extern const mpi_info_struc mpi_info;
 " to access elsewhere. This may be terrible, but this doesn't warrant a class, really, come on.*/
@@ -607,3 +609,17 @@ template<typename T> T interpolate(T* axis, T* vals, T target, int pts){
 template float interpolate(float*, float*, float, int);
 template double interpolate(double*, double*, double, int);
 
+my_type get_Bx_ref(setup_args args_in){
+/** Read reference B_x from the same files*/
+  char block_id[ID_SIZE] = "bx";
+
+  reader bx_reader = reader(args_in.file_prefix, block_id);
+  //We use this to get the local average B field
+  int bx_times[2] = {0, 1};
+  
+  data_array bx = data_array(args_in.space[1] - args_in.space[0], 1);
+  
+  bx_reader.read_data(bx, bx_times, args_in.space);
+
+  return bx.avval();
+}

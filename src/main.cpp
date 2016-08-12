@@ -90,13 +90,7 @@ int main(int argc, char *argv[]){
   //Actually do the code...
   my_print("Processing "+mk_str(cmd_line_args.per_proc)+" blocks per core", mpi_info.rank);
 
-  char block_id[ID_SIZE] = "bx";
-
-  reader bx_reader = reader(cmd_line_args.file_prefix, block_id);
-  //We use this to get the local average B field
-  int bx_times[2] = {0, 1};
-  my_type Bx_ref = 0.0;
-
+  char block_id[ID_SIZE];
   strcpy(block_id, cmd_line_args.block.c_str());
 
   reader my_reader = reader(cmd_line_args.file_prefix, block_id);
@@ -130,7 +124,6 @@ int main(int argc, char *argv[]){
     //--------------THIS will slightly slow down some cores to match the slowest. But it makes output easier. Consider removing if many blocks
 
     data_array dat = data_array(space_dim, n_tims);
-    data_array bx = data_array(space_dim, 1);
 
     if(!dat.is_good() || !bx.is_good()){
       my_print("Data array allocation failed. Aborting.", mpi_info.rank);
@@ -138,15 +131,14 @@ int main(int argc, char *argv[]){
     }
 
     err = my_reader.read_data(dat, cmd_line_args.time, my_space);
-    err |= bx_reader.read_data(bx, bx_times, my_space);
     if(err == 1) safe_exit();
 
     if(err == 2) n_tims = dat.get_dims(1);
     //Check if we had to truncate data array...
     
-    Bx_ref = bx.avval();
+    dat.Bx_ref = get_Bx_ref(cmd_line_args);
     data_array dat_fft = data_array(space_dim, n_tims);
-
+  
     if(!dat_fft.is_good()){
       my_print("Data array allocation failed. Aborting.", mpi_info.rank);
       return 0;
@@ -159,7 +151,7 @@ int main(int argc, char *argv[]){
 
     my_print("FFT returned err_state " + mk_str(err), mpi_info.rank);
     
-    contr.set_plasma_B0(Bx_ref);
+    contr.set_plasma_B0(dat.Bx_ref);
     contr.add_spectrum(space_dim, DEFAULT_N_ANG, true);
 
     contr.get_current_spectrum()->make_test_spectrum();

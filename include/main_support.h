@@ -17,5 +17,6 @@ void share_consts();
 void print_help(char code=0);
 void divide_domain(std::vector<size_t>, int space[2], int per_proc, int block_num);
 
+my_type get_ref_Bx( );
 
 #endif

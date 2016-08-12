@@ -8,8 +8,6 @@
 -ang <int> Angular function to generate *D*elta, *G*auss, *I*so (default Delta) N-D data (N, space dims, >1) is then flattened in other dims
 -extr Extract angles from Data (N>1) only. Flatten data to 2 spatial dims and extract angular dependence. Overrides -ang
 
--b_x_file Take B_x local from this file, otherwise the deck.status value is used
-
 Sample usage:
 make utils TYPE=float
 ./FFT_to_spectrum -f ./Run1/ -in FFT_dat -out spect_dat -wave w

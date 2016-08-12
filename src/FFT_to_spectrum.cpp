@@ -59,6 +59,7 @@ int main(int argc, char *argv[]){
   }
 
   size_t Bx_ref = 1.0*my_const.omega_ce;
+  if(data_in.Bx_ref != 0.0 ) Bx_ref = data_in.Bx_ref;
   
   size_t k_len = data_in.get_dims(0);//K_x length
   contr.add_spectrum(k_len, my_args.n_ang, (my_args.ang != FUNCTION_NULL));

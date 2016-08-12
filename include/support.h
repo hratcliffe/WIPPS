@@ -137,6 +137,8 @@ struct mpi_info_struc{
   int n_procs;
 };
 
+const struct mpi_info_struc mpi_info_null = {0, 0};/**< Null MPI struct for single threaded jobs, without having to compile the SDF libraries seperately*/
+
 /** \brief Full refractive index
 *
 *Contains refractive index mu and all derivatives, plus error flag
@@ -201,8 +203,8 @@ struct d_report{
 
 void safe_exit();
 
-void my_print(std::string text, int rank, int rank_to_write=0, bool noreturn=false);
-void my_print(std::fstream * handle, std::string text, int rank, int rank_to_write=0, bool noreturn=false);
+void my_print(std::string text, int rank=0, int rank_to_write=0, bool noreturn=false);
+void my_print(std::fstream * handle, std::string text, int rank=0, int rank_to_write=0, bool noreturn=false);
 
 std::string mk_str(int i);/**<Converts int to string*/
 std::string mk_str(size_t i); /**< Long int to string*/

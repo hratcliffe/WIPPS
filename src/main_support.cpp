@@ -16,7 +16,7 @@
 #include "support.h"
 #include "main_support.h"
 
-mpi_info_struc mpi_info;/**< MPI data Not const as defined from output of MPI_Init. Use "extern const mpi_info_struc mpi_info;
+mpi_info_struc mpi_info = mpi_info_null;/**< MPI data Not const as defined from output of MPI_Init. Use "extern const mpi_info_struc mpi_info;
 " to access elsewhere. This may be terrible, but this doesn't warrant a class, really, come on.*/
 
 extern deck_constants my_const;

@@ -71,7 +71,7 @@ public:
   bool write_to_file(std::fstream &file);
   bool read_from_file(std::fstream &file);
   
-  void make_test_spectrum(int time[2], int space[2],int angle_type=FUNCTION_DELTA, bool two_sided=false, my_type om_ce=17000.0);
+  void make_test_spectrum(int angle_type=FUNCTION_DELTA, bool two_sided=false, my_type om_ce=17000.0);
 
   calc_type get_G1(calc_type omega);
   calc_type get_G2(calc_type omega, calc_type x);

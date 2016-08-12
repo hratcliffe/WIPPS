@@ -161,8 +161,10 @@ int main(int argc, char *argv[]){
     
     contr.set_plasma_B0(Bx_ref);
     contr.add_spectrum(space_dim, DEFAULT_N_ANG, true);
-    contr.get_current_spectrum()->make_test_spectrum(cmd_line_args.time, my_space);
 
+    contr.get_current_spectrum()->make_test_spectrum();
+
+    contr.get_current_spectrum()->generate_spectrum(dat_fft);
     //Now we have some test spectral data we can work with...
 
     contr.add_d(cmd_line_args.d[0], cmd_line_args.d[1]);

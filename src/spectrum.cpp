@@ -480,7 +480,7 @@ bool spectrum::read_from_file(std::fstream &file){
 
 }
 
-void spectrum::make_test_spectrum(int time[2], int space[2],int angle_type, bool two_sided, my_type om_ce){
+void spectrum::make_test_spectrum(int angle_type, bool two_sided, my_type om_ce){
 /** \brief Generate dummy spectrum
 *
 *Makes a basic spectrum object with suitable number of points, and Gaussian(s) centred at fixed k/freq and x value @param time Time range (number of points) @param space Space range (number of points) @param angle_type Function to use for angular distrib @param two_sided Whether to generate symmetric spectrum or one-sided
@@ -492,7 +492,7 @@ void spectrum::make_test_spectrum(int time[2], int space[2],int angle_type, bool
   }
   char id[ID_SIZE] = "ex";
 
-  this->set_ids(time[0], time[1], space[0], space[1], WAVE_WHISTLER, id, angle_type);
+  this->set_ids(0, 1, 0, 1, WAVE_WHISTLER, id, angle_type);
   
   //setup axes
   size_t len0;

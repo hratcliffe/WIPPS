@@ -36,7 +36,7 @@ SOURCE := $(INCLS:.h=.cpp)
 OBJS := $(SOURCE:.cpp=.o)
 #make lists of source and object files from INCLS list
 MAINSOURCE := main.cpp main_growth.cpp
-UTILSSOURCE := generate_ffts.cpp cutout.cpp
+UTILSSOURCE := generate_ffts.cpp cutout.cpp FFT_to_spectrum.cpp
 #List of source files containing a main.
 #Valid program contains one and only one of these!
 #Add a rule to the Main rules section to build a different one
@@ -135,7 +135,7 @@ growth : $(OBJDIR)/main_growth.o $(OBJS)
 #UTILSOBJS := $(UTILSSOURCE:.cpp=.o)
 #UTILSOBJS := $(addprefix $(OBJDIR)/, $(UTILSOBJS))
 utils : $(UTILSOBJS) $(OBJS)
-	@for var in $(UTILSOBJS); do name=$$(basename $$(basename $$var .o )) && echo "Building" $$name && $(CC) $(LFLAGS) $(INCLUDE) $(OBJS) $$var $(LIB) -o $$name;done
+	@for var in $(UTILSOBJS); do name=$$(basename $$(basename $$var .o )) && echo "Building" $$name "....." && $(CC) $(LFLAGS) $(INCLUDE) $(OBJS) $$var $(LIB) -o $$name;done
 #	for var in $(UTILSOBJS); do name=$$(basename $${var%.*}) && echo $$name && $(CC) $(LFLAGS) $(INCLUDE) $(OBJS) $$var $(LIB) -o $$name;done
 
 #====================================================================
@@ -176,7 +176,7 @@ echo_deps :
 	@cp dependencies.log dependencies.log.bak
 	@./process_deps.sh
   #post processing to fix up lines and remove irrelevant deps
-	@sed -i .bak 's,[a-z/_]*\.o,$(OBJDIR)\/&,' dependencies.log
+	@sed -i .bak 's,[a-zA-Z/_]*\.o,$(OBJDIR)\/&,' dependencies.log
   #prepend OBJDIR string
 
 

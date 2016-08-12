@@ -7,8 +7,8 @@ include/my_array.h\
 
 obj/data_array.o:\
 src/data_array.cpp\
-  include/support.h\
-  include/my_array.h\
+include/support.h\
+include/my_array.h\
   include/data_array.h\
 
 obj/d_coeff.o:\
@@ -126,4 +126,9 @@ src/cutout.cpp\
   include/controller.h\
   include/plasma.h\
   include/spectrum.h\
+  include/main_support.h\
+
+obj/FFT_to_spectrum.o:\
+src/FFT_to_spectrum.cpp\
+include/support.h\
   include/main_support.h\

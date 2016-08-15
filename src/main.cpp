@@ -1,9 +1,8 @@
 /** \file main.cpp \brief Main program
 *
-* This should: open a sequence of SDF files using the SDF library and read E and B field data. Fourier transform it. Extract frequency/wavenumber and angular spectra (if possible). Calculate the resulting particle diffusion coefficients using Lyons 1974 a, b, Albert 2005 and such.
-* Depends on the SDF file libraries, the FFTW library, and boost's math for special functions. A set of test arguments is supplied. Call using ./main `<test_pars` to use these.
+* Calculates a diffusion coefficient from data. Data can be either a range of SDF files or a list of FFT or spectrum files, from e.g. supplied generate_ffts utility. The resulting particle diffusion coefficient are calculated using Lyons 1974 a, b, Albert 2005 and such. Note that this makes no sense for E fields!
+* Depends on the SDF file libraries, the FFTW library, and boost's math for special functions. A set of test arguments is supplied. Call using ./main `<test_pars` to use these. Or try ./main -h for argument help
   \author Heather Ratcliffe \date 18/09/2015.
-  \todo Update description
 */
 
 
@@ -43,7 +42,7 @@ tests* test_bed;/**<Test bed for testing */
 
 int main(int argc, char *argv[]){
 /**
-*In theory, these classes and functions should be named well enough that the function here is largely clear. Remains to be seen, eh? \todo Main that starts from FFT or spectrum files
+*In theory, these classes and functions should be named well enough that the function here is largely clear. Remains to be seen, eh?
 *
 */
 
@@ -57,15 +56,16 @@ int main(int argc, char *argv[]){
 
   my_print(std::string("Code Version: ")+ VERSION, mpi_info.rank);
   my_print("Code is running on "+mk_str(mpi_info.n_procs)+" processing elements.", mpi_info.rank);
-
-  //if(mpi_info.rank ==0) std::cout<< &mpi_info<<std::endl;
-  
-  //my_array tmp_array;
-  //tmp_array.tmp_function();
   
   MPI_Barrier(MPI_COMM_WORLD);
 
   setup_args cmd_line_args = process_command_line(argc, argv);
+  std::vector<std::string> file_list;
+  if(cmd_line_args.is_list){
+    file_list = process_filelist(argc, argv);
+    cmd_line_args.per_proc = std::ceil( (float) file_list.size() / (float) mpi_info.n_procs);
+  }
+  
   if(mpi_info.rank == 0) get_deck_constants(cmd_line_args.file_prefix);
   share_consts();
   /** Get constants from deck and share to other procs*/
@@ -83,9 +83,6 @@ int main(int argc, char *argv[]){
   test_bed->run_tests();
   delete test_bed;
 
-//  MPI_Finalize();
-
-//  return 0;
 #else
   //Actually do the code...
   my_print("Processing "+mk_str(cmd_line_args.per_proc)+" blocks per core", mpi_info.rank);
@@ -117,50 +114,80 @@ int main(int argc, char *argv[]){
 
   //---------------- Now we loop over blocks per proc-------
   for(int block_num = 0; block_num<cmd_line_args.per_proc; block_num++){
-
-    divide_domain(dims, my_space, cmd_line_args.per_proc, block_num);
-    space_dim = my_space[1]-my_space[0];
     
-    MPI_Barrier(MPI_COMM_WORLD);
-    //--------------THIS will slightly slow down some cores to match the slowest. But it makes output easier. Consider removing if many blocks
+    data_array dat_fft;
+    
+    if(!cmd_line_args.is_list){
+      divide_domain(dims, my_space, cmd_line_args.per_proc, block_num);
+      space_dim = my_space[1]-my_space[0];
+      
+      MPI_Barrier(MPI_COMM_WORLD);
+      //--------------THIS will slightly slow down some cores to match the slowest. But it makes output easier. Consider removing if many blocks
 
-    data_array dat = data_array(space_dim, n_tims);
+      data_array dat = data_array(space_dim, n_tims);
 
-    if(!dat.is_good()){
-      my_print("Data array allocation failed. Aborting.", mpi_info.rank);
-      return 0;
+      if(!dat.is_good()){
+        my_print("Data array allocation failed. Aborting.", mpi_info.rank);
+        return 0;
+      }
+
+      err = my_reader.read_data(dat, cmd_line_args.time, my_space);
+      if(err == 1) safe_exit();
+
+      if(err == 2) n_tims = dat.get_dims(1);
+      //Check if we had to truncate data array...
+
+      dat.B_ref = get_ref_Bx(cmd_line_args.file_prefix, my_space, cmd_line_args.time[0] == 0 ? cmd_line_args.time[0] :1);
+      //Get ref B using specfied file but skip 1st ones as they seem broken
+      dat_fft = data_array(space_dim, n_tims);
+    
+      if(!dat_fft.is_good()){
+        my_print("Data array allocation failed. Aborting.", mpi_info.rank);
+        return 0;
+      }
+
+      err = dat.fft_me(dat_fft);
+      
+      if(mpi_info.rank ==0) MPI_Reduce(MPI_IN_PLACE, &err, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+      else MPI_Reduce(&err, NULL, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+
+      my_print("FFT returned err_state " + mk_str(err), mpi_info.rank);
+    
     }
-
-    err = my_reader.read_data(dat, cmd_line_args.time, my_space);
-    if(err == 1) safe_exit();
-
-    if(err == 2) n_tims = dat.get_dims(1);
-    //Check if we had to truncate data array...
-    
-    dat.B_ref = get_ref_Bx(cmd_line_args.file_prefix, cmd_line_args.space, cmd_line_args.time[0] == 0 ? cmd_line_args.time[0] :1);
-    //Get ref B using specfied file but skip 1st ones as they seem broken
-    data_array dat_fft = data_array(space_dim, n_tims);
-  
-    if(!dat_fft.is_good()){
-      my_print("Data array allocation failed. Aborting.", mpi_info.rank);
-      return 0;
+    else if(!cmd_line_args.is_spect){
+      //We just read the specified file
+      std::string filename;
+      if(cmd_line_args.per_proc*mpi_info.rank + block_num < file_list.size()){
+        filename = file_list[cmd_line_args.per_proc*mpi_info.rank + block_num];
+        dat_fft = data_array(filename);
+ 
+      }else{
+        continue;
+        //We've run out of files, must have been non-integer division
+      }
     }
+    if(!cmd_line_args.is_spect){
+      contr.set_plasma_B0(dat_fft.B_ref);
+      contr.add_spectrum(space_dim, DEFAULT_N_ANG, true);
 
-    err = dat.fft_me(dat_fft);
+      contr.get_current_spectrum()->make_test_spectrum();
+
+      contr.get_current_spectrum()->generate_spectrum(dat_fft);
+      //Now we have some test spectral data we can work with...
+    }
+    else{
+      std::string filename;
+      if(cmd_line_args.per_proc*mpi_info.rank + block_num < file_list.size()){
+        filename = file_list[cmd_line_args.per_proc*mpi_info.rank + block_num];
+        contr.add_spectrum(filename);
+
+      }else{
+        continue;
+        //We've run out of files, must have been non-integer division
+      }
+    }
+    //Now we have some spectral data, either from sdf files, from an FFt dump or from a spectrum dump
     
-    if(mpi_info.rank ==0) MPI_Reduce(MPI_IN_PLACE, &err, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
-    else MPI_Reduce(&err, NULL, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
-
-    my_print("FFT returned err_state " + mk_str(err), mpi_info.rank);
-    
-    contr.set_plasma_B0(dat.B_ref);
-    contr.add_spectrum(space_dim, DEFAULT_N_ANG, true);
-
-    contr.get_current_spectrum()->make_test_spectrum();
-
-    contr.get_current_spectrum()->generate_spectrum(dat_fft);
-    //Now we have some test spectral data we can work with...
-
     contr.add_d(cmd_line_args.d[0], cmd_line_args.d[1]);
     contr.get_current_d()->calculate();
 

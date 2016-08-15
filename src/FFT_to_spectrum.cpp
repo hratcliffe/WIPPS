@@ -36,14 +36,13 @@ FFT_spect_args FFT_spect_process_command_line(int argc, char *argv[]);
 
 
 int main(int argc, char *argv[]){
-//We don't need MPI here so we never change it from null
+//We don't need MPI here but SDF does
 
+  my_print(std::string("Code Version: ")+ VERSION, mpi_info.rank);
   
   FFT_spect_args my_args = FFT_spect_process_command_line(argc, argv);
   
   get_deck_constants(my_args.file_prefix);
-  share_consts();
-  /* Get constants from deck and share to other procs*/
 
   log_code_constants(my_args.file_prefix);
   /* Do this so we have the spectrum wavetype and angle codes*/
@@ -51,7 +50,7 @@ int main(int argc, char *argv[]){
   controller contr = controller(my_args.file_prefix);
   //For spectrum we need a plasma to dictate dispersion, so we go via controller
   
-  data_array data_in = data_array(my_args.file_prefix+my_args.file_in);
+  data_array data_in = data_array(my_args.file_prefix+my_args.file_in, 0, false);
 
   if(!data_in.is_good()){
     my_print("Data array allocation failed. Aborting.");
@@ -59,7 +58,7 @@ int main(int argc, char *argv[]){
   }
 
   size_t B_ref = 0.0;
-  if(data_in.B_ref != 0.0) B_ref = data_in.B_ref;
+  if(std::abs(data_in.B_ref) < GEN_PRECISION) B_ref = data_in.B_ref;
   else B_ref = my_const.omega_ce * me/std::abs(q0);
   //Use reference B from file if non-zero, else use deck constants
   
@@ -67,10 +66,13 @@ int main(int argc, char *argv[]){
   contr.add_spectrum(k_len, my_args.n_ang, (my_args.ang != FUNCTION_NULL));
   
   contr.set_plasma_B0(B_ref);
-  contr.get_current_spectrum()->generate_spectrum(data_in, my_args.fuzz, my_args.ang);
+//  contr.get_current_spectrum()->generate_spectrum(data_in, my_args.fuzz, my_args.ang);
+  contr.get_current_spectrum()->make_test_spectrum();
+  data_array BB = contr.get_current_spectrum()->copy_out_B();
+  std::cout<<BB.maxval()<<'\n';
   
   std::fstream outfile;
-  outfile.open(my_args.file_out, std::ios::binary|std::ios::out);
+  outfile.open(my_args.file_prefix+my_args.file_out, std::ios::binary|std::ios::out);
   contr.get_current_spectrum()->write_to_file(outfile);
   outfile.close();
   

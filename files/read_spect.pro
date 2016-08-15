@@ -7,12 +7,6 @@ COMPILE_OPT IDL2
 
 IF((N_ELEMENTS(filename) EQ 0)) THEN return, !NULL
 
-;my_type_code = 'f'
-;my_type = 0.0
-;this matches the type of the C code my_type...
-;Usually float or double. Set code to f for float, d for double...
-
-;int_type = 1
 OPENR, filenum,  filename, /GET_LUN
 ;open file
 
@@ -44,7 +38,6 @@ spect = {B:read_block(filenum, hdr.my_type, hdr.block_type)}
 next_pos = hdr.block_type
 readu, filenum, next_pos
 
-PRINT, next_pos, start_pos, fstat(filenum)
 if(next_pos EQ start_pos) THEN BEGIN
   print, "Insufficient arrays found, spectrum incomplete"
   return, spect
@@ -52,12 +45,14 @@ end
 
 POINT_LUN, filenum, next_pos
 ;Skip on to the next block..
+readu, filenum, next_pos
+POINT_LUN, filenum, next_pos
 
 ;Now the next complete array
 hdr=read_header(filenum)
 IF(hdr.err) THEN BEGIN
   FREE_LUN, filenum
-  PRINT, "Error reading file header"
+  PRINT, "Error reading second block header"
   RETURN, !NULL
 ENDIF
 
@@ -69,6 +64,8 @@ if(next_pos NE start_pos) THEN BEGIN
   return, spect
 end
 
+POINT_LUN, filenum, start_pos
+readu, filenum, next_pos
 POINT_LUN, filenum, start_pos
 readu, filenum, next_pos
 

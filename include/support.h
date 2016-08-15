@@ -181,6 +181,8 @@ struct setup_args{
   int n_space;/**< Number of space blocks in global x direction*/
   int per_proc;/**< Resulting number of space blocks per proc*/
   int d[2];/**< Dimensions of D to produce*/
+  bool is_list;/**< Use FFT or spectrum list rather than sdf input*/
+  bool is_spect;
 };
 
 /** \brief D coefficient report

@@ -76,7 +76,7 @@ data_array::data_array(size_t n_dims, size_t * dims) : my_array(n_dims, dims){
   alloc_ax(els);
 }
 
-data_array::data_array(std::string filename, bool no_version_check){
+data_array::data_array(std::string filename, bool no_version_check, bool ext){
 /**\brief Create data array from file
 *
 * Create a data array by reading from the named file. If the file does not exist no memory is allocated. Otherwise it reads the dimensions and sets itself up accordingly
@@ -109,7 +109,7 @@ data_array::data_array(std::string filename, bool no_version_check){
 
     //Finally read in data and axes using normal routines
     infile.seekg(0, std::ios::beg);
-    bool err= this->read_from_file(infile, no_version_check);
+    bool err= this->read_from_file(infile, no_version_check, ext);
     if(err){
       my_print("IO error, could not read", mpi_info.rank);
       if(axes) delete axes;
@@ -432,10 +432,10 @@ std::vector<size_t> data_array::get_bounds(std::vector<my_type> limits){
   return index_limits;
 }
 
-bool data_array::read_from_file(std::fstream &file, bool no_version_check){
+bool data_array::read_from_file(std::fstream &file, bool no_version_check, bool ext){
 /** \brief Read data array file dump
 *
-*Read a file into a pre-sized data array See also data_array::data_array(std::string filename, bool no_version_check);
+*Read a file into a pre-sized data array See also data_array::data_array(std::string filename, bool no_version_check); ext keyword is for previous shorter writings \todo remove ext
 */
 /*
 *First write the my_array section, see my_array::write_to_file then add the following
@@ -462,16 +462,17 @@ bool data_array::read_from_file(std::fstream &file, bool no_version_check){
 
 //  end_pos = (size_t) file.tellg();
 
-  file.read((char*) &next_block, sizeof(size_t));
+  if(ext){
+    file.read((char*) &next_block, sizeof(size_t));
 
-//  file.seekg(-1*sizeof(size_t), file.end);
-//  file.read((char*) &end_block, sizeof(size_t));
+  //  file.seekg(-1*sizeof(size_t), file.end);
+  //  file.read((char*) &end_block, sizeof(size_t));
 
-  //Position of next section
-  file.read((char *) time, sizeof(my_type)*2);
-  file.read((char *) space, sizeof(size_t)*2);
-  file.read((char *) &B_ref, sizeof(my_type));
-
+    //Position of next section
+    file.read((char *) time, sizeof(my_type)*2);
+    file.read((char *) space, sizeof(size_t)*2);
+    file.read((char *) &B_ref, sizeof(my_type));
+  }
   file.read((char*) &next_block, sizeof(size_t));
 
   //Now read the block ID

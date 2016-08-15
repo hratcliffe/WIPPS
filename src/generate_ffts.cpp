@@ -106,8 +106,11 @@ int main(int argc, char *argv[]){
     }
 
     err = my_reader->read_data(dat, cmd_line_args.time, my_space);
-    if(err == 1) safe_exit();
-
+    /** \todo Have this attempt the next file before failing*/
+    if(err == 1){
+      my_print("Data read failed. Aborting", mpi_info.rank);
+      safe_exit();
+    }
     if(err == 2) n_tims = dat.get_dims(1);
     //Check if we had to truncate data array...
     data_array dat_fft = data_array(space_dim, n_tims);
@@ -116,6 +119,8 @@ int main(int argc, char *argv[]){
       my_print("Data array allocation failed. Aborting.", mpi_info.rank);
       return 0;
     }
+    dat.B_ref = get_ref_Bx(cmd_line_args.file_prefix, my_space, cmd_line_args.time[0] == 0 ? cmd_line_args.time[0] :1, my_reader->current_block_is_accum());
+    //Get ref B using specfied file but skip 1st ones as they seem broken
     err = dat.fft_me(dat_fft);
 
     if(mpi_info.rank ==0) MPI_Reduce(MPI_IN_PLACE, &err, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);

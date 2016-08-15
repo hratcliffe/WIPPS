@@ -11,7 +11,8 @@
 #include <math.h>
 #include <cmath>
 #include <boost/math/special_functions.hpp>
-
+#include <map>
+#include <cstdlib>
 
 #include "support.h"
 #include "main_support.h"
@@ -83,6 +84,43 @@ void share_consts(){
 
 }
 
+std::vector<std::string> process_filelist(int argc, char *argv[]){
+/** \brief Extracts files from list
+*
+*  Returns vector of filename strings. Assumed to be in form [stuff]_space0_space1.dat and will be ordered on space0
+*/
+
+  std::vector<std::string> names;
+  for(int i=0; i< argc; i++){
+    if(((strcmp(argv[i], "-Finput")==0)||(strcmp(argv[i], "-Sinput")==0)) && i < argc-1){
+      while(i<argc-1 && argv[i+1][0]!= '-'){
+        //Checks if next argument is a new flag
+        names.push_back(argv[i+1]);
+        i++;
+      }
+    }
+  }
+
+  //Now we have vector of names. Extract space0 from them and plop into a map
+  std::map<int, std::string> name_map;
+  int num;
+  size_t posa, posb;
+  for(size_t i = 0; i< names.size(); i++){
+    posb = names[i].find_last_of('_');
+    posa = (names[i].substr(0, posb)).find_last_of('_');
+    num = atoi((names[i].substr(posa+1, posb-posa-1)).c_str());
+    name_map[num] = names[i];
+  }
+  names.clear();
+  //Now we plop the map back into the vector
+  for(auto it=name_map.begin(); it!=name_map.end(); it++){
+    names.push_back(it->second);
+  }
+  //This ends up with sorting without having to write custom comparator. Replace when have time
+  
+  return names;
+}
+
 setup_args process_command_line(int argc, char *argv[]){
 /** \brief Set basic parameters
 *
@@ -101,6 +139,8 @@ setup_args process_command_line(int argc, char *argv[]){
   values.block = "ex";
   values.d[0] = 10;
   values.d[1] = 10;
+  values.is_list = false;
+  values.is_spect = false;
 
   for(int i=0; i< argc; i++){
     if(strcmp(argv[i], "-h")==0) print_help();
@@ -121,7 +161,8 @@ setup_args process_command_line(int argc, char *argv[]){
       values.d[0] = atoi(argv[i+1]);
       values.d[1] = atoi(argv[i+2]);
     }
-    
+    if(((strcmp(argv[i], "-Finput")==0)||(strcmp(argv[i], "-Sinput")==0)) && i < argc-1) values.is_list=true;
+    if((strcmp(argv[i], "-Sinput")==0) && i < argc-1) values.is_spect = true;
   }
 
   if(values.space[0] == -1 && values.space[1] == -1 && values.n_space == -1){
@@ -170,7 +211,7 @@ void print_help(char code){
     std::cout<<halp.rdbuf();
     std::cout<<'\n';
   }
-  safe_exit();
+  exit(0);
 }
 
 void divide_domain(std::vector<size_t> dims, int space[2], int per_proc, int block_num){
@@ -622,14 +663,15 @@ my_type get_ref_Bx(std::string file_prefix, int space_in[2], int time_0, bool is
   //use specified file and read one row
   size_t n_dims;
   std::vector<size_t> dims;
-  bool err = bx_reader.read_dims(n_dims, dims);
+  int err = bx_reader.read_dims(n_dims, dims);
   if(err) return 0.0;
 
-  data_array bx = data_array(dims[0], 1);
+  size_t space_dim = space_in[1]-space_in[0];
+  data_array bx = data_array(space_dim, 1);
   if(!bx.is_good()) return 0.0;
   
   err = bx_reader.read_data(bx, bx_times, space_in);
-  
-  if(!err) return bx.avval();
+  if(err == 0 || err ==2 ) return bx.avval();
+  //2 is a non-fatal read error
   else return 0.0;
 }

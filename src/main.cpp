@@ -2,7 +2,7 @@
 *
 * Calculates a diffusion coefficient from data. Data can be either a range of SDF files or a list of FFT or spectrum files, from e.g. supplied generate_ffts utility. The resulting particle diffusion coefficient are calculated using Lyons 1974 a, b, Albert 2005 and such. Note that this makes no sense for E fields!
 * Depends on the SDF file libraries, the FFTW library, and boost's math for special functions. A set of test arguments is supplied. Call using ./main `<test_pars` to use these. Or try ./main -h for argument help
-  \author Heather Ratcliffe \date 18/09/2015.
+  \author Heather Ratcliffe \date 18/09/2015. \todo Remove FFTW dependencies where possible. Perhaps an Ifdef
 */
 
 
@@ -137,7 +137,7 @@ int main(int argc, char *argv[]){
       if(err == 2) n_tims = dat.get_dims(1);
       //Check if we had to truncate data array...
 
-      dat.B_ref = get_ref_Bx(cmd_line_args.file_prefix, my_space, cmd_line_args.time[0] == 0 ? cmd_line_args.time[0] :1);
+      dat.B_ref = get_ref_Bx(cmd_line_args.file_prefix, my_space, cmd_line_args.time[0] == 0 ? 1: cmd_line_args.time[0]);
       //Get ref B using specfied file but skip 1st ones as they seem broken
       dat_fft = data_array(space_dim, n_tims);
     

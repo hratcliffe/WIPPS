@@ -1051,6 +1051,31 @@ int test_entity_basic_maths::run(){
   /*"I think you should be able to recognize them using Vieta's formula for cubic equations, which states that if a cubic equation x3+ax2+bx+c=0x3+ax2+bx+c=0 has three different roots x1,x2,x3x1,x2,x3, then:
   −a=x1+x2+x3 b = x1x2+x1x3+x2x3 and -c = x1x2x3"
 **/
+
+  //Check our array slice flattener
+  
+  size_t dims[3];
+  size_t n_dims = 3;
+  dims[0] = 5; dims[1] = 5; dims[2] = 5;
+  size_t total_sz = dims[0]*dims[1]*dims[2];
+  my_type * in, *out;
+  in = (my_type *) calloc(total_sz, sizeof(my_type));
+  out = (my_type *) calloc(total_sz/dims[1], sizeof(my_type));
+  
+  for(size_t i = 0; i< dims[0]; i++){
+    for(size_t j=0; j<dims[1]; j++){
+      for(size_t k=0; k< dims[2]; k++){
+        *(in+(k*dims[1]+ j)*dims[0] + i) = i+j;
+        //Now each flattened slice should end up having same value
+      }
+    }
+  }
+  flatten_fortran_slice(in, out, n_dims, dims, 1);
+  for(size_t i = 0; i< dims[0]; i++){
+    for(size_t k=0; k< dims[2]; k++){
+      std::cout<< *(out + (k*dims[0] + i))<<'\n';
+    }
+  }
  
   test_bed->report_err(err);
   return err;

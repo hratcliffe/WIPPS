@@ -13,6 +13,8 @@
 -Finput <string ...> Start from list of FFT files. Names must end in space0_space1.dat and will be sorted by space0
 -Sinput <string ...> Start from list of spectrum files, see -Finput
 
+-flatten For 2-D data, total in y and treat as 1-D
+
 Sample usage:
 make TYPE=double
 mpiexec -n 4 ./main `<test_pars`

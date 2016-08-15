@@ -48,6 +48,7 @@ public:
   data_array(std::string filename, bool no_version_check = false, bool ext=true);
   data_array(size_t n_dims, size_t * dims);
   virtual ~data_array();
+  virtual void clone_empty(const data_array &src);
 
   virtual bool is_good()const{return my_array::is_good() && axes;}
   void copy_ids( const data_array & src);

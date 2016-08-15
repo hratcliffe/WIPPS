@@ -141,10 +141,12 @@ setup_args process_command_line(int argc, char *argv[]){
   values.d[1] = 10;
   values.is_list = false;
   values.is_spect = false;
+  values.do_flatten = false;
 
   for(int i=0; i< argc; i++){
     if(strcmp(argv[i], "-h")==0) print_help();
-    if(strcmp(argv[i], "-f")==0 && i < argc-1) values.file_prefix = argv[i+1];
+    if(strcmp(argv[i], "-flatten")==0) values.do_flatten = true;
+        if(strcmp(argv[i], "-f")==0 && i < argc-1) values.file_prefix = argv[i+1];
     if(strcmp(argv[i], "-start")==0 && i < argc-1) values.time[0] = atoi(argv[i+1]);
     if(strcmp(argv[i], "-end")==0 && i < argc-1) values.time[1] = atoi(argv[i+1]);
     if(strcmp(argv[i], "-rows")==0 && i < argc-1){
@@ -674,4 +676,51 @@ my_type get_ref_Bx(std::string file_prefix, int space_in[2], int time_0, bool is
   if(err == 0 || err ==2 ) return bx.avval();
   //2 is a non-fatal read error
   else return 0.0;
+}
+
+bool flatten_fortran_slice(my_type * src_ptr, my_type* dest_ptr, size_t n_dims_in, size_t * dims_in, size_t flatten_on_dim){
+/** \brief Flatten a Fortran-style array on the specified dimension
+*
+* The result is a Fortran-style array of rank n_dims_in - 1, containing the total along each value of the flattening dim. dest_ptr is assumed to point to an allocated block sufficient to hold the result.
+*/
+/*
+* A 2-d array 5x3 is
+|ooooo||ooooo||ooooo|
+<-row->
+
+A 3-d 5x3x2 is
+[|ooooo||ooooo||ooooo|][|ooooo||ooooo||ooooo|]
+<--------'slice'------>
+
+We'll borrow the resizer code to get the new array by resizing the required dim to size 1 in a copy, and then we'll add the rest on
+Think of the array as being 3-D. The dim we;re flattening is dim-1. All the less-significant dims are smushed together into dim-0, and all the higher into dim-2
+*/
+
+  if(flatten_on_dim > n_dims_in) return 1;
+  
+  my_print("Flattening array", mpi_info.rank);
+
+  size_t part_sz = 1, lower_dims =1;
+
+  for(size_t i=0; i<flatten_on_dim; ++i) lower_dims*= dims_in[i];
+  part_sz = lower_dims;
+  for(size_t i=flatten_on_dim+1; i<n_dims_in; ++i) part_sz*= dims_in[i];
+
+  size_t els_to_copy = 1, n_segments = 1, sz = 1;
+
+  for(size_t i=0; i<flatten_on_dim; ++i) els_to_copy *= dims_in[i];
+  size_t chunk_sz = els_to_copy;
+//  (sz> dims[dim])? els_to_copy *= dims_in[flatten_on_dim] : els_to_copy *= sz;
+  for(size_t i=flatten_on_dim+1; i< n_dims_in; ++i) n_segments *= dims_in[i];
+  for(size_t i=0; i< n_segments; ++i) std::copy(src_ptr + i*chunk_sz*dims_in[flatten_on_dim], src_ptr + i*chunk_sz*dims_in[flatten_on_dim]+ els_to_copy, dest_ptr + i*chunk_sz*sz);
+  
+  //Now we should have the 0th row in place
+  
+  for(size_t j = 1; j<dims_in[flatten_on_dim]; j++){
+    for(size_t i=0; i< n_segments; ++i) std::transform(src_ptr + i*chunk_sz*dims_in[flatten_on_dim] + lower_dims*j, src_ptr + i*chunk_sz*dims_in[flatten_on_dim]+ els_to_copy + lower_dims*j, dest_ptr + i*chunk_sz*sz,dest_ptr + i*chunk_sz*sz, std::plus<my_type>());
+  }
+
+  return 0;
+  
+
 }

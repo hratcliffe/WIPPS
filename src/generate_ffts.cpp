@@ -98,8 +98,16 @@ int main(int argc, char *argv[]){
     
     MPI_Barrier(MPI_COMM_WORLD);
     //--------------THIS will slightly slow down some cores to match the slowest. But it makes output easier. Consider removing if many blocks
-    data_array dat = data_array(space_dim, n_tims);
-
+    data_array dat;
+    if(n_dims ==1 || (n_dims ==2 && my_reader->current_block_is_accum())){
+      dat = data_array(space_dim, n_tims);
+    }else if(n_dims == 2){
+      dat = data_array(space_dim, dims[1], n_tims);
+    
+    }else{
+      my_print("More than 2-D data not supported", mpi_info.rank);
+    }//Here I have no more than 2-D in space
+  
     if(!dat.is_good()){
       my_print("Data array allocation failed. Aborting.", mpi_info.rank);
       return 0;
@@ -113,14 +121,25 @@ int main(int argc, char *argv[]){
     }
     if(err == 2) n_tims = dat.get_dims(1);
     //Check if we had to truncate data array...
-    data_array dat_fft = data_array(space_dim, n_tims);
+
+
+    if(cmd_line_args.do_flatten && dat.get_dims() >2){
+      data_array tmp = data_array(space_dim, n_tims);
+      
+    
+    }
+    //Flatten 2-D data before proceeding
+    
+    data_array dat_fft;
+    dat_fft.clone_empty(dat);
 
     if(!dat_fft.is_good()){
       my_print("Data array allocation failed. Aborting.", mpi_info.rank);
       return 0;
     }
-    dat.B_ref = get_ref_Bx(cmd_line_args.file_prefix, my_space, cmd_line_args.time[0] == 0 ? cmd_line_args.time[0] :1, my_reader->current_block_is_accum());
-    //Get ref B using specfied file but skip 1st ones as they seem broken
+    dat.B_ref = get_ref_Bx(cmd_line_args.file_prefix, my_space, cmd_line_args.time[0] == 0 ? 1:cmd_line_args.time[0], my_reader->current_block_is_accum());
+    //Get ref B using specfied file but skip 0th ones as they seem broken
+
     err = dat.fft_me(dat_fft);
 
     if(mpi_info.rank ==0) MPI_Reduce(MPI_IN_PLACE, &err, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);

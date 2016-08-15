@@ -171,6 +171,20 @@ my_array::my_array(const my_array &src){
 
 }
 
+void my_array::clone_empty(const my_array &src){
+/** \brief Initialise this to same sizes as src
+*
+* Duplicates sizes of src but do not copy data
+*/
+  construct();
+
+  if(!src.dims || src.n_dims==0) return;
+  //Stop if src has no dims
+  
+  alloc_all(src.n_dims, src.dims);
+  
+}
+
 long my_array::get_index(size_t n_dims, size_t * inds_in)const{
 /** Passing integer array and loop so going to be slower
 */

@@ -47,7 +47,7 @@ public:
   my_array(my_array && src);
   my_array & operator=(const my_array& src);
   virtual bool is_good()const {return (data && dims);}/**< Check memory allocation etc worked*/
-
+  virtual void clone_empty(const my_array &src);
   size_t get_dims()const;
   size_t get_dims(size_t dim)const;
   my_type get_element(size_t nx)const;

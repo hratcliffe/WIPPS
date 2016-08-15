@@ -177,6 +177,18 @@ data_array::data_array(const data_array &src) : my_array(src){
   copy_ids(src);
 }
 
+void data_array::clone_empty(const data_array &src){
+/** \brief Initialise this to match sizes of src
+*
+* Does not copy data or axes
+*/
+  construct();
+  my_array::clone_empty(src);
+  size_t els= this->get_total_axis_elements();
+  alloc_ax(els);
+
+}
+
 my_type * data_array::get_axis(size_t dim, size_t & length){
 /**  \brief Get pointer to axis
 *

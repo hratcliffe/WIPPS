@@ -183,6 +183,7 @@ setup_args process_command_line(int argc, char *argv[]){
   if(values.time[1]< 0 ) values.time[1] = 0;
   if(values.time[1]< 0 ) values.time[1] = 0;
   if(values.time[1] < values.time[0]) values.time[1] = values.time[0] + 1;
+  //If unspecified use 1 row per file
   if(values.d[0] < 0) values.d[0] = 0;
   if(values.d[1] < 0) values.d[1] = 0;
   if(values.d[0] >MAX_SIZE){
@@ -698,7 +699,7 @@ Think of the array as being 3-D. The dim we;re flattening is dim-1. All the less
 
   if(flatten_on_dim > n_dims_in) return 1;
   
-  my_print("Flattening array", mpi_info.rank);
+  //my_print("Flattening array", mpi_info.rank);
 
   size_t part_sz = 1;
   size_t els_to_copy = 1, n_segments = 1, sz = 1;

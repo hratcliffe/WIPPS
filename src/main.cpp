@@ -91,11 +91,15 @@ int main(int argc, char *argv[]){
   strcpy(block_id, cmd_line_args.block.c_str());
 
   reader my_reader = reader(cmd_line_args.file_prefix, block_id);
-  if(my_reader.current_block_is_accum()) cmd_line_args.use_row_time = true;
+  if(my_reader.current_block_is_accum()) cmd_line_args.use_row_time = true; /** \todo Remove this and use is_accum() directly?*/
   int n_tims;
   if(!cmd_line_args.use_row_time){
     n_tims = std::max(cmd_line_args.time[1]-cmd_line_args.time[0], 1);
   }else{
+    if(cmd_line_args.time[2] == 0){
+      my_print("Please specify number of rows to read", mpi_info.rank);
+      exit(1);
+    }
     n_tims = cmd_line_args.time[2];
   }
 

@@ -490,9 +490,10 @@ bool data_array::read_from_file(std::fstream &file, bool no_version_check, bool 
   //Now read the block ID
   char id_in[ID_SIZE];
 //  file.seekg(end_block+sizeof(size_t));
-  if(file) file.read(id_in, sizeof(char)*ID_SIZE);
-  strcpy(this->block_id, id_in);
-
+  if(file){
+    file.read(id_in, sizeof(char)*ID_SIZE);
+    strncpy(this->block_id, id_in, ID_SIZE);
+  }
   //file.seekg(end_pos);
   return err;
 
@@ -641,7 +642,8 @@ bool data_array::populate_mirror_fastest(my_type * result_in, size_t total_els){
 void data_array::copy_ids( const data_array &src){
 /** Copies ID fields from src array to this */
 
-  strcpy(this->block_id, src.block_id);
+  strncpy(this->block_id, src.block_id, ID_SIZE);
+  //Strncpy for extra safety
   for(size_t i=0; i < 2; ++i) this->time[i] = src.time[i];
   //  std::copy(src->time, src->time + 2, this->time);
   for(size_t i=0; i < 2; ++i) this->space[i] = src.space[i];

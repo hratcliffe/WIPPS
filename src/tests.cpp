@@ -1933,7 +1933,8 @@ int test_entity_levelone::twod_tests(){
   }
   int space_dim = space_in[1]-space_in[0];
 
-  dat = data_array(space_dim, dims_in[1], n_tims);
+//  dat = data_array(space_dim, dims_in[1], n_tims);
+  dat = data_array(space_dim, n_tims);
   strcpy(dat.block_id, block_id);
 
   if(!dat.is_good()){
@@ -1942,14 +1943,16 @@ int test_entity_levelone::twod_tests(){
     err |= TEST_FATAL_ERR;
   }
 
-  int err2 = my_reader->read_data(dat, time_in, space_in);
+//  int err2 = my_reader->read_data(dat, time_in, space_in);
+  int err2 = my_reader->read_data(dat, time_in, space_in, 1);
   if(err2 == 1){
     return TEST_FATAL_ERR;
   }
   if(err2 == 2) n_tims = dat.get_dims(1);
   //Check if we had to truncate data array and size FFT accordingly
-  dat_fft = data_array(space_dim, dims_in[1], n_tims);
-
+//  dat_fft = data_array(space_dim, dims_in[1], n_tims);
+  dat_fft = data_array();
+  dat_fft.clone_empty(dat);
   if(!dat_fft.is_good()){
     return TEST_FATAL_ERR;
   }

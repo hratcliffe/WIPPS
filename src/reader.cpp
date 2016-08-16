@@ -12,6 +12,7 @@
 #include <vector>
 #include <algorithm>
 #include "support.h"
+#include "main_support.h"
 #include "reader.h"
 #include "data_array.h"
 #include "sdf.h"
@@ -103,7 +104,7 @@ bool reader::read_dims(size_t &n_dims, std::vector<size_t> &dims){
   return 0;
 }
 
-int reader::read_data(data_array &my_data_in, int time_range[3], int space_range[2]){
+int reader::read_data(data_array &my_data_in, int time_range[3], int space_range[2], int flatten_on){
 /** \brief Read data into given array
 *
 *This will open the files dictated by time range sequentially, and populate them into the data_array. It'll stop when the end of range is reached, or it goes beyond the size available. Space range upper entry of -1 is taken as respective limit. NB: blocking is only supported on the X axis. @return 0 for success, 1 for error 2 for unusual exit, i.e. early termination
@@ -124,14 +125,15 @@ int reader::read_data(data_array &my_data_in, int time_range[3], int space_range
   size_t len;
 
   std::string file_name = get_full_name(time_range[0]);
-  
+  bool accumulated = is_accum(block_id);
+
   handle = sdf_open(file_name.c_str(), MPI_COMM_WORLD, SDF_READ, 0);
   if(!handle) return 1;
 
   sdf_read_blocklist(handle);
 
   std::string grid_name = "grid";
-  if(current_block_is_accum()) grid_name = "grid_accum";
+  if(accumulated) grid_name = "grid_accum";
     
   //first we open first file and do grids.
   block = sdf_find_block_by_id(handle, grid_name.c_str());
@@ -148,12 +150,16 @@ int reader::read_data(data_array &my_data_in, int time_range[3], int space_range
     my_print("Wrong data type detected. Converting grids", mpi_info.rank);
   }
 
-  for(size_t i=0; i< my_data_in.get_dims()-1; i++){
+  for(size_t i=0, i2=0; i< my_data_in.get_dims()-1; i++, i2++){
+    if(flatten_on >= 0 && flatten_on == i){
+      i2++;
+      continue;
+    }
+    //Skip a flattening dim if exists
     ax_ptr = my_data_in.get_axis(i, len);
 
-    // Mostly c++ way
-    if(block->datatype != my_sdf_type) std::copy((other_type *) block->grids[i], (other_type *) block->grids[i] + len, ax_ptr);
-    else std::copy((my_type *) block->grids[i], (my_type *) block->grids[i] + len, ax_ptr);
+    if(block->datatype != my_sdf_type) std::copy((other_type *) block->grids[i2], (other_type *) block->grids[i2] + len, ax_ptr);
+    else std::copy((my_type *) block->grids[i2], (my_type *) block->grids[i2] + len, ax_ptr);
     //We assume if the type does not match then it's the other of double or float
     //Get space axes
   }
@@ -163,22 +169,32 @@ int reader::read_data(data_array &my_data_in, int time_range[3], int space_range
   //Simple slices are those where we're slicing only the last spatial dimension. For what we have here, that means 1 space dim or more than one and no slicing. We have no mechanism to slice y etc, only x.
   //Grid dimensions are for staggered grid for subtract 1
   if(my_data_in.get_dims() ==2 || block->dims[0]-1 == space_range[1]-space_range[0]){
+  //Either result is 2-d, i.e. single time data is 1-d, or we're not trying to crop 0th dim
     simple_slice = true;
-  }else{
-    source_sizes = (size_t *) malloc((my_data_in.get_dims()-1)*sizeof(size_t));
-    
-    for(size_t i=0; i< my_data_in.get_dims()-1; i++){
-      source_sizes[i] = block->dims[i]-1;
-      source_advance*=source_sizes[i];
-    }
-    source_advance/=source_sizes[0];
+  }
+  source_sizes = (size_t *) malloc((block->ndims)*sizeof(size_t));
+  
+  for(size_t i=0; i< block->ndims; i++){
+    //if(flatten_on >= 0 && flatten_on <= i) source_sizes[i] = block->dims[i+1]-1;
+    //else
+    source_sizes[i] = block->dims[i]-1;
+    //Skip a flattening dimension
+
+    source_advance*=source_sizes[i];
+    //Advance between one time read and the next
+  }
+
+  my_type * flat_data = nullptr;
+  size_t acc_min_times = 1;//How much memory space we have for flat data
+  if(flatten_on >=0){
+    //One time at once
+    flat_data = (my_type*) malloc(sizeof(my_type)*source_advance);
   }
 
   sdf_close(handle);
 
   ax_ptr = my_data_in.get_axis(my_data_in.get_dims()-1, len);
   //pointer to last axis, which will be time
-  bool accumulated = is_accum(block_id);
   int i;
   int last_report=0;
   int report_interval = (time_range[1]-time_range[0])/10;
@@ -189,7 +205,6 @@ int reader::read_data(data_array &my_data_in, int time_range[3], int space_range
   my_data_in.space[0] = space_range[0];
   my_data_in.space[1] = space_range[1];
   
-
   int rows=0;
   int total_reads=0;
   //now loop over files and get actual data
@@ -219,24 +234,25 @@ int reader::read_data(data_array &my_data_in, int time_range[3], int space_range
     if(!block->data) break;
     my_type * my_ptr = (my_type *) block->data;
     
-    my_ptr +=space_range[0];
-    if(!accumulated){
-      *(ax_ptr + i) = (my_type) handle->time;
-      if(simple_slice){
-        size_t val[1];
-        val[0] = i-time_range[0];
-        my_data_in.populate_slice(my_ptr, 1, val);
+//    my_ptr +=space_range[0];//Adapt for 2-d data
+    my_ptr += source_advance/block->dims[0]*space_range[0];
 
-  //      my_data_in->populate_row(my_ptr, space_range[1], i-time_range[0]);
+    if(!accumulated){
+      size_t val[1];
+      val[0] = i-time_range[0];
+      *(ax_ptr + val[0]) = (my_type) handle->time;
+
+      if(simple_slice && flatten_on < 0){
+        //Simple slicing and no flattening required
+        my_data_in.populate_slice(my_ptr, 1, val);
+      }else if(simple_slice){
+        //Simple slicing but we flatten first
+        flatten_fortran_slice(my_ptr, flat_data, my_data_in.get_dims()-1, source_sizes,flatten_on);
+        my_data_in.populate_slice(flat_data, 1, val);
       }else{
-        size_t val[1];
-        val[0] = i-time_range[0];
         my_data_in.populate_complex_slice(my_ptr, 1, val, source_sizes);
-//        my_data_in->populate_row(my_ptr, space_range[1], i-time_range[0]);
-      
       }
       total_reads++;
-
     }
     else{
       ax_block = sdf_find_block_by_id(handle, grid_name.c_str());
@@ -246,31 +262,40 @@ int reader::read_data(data_array &my_data_in, int time_range[3], int space_range
       rows = ax_block->dims[block->ndims-1];
       if(total_reads + rows >= time_range[2]) rows = time_range[2]- total_reads;
       //don't read more than time[2] rows
-      //if(ax_ptr) std::copy((my_type *) ax_block->grids[1], (my_type *) ax_block->grids[1] + rows, ax_ptr +total_reads);
       if(ax_ptr){
         if(ax_block->datatype != my_sdf_type) std::copy((other_type *) ax_block->grids[1], (other_type *) ax_block->grids[1] + rows, ax_ptr+total_reads);
         else std::copy((my_type *) ax_block->grids[1], (my_type *) ax_block->grids[1] + rows, ax_ptr+total_reads);
       }
       //Copy time grid out
-      
-      if(simple_slice){
-        size_t val[1];
+      size_t val[1];
+      if(simple_slice && flatten_on < 0){
         for(int j=0; j<rows; j++){
-          //my_data_in->populate_row(my_ptr, space_range[1], total_reads+j);
           val[0] = total_reads+j;
           my_data_in.populate_slice(my_ptr, 1, val);
+          my_ptr += source_advance;
 
-          my_ptr += block->dims[0];
+//          my_ptr += block->dims[0];
         }
-      }else{
+      }else if(simple_slice){
+        for(int j=0; j<rows; j++){
+          val[0] = total_reads+j;
+          //Simple slicing but we flatten first
+          flatten_fortran_slice(my_ptr, flat_data, my_data_in.get_dims()-1, source_sizes,flatten_on);
 
-        size_t val[1];
+          my_data_in.populate_slice(flat_data, 1, val);
+
+//          my_ptr += block->dims[0];
+          my_ptr += source_advance;
+        }
+        
+      }else{
         for(int j=0; j<rows; j++){
           //my_data_in->populate_row(my_ptr, space_range[1], total_reads+j);
           val[0] = total_reads+j;
           my_data_in.populate_complex_slice(my_ptr, 1, val, source_sizes);
+          my_ptr += source_advance;
 
-          my_ptr += block->dims[0];
+//          my_ptr += block->dims[0];
         }
       }
       total_reads+= rows;

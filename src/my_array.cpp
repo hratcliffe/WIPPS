@@ -838,16 +838,18 @@ bool my_array::resize(size_t dim, size_t sz){
   }
   else{
     //have to allocate a new block and copy across.
-    for(size_t i=0; i<dim; ++i) part_sz*= dims[i];
-    for(size_t i=dim+1; i<n_dims; ++i) part_sz*= dims[i];
-    new_data=(my_type*)calloc(part_sz*sz,sizeof(my_type));
     size_t els_to_copy = 1, n_segments = 1;
 
-    // Now we know dim is zeroth or a middle dimension. (1 for n_dims==3, 1 or 2 for n_dims==4.So we copy in chunks
     for(size_t i=0; i<dim; ++i) els_to_copy *= dims[i];
+    for(size_t i=dim+1; i< n_dims; ++i) n_segments *= dims[i];
+
+//    for(size_t i=0; i<dim; ++i) part_sz*= dims[i];
+    part_sz = els_to_copy*n_segments;
+    new_data=(my_type*)calloc(part_sz*sz,sizeof(my_type));
+
+    // Now we know dim is zeroth or a middle dimension. (1 for n_dims==3, 1 or 2 for n_dims==4.So we copy in chunks
     size_t chunk_sz = els_to_copy;
     (sz> dims[dim])? els_to_copy *= dims[dim] : els_to_copy *= sz;
-    for(size_t i=dim+1; i< n_dims; ++i) n_segments *= dims[i];
     for(size_t i=0; i< n_segments; ++i) std::copy(data + i*chunk_sz*dims[dim],data + i*chunk_sz*dims[dim]+ els_to_copy, new_data + i*chunk_sz*sz);
 
     free(data);

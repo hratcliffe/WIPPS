@@ -700,27 +700,25 @@ Think of the array as being 3-D. The dim we;re flattening is dim-1. All the less
   
   my_print("Flattening array", mpi_info.rank);
 
-  size_t part_sz = 1, lower_dims =1;
-
-  for(size_t i=0; i<flatten_on_dim; ++i) lower_dims*= dims_in[i];
-  part_sz = lower_dims;
-  for(size_t i=flatten_on_dim+1; i<n_dims_in; ++i) part_sz*= dims_in[i];
-
+  size_t part_sz = 1;
   size_t els_to_copy = 1, n_segments = 1, sz = 1;
 
-  for(size_t i=0; i<flatten_on_dim; ++i) els_to_copy *= dims_in[i];
-  size_t chunk_sz = els_to_copy;
-//  (sz> dims[dim])? els_to_copy *= dims_in[flatten_on_dim] : els_to_copy *= sz;
+  for(size_t i=0; i<flatten_on_dim; ++i) els_to_copy*= dims_in[i];
   for(size_t i=flatten_on_dim+1; i< n_dims_in; ++i) n_segments *= dims_in[i];
+
+  part_sz = els_to_copy*n_segments;
+
+  size_t chunk_sz = els_to_copy;
   for(size_t i=0; i< n_segments; ++i) std::copy(src_ptr + i*chunk_sz*dims_in[flatten_on_dim], src_ptr + i*chunk_sz*dims_in[flatten_on_dim]+ els_to_copy, dest_ptr + i*chunk_sz*sz);
   
   //Now we should have the 0th row in place
+  //Add each successive row onto it
   
   for(size_t j = 1; j<dims_in[flatten_on_dim]; j++){
-    for(size_t i=0; i< n_segments; ++i) std::transform(src_ptr + i*chunk_sz*dims_in[flatten_on_dim] + lower_dims*j, src_ptr + i*chunk_sz*dims_in[flatten_on_dim]+ els_to_copy + lower_dims*j, dest_ptr + i*chunk_sz*sz,dest_ptr + i*chunk_sz*sz, std::plus<my_type>());
+    
+    for(size_t i=0; i< n_segments; ++i) std::transform(src_ptr + i*chunk_sz*dims_in[flatten_on_dim] + els_to_copy*j, src_ptr + i*chunk_sz*dims_in[flatten_on_dim]+ els_to_copy + els_to_copy*j, dest_ptr + i*chunk_sz*sz,dest_ptr + i*chunk_sz*sz, std::plus<my_type>());
   }
 
   return 0;
   
-
 }

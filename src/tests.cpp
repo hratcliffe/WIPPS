@@ -1053,30 +1053,35 @@ int test_entity_basic_maths::run(){
 **/
 
   //Check our array slice flattener
-  
   size_t dims[3];
   size_t n_dims = 3;
-  dims[0] = 5; dims[1] = 5; dims[2] = 5;
+  dims[0] = 5; dims[1] = 6; dims[2] = 5;
   size_t total_sz = dims[0]*dims[1]*dims[2];
   my_type * in, *out;
   in = (my_type *) calloc(total_sz, sizeof(my_type));
   out = (my_type *) calloc(total_sz/dims[1], sizeof(my_type));
   
+  int tot_on_dim1 = 0;
+  for(size_t j=0; j<dims[1]; j++) tot_on_dim1 += j;
+  
   for(size_t i = 0; i< dims[0]; i++){
     for(size_t j=0; j<dims[1]; j++){
       for(size_t k=0; k< dims[2]; k++){
         *(in+(k*dims[1]+ j)*dims[0] + i) = i+j;
-        //Now each flattened slice should end up having same value
+        
       }
     }
   }
   flatten_fortran_slice(in, out, n_dims, dims, 1);
+  int errs = 0;
   for(size_t i = 0; i< dims[0]; i++){
     for(size_t k=0; k< dims[2]; k++){
-      std::cout<< *(out + (k*dims[0] + i))<<'\n';
+      if(*(out + (k*dims[0] + i)) != tot_on_dim1+ dims[1]*i) errs++;
     }
   }
- 
+  if(errs > 0) err |= TEST_WRONG_RESULT;
+  else test_bed->report_info("Flattener OK", 1);
+
   test_bed->report_err(err);
   return err;
 

@@ -77,6 +77,7 @@ readu, filenum, id_in
 PRINT, id_in
 spect=create_struct(spect, {block:id_in})
 
+spect=create_struct(spect, {filename: filename})
 
 return, spect
 END

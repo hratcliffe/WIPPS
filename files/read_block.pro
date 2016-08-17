@@ -43,7 +43,6 @@ if(n_dims GT 0) THEN BEGIN
   dims = get_array_of_type(SIZE(block_type, /TYPE), n_dims)
   readu, filenum, dims
   readu, filenum, next_block
-
   IF(SIZE(my_type, /TYPE) EQ 4) THEN BEGIN
     axes_list = {x:fltarr(dims[0])}
     if(n_dims GT 1) THEN axes_list = create_struct(axes_list, {Y:fltarr(dims[1])})
@@ -53,7 +52,6 @@ if(n_dims GT 0) THEN BEGIN
     tmp2=fltarr(dims)
 
   ENDIF ELSE IF(SIZE(my_type, /TYPE) EQ 5) THEN BEGIN
-    axes_list = {k:dblarr(dims[0]), omega:dblarr(dims[1])}
     axes_list = {x:dblarr(dims[0])}
     if(n_dims GT 1) THEN axes_list = create_struct(axes_list, {Y:dblarr(dims[1])})
     if(n_dims GT 2) THEN axes_list = create_struct(axes_list, {Z:dblarr(dims[2])})

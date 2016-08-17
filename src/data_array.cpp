@@ -626,17 +626,21 @@ bool data_array::populate_mirror_fastest(my_type * result_in, size_t total_els){
 */
   size_t last_size = floor(dims[0]/2) + 1;
   size_t num_strides = total_els/dims[0];//Always integer
- 
+
+  size_t num_seconds = this->n_dims >= 2? dims[1]: 1;//Size of "second dimension"
+  size_t slice_sz = num_seconds*dims[0];
+memset(data, 0, total_els);
   for(size_t i=0; i< num_strides; i++){
     //Reverse the result into place (left side)
     std::reverse_copy(result_in+ i*last_size, result_in+(i+1)*last_size-1, data+i*dims[0]+1);
   }
-  //Now fill the redundant side. Zero stays as zero, we flip the rest.
-  std::reverse_copy(data+1, data+last_size, data+last_size-1);
-  for(size_t i=1; i< num_strides; i++){
-      std::reverse_copy(data+i*dims[0]+1, data+i*dims[0]+last_size, data+(num_strides-i)*dims[0]+last_size-1);
+  //Now fill the redundant 2-d side. Zero stays as zero, we flip the rest. This is to give us "correct" 2-D result when we take only +ve omega
+  for(size_t j=0; j< num_strides/num_seconds; j++){
+    std::reverse_copy(data+1+j*slice_sz, data+last_size+j*slice_sz, data+last_size-1+j*slice_sz);
+    for(size_t i=1; i< num_seconds; i++){
+        std::reverse_copy(data+i*dims[0]+1+j*slice_sz, data+i*dims[0]+last_size+j*slice_sz, data+j*slice_sz+(num_seconds-i)*dims[0]+last_size-1);
+    }
   }
-
   return 0;
 }
 
@@ -761,6 +765,10 @@ bool data_array::shift(size_t dim, long n_els, bool axis){
 }
 
 data_array data_array::total(size_t dim){
+/** \brief Total array on dim dim
+*
+*Returns a new array of rank this->n_dims -1, containing data summed over entire range of dimension dim. See also data_array data_array::total(size_t dim, my_type min, my_type max)
+*/
   //Wraps total over range, passing limits outside axis ranges
   my_type min, max;
   min = this->get_axis_element(dim, 0) - 1;
@@ -772,11 +780,10 @@ data_array data_array::total(size_t dim){
 data_array data_array::total(size_t dim, my_type min, my_type max){
 /** \brief Total along dim dim
 *
-* A new array is created of rank this->n_dims-1 and proper dims, filled by totalling this and returned
+*Returns a new array of rank this->n_dims -1, containing data summed over between axis values of min and max on dimension dim. See also data_array data_array::total(size_t dim)
 */
   
   if(dim >= this->n_dims){
-//    data_array new_array;
     return data_array();
   }
   
@@ -788,7 +795,6 @@ data_array data_array::total(size_t dim, my_type min, my_type max){
       continue;
     }
     new_dims[i2] = dims[i];
-    std::cout<< new_dims[i2]<<'\n';
   }
   size_t len, min_ind = 0, max_ind = this->get_dims(dim)-1;
   int where_val;

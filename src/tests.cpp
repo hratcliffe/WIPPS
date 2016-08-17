@@ -2071,7 +2071,7 @@ int test_entity_levelone::twod_space_tests(){
 
   err2 = dat.fft_me(dat_fft);
 
-  
+ // dat_fft.total(2, 0.01*my_const.omega_ce, 4.0*my_const.omega_ce);
 
   test_bed->report_info("FFT returned err_state " + mk_str(err2));
 
@@ -2080,16 +2080,16 @@ int test_entity_levelone::twod_space_tests(){
   
   int n_dims = dat.get_dims();
   std::vector<my_type> lims;
-  if(n_dims >=3){
-    lims.push_back(-0.002);
-    lims.push_back(0.002);
-  }
   if(n_dims >=2){
     lims.push_back(-0.002);
     lims.push_back(0.002);
     lims.push_back(-0.002);
     lims.push_back(0.002);
 
+  }
+  if(n_dims >=3){
+    lims.push_back(-500.0*my_const.omega_ce);
+    lims.push_back(500.0*my_const.omega_ce);
   }
   
 //Set cutout limits on FFT

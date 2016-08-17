@@ -679,7 +679,7 @@ my_type get_ref_Bx(std::string file_prefix, int space_in[2], int time_0, bool is
   else return 0.0;
 }
 
-bool flatten_fortran_slice(my_type * src_ptr, my_type* dest_ptr, size_t n_dims_in, size_t * dims_in, size_t flatten_on_dim){
+bool flatten_fortran_slice(my_type * src_ptr, my_type* dest_ptr, size_t n_dims_in, size_t * dims_in, size_t flatten_on_dim, size_t flat_start, size_t flat_stop){
 /** \brief Flatten a Fortran-style array on the specified dimension
 *
 * The result is a Fortran-style array of rank n_dims_in - 1, containing the total along each value of the flattening dim. dest_ptr is assumed to point to an allocated block sufficient to hold the result.
@@ -698,6 +698,8 @@ Think of the array as being 3-D. The dim we;re flattening is dim-1. All the less
 */
 
   if(flatten_on_dim > n_dims_in) return 1;
+  if(flat_start >= dims_in[flatten_on_dim]) return 1;
+  if(flat_stop >= dims_in[flatten_on_dim]) flat_stop = dims_in[flatten_on_dim];
   
   //my_print("Flattening array", mpi_info.rank);
 
@@ -710,12 +712,12 @@ Think of the array as being 3-D. The dim we;re flattening is dim-1. All the less
   part_sz = els_to_copy*n_segments;
 
   size_t chunk_sz = els_to_copy;
-  for(size_t i=0; i< n_segments; ++i) std::copy(src_ptr + i*chunk_sz*dims_in[flatten_on_dim], src_ptr + i*chunk_sz*dims_in[flatten_on_dim]+ els_to_copy, dest_ptr + i*chunk_sz*sz);
+  for(size_t i=0; i< n_segments; ++i) std::copy(src_ptr + i*chunk_sz*dims_in[flatten_on_dim] +els_to_copy*flat_start, src_ptr + i*chunk_sz*dims_in[flatten_on_dim]+ els_to_copy+ els_to_copy*flat_start, dest_ptr + i*chunk_sz*sz);
   
   //Now we should have the 0th row in place
   //Add each successive row onto it
   
-  for(size_t j = 1; j<dims_in[flatten_on_dim]; j++){
+  for(size_t j = flat_start+1; j<flat_stop; j++){
     
     for(size_t i=0; i< n_segments; ++i) std::transform(src_ptr + i*chunk_sz*dims_in[flatten_on_dim] + els_to_copy*j, src_ptr + i*chunk_sz*dims_in[flatten_on_dim]+ els_to_copy + els_to_copy*j, dest_ptr + i*chunk_sz*sz,dest_ptr + i*chunk_sz*sz, std::plus<my_type>());
   }

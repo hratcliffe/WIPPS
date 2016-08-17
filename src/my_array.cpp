@@ -144,15 +144,19 @@ my_array & my_array::operator=(const my_array& src){
 my_array::my_array(my_array && src){
 /** \brief Move constructor
 *
-*Move src to a new instance i.e. copy fields but don't move memory
+*Move src to a new instance i.e. copy fields but don't move memory. Src becomes empty afterwards
 */
 
   if(!src.dims || src.n_dims==0) return;
   //Stop if src has no dims
   
   this->n_dims = src.n_dims;
+  src.n_dims = 0;
   this->dims = src.dims;
+  src.dims = nullptr;
   this->data = src.data;
+  src.data = nullptr;
+  //Steal memory from src
 }
 
 my_array::my_array(const my_array &src){

@@ -223,6 +223,7 @@ class test_entity_levelone: public test_entity{
     int setup();
     int basic_tests();
     int twod_tests();
+    int twod_space_tests();
   public:
     test_entity_levelone();
     virtual ~test_entity_levelone();

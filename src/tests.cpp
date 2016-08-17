@@ -1053,7 +1053,7 @@ int test_entity_basic_maths::run(){
 **/
 
   //Check our array slice flattener
-  size_t dims[3];
+{  size_t dims[3];
   size_t n_dims = 3;
   dims[0] = 5; dims[1] = 6; dims[2] = 5;
   size_t total_sz = dims[0]*dims[1]*dims[2];
@@ -1079,8 +1079,33 @@ int test_entity_basic_maths::run(){
       if(*(out + (k*dims[0] + i)) != tot_on_dim1+ dims[1]*i) errs++;
     }
   }
-  if(errs > 0) err |= TEST_WRONG_RESULT;
-  else test_bed->report_info("Flattener OK", 1);
+  if(errs > 0) err |= TEST_WRONG_RESULT;}
+
+{  size_t dims[2];
+  size_t n_dims = 2;
+  dims[0] = 5; dims[1] = 6;
+  size_t total_sz = dims[0]*dims[1];
+  my_type * in, *out;
+  in = (my_type *) calloc(total_sz, sizeof(my_type));
+  out = (my_type *) calloc(total_sz/dims[1], sizeof(my_type));
+  
+  int tot_on_dim1 = 0;
+  for(size_t j=0; j<dims[1]; j++) tot_on_dim1 += j;
+  
+  for(size_t i = 0; i< dims[0]; i++){
+    for(size_t j=0; j<dims[1]; j++){
+        *(in+ j*dims[0] + i) = i+j;
+    }
+  }
+  flatten_fortran_slice(in, out, n_dims, dims, 1);
+  int errs = 0;
+  for(size_t i = 0; i< dims[0]; i++){
+      if(*(out + i) != tot_on_dim1+ dims[1]*i) errs++;
+  }
+  
+  if(errs > 0) err |= TEST_WRONG_RESULT;}
+  
+  if(err == TEST_PASSED) test_bed->report_info("Flattener OK", 1);
 
   test_bed->report_err(err);
   return err;
@@ -1804,6 +1829,8 @@ int test_entity_levelone::run(){
 
     err|=setup();
     if(!test_bed->check_for_abort(err)) err|= twod_tests();
+    if(!test_bed->check_for_abort(err)) err|= twod_space_tests();
+
   }
   
   test_bed->report_err(err);
@@ -1932,7 +1959,6 @@ int test_entity_levelone::twod_tests(){
     return TEST_FATAL_ERR;
   }
   int space_dim = space_in[1]-space_in[0];
-
 //  dat = data_array(space_dim, dims_in[1], n_tims);
   dat = data_array(space_dim, n_tims);
   strcpy(dat.block_id, block_id);
@@ -1956,6 +1982,7 @@ int test_entity_levelone::twod_tests(){
   if(!dat_fft.is_good()){
     return TEST_FATAL_ERR;
   }
+  dat.B_ref = -1;
   err2 = dat.fft_me(dat_fft);
 
   test_bed->report_info("FFT returned err_state " + mk_str(err2));
@@ -1974,7 +2001,7 @@ int test_entity_levelone::twod_tests(){
     lims.push_back(0.002);
     lims.push_back(-3.0*my_const.omega_ce);
     lims.push_back(3.0*my_const.omega_ce);
-  
+
   }
   
 //Set cutout limits on FFT
@@ -1982,6 +2009,94 @@ int test_entity_levelone::twod_tests(){
   time_str = mk_str(dat_fft.time[0], true)+"_"+mk_str(this->n_tims);
   std::string block = block_id;
   filename = file_prefix+"FFT_"+block +"_"+time_str+"_"+mk_str(dat_fft.space[0])+"_"+mk_str(dat_fft.space[1]) + ".dat";
+  std::fstream file;
+  file.open(filename.c_str(),std::ios::out|std::ios::binary);
+  if(file.is_open()){
+    dat_fft.write_section_to_file(file, lims);
+//    dat.write_to_file(file);
+    if(err2){
+      test_bed->report_info("File writing failed");
+      err |=TEST_ASSERT_FAIL;
+    }
+    
+  }else{
+    err |=TEST_ASSERT_FAIL;
+  
+  }
+  file.close();
+  test_bed->report_info("FFT section output in "+filename, 1);
+
+  return err;
+
+}
+int test_entity_levelone::twod_space_tests(){
+/** \brief Basic tests of process to make levl-1 data from 2-d input
+*
+* Reads proper data files, produces FFT, derived spectrum etc*/
+  int err = TEST_PASSED;
+
+  size_t n_dims_in;
+  std::vector<size_t> dims_in;
+  my_reader->read_dims(n_dims_in, dims_in);
+  if(n_dims_in != 2){
+    test_bed->report_info("Wrong file dimension", 1);
+    return TEST_FATAL_ERR;
+  }
+  int space_dim = space_in[1]-space_in[0];
+  dat = data_array(space_dim, dims_in[1], n_tims);
+  strcpy(dat.block_id, block_id);
+
+  if(!dat.is_good()){
+    my_print("Data array allocation failed.", mpi_info.rank);
+    err |= TEST_ASSERT_FAIL;
+    err |= TEST_FATAL_ERR;
+  }
+
+  int err2 = my_reader->read_data(dat, time_in, space_in);
+  if(err2 == 1){
+    return TEST_FATAL_ERR;
+  }
+  if(err2 == 2) n_tims = dat.get_dims(1);
+  //Check if we had to truncate data array and size FFT accordingly
+//  dat_fft = data_array(space_dim, dims_in[1], n_tims);
+
+  dat.B_ref = -1;
+
+//  dat = dat.total(2);
+
+  dat_fft.clone_empty(dat);
+  if(!dat_fft.is_good()){
+    return TEST_FATAL_ERR;
+  }
+
+  err2 = dat.fft_me(dat_fft);
+
+  
+
+  test_bed->report_info("FFT returned err_state " + mk_str(err2));
+
+  test_contr->add_spectrum(space_dim, DEFAULT_N_ANG, true);
+  test_contr->get_current_spectrum()->make_test_spectrum();
+  
+  int n_dims = dat.get_dims();
+  std::vector<my_type> lims;
+  if(n_dims >=3){
+    lims.push_back(-0.002);
+    lims.push_back(0.002);
+  }
+  if(n_dims >=2){
+    lims.push_back(-0.002);
+    lims.push_back(0.002);
+    lims.push_back(-0.002);
+    lims.push_back(0.002);
+
+  }
+  
+//Set cutout limits on FFT
+  std::string filename, time_str;
+  time_str = mk_str(dat_fft.time[0], true)+"_"+mk_str(this->n_tims);
+  std::string block = block_id;
+  filename = file_prefix+"FFT_k_"+block +"_"+time_str+"_"+mk_str(dat_fft.space[0])+"_"+mk_str(dat_fft.space[1]) + ".dat";
   std::fstream file;
   file.open(filename.c_str(),std::ios::out|std::ios::binary);
   if(file.is_open()){

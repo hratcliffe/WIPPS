@@ -17,6 +17,7 @@
 #include <cmath>
 #include <cstring>
 #include "support.h"
+#include "main_support.h"
 #include "my_array.h"
 #include "data_array.h"
 
@@ -135,7 +136,6 @@ data_array & data_array::operator=(const data_array& src){
 *
 *Set this equal to src by copying src including data
 */
-
   if(this->axes) free(axes);
 
   this->construct();
@@ -159,6 +159,7 @@ data_array::data_array(data_array && src) : my_array(src){
 *Move src to new location. Copies data pointers but does not reallocate memory
 */
   this->axes = src.axes;
+  src.axes = nullptr;
   copy_ids(src);
 }
 
@@ -464,7 +465,7 @@ bool data_array::read_from_file(std::fstream &file, bool no_version_check, bool 
   }
   //call parent class to read data, checking we read id ok first
 
-  size_t next_block=0, end_block=0, end_pos=0;
+  size_t next_block=0; //, end_block=0, end_pos=0;
   file.read((char*) &next_block, sizeof(size_t));
 
   size_t tot_els = get_total_axis_elements();
@@ -759,3 +760,56 @@ bool data_array::shift(size_t dim, long n_els, bool axis){
 
 }
 
+data_array data_array::total(size_t dim){
+  //Wraps total over range, passing limits outside axis ranges
+  my_type min, max;
+  min = this->get_axis_element(dim, 0) - 1;
+  max = this->get_axis_element(dim, this->get_dims(dim)-1) + 1;
+  return this->total(dim, min, max);
+
+}
+
+data_array data_array::total(size_t dim, my_type min, my_type max){
+/** \brief Total along dim dim
+*
+* A new array is created of rank this->n_dims-1 and proper dims, filled by totalling this and returned
+*/
+  
+  if(dim >= this->n_dims){
+//    data_array new_array;
+    return data_array();
+  }
+  
+  size_t * new_dims;
+  new_dims = (size_t *) calloc((this->n_dims-1), sizeof(size_t));
+  for(size_t i=0, i2=0; i< this->n_dims-1; i++, i2++){
+    if(i == dim){
+      i2--;
+      continue;
+    }
+    new_dims[i2] = dims[i];
+    std::cout<< new_dims[i2]<<'\n';
+  }
+  size_t len, min_ind = 0, max_ind = this->get_dims(dim)-1;
+  int where_val;
+  my_type * ax_start = get_axis(dim, len);
+  where_val = where(ax_start, len, min);
+  if(where_val != -1) min_ind = where_val;
+  where_val = where(ax_start, len, max);
+  if(where_val != -1) max_ind = where_val;
+
+  data_array new_array = data_array(this->n_dims-1, new_dims);
+  
+  flatten_fortran_slice(this->data, new_array.data, this->n_dims, this->dims, dim, min_ind, max_ind);
+  
+  //Copy axes
+  my_type * ax_new;
+  size_t len2;
+  for(size_t i=0, i2=0; i2< n_dims -1; i++, i2++ ){
+    if(i == dim) i++;
+    ax_new = new_array.get_axis(i2, len);
+    std::copy(this->get_axis(i, len2),this->get_axis(i, len2)+len, ax_new);
+  }
+  new_array.copy_ids(*this);
+  return new_array;
+}

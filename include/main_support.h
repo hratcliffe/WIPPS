@@ -20,5 +20,5 @@ void divide_domain(std::vector<size_t>, int space[2], int per_proc, int block_nu
 
 my_type get_ref_Bx(std::string file_prefix, int space_in[2], int time_0, bool is_acc=false);
 
-bool flatten_fortran_slice(my_type * src_ptr, my_type* dest_ptr, size_t n_dims_in, size_t * sizes_in, size_t flatten_on_dim);
+bool flatten_fortran_slice(my_type * src_ptr, my_type* dest_ptr, size_t n_dims_in, size_t * sizes_in, size_t flatten_on_dim,size_t flat_start=0, size_t flat_stop=-1);//I know -1 will overflow, that is what I want
 #endif

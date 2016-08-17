@@ -68,6 +68,9 @@ public:
   bool check_ids(const data_array & src);
   bool resize(size_t dim, size_t sz);
   bool shift(size_t dim, long n_els, bool axis=1);
+  data_array total(size_t dim);
+  data_array total(size_t dim, my_type min, my_type max);
+
 };
 
 

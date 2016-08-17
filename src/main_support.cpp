@@ -141,30 +141,30 @@ setup_args process_command_line(int argc, char *argv[]){
   values.d[1] = 10;
   values.is_list = false;
   values.is_spect = false;
-  values.do_flatten = false;
 
   for(int i=0; i< argc; i++){
-    if(strcmp(argv[i], "-h")==0) print_help();
-    if(strcmp(argv[i], "-flatten")==0) values.do_flatten = true;
-        if(strcmp(argv[i], "-f")==0 && i < argc-1) values.file_prefix = argv[i+1];
-    if(strcmp(argv[i], "-start")==0 && i < argc-1) values.time[0] = atoi(argv[i+1]);
-    if(strcmp(argv[i], "-end")==0 && i < argc-1) values.time[1] = atoi(argv[i+1]);
-    if(strcmp(argv[i], "-rows")==0 && i < argc-1){
+    if(strcmp(argv[i], "-h")==0){
+      print_help();
+      exit(0);
+    }
+    else if(strcmp(argv[i], "-f")==0 && i < argc-1) values.file_prefix = argv[i+1];
+    else if(strcmp(argv[i], "-start")==0 && i < argc-1) values.time[0] = atoi(argv[i+1]);
+    else if(strcmp(argv[i], "-end")==0 && i < argc-1) values.time[1] = atoi(argv[i+1]);
+    else if(strcmp(argv[i], "-rows")==0 && i < argc-1){
       values.time[2] = atoi(argv[i+1]);
     }
-
-    if(strcmp(argv[i], "-block")==0 && i < argc-1) values.block = argv[i+1];
-    if(strcmp(argv[i], "-n")==0 && i < argc-1) values.n_space= atoi(argv[i+1]);
-    if(strcmp(argv[i], "-space")==0 && i < argc-2){
+    else if(strcmp(argv[i], "-block")==0 && i < argc-1) values.block = argv[i+1];
+    else if(strcmp(argv[i], "-n")==0 && i < argc-1) values.n_space= atoi(argv[i+1]);
+    else if(strcmp(argv[i], "-space")==0 && i < argc-2){
       values.space[0] = atoi(argv[i+1]);
       values.space[1] = atoi(argv[i+2]);
     }
-    if(strcmp(argv[i], "-d")==0 && i < argc-2){
+    else if(strcmp(argv[i], "-d")==0 && i < argc-2){
       values.d[0] = atoi(argv[i+1]);
       values.d[1] = atoi(argv[i+2]);
     }
-    if(((strcmp(argv[i], "-Finput")==0)||(strcmp(argv[i], "-Sinput")==0)) && i < argc-1) values.is_list=true;
-    if((strcmp(argv[i], "-Sinput")==0) && i < argc-1) values.is_spect = true;
+    else if(((strcmp(argv[i], "-Finput")==0)||(strcmp(argv[i], "-Sinput")==0)) && i < argc-1) values.is_list=true;
+    else if((strcmp(argv[i], "-Sinput")==0) && i < argc-1) values.is_spect = true;
   }
 
   if(values.space[0] == -1 && values.space[1] == -1 && values.n_space == -1){
@@ -210,11 +210,9 @@ void print_help(char code){
   if(code !=0) file = append_into_string(file, "_"+std::string(1, code));
   halp.open(file);
   if(mpi_info.rank == 0 && halp){
-    std::cout<<"Command line options: "<<std::endl;
     std::cout<<halp.rdbuf();
     std::cout<<'\n';
   }
-  exit(0);
 }
 
 void divide_domain(std::vector<size_t> dims, int space[2], int per_proc, int block_num){

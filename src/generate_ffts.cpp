@@ -32,6 +32,14 @@
 deck_constants my_const;/**< Physical constants*/
 extern const mpi_info_struc mpi_info;/**< Link to mpi_info as const*/
 
+struct gen_cmd_line{
+  int flat_dim;
+  bool flat_fft;
+  my_type flat_fft_min;
+  my_type flat_fft_max;
+};
+
+gen_cmd_line special_command_line(int argc, char *argv[]);
 
 int main(int argc, char *argv[]){
 
@@ -48,6 +56,7 @@ int main(int argc, char *argv[]){
   
   MPI_Barrier(MPI_COMM_WORLD);
 
+  gen_cmd_line extra_args = special_command_line(argc, argv);
   setup_args cmd_line_args = process_command_line(argc, argv);
   if(mpi_info.rank == 0) get_deck_constants(cmd_line_args.file_prefix);
   share_consts();
@@ -104,9 +113,12 @@ int main(int argc, char *argv[]){
     }else if(n_dims == 2){
       dat = data_array(space_dim, dims[1], n_tims);
     
+    }else if(n_dims == 3){
+      dat = data_array(space_dim, dims[1], dims[2], n_tims);
+    
     }else{
-      my_print("More than 2-D data not supported", mpi_info.rank);
-    }//Here I have no more than 2-D in space
+      my_print("More than 3-D input data not supported by this utility", mpi_info.rank);
+    }//Here I have no more than 3-D in space
   
     if(!dat.is_good()){
       my_print("Data array allocation failed. Aborting.", mpi_info.rank);
@@ -123,12 +135,9 @@ int main(int argc, char *argv[]){
     //Check if we had to truncate data array...
 
 
-    if(cmd_line_args.do_flatten && dat.get_dims() >2){
-      data_array tmp = data_array(space_dim, n_tims);
-      
-    
+    if(extra_args.flat_dim>=0 && dat.get_dims()>1 && !extra_args.flat_fft){
+      dat = dat.total(extra_args.flat_dim);
     }
-    //Flatten 2-D data before proceeding
     
     data_array dat_fft;
     dat_fft.clone_empty(dat);
@@ -199,3 +208,27 @@ int main(int argc, char *argv[]){
   exit(0);
 }
 
+gen_cmd_line special_command_line(int argc, char *argv[]){
+//Do special command line processing here
+
+  gen_cmd_line values;
+  values.flat_dim = -1;
+  values.flat_fft = false;
+  values.flat_fft_min = 0.0;
+  values.flat_fft_max = 0.0;
+  
+  for(int i=0; i< argc; i++){
+    if(strcmp(argv[i], "-h")==0){
+      print_help();
+      print_help('g');
+      exit(0);
+    }
+    else if(strcmp(argv[i], "-flat_dat")==0 && i < argc-1) values.flat_dim = atoi(argv[i+1]);
+    else if(strcmp(argv[i], "-flat_fft")==0  && i < argc-3){
+      values.flat_dim = atoi(argv[i+1]);
+      values.flat_fft = true;
+      values.flat_fft_min = atof(argv[i+2]);
+      values.flat_fft_max = atof(argv[i+3]);
+    }
+}
+}

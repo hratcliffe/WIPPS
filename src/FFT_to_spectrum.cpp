@@ -94,25 +94,26 @@ FFT_spect_args FFT_spect_process_command_line(int argc, char *argv[]){
   bool extr = false;
   
   for(int i=0; i< argc; i++){
-    if(strcmp(argv[i], "-h")==0) print_help('f');
-    
+    if(strcmp(argv[i], "-h")==0){
+      print_help('f');
+      exit(0);
+    }
     if(strcmp(argv[i], "-f")==0 && i < argc-1) values.file_prefix = argv[i+1];
-    if(strcmp(argv[i], "-in")==0 && i < argc-1) values.file_in = argv[i+1];
-    if(strcmp(argv[i], "-out")==0 && i < argc-1) values.file_out = argv[i+1];
-    if(strcmp(argv[i], "-om")==0 && i < argc-1) values.fuzz = atoi(argv[i+1]);
-    if(strcmp(argv[i], "-n_ang")==0 && i < argc-1) values.n_ang = atoi(argv[i+1]);
-    
-    if(strcmp(argv[i], "-wave")==0 && i < argc-1){
+    else if(strcmp(argv[i], "-in")==0 && i < argc-1) values.file_in = argv[i+1];
+    else if(strcmp(argv[i], "-out")==0 && i < argc-1) values.file_out = argv[i+1];
+    else if(strcmp(argv[i], "-om")==0 && i < argc-1) values.fuzz = atoi(argv[i+1]);
+    else if(strcmp(argv[i], "-n_ang")==0 && i < argc-1) values.n_ang = atoi(argv[i+1]);
+    else if(strcmp(argv[i], "-wave")==0 && i < argc-1){
       if(argv[i+1][0] == 'w' || argv[i+1][0] == 'W') values.wave=WAVE_WHISTLER;
       else if(argv[i+1][0] == 'p' || argv[i+1][0] == 'P') values.wave=WAVE_PLASMA;
       else if(argv[i+1][0] == 'o' || argv[i+1][0] == 'O') values.wave=WAVE_O;
     }
-    if(strcmp(argv[i], "-ang")==0 && i < argc-1 && !extr){
+    else if(strcmp(argv[i], "-ang")==0 && i < argc-1 && !extr){
       if(argv[i+1][0] == 'd' || argv[i+1][0] == 'D') values.ang=FUNCTION_DELTA;
       else if(argv[i+1][0] == 'g' || argv[i+1][0] == 'G') values.ang=FUNCTION_GAUSS;
       else if(argv[i+1][0] == 'i' || argv[i+1][0] == 'I') values.ang=FUNCTION_ISO;
     }
-    if(strcmp(argv[i], "-extr")==0){
+    else if(strcmp(argv[i], "-extr")==0){
       values.ang = FUNCTION_NULL;
       extr = true;
       //This _overrides_ -ang

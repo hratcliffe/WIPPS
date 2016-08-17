@@ -183,7 +183,6 @@ struct setup_args{
   int d[2];/**< Dimensions of D to produce*/
   bool is_list;/**< Use FFT or spectrum list rather than sdf input*/
   bool is_spect;/**< Use spectrum list rather than sdf input*/
-  bool do_flatten;/**< Flatten 2-D data and treat as 1-D*/
 };
 
 /** \brief D coefficient report

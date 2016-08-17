@@ -107,7 +107,10 @@ cutout_args cutout_process_command_line(int argc, char *argv[]){
   values.file_out = "";
 
   for(int i=0; i< argc; i++){
-    if(strcmp(argv[i], "-h")==0) print_help('c');
+    if(strcmp(argv[i], "-h")==0){
+      print_help('c');
+      exit(0);
+    }
     
     if(strcmp(argv[i], "-f")==0 && i < argc-1) values.file_prefix = argv[i+1];
     if(strcmp(argv[i], "-in")==0 && i < argc-1) values.file_in = argv[i+1];

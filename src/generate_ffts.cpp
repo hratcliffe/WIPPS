@@ -37,6 +37,7 @@ struct gen_cmd_line{
   bool flat_fft;
   my_type flat_fft_min;
   my_type flat_fft_max;
+  std::vector<my_type> limits;
 };
 
 gen_cmd_line special_command_line(int argc, char *argv[]);
@@ -58,6 +59,7 @@ int main(int argc, char *argv[]){
 
   gen_cmd_line extra_args = special_command_line(argc, argv);
   setup_args cmd_line_args = process_command_line(argc, argv);
+
   if(mpi_info.rank == 0) get_deck_constants(cmd_line_args.file_prefix);
   share_consts();
   /** Get constants from deck and share to other procs*/
@@ -77,6 +79,7 @@ int main(int argc, char *argv[]){
   }else{
     n_tims = cmd_line_args.time[2];
   }
+  my_reader->set_ref_filenum(cmd_line_args.time[0]);
 
   int my_space[2];
   my_space[0] = cmd_line_args.space[0];
@@ -127,6 +130,8 @@ int main(int argc, char *argv[]){
 
     err = my_reader->read_data(dat, cmd_line_args.time, my_space);
     /** \todo Have this attempt the next file before failing*/
+    //IMPORTANT: we use the same array for each space block. So if we had insufficient files etc this will truncate the array ONLY ONCE
+    
     if(err == 1){
       my_print("Data read failed. Aborting", mpi_info.rank);
       safe_exit();
@@ -134,7 +139,21 @@ int main(int argc, char *argv[]){
     if(err == 2) n_tims = dat.get_dims(1);
     //Check if we had to truncate data array...
 
+    dat.B_ref = get_ref_Bx(cmd_line_args.file_prefix, my_space, cmd_line_args.time[0] == 0 ? 1:cmd_line_args.time[0], my_reader->current_block_is_accum());
+    //Get ref B using specfied file but skip 0th ones as they seem broken
 
+    //Checks limits and denormalise freq. if applicable
+    std::vector<my_type> lims;
+    if(extra_args.limits.size() != 0){
+      if(extra_args.limits.size() != 2*dat.get_dims()) my_print("Please supply 2 limits per dimension. Output will be untrimmed");
+      else{
+        lims = extra_args.limits;
+        if(extra_args.flat_dim != dat.get_dims()-1){
+          lims[lims.size()-2] *= (dat.B_ref*q0/me);
+          lims[lims.size()-1] *= (dat.B_ref*q0/me);
+        }
+      }
+    }
     if(extra_args.flat_dim>=0 && dat.get_dims()>1 && !extra_args.flat_fft){
       dat = dat.total(extra_args.flat_dim);
     }
@@ -146,8 +165,6 @@ int main(int argc, char *argv[]){
       my_print("Data array allocation failed. Aborting.", mpi_info.rank);
       return 0;
     }
-    dat.B_ref = get_ref_Bx(cmd_line_args.file_prefix, my_space, cmd_line_args.time[0] == 0 ? 1:cmd_line_args.time[0], my_reader->current_block_is_accum());
-    //Get ref B using specfied file but skip 0th ones as they seem broken
 
     err = dat.fft_me(dat_fft);
 
@@ -155,24 +172,7 @@ int main(int argc, char *argv[]){
     else MPI_Reduce(&err, NULL, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
 
     my_print("FFT returned err_state " + mk_str(err), mpi_info.rank);
-
-//    contr->add_spectrum(space_dim, DEFAULT_N_ANG, true);
-//    contr->get_current_spectrum()->make_test_spectrum(cmd_line_args.time, my_space);
     
-    //Set cutout limits on FFT
-    int n_dims = dat.get_dims();
-    std::vector<my_type> lims;
-    if(n_dims >=3){
-      lims.push_back(-0.002);
-      lims.push_back(0.002);
-    }
-    if(n_dims >=2){
-      lims.push_back(-0.0015);
-      lims.push_back(0.0015);
-      lims.push_back(0.0*my_const.omega_ce);//Negative values just repeat what we had
-      lims.push_back(3.0*my_const.omega_ce);
-    
-    }
     //Construct filename. Since the MPI is using block-wise domain decomposition, different processors can't overlap on blocks
     std::string filename, time_str;
     time_str = mk_str(dat_fft.time[0], true)+"_"+mk_str(n_tims);
@@ -181,7 +181,11 @@ int main(int argc, char *argv[]){
     std::fstream file;
     file.open(filename.c_str(),std::ios::out|std::ios::binary);
     if(file.is_open()){
-      dat_fft.write_section_to_file(file, lims);
+      if(lims.size() == 2*dat.get_dims()){
+        dat_fft.write_section_to_file(file, lims);
+      }else{
+        dat_fft.write_to_file(file);
+      }
     }
     file.close();
     my_print( "FFT section output in "+filename, mpi_info.rank);
@@ -230,5 +234,14 @@ gen_cmd_line special_command_line(int argc, char *argv[]){
       values.flat_fft_min = atof(argv[i+2]);
       values.flat_fft_max = atof(argv[i+3]);
     }
-}
+    else if(strcmp(argv[i], "-lims")==0 && i < argc-1){
+      while(i<argc-1 && (argv[i+1][0]!= '-'  || ((argv[i+1][1] >='0' && argv[i+1][1] <='9') || argv[i+1][1] =='.'))){
+        //Checks if next argument is a new flag, but allows negative numbers
+        values.limits.push_back(atof(argv[i+1]));
+        i++;
+      }
+    }
+  }
+  
+  return values;
 }

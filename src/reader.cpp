@@ -299,7 +299,6 @@ int reader::read_data(data_array &my_data_in, int time_range[3], int space_range
   size_t n_dims = my_data_in.get_dims();
   my_data_in.time[0] = my_data_in.get_axis_element(n_dims-1, 0);
   
-  std::cout<<total_reads<<" "<<time_range[2]<<'\n';
   //report if we broke out of loop and print filename
   if(i < time_range[1] || (accumulated && total_reads < time_range[2])){
     my_data_in.resize(1, total_reads);

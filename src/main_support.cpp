@@ -662,6 +662,8 @@ my_type get_ref_Bx(std::string file_prefix, int space_in[2], int time_0, bool is
   //We use this to get the local average B field
   int bx_times[3] = {time_0, time_0+1, 1};
   //use specified file and read one row
+  bx_reader.set_ref_filenum(time_0);
+
   size_t n_dims;
   std::vector<size_t> dims;
   int err = bx_reader.read_dims(n_dims, dims);
@@ -671,7 +673,14 @@ my_type get_ref_Bx(std::string file_prefix, int space_in[2], int time_0, bool is
   data_array bx = data_array(space_dim, 1);
   if(!bx.is_good()) return 0.0;
   
-  err = bx_reader.read_data(bx, bx_times, space_in);
+  if(n_dims == 1){
+    err = bx_reader.read_data(bx, bx_times, space_in);
+  }else if(n_dims == 2){
+    err = bx_reader.read_data(bx, bx_times, space_in, 1);
+  }else{
+    my_print("3-D space not added...", mpi_info.rank);
+  }
+  
   if(err == 0 || err ==2 ) return bx.avval();
   //2 is a non-fatal read error
   else return 0.0;

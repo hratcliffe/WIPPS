@@ -107,7 +107,7 @@ bool reader::read_dims(size_t &n_dims, std::vector<size_t> &dims){
 int reader::read_data(data_array &my_data_in, int time_range[3], int space_range[2], int flatten_on){
 /** \brief Read data into given array
 *
-*This will open the files dictated by time range sequentially, and populate them into the data_array. It'll stop when the end of range is reached, or it goes beyond the size available. Space range upper entry of -1 is taken as respective limit. NB: blocking is only supported on the X axis. @return 0 for success, 1 for error 2 for unusual exit, i.e. early termination
+*This will open the files dictated by time range sequentially, and populate them into the data_array. It'll stop when the end of range is reached, or it goes beyond the size available. Space range upper entry of -1 is taken as respective limit. NB: blocking is only supported on the X axis. @return 0 for success, 1 for error 2 for unusual exit, i.e. early termination \todo Break out into three functions, common, plain and acc
 */
   
   if(!my_data_in.is_good()){
@@ -174,18 +174,14 @@ int reader::read_data(data_array &my_data_in, int time_range[3], int space_range
   }
   source_sizes = (size_t *) malloc((block->ndims)*sizeof(size_t));
   
-  for(size_t i=0; i< block->ndims; i++){
-    //if(flatten_on >= 0 && flatten_on <= i) source_sizes[i] = block->dims[i+1]-1;
-    //else
+  for(size_t i=0; i< block->ndims - accumulated; i++){
+    //Get SPACE advance for source, i.e advance between one time read and the next
     source_sizes[i] = block->dims[i]-1;
-    //Skip a flattening dimension
-
+    //Minus one because this is grid block with stagger
     source_advance*=source_sizes[i];
-    //Advance between one time read and the next
-  }
 
+  }
   my_type * flat_data = nullptr;
-  size_t acc_min_times = 1;//How much memory space we have for flat data
   if(flatten_on >=0){
     //One time at once
     flat_data = (my_type*) malloc(sizeof(my_type)*source_advance);
@@ -234,7 +230,6 @@ int reader::read_data(data_array &my_data_in, int time_range[3], int space_range
     if(!block->data) break;
     my_type * my_ptr = (my_type *) block->data;
     
-//    my_ptr +=space_range[0];//Adapt for 2-d data
     my_ptr += source_advance/block->dims[0]*space_range[0];
 
     if(!accumulated){
@@ -259,22 +254,21 @@ int reader::read_data(data_array &my_data_in, int time_range[3], int space_range
       handle->current_block = ax_block;
       sdf_read_data(handle);
 
+      //don't read more than time[2] rows
       rows = ax_block->dims[block->ndims-1];
       if(total_reads + rows >= time_range[2]) rows = time_range[2]- total_reads;
-      //don't read more than time[2] rows
+
+      //Copy time grid out
       if(ax_ptr){
         if(ax_block->datatype != my_sdf_type) std::copy((other_type *) ax_block->grids[1], (other_type *) ax_block->grids[1] + rows, ax_ptr+total_reads);
         else std::copy((my_type *) ax_block->grids[1], (my_type *) ax_block->grids[1] + rows, ax_ptr+total_reads);
       }
-      //Copy time grid out
       size_t val[1];
       if(simple_slice && flatten_on < 0){
         for(int j=0; j<rows; j++){
           val[0] = total_reads+j;
           my_data_in.populate_slice(my_ptr, 1, val);
           my_ptr += source_advance;
-
-//          my_ptr += block->dims[0];
         }
       }else if(simple_slice){
         for(int j=0; j<rows; j++){
@@ -283,19 +277,14 @@ int reader::read_data(data_array &my_data_in, int time_range[3], int space_range
           flatten_fortran_slice(my_ptr, flat_data, my_data_in.get_dims()-1, source_sizes,flatten_on);
 
           my_data_in.populate_slice(flat_data, 1, val);
-
-//          my_ptr += block->dims[0];
           my_ptr += source_advance;
         }
         
       }else{
         for(int j=0; j<rows; j++){
-          //my_data_in->populate_row(my_ptr, space_range[1], total_reads+j);
           val[0] = total_reads+j;
           my_data_in.populate_complex_slice(my_ptr, 1, val, source_sizes);
           my_ptr += source_advance;
-
-//          my_ptr += block->dims[0];
         }
       }
       total_reads+= rows;
@@ -306,20 +295,27 @@ int reader::read_data(data_array &my_data_in, int time_range[3], int space_range
 
   if(source_sizes) free(source_sizes);
 
-  {
-    size_t n_dims = my_data_in.get_dims();
-    my_data_in.time[0] = my_data_in.get_axis_element(n_dims-1, 0);
-    my_data_in.time[1] = my_data_in.get_axis_element(n_dims-1, my_data_in.get_dims(n_dims-1)-1);
-    //Set times to be first and final time axis elements
-  }
-
+  //Set 0th time
+  size_t n_dims = my_data_in.get_dims();
+  my_data_in.time[0] = my_data_in.get_axis_element(n_dims-1, 0);
+  
+  std::cout<<total_reads<<" "<<time_range[2]<<'\n';
   //report if we broke out of loop and print filename
-  if(i < time_range[1]){
+  if(i < time_range[1] || (accumulated && total_reads < time_range[2])){
     my_data_in.resize(1, total_reads);
-    //trim array to number of lines read... NB 2-D ONLY
+    //trim array to number of lines read
+
+    //Set last time
+    my_data_in.time[1] = my_data_in.get_axis_element(n_dims-1, my_data_in.get_dims(n_dims-1)-1);
+    
     if(!accumulated) my_print("Read stopped by error at file "+file_name, mpi_info.rank);
     else my_print("Read "+mk_str(total_reads)+" rows", mpi_info.rank);
     return 2;
+  }
+  else{
+    //Set last time
+    my_data_in.time[1] = my_data_in.get_axis_element(n_dims-1, my_data_in.get_dims(n_dims-1)-1);
+    return 0;
   }
 
 return 0;

@@ -46,6 +46,11 @@ public:
   my_array(const my_array &src);
   my_array(my_array && src);
   my_array & operator=(const my_array& src);
+
+  template<typename T> void divide( T val){
+    for(size_t i=0; i< this->get_total_elements(); i++) *(this->data+i) /= val;
+  }//Works for any type T where my_type/T is defined
+
   virtual bool is_good()const {return (data && dims);}/**< Check memory allocation etc worked*/
   void clone_empty(const my_array &src);
   size_t get_dims()const;

@@ -155,7 +155,8 @@ int main(int argc, char *argv[]){
       }
     }
     if(extra_args.flat_dim>=0 && dat.get_dims()>1 && !extra_args.flat_fft){
-      dat = dat.total(extra_args.flat_dim);
+      dat = dat.average(extra_args.flat_dim);
+      
     }
     
     data_array dat_fft;

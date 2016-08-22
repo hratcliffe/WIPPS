@@ -11,6 +11,7 @@
 
 #include <iostream>
 #include <vector>
+#include "sdf.h"
 
 
 class data_array;
@@ -25,9 +26,14 @@ class reader{
 
   int n_z; /*<*Number of characters in filename's dump number*/
   int ref_file_num;/**< Number of any file which exists to test dimensions etc*/
+  
   std::string get_full_name(int num);
   bool is_accum(std::string block_id);
 
+  int pre_read(data_array& my_data_in, int ref_time, bool accum, int flatten_on, size_t &n_dims, size_t * &source_sizes);
+  int read_acc_time(data_array & my_data_in, sdf_file_t * handle, size_t total_reads, size_t rows);
+  int read_plain_time(data_array& my_data_in, sdf_file_t * handle, size_t pos);
+  
 public:
 
   std::string file_prefix;/**< Prefix of files before dump number*/
@@ -45,6 +51,7 @@ public:
   bool read_dims(size_t &n_dims, std::vector<size_t> &dims);
 
   int read_data(data_array & my_data_in, int time_range[3], int space_range[2], int flatten_on = -1);
+  
   bool current_block_is_accum();
   int get_file_size();
   

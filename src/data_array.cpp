@@ -819,3 +819,25 @@ data_array data_array::total(size_t dim, my_type min, my_type max){
   new_array.copy_ids(*this);
   return new_array;
 }
+
+data_array data_array::average(size_t dim){
+  size_t old_dim = this->get_dims(dim);
+  data_array new_arr = total(dim);
+  new_arr.divide(old_dim);
+  return new_arr;
+}
+
+
+data_array data_array::average(size_t dim, my_type min, my_type max){
+  size_t len, min_ind=0, max_ind = this->get_dims(dim)-1;
+  int where_val;
+  my_type * ax_start = get_axis(dim, len);
+  where_val = where(ax_start, len, min);
+  if(where_val != -1) min_ind = where_val;
+  where_val = where(ax_start, len, max);
+  if(where_val != -1) max_ind = where_val;
+
+  data_array new_arr = total(dim, min, max);
+  new_arr.divide(max_ind - min_ind);
+  return new_arr;
+}

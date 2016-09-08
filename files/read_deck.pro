@@ -1,7 +1,7 @@
 function read_deck, dir=dir, pref=pref
 
 ;Read from deck.status into a struct of the available constants
-
+;/todo add file exists check
 COMPILE_OPT IDL2
 ;force long ints and proper brackets
 IF(N_ELEMENTS(pref) EQ 0) THEN pref = ""

@@ -18,8 +18,6 @@
 //SDF file libraries
 #include <mpi.h>
 #include <complex.h>
-#include <fftw3.h>
-//FFTW3 Fourier transform libs
 
 #include "support.h"
 #include "main_support.h"
@@ -100,7 +98,7 @@ int main(int argc, char *argv[]){
 
   my_print("Calculating growth rates", mpi_info.rank);
 
-  plasma * my_plas = new plasma(my_const.omega_ce * me/std::abs(q0), cmd_line_args.file_prefix);
+  plasma * my_plas = new plasma(cmd_line_args.file_prefix);
 
   non_thermal * my_elec = new non_thermal(cmd_line_args.file_prefix);
 

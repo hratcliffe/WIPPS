@@ -11,8 +11,9 @@
 
 #include <stdlib.h>
 #include <vector>
+#ifndef NO_FFT
 #include <fftw3.h> //Include here so propagates to anywhere used
-
+#endif
 #include "my_array.h"
 
 /** \brief Extended my_array class including axes

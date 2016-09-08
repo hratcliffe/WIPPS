@@ -209,6 +209,11 @@ void print_help(char code){
   std::string file = halp_file;
   if(code !=0) file = append_into_string(file, "_"+std::string(1, code));
   halp.open(file);
+  if(!halp){
+    //File not found!
+    std::cout<<"Help file "<<file<<" not found\n";
+    return;
+  }
   if(mpi_info.rank == 0 && halp){
     std::cout<<halp.rdbuf();
     std::cout<<'\n';

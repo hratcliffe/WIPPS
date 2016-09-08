@@ -19,6 +19,14 @@ LIB := $(LIBSDF)
 #========Edit these for optimisation, debug options etc===============
 CFLAGS = -O0 -c $(INCLUDE) -DVERSION=\"$(GIT_VERSION)\" -std=c++0x -pedantic
 CFLAGS += -g
+
+NO_FFT = 1
+#If defined, do not use FFT libraries. Note FFT routines will be unavailable if set, as will certain utilities
+
+ifdef NO_FFT
+  CFLAGS += -DNO_FFT
+endif
+
 DEBUG = -g -W -Wall -pedantic -D_GLIBCXX_DEBUG -Wextra
 #DEBUG+= -Wno-sign-compare
 #DEBUG+= -Wno-unused-parameter
@@ -36,7 +44,10 @@ SOURCE := $(INCLS:.h=.cpp)
 OBJS := $(SOURCE:.cpp=.o)
 #make lists of source and object files from INCLS list
 MAINSOURCE := main.cpp main_growth.cpp
-UTILSSOURCE := generate_ffts.cpp cutout.cpp FFT_to_spectrum.cpp
+UTILSSOURCE := cutout.cpp FFT_to_spectrum.cpp
+ifndef NO_FFT
+ UTILSSOURCE += generate_ffts.cpp
+endif
 #List of source files containing a main.
 #Valid program contains one and only one of these!
 #Add a rule to the Main rules section to build a different one
@@ -67,9 +78,17 @@ ifndef TYPE
   ISFLOAT = 'Using float'
 endif
 ifeq ($(strip $(TYPE)),double)
-  LIB += -lfftw3 -lm
+  ifndef NO_FFT
+    LIB += -lfftw3 -lm
+  else
+    LIB += -lm
+  endif
 else ifdef ISFLOAT
-  LIB += -lfftw3f -lm
+  ifndef NO_FFT
+    LIB += -lfftw3f -lm
+  else
+    LIB += -lm
+  endif
   CFLAGS += -D_USE_FLOAT
   SED_STR = sed -i.bak 's/_NO_USE_FLOAT/_USE_FLOAT/' Doxyfile
 #Set Doxygen to document correct version

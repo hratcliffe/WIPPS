@@ -17,8 +17,11 @@
 //SDF file libraries
 #include <mpi.h>
 #include <complex.h>
+
+#ifndef NO_FFT
 #include <fftw3.h>
 //FFTW3 Fourier transform libs
+#endif
 
 #include "main.h"
 #include "support.h"

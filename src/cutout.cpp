@@ -89,8 +89,9 @@ int main(int argc, char *argv[]){
   }
 
   MPI_Barrier(MPI_COMM_WORLD);
-
+#ifndef NO_FFT
   ADD_FFTW(cleanup());
+#endif
   MPI_Finalize();
   //call these last...
 

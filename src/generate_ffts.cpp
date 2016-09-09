@@ -175,8 +175,10 @@ int main(int argc, char *argv[]){
 
     my_print("FFT returned err_state " + mk_str(err), mpi_info.rank);
     
+    
     if(extra_args.flat_fft && extra_args.flat_dim >=0){
       //Flatten between limits
+      dat_fft = dat_fft.total(extra_args.flat_dim, extra_args.flat_fft_min, extra_args.flat_fft_max);
     
     }
     
@@ -191,7 +193,7 @@ int main(int argc, char *argv[]){
     std::fstream file;
     file.open(filename.c_str(),std::ios::out|std::ios::binary);
     if(file.is_open()){
-      if(lims.size() == 2*dat.get_dims()){
+      if(lims.size() == 2*dat_fft.get_dims()){
         dat_fft.write_section_to_file(file, lims);
       }else{
         dat_fft.write_to_file(file);

@@ -49,6 +49,7 @@ public:
   void set_ref_filenum(int num){if(num > 0) this->ref_file_num = num;}/** Reference file number to get data dimensions etc*/
 
   bool read_dims(size_t &n_dims, std::vector<size_t> &dims);
+  std::vector<std::pair<std::string, std::string> > list_blocks();
 
   int read_data(data_array & my_data_in, int time_range[3], int space_range[2], int flatten_on = -1);
   

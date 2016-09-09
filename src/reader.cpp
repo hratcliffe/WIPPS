@@ -61,6 +61,30 @@ Default and minimum is 4 or the length of first as a string, tries 5-7 also.
 
 }
 
+std::vector<std::pair<std::string, std::string> > reader::list_blocks(){
+/** \brief List blocks in ref file
+*
+*Returns a vector containing pairs of block name and the internal id.
+*/
+  std::string file_name = get_full_name(this->ref_file_num);
+  sdf_file_t *handle;
+  sdf_block_t * block, * next;
+  std::vector<std::pair<std::string, std::string> > list;
+  handle = sdf_open(file_name.c_str(), MPI_COMM_WORLD, SDF_READ, 0);
+  if(!handle){
+    return list;
+  }
+  sdf_read_blocklist(handle);
+
+  next = handle->current_block;
+  for(int i =0; i< handle->nblocks; i++){
+    list.push_back(std::make_pair(std::string(next->name), std::string(next->id)));
+    next = next->next;
+  }
+  sdf_close(handle);
+  return list;
+}
+
 bool reader::read_dims(size_t &n_dims, std::vector<size_t> &dims){
 /** \brief Gets dimensions of the block specified in reader.
 *

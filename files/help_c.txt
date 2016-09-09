@@ -2,7 +2,7 @@ Command line options:
 -h Show help
 -f <string> filepath (prepended to in, out and deck.status files)
 -in <string> input file name
--out <string> Output file name. If absent [inputfile] is used with trim inserted before extension
+-out <string> Output file name. If absent [inputfile] is used with "trim" inserted before extension
 -lims <float float ...> The limits to cutout. Should be one pair per dimension. Pairs except the last are assumed to be wavenumber and normed to ..., the last pair are normed to omega_ce. Normalising constants are taken from [filepath]deck.status>
 
 Sample usage:

@@ -470,10 +470,10 @@ bool my_array::set_element(size_t n_dims_in, size_t * dims_in, my_type val){
 
 }
 
-bool my_array::populate_data(my_type * dat_in, size_t n_tot){
+bool my_array::populate_data(my_type * dat_in, size_t n_tot, bool convert){
 /** \brief Fill array
 *
-*Populates data with the total number of elements specified, as long as n_tot is less than the product of dims. Parameter needed so we can't overflow dat_int. Assumes same row-column order etc etc @return 0 (sucess) 1 (error)
+*Populates data with the total number of elements specified, as long as n_tot is less than the product of dims. Parameter needed so we can't overflow dat_int. Assumes same row-column order etc etc @return 0 (sucess) 1 (error). If convert is set we convert to the other of double and float in the copy
 */
 
   size_t tot_els = get_total_elements();
@@ -481,11 +481,9 @@ bool my_array::populate_data(my_type * dat_in, size_t n_tot){
   if(n_tot < tot_els) tot_els = n_tot;
   //Use min of n_tot, tot_els
 
-  void * tmp = (void *) this->data;
-  if(!tmp) return 1;
 
-  memcpy (tmp , dat_in, tot_els*sizeof(my_type));
-
+  if(!convert) std::copy(dat_in, dat_in+tot_els, this->data);
+  else std::copy( (other_type *) dat_in, (other_type *) dat_in+tot_els, this->data);
   return 0;
 
 }

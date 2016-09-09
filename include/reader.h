@@ -49,10 +49,12 @@ public:
   void set_ref_filenum(int num){if(num > 0) this->ref_file_num = num;}/** Reference file number to get data dimensions etc*/
 
   bool read_dims(size_t &n_dims, std::vector<size_t> &dims);
+  bool read_dims(size_t &n_dims, std::vector<size_t> &dims, std::string b_id);
   std::vector<std::pair<std::string, std::string> > list_blocks();
 
   int read_data(data_array & my_data_in, int time_range[3], int space_range[2], int flatten_on = -1);
   
+  bool read_distrib(data_array & my_data_in, std::string dist_id,int dump_number);
   bool current_block_is_accum();
   int get_file_size();
   

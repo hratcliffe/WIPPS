@@ -35,9 +35,9 @@ protected:
   long get_index(size_t nx, size_t ny, size_t nz)const;
   long get_index(size_t nx, size_t ny, size_t nz, size_t nt)const;
 
-  size_t get_total_elements()const;
 
 public:
+  size_t get_total_elements()const;
 
   my_array();
   my_array(size_t nx, size_t ny=0, size_t nz=0, size_t nt=0);
@@ -66,7 +66,7 @@ public:
   bool set_element(size_t nx, size_t ny, size_t nz, size_t nt, my_type val);
   bool set_element(size_t n_dims, size_t * dim, my_type val);
 
-  bool populate_data(my_type * dat_in, size_t n_tot);
+  bool populate_data(my_type * dat_in, size_t n_tot, bool convert = 0);
   bool populate_slice(my_type * dat_in, size_t n_dims, size_t * offsets);
   bool populate_complex_slice(my_type * dat_in, size_t n_dims, size_t * offsets, size_t* sizes);
 

@@ -44,7 +44,7 @@ SOURCE := $(INCLS:.h=.cpp)
 OBJS := $(SOURCE:.cpp=.o)
 #make lists of source and object files from INCLS list
 MAINSOURCE := main.cpp main_growth.cpp
-UTILSSOURCE := cutout.cpp FFT_to_spectrum.cpp
+UTILSSOURCE := cutout.cpp FFT_to_spectrum.cpp compress_distributions.cpp
 ifndef NO_FFT
  UTILSSOURCE += generate_ffts.cpp
 endif

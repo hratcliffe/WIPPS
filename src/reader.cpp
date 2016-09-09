@@ -85,7 +85,12 @@ std::vector<std::pair<std::string, std::string> > reader::list_blocks(){
   return list;
 }
 
+
 bool reader::read_dims(size_t &n_dims, std::vector<size_t> &dims){
+  return read_dims(n_dims, dims, std::string(this->block_id));
+}
+
+bool reader::read_dims(size_t &n_dims, std::vector<size_t> &dims, std::string b_id){
 /** \brief Gets dimensions of the block specified in reader.
 *
 *Opens reference file, and gets dimension info. Returns by reference, with 0 for success, 1 for file open or read failure. Note we don't have to read the data, only the block list.
@@ -106,20 +111,18 @@ bool reader::read_dims(size_t &n_dims, std::vector<size_t> &dims){
   bool err=sdf_read_blocklist(handle);
   if(err) my_print("Block read failed", mpi_info.rank);
 
-  block = sdf_find_block_by_id(handle, this->block_id);
+  block = sdf_find_block_by_id(handle, b_id.c_str());
 
   if(!block){
     my_print("Requested block not found. Aborting", mpi_info.rank);
     return 1;
   }
 
-  if(block->datatype != my_sdf_type) my_print("WARNING!!! Data type does not match. Output may be nonsense!", mpi_info.rank);
-
-  if(!is_accum(this->block_id)){
+  if(!is_accum(b_id)){
     n_dims = block->ndims;
   }else{
     n_dims = block->ndims -1 ;
-    //remove time dimension
+    //remove time dimension from accum. blocks
   }
   for(size_t i=0; i<n_dims; i++) dims.push_back(block->dims[i]);
   
@@ -271,7 +274,6 @@ int reader::read_data(data_array &my_data_in, int time_range[3], int space_range
 
     if(block->datatype != my_sdf_type) my_print("WARNING!!! Data type does not match. Output may be nonsense!", mpi_info.rank);
 
-    //save time of file
     if(!block->data) break;
     my_type * my_ptr = (my_type *) block->data;
     
@@ -382,6 +384,62 @@ int reader::read_acc_time(data_array & my_data_in, sdf_file_t * handle, size_t t
     else std::copy((my_type *) ax_block->grids[n_grids-1], (my_type *) ax_block->grids[n_grids-1] + rows, ax_ptr+total_reads);
   }
   return 0;
+}
+
+
+bool reader::read_distrib(data_array & my_data_in, std::string dist_id, int dump_number){
+/** \brief Read distribution function
+*
+*Reads the distribution function dist_id into data_in. ID has dist_fn removed and is trimmed to 10 chars max. If data type does not match compiled type we cast to match. 
+*/
+  if(!my_data_in.is_good()){
+    my_print("Cannot read into invalid array", mpi_info.rank);
+    return 1;
+  }
+  sdf_file_t *handle;
+  sdf_block_t * block;
+  std::string file_name = get_full_name(dump_number);
+
+  handle = sdf_open(file_name.c_str(), MPI_COMM_WORLD, SDF_READ, 0);
+  if(!handle) return 1;
+
+  sdf_read_blocklist(handle);
+  block = sdf_find_block_by_id(handle, dist_id.c_str());
+  if(!block) return 1;
+
+  handle->current_block = block;
+  sdf_read_data(handle);
+
+  if(!block->data) return 1;
+  my_type * my_ptr = (my_type *) block->data;
+
+  size_t total_els = my_data_in.get_total_elements();
+  if(block->datatype != my_sdf_type) my_data_in.populate_data((my_type*)block->data, total_els, 1);
+  else my_data_in.populate_data( (my_type*)block->data, total_els, 0);
+
+  strncpy(my_data_in.block_id, dist_id.c_str(), ID_SIZE);
+  my_data_in.time[0] = handle->time;
+  my_data_in.time[1] = handle->time;
+  
+  
+  //Finally read the axes
+  block = sdf_find_block_by_id(handle, ("grid/"+dist_id).c_str());
+  if(!block) return 1;
+
+  handle->current_block = block;
+  sdf_read_data(handle);
+
+  my_type * ax_ptr;
+  size_t len;
+  for(size_t i=0, i2=0; i< my_data_in.get_dims(); i++){
+    ax_ptr = my_data_in.get_axis(i, len);
+
+    if(block->datatype != my_sdf_type) std::copy((other_type *) block->grids[i], (other_type *) block->grids[i] + len, ax_ptr);
+    else std::copy((my_type *) block->grids[i], (my_type *) block->grids[i] + len, ax_ptr);
+  }
+  
+  return 0;
+
 }
 
 std::string reader::get_full_name(int num){

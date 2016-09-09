@@ -577,6 +577,10 @@ bool data_array::fft_me(data_array & data_out){
     addr++;
   }
   //Absolute square of out array to produce final result of type my_type
+
+  ADD_FFTW(free)(in);
+  ADD_FFTW(free)(out);
+  //Free as early as possible...
   
   bool err=false;
   err = data_out.populate_mirror_fastest(result, total_size);
@@ -588,18 +592,8 @@ bool data_array::fft_me(data_array & data_out){
   }
 
   ADD_FFTW(destroy_plan)(p);
-  ADD_FFTW(free)(in);
-  ADD_FFTW(free)(out);
   ADD_FFTW(free)(result);
   //Destroy stuff we don't need
-
-  //do shifts for all but 0th dim
-  size_t shft = 0;
-  for(size_t i=1; i< n_dims; i++){
-    shft = data_out.get_dims(i)/2;
-    data_out.shift(i, shft, 0);
-  }
-
 
   my_type * tmp_axis;
   float N2, res;
@@ -624,25 +618,50 @@ bool data_array::populate_mirror_fastest(my_type * result_in, size_t total_els){
 /** \brief Copy FFTW data into array
 
 *
-*For real data an FFT has a redundant half so FFTW returns array od size (dims[0]/2 +1)*dims[...]*dims[n-1] (Note that our first dim is FFTWs last). Since we want all k we have to mirror this to obey H(-f, -g) = H(f, g). Data is assumed unshifted. \todo Which side is negative k?
+*For real data an FFT has a redundant half so FFTW returns array od size (dims[0]/2 +1)*dims[...]*dims[n-1] (Note that our first dim is FFTWs last). Since we want all k we have to mirror this to obey H(-f, -g) = H(f, g). For simplicity we enforce this on k_x, omega pair only. Data is assumed unshifted. Should work for 1-3 dimensions. 1st dimension will be returned shifted to 0-in-centre \todo Which side is negative k?
 */
   size_t last_size = floor(dims[0]/2) + 1;
   size_t num_strides = total_els/dims[0];//Always integer
 
   size_t num_seconds = this->n_dims >= 2? dims[1]: 1;//Size of "second dimension"
   size_t slice_sz = num_seconds*dims[0];
+
 memset(data, 0, total_els);
+
   for(size_t i=0; i< num_strides; i++){
-    //Reverse the result into place (left side)
+    //Reverse the result into place (left side of a 2-d)
     std::reverse_copy(result_in+ i*last_size, result_in+(i+1)*last_size-1, data+i*dims[0]+1);
   }
+
   //Now fill the redundant 2-d side. Zero stays as zero, we flip the rest. This is to give us "correct" 2-D result when we take only +ve omega
   for(size_t j=0; j< num_strides/num_seconds; j++){
     std::reverse_copy(data+1+j*slice_sz, data+last_size+j*slice_sz, data+last_size-1+j*slice_sz);
     for(size_t i=1; i< num_seconds; i++){
-        std::reverse_copy(data+i*dims[0]+1+j*slice_sz, data+i*dims[0]+last_size+j*slice_sz, data+j*slice_sz+(num_seconds-i)*dims[0]+last_size-1);
+      std::reverse_copy(data+i*dims[0]+1+j*slice_sz, data+i*dims[0]+last_size+j*slice_sz, data+j*slice_sz+(num_seconds-i)*dims[0]+last_size-1);
     }
   }
+  
+  //do shifts for all but 0th dim, this is already done by steps above
+  size_t shft = 0;
+  for(size_t i=1; i< n_dims; i++){
+    shft = this->get_dims(i)/2;
+    this->shift(i, shft, 0);
+  }
+
+  
+  if(n_dims >=3){
+    //Reverse omega vs k_x on -ve k_x side only.
+    for(size_t i=0; i<dims[0]; i++){
+      for(size_t j=0; j<dims[1]; j++){
+        for(size_t k=0; k<dims[2]/2; k++){
+        
+          *(data+ i + j*dims[0]+(dims[2]-1-k)*dims[1]*dims[0]) = *(data+ i + j*dims[0]+ k*dims[1]*dims[0]);
+        }
+      }
+    }
+  
+  }
+  
   return 0;
 }
 
@@ -791,7 +810,7 @@ data_array data_array::total(size_t dim, my_type min, my_type max){
   
   size_t * new_dims;
   new_dims = (size_t *) calloc((this->n_dims-1), sizeof(size_t));
-  for(size_t i=0, i2=0; i< this->n_dims-1; i++, i2++){
+  for(size_t i=0, i2=0; i< this->n_dims; i++, i2++){
     if(i == dim){
       i2--;
       continue;
@@ -823,8 +842,9 @@ data_array data_array::total(size_t dim, my_type min, my_type max){
 }
 
 data_array data_array::average(size_t dim){
+
   size_t old_dim = this->get_dims(dim);
-  data_array new_arr = total(dim);
+  data_array new_arr = this->total(dim);
   new_arr.divide(old_dim);
   return new_arr;
 }

@@ -20,7 +20,7 @@ LIB := $(LIBSDF)
 CFLAGS = -O0 -c $(INCLUDE) -DVERSION=\"$(GIT_VERSION)\" -std=c++0x -pedantic
 CFLAGS += -g
 
-NO_FFT = 1
+#NO_FFT = 1
 #If defined, do not use FFT libraries. Note FFT routines will be unavailable if set, as will certain utilities
 
 ifdef NO_FFT

@@ -145,7 +145,8 @@ int main(int argc, char *argv[]){
     //Checks limits and denormalise freq. if applicable
     std::vector<my_type> lims;
     if(extra_args.limits.size() != 0){
-      if(extra_args.limits.size() != 2*dat.get_dims()) my_print("Please supply 2 limits per dimension. Output will be untrimmed");
+      int do_flat = (extra_args.flat_dim>=0);
+      if(extra_args.limits.size() != 2*(dat.get_dims() - do_flat)) my_print("Please supply 2 limits per dimension. Output will be untrimmed");
       else{
         lims = extra_args.limits;
         if(extra_args.flat_dim != dat.get_dims()-1){
@@ -154,11 +155,11 @@ int main(int argc, char *argv[]){
         }
       }
     }
+
     if(extra_args.flat_dim>=0 && dat.get_dims()>1 && !extra_args.flat_fft){
       dat = dat.average(extra_args.flat_dim);
-      
     }
-    
+
     data_array dat_fft;
     dat_fft.clone_empty(dat);
 
@@ -174,11 +175,19 @@ int main(int argc, char *argv[]){
 
     my_print("FFT returned err_state " + mk_str(err), mpi_info.rank);
     
+    if(extra_args.flat_fft && extra_args.flat_dim >=0){
+      //Flatten between limits
+    
+    }
+    
     //Construct filename. Since the MPI is using block-wise domain decomposition, different processors can't overlap on blocks
-    std::string filename, time_str;
+    std::string filename, time_str, flat_tag = "";
+    if(extra_args.flat_dim >=0 && !extra_args.flat_fft) flat_tag ="_f"+ mk_str(extra_args.flat_dim);
+    else if(extra_args.flat_dim >=0) flat_tag ="_fFFT"+ mk_str(extra_args.flat_dim);
+    
     time_str = mk_str(dat_fft.time[0], true)+"_"+mk_str(n_tims);
     std::string block = block_id;
-    filename = cmd_line_args.file_prefix+"FFT_"+block +"_"+time_str+"_"+mk_str(dat_fft.space[0])+"_"+mk_str(dat_fft.space[1]) + ".dat";
+    filename = cmd_line_args.file_prefix+"FFT_"+block +"_"+time_str+"_"+mk_str(dat_fft.space[0])+"_"+mk_str(dat_fft.space[1]) + flat_tag+".dat";
     std::fstream file;
     file.open(filename.c_str(),std::ios::out|std::ios::binary);
     if(file.is_open()){

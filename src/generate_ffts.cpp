@@ -233,18 +233,22 @@ gen_cmd_line special_command_line(int argc, char *argv[]){
   values.flat_fft_min = 0.0;
   values.flat_fft_max = 0.0;
   
-  for(int i=0; i< argc; i++){
+  for(int i=1; i< argc; i++){
     if(strcmp(argv[i], "-h")==0){
       print_help();
       print_help('g');
       exit(0);
     }
-    else if(strcmp(argv[i], "-flat_dat")==0 && i < argc-1) values.flat_dim = atoi(argv[i+1]);
+    else if(strcmp(argv[i], "-flat_dat")==0 && i < argc-1){
+      values.flat_dim = atoi(argv[i+1]);
+      i++;
+    }
     else if(strcmp(argv[i], "-flat_fft")==0  && i < argc-3){
       values.flat_dim = atoi(argv[i+1]);
       values.flat_fft = true;
       values.flat_fft_min = atof(argv[i+2]);
       values.flat_fft_max = atof(argv[i+3]);
+      i+=3;
     }
     else if(strcmp(argv[i], "-lims")==0 && i < argc-1){
       while(i<argc-1 && (argv[i+1][0]!= '-'  || ((argv[i+1][1] >='0' && argv[i+1][1] <='9') || argv[i+1][1] =='.'))){
@@ -253,6 +257,8 @@ gen_cmd_line special_command_line(int argc, char *argv[]){
         i++;
       }
     }
+    else std::cout<<"UNKNOWN OPTION " <<argv[i]<<'\n';
+
   }
   
   return values;

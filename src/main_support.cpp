@@ -126,6 +126,7 @@ setup_args process_command_line(int argc, char *argv[]){
 *
 *Sets defaults or those given via command line (see help.txt). Forces an constant integer number of space blocks on each core.
 */
+
   setup_args values;
   values.n_space = -1;
   values.space[0] = -1;
@@ -142,29 +143,63 @@ setup_args process_command_line(int argc, char *argv[]){
   values.is_list = false;
   values.is_spect = false;
 
-  for(int i=0; i< argc; i++){
+  for(int i=1; i< argc; i++){
+  std::cout<< argv[i]<<'\n';
     if(strcmp(argv[i], "-h")==0){
       print_help();
       exit(0);
     }
-    else if(strcmp(argv[i], "-f")==0 && i < argc-1) values.file_prefix = argv[i+1];
-    else if(strcmp(argv[i], "-start")==0 && i < argc-1) values.time[0] = atoi(argv[i+1]);
-    else if(strcmp(argv[i], "-end")==0 && i < argc-1) values.time[1] = atoi(argv[i+1]);
+    else if(strcmp(argv[i], "-f")==0 && i < argc-1){
+      values.file_prefix = argv[i+1];
+      i++;
+    }
+    else if(strcmp(argv[i], "-start")==0 && i < argc-1){
+      values.time[0] = atoi(argv[i+1]);
+      i++;
+    }
+    else if(strcmp(argv[i], "-end")==0 && i < argc-1){
+      values.time[1] = atoi(argv[i+1]);
+      i++;
+    }
     else if(strcmp(argv[i], "-rows")==0 && i < argc-1){
       values.time[2] = atoi(argv[i+1]);
+      i++;
     }
-    else if(strcmp(argv[i], "-block")==0 && i < argc-1) values.block = argv[i+1];
-    else if(strcmp(argv[i], "-n")==0 && i < argc-1) values.n_space= atoi(argv[i+1]);
+    else if(strcmp(argv[i], "-block")==0 && i < argc-1){
+      values.block = argv[i+1];
+      i++;
+    }
+    else if(strcmp(argv[i], "-n")==0 && i < argc-1){
+      values.n_space= atoi(argv[i+1]);
+      i++;
+    }
     else if(strcmp(argv[i], "-space")==0 && i < argc-2){
       values.space[0] = atoi(argv[i+1]);
       values.space[1] = atoi(argv[i+2]);
+      i+=2;
     }
     else if(strcmp(argv[i], "-d")==0 && i < argc-2){
       values.d[0] = atoi(argv[i+1]);
       values.d[1] = atoi(argv[i+2]);
+      i+=2;
     }
-    else if(((strcmp(argv[i], "-Finput")==0)||(strcmp(argv[i], "-Sinput")==0)) && i < argc-1) values.is_list=true;
-    else if((strcmp(argv[i], "-Sinput")==0) && i < argc-1) values.is_spect = true;
+    else if(((strcmp(argv[i], "-Finput")==0)||(strcmp(argv[i], "-Sinput")==0)) && i < argc-1){
+      values.is_list=true;
+      //Now hunt for next arg..., we assume no '-' starting filenames
+      int tmp = i;
+      while(i<argc-1 && argv[i+1][0]!= '-') i++;
+      if(tmp -i >= 1 ) i--;
+      //Go back one so that loop advance leaves us in correct place, but not if we didn't skip on at all or we'd infinite loop
+    }
+    else if((strcmp(argv[i], "-Sinput")==0) && i < argc-1){
+      values.is_spect = true;
+      //Now hunt for next arg..., we assume no '-' starting filenames
+      int tmp = i;
+      while(i<argc-1 && argv[i+1][0]!= '-') i++;
+      if(tmp -i >= 1 ) i--;
+    }
+    else std::cout<<"UNKNOWN OPTION " <<argv[i]<<'\n';
+
   }
 
   if(values.space[0] == -1 && values.space[1] == -1 && values.n_space == -1){
@@ -415,6 +450,15 @@ void trim_string(std::string &str, char ch){
 
 }
 
+std::string replace_char(std::string str_in, char ch, char repl){
+  std::string str = str_in;
+  size_t pos =str.find_first_of(ch);
+  while(pos != std::string::npos){
+    str[pos] = repl;
+    pos =str.find_first_of(ch);
+  }
+  return str;
+}
 void my_print(std::string text, int rank, int rank_to_write, bool noreturn){
 /** \brief Write output
 *

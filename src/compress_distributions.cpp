@@ -63,7 +63,7 @@ int main(int argc, char *argv[]){
     my_reader.read_dims(n_dims, dims, dist_blocks[i].second);
     for(int j=0; j<2; j++) dims_arr[j] = dims[j];
     dat = data_array((size_t)2, dims_arr);
-    /** \todo Why is there a 3rd dim of len 1?*/
+    //The distribs are always 3-d, with absent dims of size 1. Ours should be 2-d initially
     err = my_reader.read_distrib(dat, dist_blocks[i].second, my_args.dump);
     if(err){
       std::cout<<"Error reading distribs"<<'\n';

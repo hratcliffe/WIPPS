@@ -1,7 +1,7 @@
-/** \file main_growth.cpp \brief Helper program to get expected and/or actual growth rates of waves
+/** \file calculate_growth.cpp \brief Helper program to get expected and/or actual growth rates of waves
 *
 * Can take sdf files or derived spectrum files, extract the approximate wave growth rates (peak or integrated) and output these, plus a theoretical rate, OR just the theoretical rate. Parameters are obtained as in Main, so requires a plasma.conf file and deck.status file.
-* Depends on the SDF file libraries, the FFTW library. A set of test arguments is supplied. Call using ./growth `<growth_test_pars` to use these. \todo Rename to calculate_growth_rate \todo Complete
+* Depends on the SDF file libraries, the FFTW library. A set of test arguments is supplied. Call using ./growth `<growth_test_pars` to use these. \todo Complete
   \author Heather Ratcliffe \date 11/02/2016.
 */
 

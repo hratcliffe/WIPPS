@@ -417,7 +417,7 @@ bool reader::read_distrib(data_array & my_data_in, std::string dist_id, int dump
   if(block->datatype != my_sdf_type) my_data_in.populate_data((my_type*)block->data, total_els, 1);
   else my_data_in.populate_data( (my_type*)block->data, total_els, 0);
 
-  strncpy(my_data_in.block_id, dist_id.c_str(), ID_SIZE);
+  strncpy(my_data_in.block_id, dist_id.c_str(), ID_SIZE-1);
   my_data_in.time[0] = handle->time;
   my_data_in.time[1] = handle->time;
   

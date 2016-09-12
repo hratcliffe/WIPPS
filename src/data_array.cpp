@@ -358,21 +358,35 @@ IMPORTANT: the VERSION specifier links output files to code. If modifying output
 }
 
 bool data_array::write_section_to_file(std::fstream &file, std::vector<my_type> limits, bool close_file){
+/** \brief Write section to file
+*
+*Write section between given AXIS values to file. To use one dimension entire supply values less/greater than min and max axis values.
+*/
+  //Identify limits of segment from axes
+  std::vector<size_t> index_limits = this->get_bounds(limits);
+  return write_raw_section_to_file(file, index_limits, close_file);
+
+}
+
+bool data_array::write_raw_section_to_file(std::fstream &file, std::vector<size_t> index_limits, bool close_file){
 /** \brief Print section of array to file
 *
-*Prints the section defined by the vector limits to supplied file. Limits should contain AXIS values. To use one dimension entire supply values less/greater than min and max axis values. See data_array::write_to_file for format
+*Prints the section defined by the vector limits to supplied file. If limits are out of range the start and end are used. See data_array::write_to_file for format
 */
 
   if(!file.is_open()) return 1;
   bool write_err = 0;
 
-  if(limits.size() != 2*n_dims){
+  if(index_limits.size() != 2*n_dims){
     my_print("Limits vector size does not match array!", mpi_info.rank);
     return 1;
   }
 
-  //Identify limits of segment from axes
-  std::vector<size_t> index_limits = this->get_bounds(limits);
+  for(size_t i=0; i< index_limits.size(); i+=2){
+    if(index_limits[i] >= dims[i/2]) index_limits[i] = 0;
+    if(index_limits[i+1] >= dims[i/2]) index_limits[i+1] = dims[i/2];
+    //Make sure are within ranges.
+  }
 
   my_array::write_section_to_file(file, index_limits);
   //call base class method to write that data.
@@ -415,6 +429,26 @@ bool data_array::write_section_to_file(std::fstream &file, std::vector<my_type> 
   if(close_file) file.write((char*) & ftr_start, sizeof(size_t));
 
   return 0;
+}
+
+bool data_array::write_closer(std::fstream &file){
+
+  if(!file.is_open()) return 1;
+  bool write_err = 0;
+
+  size_t ftr_start = (size_t) file.tellg();
+  //Start of ftr means where to start reading block, i.e. location of the next_location tag
+  size_t next_location = ftr_start+ sizeof(char)*ID_SIZE +sizeof(size_t);
+
+  file.write((char*) & next_location, sizeof(size_t));
+  //Position of next section, i.e. of file end val
+  file.write(block_id, sizeof(char)*ID_SIZE);
+
+  if((size_t)file.tellg() != next_location) write_err=1;
+  if(write_err) my_print("Error writing offset positions", mpi_info.rank);
+  file.write((char*) & ftr_start, sizeof(size_t));
+
+  return write_err;
 }
 
 std::vector<size_t> data_array::get_bounds(std::vector<my_type> limits){
@@ -799,6 +833,22 @@ data_array data_array::total(size_t dim){
 }
 
 data_array data_array::total(size_t dim, my_type min, my_type max){
+
+  size_t len, min_ind = 0, max_ind = this->get_dims(dim)-1;
+  int where_val;
+  my_type * ax_start = get_axis(dim, len);
+  where_val = where(ax_start, len, min);
+  if(where_val != -1) min_ind = where_val;
+  where_val = where(ax_start, len, max);
+  if(where_val != -1) max_ind = where_val;
+
+
+  return total(dim, min_ind, max_ind);
+
+}
+
+data_array data_array::total(size_t dim, size_t min_ind, size_t max_ind){
+
 /** \brief Total along dim dim
 *
 *Returns a new array of rank this->n_dims -1, containing data summed over between axis values of min and max on dimension dim. See also data_array data_array::total(size_t dim)
@@ -817,13 +867,6 @@ data_array data_array::total(size_t dim, my_type min, my_type max){
     }
     new_dims[i2] = dims[i];
   }
-  size_t len, min_ind = 0, max_ind = this->get_dims(dim)-1;
-  int where_val;
-  my_type * ax_start = get_axis(dim, len);
-  where_val = where(ax_start, len, min);
-  if(where_val != -1) min_ind = where_val;
-  where_val = where(ax_start, len, max);
-  if(where_val != -1) max_ind = where_val;
 
   data_array new_array = data_array(this->n_dims-1, new_dims);
   
@@ -831,7 +874,7 @@ data_array data_array::total(size_t dim, my_type min, my_type max){
   
   //Copy axes
   my_type * ax_new;
-  size_t len2;
+  size_t len2, len;
   for(size_t i=0, i2=0; i2< n_dims -1; i++, i2++ ){
     if(i == dim) i++;
     ax_new = new_array.get_axis(i2, len);
@@ -859,7 +902,11 @@ data_array data_array::average(size_t dim, my_type min, my_type max){
   where_val = where(ax_start, len, max);
   if(where_val != -1) max_ind = where_val;
 
-  data_array new_arr = total(dim, min, max);
+  return average(dim, min_ind, max_ind);
+}
+
+data_array data_array::average(size_t dim, size_t min_ind, size_t max_ind){
+  data_array new_arr = total(dim, min_ind, max_ind);
   new_arr.divide(max_ind - min_ind);
   return new_arr;
 }

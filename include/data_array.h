@@ -63,7 +63,8 @@ public:
   bool write_to_file(std::fstream &file, bool close_file=true);
   bool read_from_file(std::fstream &file, bool no_version_check=0, bool ext=true);
   bool write_section_to_file(std::fstream &file, std::vector<my_type> limits, bool close_file=true);
-  
+  bool write_raw_section_to_file(std::fstream &file, std::vector<size_t> limits, bool close_file=true);
+  bool write_closer(std::fstream &file);
   bool fft_me(data_array & data_out);
   bool populate_mirror_fastest(my_type * result_in, size_t total_els);
   bool check_ids(const data_array & src);
@@ -71,8 +72,11 @@ public:
   bool shift(size_t dim, long n_els, bool axis=1);
   data_array total(size_t dim);
   data_array total(size_t dim, my_type min, my_type max);
+  data_array total(size_t dim, size_t min, size_t max);
   data_array average(size_t dim, my_type min, my_type max);
   data_array average(size_t dim);
+  data_array average(size_t dim, size_t min, size_t max);
+
 };
 
 

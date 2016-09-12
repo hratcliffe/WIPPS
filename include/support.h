@@ -217,6 +217,8 @@ std::string mk_str(float i, bool noexp=0);/**<Converts float to string*/
 std::string mk_str(long double i, bool noexp=0);/**<Converts long double to string*/
 void trim_string(std::string &str, char ch=' '); /**< Trim all leading/trailing ch's from str*/
 
+std::string replace_char(std::string str, char ch, char repl);/**<Replace all occurences of character ch in string*/
+
 std::string append_into_string(const std::string &in, const std::string &infix);
 
 bool parse_name_val(std::string in, std::string &name, std::string &val);

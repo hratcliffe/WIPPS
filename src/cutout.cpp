@@ -101,28 +101,37 @@ int main(int argc, char *argv[]){
 
 cutout_args cutout_process_command_line(int argc, char *argv[]){
 
-
   cutout_args values;
   values.file_prefix = "./files/";
   values.file_in = "";
   values.file_out = "";
 
-  for(int i=0; i< argc; i++){
+  for(int i=1; i< argc; i++){
     if(strcmp(argv[i], "-h")==0){
       print_help('c');
       exit(0);
     }
-    
-    if(strcmp(argv[i], "-f")==0 && i < argc-1) values.file_prefix = argv[i+1];
-    if(strcmp(argv[i], "-in")==0 && i < argc-1) values.file_in = argv[i+1];
-    if(strcmp(argv[i], "-out")==0 && i < argc-1) values.file_out = argv[i+1];
-    if(strcmp(argv[i], "-lims")==0 && i < argc-1){
+    else if(strcmp(argv[i], "-f")==0 && i < argc-1){
+      values.file_prefix = argv[i+1];
+      i++;
+    }
+    else if(strcmp(argv[i], "-in")==0 && i < argc-1){
+      values.file_in = argv[i+1];
+        i++;
+    }
+    else if(strcmp(argv[i], "-out")==0 && i < argc-1){
+      values.file_out = argv[i+1];
+      i++;
+    }
+    else if(strcmp(argv[i], "-lims")==0 && i < argc-1){
       while(i<argc-1 && (argv[i+1][0]!= '-'  || ((argv[i+1][1] >='0' && argv[i+1][1] <='9') || argv[i+1][1] =='.'))){
         //Checks if next argument is a new flag, but allows negative numbers
         values.limits.push_back(atof(argv[i+1]));
         i++;
       }
     }
+    else std::cout<<"UNKNOWN OPTION " <<argv[i]<<'\n';
+
   }
   if(values.file_out == "" && values.file_in != "") values.file_out = append_into_string(values.file_in, "_trim");
   

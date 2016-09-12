@@ -265,8 +265,12 @@ g_args g_command_line(int argc, char * argv[]){
     if(strcmp(argv[i], "-s")==0 && i < argc-1){
       extra_cmd_line.spect_file = atoi(argv[i+1]);
       extra_cmd_line.src = 2;
+      i++;
     }
-    if(strcmp(argv[i], "-sdf")==0) extra_cmd_line.src = 1;
+    else if(strcmp(argv[i], "-sdf")==0) extra_cmd_line.src = 1;
+    else{
+      std::cout<<"UNKNOWN OPTION "<<argv[i]<<'\n';
+    }
   }
   return extra_cmd_line;
 

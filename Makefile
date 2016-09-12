@@ -43,8 +43,8 @@ INCLS = my_array.h data_array.h d_coeff.h spectrum.h  plasma.h tests.h reader.h 
 SOURCE := $(INCLS:.h=.cpp)
 OBJS := $(SOURCE:.cpp=.o)
 #make lists of source and object files from INCLS list
-MAINSOURCE := main.cpp main_growth.cpp
-UTILSSOURCE := cutout.cpp FFT_to_spectrum.cpp compress_distributions.cpp
+MAINSOURCE := main.cpp
+UTILSSOURCE := cutout.cpp FFT_to_spectrum.cpp compress_distributions.cpp calculate_growth.cpp
 ifndef NO_FFT
  UTILSSOURCE += generate_ffts.cpp
 endif
@@ -147,9 +147,6 @@ echo_float:
 
 read_test : $(OBJDIR)/read_test.o
 	$(CC) $(INCLUDE) $(SRCDIR)/read_test.cpp $(LIBSDF) -o read_test
-
-growth : $(OBJDIR)/main_growth.o $(OBJS)
-	$(CC) $(LFLAGS) $(INCLUDE) $(OBJS) $(OBJDIR)/main_growth.o $(LIB) -o growth
 
 #UTILSOBJS := $(UTILSSOURCE:.cpp=.o)
 #UTILSOBJS := $(addprefix $(OBJDIR)/, $(UTILSOBJS))

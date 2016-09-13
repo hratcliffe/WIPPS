@@ -100,6 +100,8 @@ const std::string LOCAL = "loc";/**< Tag identifying diffusion coefficient proce
 const std::string BOUNCE_AV = "bav";/**< Tag identifying diffusion coefficient processing level: bounce averaged*/
 const std::string GLOBAL = "glb";/**< Tag identifying diffusion coefficient processing level: reduced over all space*/
 
+const char HANDLED_ARG[3] = "**";
+
 const my_type V_MIN = -0.3*v0;/**< Minimum particle velocity for D*/
 const my_type V_MAX = 0.3*v0;/**< Maximum particle velocity for D*/
 const my_type ANG_MIN = 0.0;/**< Minimum angle (tan theta) for D*/

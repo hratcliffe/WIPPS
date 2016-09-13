@@ -226,6 +226,7 @@ int main(int argc, char *argv[]){
 
 gen_cmd_line special_command_line(int argc, char *argv[]){
 //Do special command line processing here
+//We next pass on to normal command line, so we should delete the options we have handled. We'll do this by setting first chars to HANDLED_ARG constant for the flag and any values it consumes
 
   gen_cmd_line values;
   values.flat_dim = -1;
@@ -241,6 +242,7 @@ gen_cmd_line special_command_line(int argc, char *argv[]){
     }
     else if(strcmp(argv[i], "-flat_dat")==0 && i < argc-1){
       values.flat_dim = atoi(argv[i+1]);
+      strcpy(argv[i], HANDLED_ARG);
       i++;
     }
     else if(strcmp(argv[i], "-flat_fft")==0  && i < argc-3){
@@ -248,16 +250,23 @@ gen_cmd_line special_command_line(int argc, char *argv[]){
       values.flat_fft = true;
       values.flat_fft_min = atof(argv[i+2]);
       values.flat_fft_max = atof(argv[i+3]);
+      strcpy(argv[i], HANDLED_ARG);
+      strcpy(argv[i+1], HANDLED_ARG);
+      strcpy(argv[i+2], HANDLED_ARG);
+      strcpy(argv[i+3], HANDLED_ARG);
+      
       i+=3;
     }
     else if(strcmp(argv[i], "-lims")==0 && i < argc-1){
       while(i<argc-1 && (argv[i+1][0]!= '-'  || ((argv[i+1][1] >='0' && argv[i+1][1] <='9') || argv[i+1][1] =='.'))){
         //Checks if next argument is a new flag, but allows negative numbers
         values.limits.push_back(atof(argv[i+1]));
+        strcpy(argv[i], HANDLED_ARG);
         i++;
       }
+      strcpy(argv[i], HANDLED_ARG);
+
     }
-    else std::cout<<"UNKNOWN OPTION " <<argv[i]<<'\n';
 
   }
   

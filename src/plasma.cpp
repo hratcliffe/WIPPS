@@ -724,14 +724,23 @@ calc_type plasma::get_omega_ref(std::string code)const{
 
 }
 
-calc_type plasma::get_dispersion(my_type in, int wave_type, bool reverse, bool deriv)const{
+calc_type plasma::get_dispersion(my_type in, int wave_type, bool reverse, bool deriv, my_type theta)const{
 /** \brief Gets omega for given k
 *
-* Uses local refernce cyclotron and plasma frequencies and works with UNNORMALISED quantitites. Assumes parallel prop, and Em in unmagentised \todo Fix to take angle also @param k Wavenumber @param wave_type wave species (see support.h) @param deriv Whether to instead return anayltic v_g \todo Finish cases in this function \todo What should signs be. Vg?? \todo Sensible outof range error??? \todo K and omega use different eqns....\todo Seems k and omega give different derivs? \todo om_ce_loc should be local not reference
-*/
+* Uses local refernce cyclotron and plasma frequencies and works with UNNORMALISED quantitites. Assumes parallel prop, and Em in unmagentised \todo Fix to take angle also @param k Wavenumber @param wave_type wave species (see support.h) @param deriv Whether to instead return anayltic v_g \todo Finish cases in this function \todo Sensible outof range error???*/
   calc_type ret = 0.0;
   calc_type om_ce_loc, om_pe_loc;
-  
+  calc_type cos_th;
+  if(theta != 0.0){
+  //Expect theta=0 to be common case so shortcut then
+  //Else we step by step get theta into 0-pi/2 range
+    if(theta < 0) theta = -theta;
+    if(theta > 2.0*pi) theta = theta - 2.0*pi*(int)(theta/(2.0*pi));
+    if(theta > pi) theta = 2.0*pi - theta;
+    if(theta > pi/2.0) theta = pi/2.0 - theta;
+  }
+  cos_th = std::cos(theta);
+
   om_ce_loc = this->get_omega_ref("ce");
   om_pe_loc = this->get_omega_ref("pe");
   
@@ -739,23 +748,36 @@ calc_type plasma::get_dispersion(my_type in, int wave_type, bool reverse, bool d
 
     case WAVE_WHISTLER :
       if(!reverse){
+        //This is omega(k) case
         calc_type csq_ksq = v0*v0*in*in;
-        ret = v0*v0*std::abs(om_ce_loc)/(csq_ksq + om_pe_loc*om_pe_loc);
+        ret = v0*v0*std::abs(om_ce_loc)*cos_th/(csq_ksq + om_pe_loc*om_pe_loc);
         if(!deriv) ret *=std::pow(in, 2);
-        else ret *= (2.0*in) * (csq_ksq / (csq_ksq + om_pe_loc*om_pe_loc) - 1.0);
-        // FAKENUMBERS THIS IS WRONG. WHY????? IS IT RIGHT NOW?
+        else ret *= (2.0*in *std::pow(om_pe_loc, 2))/(csq_ksq + om_pe_loc*om_pe_loc);
       }else{
-
-        ret = in/v0*std::sqrt(0.0 - std::pow(om_pe_loc, 2)/(in*(in - std::abs(om_ce_loc))) );
-        calc_type csq_ksq = v0*v0*ret*ret;
-        if(deriv) ret = 1.0/( v0*v0*std::abs(om_ce_loc)/(csq_ksq + om_pe_loc*om_pe_loc) * (2.0*in) * (csq_ksq / (csq_ksq + om_pe_loc*om_pe_loc) - 1.0));
+        //k(omega)
+        //NB! We have omitted the one so that our k and omega approxes are inverses!!!
+        in = std::abs(in);
+        if(in >= om_ce_loc) break;
+        
+        if(!deriv) ret = in/v0*std::sqrt(0.0 - std::pow(om_pe_loc, 2)/(in*(in - std::abs(om_ce_loc)*cos_th)) );
+        else{
+          calc_type om_pe_sq = std::pow(om_pe_loc, 2);
+          calc_type in_minus_om = in-std::abs(om_ce_loc);
+          ret = 0.5*om_pe_sq*std::abs(om_ce_loc)/std::pow(in_minus_om, 2)/std::sqrt(-om_pe_sq*in/in_minus_om)  /v0;
+        }
       }
-      //here goes dispersion in suitable normed units.
-      break;
+      break;//Case break
 
-    case WAVE_PLASMA :
-      if(!deriv) ret = std::sqrt(om_pe_loc*om_pe_loc + std::pow(v0*in, 2));
-      else ret = v0 * in; /** \todo Check */
+    case WAVE_O :
+      if(!reverse){
+        ret = std::sqrt(om_pe_loc*om_pe_loc + std::pow(v0*in, 2));
+        if(deriv) ret = v0*v0 * in/ret;
+      }else{
+        if(in < om_pe_loc) break;
+        ret = std::sqrt(in*in -om_pe_loc*om_pe_loc);
+        if(!deriv) ret = ret/v0;
+        else ret = in/v0/ret;
+      }
       break;
   }
 

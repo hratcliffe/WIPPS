@@ -183,6 +183,7 @@ class test_entity_plasma : public test_entity{
     int high_density();
     int other_modes();
     int phi_dom();
+    int analytic_dispersion();
   public:
     test_entity_plasma();
     virtual ~test_entity_plasma();

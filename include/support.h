@@ -74,8 +74,10 @@ const int DEFAULT_N_ANG = 100;/**< Default number of wave normal angles to consi
 const int ID_SIZE = 10;/**< Length of block ids*/
 
 const int WAVE_WHISTLER = 1; /**< Code to id wave as whistler mode */
-const int WAVE_PLASMA = 2; /**< Code to id wave as plasma/Langmuir mode */
+const int WAVE_PLASMA = 2; /**< Code to id wave as plasma/Langmuir wave*/
+
 const int WAVE_O = 3; /**< Code to id wave as ordinary EM mode */
+const int WAVE_X = 4; /**< Code to id wave as ordinary EM mode */
 
 const int FUNCTION_NULL = 0; /**< Code to id spectral angular distribution as absent */
 const int FUNCTION_DELTA = 1; /**< Code to id spectral angular distribution as delta function (with integral 1) */

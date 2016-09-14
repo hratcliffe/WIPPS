@@ -17,8 +17,10 @@ LIB := $(LIBSDF)
 #Add the libraries for glut (openGL) and the matplot library
 
 #========Edit these for optimisation, debug options etc===============
-CFLAGS = -O3 -c $(INCLUDE) -DVERSION=\"$(GIT_VERSION)\" -std=c++0x -pedantic
+CFLAGS = -c $(INCLUDE) -DVERSION=\"$(GIT_VERSION)\" -std=c++0x -pedantic
 CFLAGS += -g
+OPTIMISE = -O3
+#Optimiser level for non-debug builds (debug includes test)
 
 #NO_FFT = 1
 #If defined, do not use FFT libraries. Note FFT routines will be unavailable if set, as will certain utilities
@@ -27,7 +29,7 @@ ifdef NO_FFT
   CFLAGS += -DNO_FFT
 endif
 
-DEBUG = -g -W -Wall -pedantic -D_GLIBCXX_DEBUG -Wextra
+DEBUG = -O0 -g -W -Wall -pedantic -D_GLIBCXX_DEBUG -Wextra
 #DEBUG+= -Wno-sign-compare
 #DEBUG+= -Wno-unused-parameter
 #Comment/uncomment these to hide specific errors...
@@ -107,9 +109,12 @@ else ifeq ($(strip $(MODE)),test)
   SED_STR_Test = sed -i.bak 's/ NO_RUN_TESTS_AND_EXIT/ RUN_TESTS_AND_EXIT/' Doxyfile
 else ifeq ($(strip $(MODE)),profile)
   CFLAGS += $(PROFILE)
+  CFLAGS += $(OPTIMISE)
   #LFLAGS += $(PROFILE)
 else ifdef MODE
   $(error Unknown MODE)
+else
+  CFLAGS += $(OPTIMISE)
 endif
 #Check we have a valid MODE selection and set the right flags and docs
 #---------------------------------------------------------------------

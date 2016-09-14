@@ -198,7 +198,6 @@ class test_entity_spectrum : public test_entity{
     data_array test_spect;
     controller * test_contr;
     std::string file_prefix;
-    int tim_in[3], space_in[2];
     int setup();
     int basic_tests1();
     int basic_tests2();

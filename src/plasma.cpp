@@ -725,9 +725,10 @@ calc_type plasma::get_omega_ref(std::string code)const{
 }
 
 calc_type plasma::get_dispersion(my_type in, int wave_type, bool reverse, bool deriv, my_type theta)const{
-/** \brief Gets omega for given k
+/** \brief Solve analytic dispersion (approx)
 *
-* Uses local refernce cyclotron and plasma frequencies and works with UNNORMALISED quantitites. Assumes parallel prop, and Em in unmagentised \todo Fix to take angle also @param k Wavenumber @param wave_type wave species (see support.h) @param deriv Whether to instead return anayltic v_g \todo Finish cases in this function \todo Sensible outof range error???*/
+* By default returns omega for a given k (see reverse and deriv params param). Uses local reference cyclotron and plasma frequencies and works with UNNORMALISED quantitites. NB: parameters out of range will silently return 0. NB: For Whistler modes this is an approximation and intended to be perfectly reversible. @param k Wavenumber @param wave_type wave species (see support.h) @param reverse Return k for input omega @param deriv Whether to instead return anayltic v_g */
+
   calc_type ret = 0.0;
   calc_type om_ce_loc, om_pe_loc;
   calc_type cos_th;

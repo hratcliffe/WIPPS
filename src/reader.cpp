@@ -68,7 +68,7 @@ std::vector<std::pair<std::string, std::string> > reader::list_blocks(){
 */
   std::string file_name = get_full_name(this->ref_file_num);
   sdf_file_t *handle;
-  sdf_block_t * block, * next;
+  sdf_block_t * next;
   std::vector<std::pair<std::string, std::string> > list;
   handle = sdf_open(file_name.c_str(), MPI_COMM_WORLD, SDF_READ, 0);
   if(!handle){
@@ -166,7 +166,7 @@ int reader::pre_read(data_array& my_data_in, int ref_time, bool accumulated, int
 
   //Copy (all) the spatial axes
   for(size_t i=0, i2=0; i< my_data_in.get_dims()-1; i++, i2++){
-    if(flatten_on >= 0 && flatten_on == i){
+    if(flatten_on >= 0 && (size_t)flatten_on == i){
       i2++;
       continue;
     }
@@ -304,7 +304,7 @@ int reader::read_data(data_array &my_data_in, int time_range[3], int space_range
 
       read_acc_time(my_data_in, handle, total_reads, rows);
       size_t val[1] = {total_reads};
-      for(int j=0; j<rows; j++){
+      for(size_t j=0; j<rows; j++){
 
         if(simple_slice && flatten_on < 0){
           my_data_in.populate_slice(my_ptr, 1, val);
@@ -411,7 +411,6 @@ bool reader::read_distrib(data_array & my_data_in, std::string dist_id, int dump
   sdf_read_data(handle);
 
   if(!block->data) return 1;
-  my_type * my_ptr = (my_type *) block->data;
 
   size_t total_els = my_data_in.get_total_elements();
   if(block->datatype != my_sdf_type) my_data_in.populate_data((my_type*)block->data, total_els, 1);
@@ -431,7 +430,7 @@ bool reader::read_distrib(data_array & my_data_in, std::string dist_id, int dump
 
   my_type * ax_ptr;
   size_t len;
-  for(size_t i=0, i2=0; i< my_data_in.get_dims(); i++){
+  for(size_t i=0; i< my_data_in.get_dims(); i++){
     ax_ptr = my_data_in.get_axis(i, len);
 
     if(block->datatype != my_sdf_type) std::copy((other_type *) block->grids[i], (other_type *) block->grids[i] + len, ax_ptr);

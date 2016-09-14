@@ -30,7 +30,7 @@ ifdef NO_FFT
 endif
 
 DEBUG = -O0 -g -W -Wall -pedantic -D_GLIBCXX_DEBUG -Wextra
-#DEBUG+= -Wno-sign-compare
+DEBUG+= -Wno-sign-compare
 #DEBUG+= -Wno-unused-parameter
 #Comment/uncomment these to hide specific errors...
 PROFILE = -g

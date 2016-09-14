@@ -35,8 +35,6 @@ private:
   calc_type pcharge[ncomps];
   calc_type pdens[ncomps];
 
-//  mu last_mu;
-//  calc_type last_th, last_w, last_psi;
   bool configure_from_file(std::string file_prefix);
   bool is_setup;
 public:
@@ -54,12 +52,6 @@ public:
   mu get_root(calc_type th, calc_type w, calc_type psi, bool Righthand=true);
   mu_dmudom get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int n, calc_type omega_n=0, bool Righthand=true)const;
   mu_dmudom get_high_dens_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int n, calc_type omega_n, bool Righthand=true)const;
-
-  /*probably want some parameter "which_thing" is some way of specifying what we want, probably via enum or named constants PROBABLY a mask is best, i.e. bitmask with named contants and we get each thing we want. But how to return? Rturn invalid number for those we on't request. Make it optional so by default we get all? Or we return all of: real(DP),intent(out)::mu,mug                   !< refractive index, group
-   real(DP),intent(out)::dmudr,dmudth             !< derivs
-   real(DP),intent(out)::alpha                    !< angle between k and prop
-   integer(I4B),intent(out)::merror               !< testing for mu \todo Clean up these comments
-  */
 
   std::vector<calc_type> get_resonant_omega(calc_type x, calc_type v_par, calc_type n)const;
 

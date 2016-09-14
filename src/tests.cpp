@@ -2190,16 +2190,16 @@ int test_entity_levelone::twod_space_tests(){
   test_contr->add_spectrum(space_dim, DEFAULT_N_ANG, true);
   test_contr->get_current_spectrum()->make_test_spectrum();
   
-  int n_dims = dat.get_dims();
+  size_t n_dims = dat_fft.get_dims();
   std::vector<my_type> lims;
-  if(dat_fft.get_dims() >=2){
+  if(n_dims >=2){
     lims.push_back(-0.002);
     lims.push_back(0.002);
     lims.push_back(-0.002);
     lims.push_back(0.002);
 
   }
-  if(dat_fft.get_dims() >=3){
+  if(n_dims >=3){
     lims.push_back(-3.0*my_const.omega_ce);
     lims.push_back(3.0*my_const.omega_ce);
   }

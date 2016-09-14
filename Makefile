@@ -17,7 +17,7 @@ LIB := $(LIBSDF)
 #Add the libraries for glut (openGL) and the matplot library
 
 #========Edit these for optimisation, debug options etc===============
-CFLAGS = -O0 -c $(INCLUDE) -DVERSION=\"$(GIT_VERSION)\" -std=c++0x -pedantic
+CFLAGS = -O3 -c $(INCLUDE) -DVERSION=\"$(GIT_VERSION)\" -std=c++0x -pedantic
 CFLAGS += -g
 
 #NO_FFT = 1

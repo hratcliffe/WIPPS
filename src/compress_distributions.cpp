@@ -59,7 +59,7 @@ int main(int argc, char *argv[]){
   size_t n_dims;
   std::vector<size_t> dims;
   size_t dims_arr[2];
-  for(int i=0; i< (dist_blocks.size() == 0 ? 0: 1) ; i++){
+  for(int i=0; i< dist_blocks.size() ; i++){
     my_reader.read_dims(n_dims, dims, dist_blocks[i].second);
     for(int j=0; j<2; j++) dims_arr[j] = dims[j];
     dat = data_array((size_t)2, dims_arr);
@@ -77,7 +77,8 @@ int main(int argc, char *argv[]){
 
     if(my_args.blocks ==-1){
       dat=dat.average(0);
-      dat.write_to_file(file);
+      dat.write_to_file(file, false);
+      dat.write_closer(file);
     }
     else{
       data_array section;

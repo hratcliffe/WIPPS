@@ -243,6 +243,7 @@ gen_cmd_line special_command_line(int argc, char *argv[]){
     else if(strcmp(argv[i], "-flat_dat")==0 && i < argc-1){
       values.flat_dim = atoi(argv[i+1]);
       strcpy(argv[i], HANDLED_ARG);
+      strcpy(argv[i+1], HANDLED_ARG);
       i++;
     }
     else if(strcmp(argv[i], "-flat_fft")==0  && i < argc-3){

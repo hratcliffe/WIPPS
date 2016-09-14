@@ -197,7 +197,7 @@ setup_args process_command_line(int argc, char *argv[]){
       while(i<argc-1 && argv[i+1][0]!= '-') i++;
       if(tmp -i >= 1 ) i--;
     }
-    else if(!(strlen(argv[i]) > 1 && argv[i][0] ==HANDLED_ARG[0] && argv[i][1] ==HANDLED_ARG[1])) std::cout<<"UNKNOWN OPTION " <<argv[i]<<'\n';
+    else if(!(strlen(argv[i]) > 0) && argv[i][0] ==HANDLED_ARG[0]) std::cout<<"UNKNOWN OPTION " <<argv[i]<<'\n';
 
   }
 

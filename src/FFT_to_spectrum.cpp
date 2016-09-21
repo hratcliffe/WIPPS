@@ -36,6 +36,7 @@ FFT_spect_args FFT_spect_process_command_line(int argc, char *argv[]);
 
 
 int main(int argc, char *argv[]){
+/** \todo FFT normalisation*/
 //We don't need MPI here but SDF does
 
   my_print(std::string("Code Version: ")+ VERSION, mpi_info.rank);
@@ -57,17 +58,17 @@ int main(int argc, char *argv[]){
     return 0;
   }
 
-  size_t B_ref = 0.0;
-  if(std::abs(data_in.B_ref) < GEN_PRECISION) B_ref = data_in.B_ref;
+  my_type B_ref = 0.0;
+  if(std::abs(data_in.B_ref) > 1e-12) B_ref = data_in.B_ref;
   else B_ref = my_const.omega_ce * me/std::abs(q0);
   //Use reference B from file if non-zero, else use deck constants
-  
+
   size_t k_len = data_in.get_dims(0);//K_x length
   contr.add_spectrum(k_len, my_args.n_ang, (my_args.ang != FUNCTION_NULL));
-  
+
   contr.set_plasma_B0(B_ref);
-//  contr.get_current_spectrum()->generate_spectrum(data_in, my_args.fuzz, my_args.ang);
-  contr.get_current_spectrum()->make_test_spectrum();
+  contr.get_current_spectrum()->generate_spectrum(data_in, my_args.fuzz, my_args.ang);
+
   data_array BB = contr.get_current_spectrum()->copy_out_B();
   std::cout<<BB.maxval()<<'\n';
   

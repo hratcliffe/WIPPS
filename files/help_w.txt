@@ -1,0 +1,9 @@
+Command line options:
+-h Show help
+-f <string> Path for for all input files (full or relative) e.g. deck.status and plasma.conf
+-s <string> File containing input spectra names (optional)
+-out <string> Name of output file to create
+
+Sample usage:
+make utils TYPE=float
+./calculate_growth -f ./Run1/ -out growth.dat

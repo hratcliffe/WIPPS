@@ -1,0 +1,5 @@
+Additional parameters for generate_ffts utility
+
+-flat_dat <int>  Flatten the raw data on specified dimension before processing (0 to n_dims-1)
+-flat_fft <int float float> Flatten the FFT on specified dimension between these axis ranges (normalised to om_ce for frequency axis)
+-lims <float float ...> Cutout to these limits. Should be one pair per dimension (after flattening if applicable). Pairs except the last are assumed to be wavenumber and normed to ..., the last pair are normed to omega_ce. Normalising constants are taken from [filepath]deck.status>

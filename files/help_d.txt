@@ -1,0 +1,10 @@
+Command line options:
+-h Show help
+-f <string> filepath (prepended to in, out and deck.status files)
+-dump <int> Dump number
+-x_blocks <int> Divide into this many x blocks. If this does not evenly divide the x-size overlap will occur
+-list Just list the present distributions (identified by presence of grid)
+
+Sample usage:
+make utils TYPE=float
+./compress_distributions -f ./Run1/ -dump 10 -x_blocks 8

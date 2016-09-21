@@ -2,7 +2,7 @@ Command line options:
 -h Show help
 -f <string> filepath (prepended to in, out and deck.status files)
 -in <string> input file name
--out <string> Output file name. If absent [inputfile] is used with trim inserted before extension
+-out <string> Output file name. If absent [inputfile] is used with spectrum inserted before extension
 -wave <char> Identifies wave mode, *W*histler, *P*lasma, *O*rdinary EM (Default whistler)
 -om <int> Percent "fuzz" around dispersion curve (default 10%)
 -n_ang <int> Number of angles to use (default set in support.h)

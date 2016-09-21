@@ -75,7 +75,7 @@ public:
   std::vector<size_t> read_dims_from_file(std::fstream &file, bool no_version_check=0);
   
   bool write_section_to_file(std::fstream &file, std::vector<size_t> bounds);
-  bool resize(size_t dim, size_t sz);
+  bool resize(size_t dim, size_t sz, bool verbose=0);
   bool shift(size_t dim, long n_els);
   
   my_type minval(size_t offset=0);

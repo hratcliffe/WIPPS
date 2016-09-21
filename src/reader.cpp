@@ -334,22 +334,23 @@ int reader::read_data(data_array &my_data_in, int time_range[3], int space_range
   //Set 0th time
   size_t n_dims = my_data_in.get_dims();
   my_data_in.time[0] = my_data_in.get_axis_element(n_dims-1, 0);
-  
-  //report if we broke out of loop and print filename
-  if(i < time_range[1] || (accumulated && total_reads < time_range[2])){
+
+  //report if we broke out of loop and print info
+  if((!accumulated && i < time_range[1]) || (accumulated && total_reads < time_range[2])){
     my_data_in.resize(1, total_reads);
     //trim array to number of lines read
 
     //Set last time
     my_data_in.time[1] = my_data_in.get_axis_element(n_dims-1, my_data_in.get_dims(n_dims-1)-1);
     
-    if(!accumulated) my_print("Read stopped by error at file "+file_name, mpi_info.rank);
-    else my_print("Read "+mk_str(total_reads)+" rows", mpi_info.rank);
+    if(!accumulated) my_print("Read stopped by error at file "+file_name + " ("+mk_str(total_reads)+" times)", mpi_info.rank);
+    else my_print("Read "+mk_str(total_reads)+" times", mpi_info.rank);
     return 2;
   }
   else{
     //Set last time
     my_data_in.time[1] = my_data_in.get_axis_element(n_dims-1, my_data_in.get_dims(n_dims-1)-1);
+    my_print("Read "+mk_str(total_reads)+" times", mpi_info.rank);
     return 0;
   }
 

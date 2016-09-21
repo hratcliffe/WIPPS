@@ -68,7 +68,7 @@ public:
   bool fft_me(data_array & data_out);
   bool populate_mirror_fastest(my_type * result_in, size_t total_els);
   bool check_ids(const data_array & src);
-  bool resize(size_t dim, size_t sz);
+  bool resize(size_t dim, size_t sz, bool verbose=0);
   bool shift(size_t dim, long n_els, bool axis=1);
   data_array total(size_t dim);
   data_array total(size_t dim, my_type min, my_type max);

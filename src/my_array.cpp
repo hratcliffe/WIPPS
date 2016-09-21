@@ -802,19 +802,19 @@ std::vector<size_t> my_array::read_dims_from_file(std::fstream &file, bool no_ve
   return dims_vec;
 }
 
-bool my_array::resize(size_t dim, size_t sz){
+bool my_array::resize(size_t dim, size_t sz, bool verbose){
 /** \brief Resize my_array on the fly
 *
 *dim is the dimension to resize, sz the new size. If sz < dims[dim] the first sz rows will be kept and the rest deleted. If sz > dims[dim] the new elements will be added zero initialised. Note due to using 1-d memory layout both cases require copying all data and therefore briefly memory to store the old and new arrays. However shinking the last dimension does not necessarily require a copy.
 */
 
-  my_print("Attempting to resize", mpi_info.rank);
+  if(verbose) my_print("Attempting to resize", mpi_info.rank);
 
   if(sz == 0 || sz > MAX_SIZE)return 1;
   //size errors. Don't allow to resize to 0!!!
   if(dim > this->n_dims) return 1;
   if(sz == dims[dim]){
-     my_print("Size matches", mpi_info.rank);
+     if(verbose) my_print("Size matches", mpi_info.rank);
      return 1;
   }
   
@@ -860,7 +860,7 @@ bool my_array::resize(size_t dim, size_t sz){
   data = new_data;
   dims[dim] = sz;
 
-  my_print("New size of dim "+mk_str(dim)+  " is " + mk_str(dims[dim]), mpi_info.rank);
+  if(verbose) my_print("New size of dim "+mk_str(dim)+  " is " + mk_str(dims[dim]), mpi_info.rank);
 
   return 0;
 

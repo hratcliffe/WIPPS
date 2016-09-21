@@ -721,7 +721,7 @@ bool data_array::check_ids( const data_array & src){
   return err;
 }
 
-bool data_array::resize(size_t dim, size_t sz){
+bool data_array::resize(size_t dim, size_t sz, bool verbose){
 /** \brief Resize my_array on the fly
 *
 *dim is the dimension to resize, sz the new size. If sz < dims[dim] the first sz rows will be kept and the rest deleted. If sz > dims[dim] the new elements will be added zero initialised. Similarly for axis elements. See my_array::resize() for more.
@@ -729,7 +729,7 @@ bool data_array::resize(size_t dim, size_t sz){
 
   size_t old_sz = this->get_dims(dim);
   //call my_array::resize to resize data...
-  bool err = my_array::resize(dim, sz);
+  bool err = my_array::resize(dim, sz, verbose);
 
   if(!err){
     //success! Do axes!

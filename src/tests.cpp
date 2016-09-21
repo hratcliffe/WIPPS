@@ -78,10 +78,10 @@ void tests::setup_tests(){
   add_test(test_obj);
   test_obj = new test_entity_spectrum();
   add_test(test_obj);
-  //test_obj = new test_entity_levelone();
-  //add_test(test_obj);
-  //test_obj = new test_entity_d();
-  //add_test(test_obj);
+  test_obj = new test_entity_levelone();
+  add_test(test_obj);
+  test_obj = new test_entity_d();
+  add_test(test_obj);
 
 }
 
@@ -493,12 +493,12 @@ int test_entity_data_array::basic_tests(){
   test_bed->report_info("Initial size is "+mk_str(test_array.get_dims(0))+" by "+mk_str(test_array.get_dims(1)), 1);
 
   //Resize and check new sizes are as expected
-  test_array.resize(1, new2);
+  test_array.resize(1, new2, true);
   if(test_array.get_dims(1) !=new2){
     err |=TEST_WRONG_RESULT;
     test_bed->report_info("Second dim size is "+mk_str(test_array.get_dims(1))+" not "+mk_str(new2), 1);
   }
-  test_array.resize(0, new1);
+  test_array.resize(0, new1, true);
   if(test_array.get_dims(0) !=new1){
     err |=TEST_WRONG_RESULT;
     test_bed->report_info("First dim size is "+mk_str(test_array.get_dims(0))+" not "+mk_str(new1), 1);
@@ -511,7 +511,7 @@ int test_entity_data_array::basic_tests(){
   }
   
   //resize to 7x1 and test average fn
-  test_array.resize(1, 1);
+  test_array.resize(1, 1, true);
   my_type av = test_array.avval();
   my_type expected_av = ((new1-1)/2.0 + 1);
   //Average of (i+1) for i=0 to new1
@@ -541,8 +541,8 @@ int test_entity_data_array::three_d_and_shift(){
   test_bed->report_info("Checking 3d",1);
   data_array old_array = test_array;
 
-  test_array.resize(1, new2);
-  test_array.resize(2, new3);
+  test_array.resize(1, new2, true);
+  test_array.resize(2, new3, true);
 
   if(test_array.get_dims(2) !=new3){
     err |=TEST_WRONG_RESULT;
@@ -758,8 +758,8 @@ int test_entity_get_and_fft::one_d(){
   //Now size down by 1 element and redo. This checks odd and even total sizes
   {
 
-    test_dat.resize(0, dims[0]-1);
-    test_dat_fft.resize(0, dims[0]-1);
+    test_dat.resize(0, dims[0]-1, true);
+    test_dat_fft.resize(0, dims[0]-1, true);
     bool tmp_err = test_dat.fft_me(test_dat_fft);
 
     if(tmp_err) err|=TEST_ASSERT_FAIL;

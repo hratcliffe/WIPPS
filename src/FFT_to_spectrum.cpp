@@ -27,6 +27,7 @@ struct FFT_spect_args{
   std::string file_in;
   std::string file_out;
   int fuzz;
+  int smth;
   size_t n_ang;
   int wave;
   int ang;
@@ -51,7 +52,7 @@ int main(int argc, char *argv[]){
   controller contr = controller(my_args.file_prefix);
   //For spectrum we need a plasma to dictate dispersion, so we go via controller
   
-  data_array data_in = data_array(my_args.file_prefix+my_args.file_in, 0, false);
+  data_array data_in = data_array(my_args.file_prefix+my_args.file_in, 0);
 
   if(!data_in.is_good()){
     my_print("Data array allocation failed. Aborting.");
@@ -68,10 +69,7 @@ int main(int argc, char *argv[]){
 
   contr.set_plasma_B0(B_ref);
   contr.get_current_spectrum()->generate_spectrum(data_in, my_args.fuzz, my_args.ang);
-
-  data_array BB = contr.get_current_spectrum()->copy_out_B();
-  std::cout<<BB.maxval()<<'\n';
-  
+  if(my_args.smth >1) contr.get_current_spectrum()->smooth_B(my_args.smth);
   std::fstream outfile;
   outfile.open(my_args.file_prefix+my_args.file_out, std::ios::binary|std::ios::out);
   contr.get_current_spectrum()->write_to_file(outfile);
@@ -87,6 +85,7 @@ FFT_spect_args FFT_spect_process_command_line(int argc, char *argv[]){
   values.file_in = "";
   values.file_out = "";
   values.fuzz = 10;
+  values.smth = 0;
   values.n_ang = DEFAULT_N_ANG;
   values.wave = WAVE_WHISTLER;
   values.ang = FUNCTION_DELTA;
@@ -134,12 +133,16 @@ FFT_spect_args FFT_spect_process_command_line(int argc, char *argv[]){
       values.ang = FUNCTION_NULL;
       extr = true;
       //This _overrides_ -ang
+    }
+    else if(strcmp(argv[i], "-smooth")==0 && i < argc-1){
+      values.smth = atoi(argv[i+1]);
+      i++;
     }else{
       std::cout<<"UNKNOWN OPTION " <<argv[i]<<'\n';
     }
   }
   if(values.file_out == "" && values.file_in != "") values.file_out = append_into_string(values.file_in, "_spectrum");
-  
+  if(values.smth < 0) values.smth = 0;
   return values;
 
 }

@@ -8,6 +8,7 @@ Command line options:
 -n_ang <int> Number of angles to use (default set in support.h)
 -ang <int> Angular function to generate *D*elta, *G*auss, *I*so (default Delta) N-D data (N, space dims, >1) is then flattened in other dims
 -extr Extract angles from Data (N>1) only. Flatten data to 2 spatial dims and extract angular dependence. Overrides -ang
+-smooth <int> Smooth the output B spectrum using this boxcar width
 
 Sample usage:
 make utils TYPE=float

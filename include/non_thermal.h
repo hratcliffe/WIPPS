@@ -26,6 +26,7 @@ public:
   calc_type v_perp;/**Perpendicular velocity*/
 
   void write(std::ofstream &outfile);
+  void dump(std::fstream &outfile);
 };
 
 

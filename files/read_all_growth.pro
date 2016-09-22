@@ -1,7 +1,6 @@
-function read_distribs, filename
-;Read an unknown number of identical structs into an array
+function read_all_growth, filename
+;Read an unknown number of NON-identical structs into a list
 
-;Written for commit ID from dc9e387 to ... FILL IN IF IO CHNAGES....
 
 COMPILE_OPT IDL2
 ;force long ints and proper brackets
@@ -11,6 +10,10 @@ IF((N_ELEMENTS(filename) EQ 0)) THEN return, !NULL
 id_type ='1234567891'
 ;type for block_izes and block id...
 
+IF ~FILE_TEST(filename) THEN BEGIN
+  PRINT, "File not found"
+  RETURN, !NULL
+END
 
 OPENR, filenum,  filename, /GET_LUN
 ;open file
@@ -76,11 +79,10 @@ WHILE(~EOF(filenum) AND (next_block NE end_pos) ) DO BEGIN
   POINT_LUN, filenum, next_block
 
   IF(i EQ 0) THEN BEGIN
-    n_dats = FIX(end_pos/n_tags(data, /length))
-    all_data = replicate(data, n_dats)
+    all_data = list(data)
 
   ENDIF ELSE BEGIN
-    all_data[i] = data
+    all_data.Add,data
   ENDELSE
   i=i+1
 END
@@ -91,6 +93,7 @@ readu, filenum, id_in
 print, "Read " + string(format='(I3)', i, /print)+ " blocks of "+id_in
 FREE_LUN, filenum
 
+IF SIZE(all_data, /N_EL) EQ 1 THEN RETURN, all_data[0]
 return, all_data
 
 end

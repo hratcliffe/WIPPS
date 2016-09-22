@@ -107,3 +107,15 @@ void non_thermal::write(std::ofstream &outfile){
   outfile<<VPERP<<" "<<v_perp<<"\n";
 
 }
+
+void non_thermal::dump(std::fstream &outfile){
+/**\brief Record non-thermal params
+*
+*Dump without tags etc
+*/
+  outfile.write((char*)& ref_dens, sizeof(calc_type));
+  outfile.write((char*)& fraction, sizeof(calc_type));
+  outfile.write((char*)& v_par, sizeof(calc_type));
+  outfile.write((char*)& v_perp, sizeof(calc_type));
+  
+}

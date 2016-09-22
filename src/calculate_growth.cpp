@@ -1,7 +1,6 @@
 /** \file calculate_growth.cpp \brief Helper program to get expected and/or actual growth rates of waves
 *
-* Can take sdf files or derived spectrum files, extract the approximate wave growth rates (peak or integrated) and output these, plus a theoretical rate, OR just the theoretical rate. Parameters are obtained as in Main, so requires a plasma.conf file and deck.status file.
-* Depends on the SDF file libraries, the FFTW library. A set of test arguments is supplied. Call using ./growth `<growth_test_pars` to use these. \todo Complete
+* Can take derived spectrum files, extract the approximate wave growth rates (peak or integrated) (assumes spectra are in time-order and all have the same axes) and output these, plus a theoretical rate, OR just the theoretical rate. In former case we use the last files axes, in latter we use a wide coverage log axis with n_trials elements. Parameters are obtained as in Main, so requires a plasma.conf file and deck.status file. Output uses same format as our arrays etc A set of test arguments is supplied. Supply a file containing paths to spectra to use, in order. Paths should be relative to given -f parameter Call using ./calculate_growth `<growth_test_pars` to use these. Or try ./calculate_growth -h
   \author Heather Ratcliffe \date 11/02/2016.
 */
 
@@ -14,14 +13,11 @@
 #include <iostream>
 #include <limits>
 #include <stdio.h>
-#include "sdf.h"
-//SDF file libraries
 #include <mpi.h>
 #include <complex.h>
 
 #include "support.h"
 #include "main_support.h"
-#include "reader.h"
 #include "controller.h"
 #include "plasma.h"
 #include "my_array.h"
@@ -30,13 +26,16 @@
 #include "non_thermal.h"
 
 
+const int n_trials = 2000;/**< Number of data points for analytic (if no real data)*/
+
 deck_constants my_const;/**< Physical constants*/
 extern const mpi_info_struc mpi_info;/**< Link to mpi_info as const*/
 
 struct g_args{
 
-  int src;/**<Whether to process no files (analytic only), sdf or spectrum 0, 1,2, respectively*/
+  bool real;/**<Whether to derive real growth from spectra list too*/
   std::string spect_file;/**<File listing spectra if using this option*/
+  std::string outfile;/**< Output filename*/
 };
 
 
@@ -45,18 +44,16 @@ calc_type * make_momentum_axis(int n_momenta, calc_type v_max_over_c);
 calc_type get_growth_rate(plasma * my_plas, non_thermal * my_elec, int n_momenta, calc_type * p_axis, calc_type omega_in);
 g_args g_command_line(int argc, char * argv[]);
 
-void write_growth_header(std::string in_file, plasma * my_plas, non_thermal * my_elec, int n_momenta, calc_type min_v, calc_type max_v, int n_trials, std::ofstream &outfile);
+void write_growth_header(std::string in_file, plasma * my_plas, non_thermal * my_elec, int n_momenta, calc_type min_v, calc_type max_v, int n_trials, std::fstream &outfile);
+bool write_growth_closer(std::string in_file, plasma * my_plas, non_thermal * my_elec, size_t n_momenta, calc_type min_v, calc_type max_v, std::fstream &file);
 
 void write_growth(calc_type omega, calc_type growth, std::ofstream &outfile);
 
+std::vector<std::string> read_filelist(std::string infile);
 
 int main(int argc, char *argv[]){
-/**
-*In theory, these classes and functions should be named well enough that the function here is largely clear. Remains to be seen, eh?
-*
-*/
 
-  int err;
+  int err=0;
   
   int ierr = local_MPI_setup(argc, argv);
   if(ierr){
@@ -67,89 +64,118 @@ int main(int argc, char *argv[]){
   my_print(std::string("Code Version: ")+ VERSION, mpi_info.rank);
   my_print("Code is running on "+mk_str(mpi_info.n_procs)+" processing elements.", mpi_info.rank);
 
-  MPI_Barrier(MPI_COMM_WORLD);
-
-  setup_args cmd_line_args = process_command_line(argc, argv);
   g_args extra_args = g_command_line(argc, argv);
+  setup_args cmd_line_args = process_command_line(argc, argv);
 
   if(mpi_info.rank == 0) get_deck_constants(cmd_line_args.file_prefix);
   share_consts();
   /** Get constants from deck and share to other procs*/
 
+  // Setup output file
+  std::string filename = cmd_line_args.file_prefix + extra_args.outfile;
+  std::fstream file;
+  file.open(filename.c_str(),std::ios::out|std::ios::in|std::ios::binary|std::ios::trunc);
+  if(!file.is_open()) return 1;
 
+  //Setup other things we need
+  plasma * my_plas = new plasma(cmd_line_args.file_prefix);
 
+  data_array numeric_data, analytic_data;
 
-  if(extra_args.src == 1){
-    //Read SDF files and derive...
-    my_print("Processing sdf files", mpi_info.rank);
-  
-  
-  
-  }else if(extra_args.src == 2){
-    //Read spectrum files and derive...
+  if(extra_args.real){
+    //Read spectrum files
     my_print("Processing spectrum files", mpi_info.rank);
-  
-  
-  
-  
+    std::vector<std::string> filelist;
+    filelist = read_filelist(cmd_line_args.file_prefix+extra_args.spect_file);
+    if(filelist.size() >= 2){
+
+      spectrum * my_spect = new spectrum(cmd_line_args.file_prefix+ filelist[0]);
+      if(my_spect->get_B_dims() <1){
+      //Wrap in quotes so we highlight stray trailing whitespace etc
+        my_print("Invalid or missing spectrum file '"+cmd_line_args.file_prefix+filelist[0]+"'");
+      }
+      data_array B_prev;
+      B_prev = my_spect->copy_out_B();
+      my_type delta_t = 0.0;
+      for(size_t i=1; i<filelist.size(); i++){
+        delete my_spect;
+        my_spect = new spectrum(cmd_line_args.file_prefix+filelist[i]);
+        if(my_spect->get_B_dims() <1){
+          my_print("Invalid or missing spectrum file '"+cmd_line_args.file_prefix+filelist[i]+"'");
+          continue;
+        }
+        numeric_data = my_spect->copy_out_B();
+        //Now do difference between spectra
+        numeric_data.subtract(B_prev);
+        //Average prev and current time vals to get mid-point and then take difference
+        delta_t = (numeric_data.time[1] + numeric_data.time[0] -B_prev.time[1] - B_prev.time[0])/2;
+        
+        numeric_data.divide(delta_t);
+        
+        if(B_prev.get_dims() > 0 && numeric_data.get_dims() > 0) err |= numeric_data.write_to_file(file, false);
+
+        B_prev = numeric_data;
+      }
+      delete my_spect;
+    }
   }
   
   //Now we do the analytics.
 
-  my_print("Calculating growth rates", mpi_info.rank);
-
-  plasma * my_plas = new plasma(cmd_line_args.file_prefix);
+  my_print("Calculating analytic growth rates", mpi_info.rank);
 
   non_thermal * my_elec = new non_thermal(cmd_line_args.file_prefix);
 
-  const int n_momenta = 10000;
-  const int n_trials = 2000;
-
-  calc_type * p_axis, *growth_rate;
+  const size_t n_momenta = 10000;
+  calc_type * p_axis;
   calc_type min_v = 0.0, max_v = 0.95;
   p_axis = make_momentum_axis(n_momenta, max_v);
-  growth_rate = (calc_type*) malloc(n_trials* sizeof(calc_type));
+  calc_type growth_rate = 0.0;
 
-  if(!p_axis || ! growth_rate){
+  if(!p_axis){
     my_print("Cannot allocate memory for arrays", mpi_info.rank);
-    
     if(p_axis) free(p_axis);
-    if(growth_rate) free(growth_rate);
-    //Free whichever was allocated
-    
     safe_exit();
   }
 
   calc_type omega;
-  calc_type d_om = std::abs(my_plas->get_omega_ref("ce")) / (float) (n_trials-1);
-  omega = 0.0;
-  int om_orders = 3;
-  calc_type d_i = (calc_type) (n_trials -1)/(calc_type) om_orders;
-  //Orders of magnitude to cover
-  d_om = std::abs(my_plas->get_omega_ref("ce"))/ std::pow(10, om_orders);
-  
-  std::ofstream outfile;
-  outfile.open("Growth.dat");
-
-  if(!outfile){
-     my_print("Error opening output file", mpi_info.rank);
-     free(p_axis);
-     free(growth_rate);
-     safe_exit();
+  //Setup an array with desired omega axis
+  if(!extra_args.real){
+    //Log axis over 3 orders of magnitude
+    calc_type d_om = std::abs(my_plas->get_omega_ref("ce")) / (float) (n_trials-1);
+    omega = 0.0;
+    int om_orders = 3;
+    calc_type d_i = (calc_type) (n_trials -1)/(calc_type) om_orders;
+    //Orders of magnitude to cover
+    d_om = std::abs(my_plas->get_omega_ref("ce"))/ std::pow(10, om_orders);
+    analytic_data = data_array(n_trials);
+    for(int i=0; i<n_trials; ++i){
+      omega = std::pow(10, (calc_type) i /d_i)*d_om;
+      analytic_data.set_axis_element(0, i, omega);
+    }
+  }else{
+    //Copy axis from the last numeric result
+    size_t sz = numeric_data.get_dims(0);
+    analytic_data = data_array(sz);
+    for(size_t i=0; i< sz; i++) analytic_data.set_axis_element(0, i, numeric_data.get_axis_element(0, i));
   
   }
+  strcpy(analytic_data.block_id, "g_an");
 
-  if(mpi_info.rank ==0) write_growth_header(cmd_line_args.file_prefix, my_plas, my_elec, n_momenta, min_v, max_v, n_trials, outfile);
-  for(int i=0; i<n_trials; ++i){
-    omega = std::pow(10, (calc_type) i /d_i)*d_om;
-    
-    growth_rate[i] = get_growth_rate(my_plas, my_elec, n_momenta, p_axis, omega);
-    if(mpi_info.rank ==0) write_growth(omega, growth_rate[i], outfile);
-    //omega += d_om;
+  for(int i=0; i<analytic_data.get_dims(0); ++i){
+    omega = analytic_data.get_axis_element(0, i);
+    growth_rate = get_growth_rate(my_plas, my_elec, n_momenta, p_axis, omega);
+    analytic_data.set_element(i, growth_rate);
   }
 
-  outfile.close();
+  err |= analytic_data.write_to_file(file, false);
+  
+  //Special finish for the file  
+  err |=write_growth_closer(cmd_line_args.file_prefix, my_plas, my_elec, n_momenta, min_v, max_v, file);
 
+  file.close();
+  if(!err) my_print("Written in "+filename);
+  else my_print("Error writing to "+filename);
   safe_exit();
 
 }
@@ -253,28 +279,85 @@ calc_type * make_momentum_axis(int n_mom, calc_type v_max){
 
 }
 
+std::vector<std::string> read_filelist(std::string infile){
+/** Read file
+*
+*Reads a list of strings from given infile
+*/
+  std::cout<<infile<<'\n';
+  std::ifstream file;
+  file.open(infile);
+  std::vector<std::string> names;
+  std::string name;
+
+  while(file){
+    //Copy all lines that are not just whitespace into vector
+    std::getline(file, name);
+    if(name.find_first_not_of("\t\n ") !=std::string::npos) names.push_back(name);
+  }
+
+  file.close();
+  return names;
+}
+
 g_args g_command_line(int argc, char * argv[]){
-/** Check whether to process no files (analytic only), sdf or spectrum 0, 1,2, respectively. Looping through again is silly, but we're stealing from main in chunks here... But if we have a -sdf arg we use sdf files, if a -s we use the spectra listed in that file, if neither, we output analytic only and if both the last one is used*/
+/** Check whether to handle real spectra. If -s we use the spectra (plural) listed in that file, if not we output analytic only*/
 
   g_args extra_cmd_line;
 
-  extra_cmd_line.src = 0;
+  extra_cmd_line.real = false;
   extra_cmd_line.spect_file = "";
+  extra_cmd_line.outfile = "growth.dat";
   
   for(int i=1; i< argc; i++){
     if(strcmp(argv[i], "-s")==0 && i < argc-1){
-      extra_cmd_line.spect_file = atoi(argv[i+1]);
-      extra_cmd_line.src = 2;
+      extra_cmd_line.spect_file = argv[i+1];
+      extra_cmd_line.real = true;
+      strcpy(argv[i], HANDLED_ARG);
+      strcpy(argv[i+1], HANDLED_ARG);
       i++;
     }
-    else if(strcmp(argv[i], "-sdf")==0) extra_cmd_line.src = 1;
-    else{
-      std::cout<<"UNKNOWN OPTION "<<argv[i]<<'\n';
+    else if(strcmp(argv[i], "-out")==0 && i < argc-1){
+      extra_cmd_line.outfile = argv[i+1];
+      strcpy(argv[i], HANDLED_ARG);
+      strcpy(argv[i+1], HANDLED_ARG);
+      i++;
+    }
+    else if(strcmp(argv[i], "-h")==0){
+      strcpy(argv[i], HANDLED_ARG);
+      print_help('w');
     }
   }
   return extra_cmd_line;
 
+}
 
+bool write_growth_closer(std::string in_file, plasma * my_plas, non_thermal * my_elec, size_t n_momenta, calc_type min_v, calc_type max_v, std::fstream &file){
+  /** Write the general parameters as a file footer with offsets*/
+  
+  
+  size_t ftr_start = file.tellg();
+  bool write_err =false;
+  size_t next_location = ftr_start + (in_file.size()+1)*sizeof(char)+sizeof(size_t)*3 +sizeof(calc_type)*6;
+  //Nonthermal dumps 4 calc types
+
+  file.write((char*) & next_location, sizeof(size_t));
+  //Position of next section
+  file.write((char*)& n_momenta, sizeof(size_t));
+  file.write((char*) &min_v, sizeof(calc_type));
+  file.write((char*) &max_v, sizeof(calc_type));
+  
+  my_elec->dump(file);
+  
+  size_t len =in_file.size()+1;
+  file.write((char*)&len, sizeof(size_t));
+  file.write(in_file.c_str(), len*sizeof(char));
+
+  if((size_t)file.tellg() != next_location) write_err=1;
+  if(write_err) my_print("Error writing offset positions", mpi_info.rank);
+  file.write((char*) & ftr_start, sizeof(size_t));
+
+  return write_err;
 }
 
 void write_growth_header(std::string in_file, plasma * my_plas, non_thermal * my_elec, int n_momenta, calc_type min_v, calc_type max_v, int n_trials, std::ofstream &outfile){

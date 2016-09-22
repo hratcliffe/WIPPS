@@ -44,7 +44,7 @@ controller::~controller(){
   }
 };
 
-void controller::add_spectrum(std::string file){
+bool controller::add_spectrum(std::string file){
 /** \brief Add spectrum from dump
 *
 *Add spectrum read from file dump
@@ -55,12 +55,14 @@ void controller::add_spectrum(std::string file){
     tmp_spect->init();
     my_list.push_back(std::make_pair(tmp_spect, nullptr));
     current_spect = my_list.size()-1;
+    return 0;
   }else{
     my_print("Spectrum construction failed", mpi_info.rank);
+    return 1;
   }
 }
 
-void controller::add_spectrum(int nx, int n_ang, bool separable){
+bool controller::add_spectrum(int nx, int n_ang, bool separable){
 /** \brief Create and add spectrum
 *
 *If separable is true it is assumed the angle distrib does not depend on omega, else it does
@@ -71,24 +73,30 @@ void controller::add_spectrum(int nx, int n_ang, bool separable){
     tmp_spect->my_controller = this;
     my_list.push_back(std::make_pair(tmp_spect, nullptr));
     current_spect = my_list.size()-1;
+    return 0;
 
   }else{
     my_print("Spectrum construction failed", mpi_info.rank);
+    return 1;
   }
 }
 
-void controller::add_d(int nx, int n_angs){
+bool controller::add_d(int nx, int n_angs){
 /** \brief Create and add diffusion_coefficient
 *
 *Creates a diffusion coefficient of size nx x n_angs, paired with the last spectrum that was added.
 */
   diffusion_coeff * tmp_d;
   tmp_d = new diffusion_coeff(nx, n_angs);
+
+  if(!tmp_d->is_good()) return 1;
+
   tmp_d->my_controller = this;
   tmp_d->make_velocity_axis();
   tmp_d->make_pitch_axis();
   
   my_list[current_spect].second = tmp_d;
+  return 0;
 }
 
 void controller::add_d_special(int nx, int n_angs){

@@ -46,7 +46,7 @@ public:
   data_array(data_array && src);
 
   data_array & operator=(const data_array& src);
-  data_array(std::string filename, bool no_version_check = false, bool ext=true);
+  data_array(std::string filename, bool no_version_check = false);
   data_array(size_t n_dims, size_t * dims);
   virtual ~data_array();
   void clone_empty(const data_array &src);
@@ -61,7 +61,7 @@ public:
   void make_linear_axis(size_t dim, float res, long offset=0);
 
   bool write_to_file(std::fstream &file, bool close_file=true);
-  bool read_from_file(std::fstream &file, bool no_version_check=0, bool ext=true);
+  bool read_from_file(std::fstream &file, bool no_version_check=0);
   bool write_section_to_file(std::fstream &file, std::vector<my_type> limits, bool close_file=true);
   bool write_raw_section_to_file(std::fstream &file, std::vector<size_t> limits, bool close_file=true);
   bool write_closer(std::fstream &file);

@@ -24,8 +24,8 @@ class controller;
   \author Heather Ratcliffe \date 24/09/2015
 */
 class spectrum{
-  friend void controller::add_spectrum(int nx, int n_ang, bool separable);
-  friend void controller::add_spectrum(std::string file);
+  friend bool controller::add_spectrum(int nx, int n_ang, bool separable);
+  friend bool controller::add_spectrum(std::string file);
   friend controller::~controller();
 
   controller * my_controller;/**< Links this to a plasma object*/

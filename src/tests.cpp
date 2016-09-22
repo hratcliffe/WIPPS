@@ -24,7 +24,7 @@
 #include <math.h>
 #include <boost/math/special_functions.hpp>
 //Provides Bessel functions, erf, and many more
-/** \todo Deliberately failing tests to check not doing nothing*/
+/** \todo Deliberately failing tests to check not doing nothing \todo Add scripts directory for level1 \todo Add tests directory for easy cleanup*/
 
 extern tests * test_bed; /**< Global testbed, define somewhere in your code*/
 
@@ -1791,13 +1791,15 @@ int test_entity_spectrum::basic_tests2(){
   
   data_array old_B = test_contr->get_current_spectrum()->copy_out_B();
   //Now dump to file and read back in and compare
-  test_contr->add_spectrum("spect_out.dat");
-  data_array new_B = test_contr->get_current_spectrum()->copy_out_B();
-  if(!old_B.is_good() || !new_B.is_good() || compare_2d(old_B, new_B)){
-    test_bed->report_info("Error or Mismatch in read", 0);
-    err|= TEST_WRONG_RESULT;
+  bool err2 = test_contr->add_spectrum("spect_out.dat");
+  if(err2) err |= TEST_ASSERT_FAIL;
+  else{
+    data_array new_B = test_contr->get_current_spectrum()->copy_out_B();
+    if(!old_B.is_good() || !new_B.is_good() || compare_2d(old_B, new_B)){
+      test_bed->report_info("Error or Mismatch in read", 0);
+      err|= TEST_WRONG_RESULT;
+    }
   }
-
   return err;
 
 }
@@ -2254,19 +2256,21 @@ int test_entity_d::run(){
   test_contr = new controller(file_prefix);
   test_bed->report_info("Reading spectrum", mpi_info.rank);
   //Now dump to file and read back in and compare
-  test_contr->add_spectrum("spect_out.dat");
-  
-  test_bed->report_info("Calculating test D", mpi_info.rank);
-  test_contr->add_d(5, 5);
-  d_report report = test_contr->get_current_d()->calculate();
-  err |= report.error;
-  test_bed->report_info("Writing test file", mpi_info.rank);
+  bool err2 = test_contr->add_spectrum("spect_out.dat");
+  if(!err2){
+    test_bed->report_info("Calculating test D", mpi_info.rank);
+    test_contr->add_d(5, 5);
+    d_report report = test_contr->get_current_d()->calculate();
+    err |= report.error;
+    test_bed->report_info("Writing test file", mpi_info.rank);
 
-  std::fstream file;
-  file.open("test_d.dat", std::ios::binary|std::ios::trunc|std::ios::out|std::ios::in);
-  if(file) test_contr->get_current_d()->write_to_file(file);
-  file.close();
-  
+    std::fstream file;
+    file.open("test_d.dat", std::ios::binary|std::ios::trunc|std::ios::out|std::ios::in);
+    if(file) test_contr->get_current_d()->write_to_file(file);
+    file.close();
+  }else{
+    err |= TEST_ASSERT_FAIL;
+  }
   my_const = const_tmp;
   share_consts();
 

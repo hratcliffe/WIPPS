@@ -34,7 +34,7 @@ protected:
   long get_index(size_t nx, size_t ny)const;
   long get_index(size_t nx, size_t ny, size_t nz)const;
   long get_index(size_t nx, size_t ny, size_t nz, size_t nt)const;
-
+  my_type get_element_from_index(size_t ind)const;
 
 public:
   size_t get_total_elements()const;
@@ -84,6 +84,7 @@ public:
   my_type maxval(std::vector<size_t> &ind, size_t offset=0);
   my_type avval();
   my_type partial_maxval(std::vector<std::pair<size_t, size_t> > ranges,std::vector<size_t> &ind);
+  void smooth_1d(int n_pts);
 };
 
 #endif /* defined(____my_array__) */

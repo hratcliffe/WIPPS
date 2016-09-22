@@ -383,6 +383,13 @@ my_type my_array::get_element(size_t n_dims, size_t* dims)const{
   }
 
 }
+my_type my_array::get_element_from_index(size_t ind)const{
+  if(ind < get_total_elements()){
+    return *(data+ind);
+  }else{
+    return 0.0;
+  }
+}
 
 size_t my_array::get_total_elements()const{
 /** Return total size of array */
@@ -1057,4 +1064,10 @@ my_type my_array::avval(){
 
   av=std::accumulate(data, data+total_size, 0.0);
   return av/total_size;
+}
+
+void my_array::smooth_1d(int n_pts){
+  if(n_dims !=1) return;
+  inplace_boxcar_smooth(data, (int) get_total_elements(), n_pts);
+
 }

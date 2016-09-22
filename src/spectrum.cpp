@@ -30,6 +30,7 @@ void spectrum::construct(){
   normg = nullptr;
   max_power=0.0;
   memset((void *) block_id, 0, ID_SIZE*sizeof(char));
+  smooth=0;
 }
 
 spectrum::spectrum(){
@@ -315,6 +316,7 @@ bool spectrum::generate_spectrum(data_array &parent, int om_fuzz, int angle_type
 
 }
 
+
 bool spectrum::make_angle_distrib(){
 /** \brief Generate angle axis and distribution
 *
@@ -371,6 +373,16 @@ bool spectrum::make_angle_distrib(){
 
 }
 
+void spectrum::smooth_B(int n_pts){
+/** \brief Smooth B
+*
+*Apply a box-car smoothing to B with specified number of pts. Store n_pts
+*/
+
+  this->smooth = n_pts;
+  B_omega_array.smooth_1d(n_pts);
+}
+
 my_type spectrum::get_omega(my_type k, int wave_type, bool deriv){
 /** \brief Gets omega for given k
 *
@@ -416,11 +428,13 @@ bool spectrum::write_to_file(std::fstream &file){
 
   size_t ftr_start = (size_t) file.tellg();
   //Start of ftr means where to start reading block, i.e. location of the next_location tag
-  size_t next_location = ftr_start+ sizeof(char)*ID_SIZE +sizeof(size_t);
+  size_t next_location = ftr_start+ sizeof(char)*ID_SIZE +sizeof(size_t)*2;
 
   file.write((char*) & next_location, sizeof(size_t));
   //Position of next section, i.e. of file end val
   file.write(block_id, sizeof(char)*ID_SIZE);
+  
+  file.write((char*) & smooth, sizeof(size_t));
 
   if((size_t)file.tellg() != next_location) write_err=1;
   if(write_err) my_print("Error writing offset positions", mpi_info.rank);
@@ -474,7 +488,7 @@ bool spectrum::read_from_file(std::fstream &file){
   file.seekg(end_block+sizeof(size_t));
   if(file) file.read(id_in, sizeof(char)*ID_SIZE);
   strcpy(this->block_id, id_in);
-
+  
   return err;
 
 
@@ -852,8 +866,8 @@ calc_type spectrum::get_peak_omega(){
 void spectrum::copy_ids( data_array & src){
 /** Copies ID fields from src array to this */
 
-  strcpy(this->block_id, src.block_id);
-  
+  strncpy(this->block_id, src.block_id, ID_SIZE);
+
   std::copy(src.time, src.time + 2, this->time);
   for(int i=0; i < 2; ++i) this->space[i] = src.space[i];
 

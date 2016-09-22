@@ -32,8 +32,6 @@ class spectrum{
   void construct();
   spectrum();
   spectrum(int nx, int n_ang, bool separable);/**< Private because only controllers can create/destroy*/
-  spectrum(std::string filename);
-  ~spectrum();/**< Private because only controllers can create/destroy*/
   spectrum & operator=(const spectrum& src);/**<For setting one spectrum equal another*/
   spectrum(const spectrum &src);/**<For copying a spectrum*/
   spectrum(spectrum && src) = default;
@@ -44,11 +42,16 @@ class spectrum{
   my_type max_power;/**<Value of maximum in spectral power*/
   bool angle_is_function;/**< Says we impose g(x) rather than have one g for each w*/
   int function_type;/**< Type code for angular function. See support.h */
+  size_t smooth;
 
   data_array g_angle_array;
   data_array B_omega_array;
 
 public:
+
+  spectrum(std::string filename);
+  ~spectrum();/**< Reloading a spectrum can be done by anyone. Creating a new is restricted*/
+
   char block_id[ID_SIZE]; /**< The field name id from SDF file*/
 
   my_type time[2];/**< Time range over which data are taken*/
@@ -56,7 +59,7 @@ public:
   int wave_id; /**< ID for which wave mode cutout we're going for. See support.h*/
   void set_ids(float time1, float time2, int space1, int space2, int wave_id, char block_id[10], int function_type=FUNCTION_DELTA);
   void init();
-
+  void smooth_B(int n_pts);
   bool generate_spectrum(data_array& parent, int om_fuzz=10, int angle_type=FUNCTION_DELTA);
   bool truncate_om(my_type om_min, my_type om_max);
   bool truncate_x(my_type x_min, my_type x_max);

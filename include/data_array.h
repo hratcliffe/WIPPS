@@ -76,6 +76,7 @@ public:
   data_array average(size_t dim, my_type min, my_type max);
   data_array average(size_t dim);
   data_array average(size_t dim, size_t min, size_t max);
+  bool subtract(const data_array& rhs);
 
 };
 

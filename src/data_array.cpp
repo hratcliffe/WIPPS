@@ -45,7 +45,8 @@ void data_array::alloc_ax(const size_t els){
   if(els > 0 && els <= this->n_dims*MAX_SIZE){
     axes=(my_type*)calloc((els),sizeof(my_type));
   }else{
-    my_print("Array size exceeds max. Axes alloc failed", mpi_info.rank);
+    if(els != 0) my_print("Array size exceeds max. Axes alloc failed", mpi_info.rank);
+    else my_print("Array size cannot be 0. Axes alloc failed", mpi_info.rank);
   }
 }
 
@@ -910,3 +911,18 @@ data_array data_array::average(size_t dim, size_t min_ind, size_t max_ind){
   new_arr.divide(max_ind - min_ind);
   return new_arr;
 }
+
+bool data_array::subtract(const data_array& rhs){
+  
+  if(this->get_dims() != rhs.get_dims()) return 1;
+  for(size_t i=0; i< n_dims; i++) if(this->get_dims(i) != rhs.get_dims(i)) return 1;
+
+  size_t els= get_total_axis_elements();
+  if(this->axes) std::copy(rhs.axes, rhs.axes+els, this->axes);
+    //Copy axes
+
+  els = get_total_elements();
+  for(size_t i=0; i< els; i++) *(this->data+i) -= rhs.get_element_from_index(i);
+  return 0;
+}
+

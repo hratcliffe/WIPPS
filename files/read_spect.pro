@@ -26,6 +26,7 @@ readu, filenum, int_sz
 
 tmp = FSTAT(filenum)
 POINT_LUN, filenum, (tmp.size - int_sz)
+file_end = tmp.size - int_sz
 start_pos = hdr.block_type
 readu, filenum, start_pos
 
@@ -59,13 +60,15 @@ ENDIF
 spect = create_struct({ang:read_block(filenum, hdr.my_type, hdr.block_type)}, spect)
 
 readu, filenum, next_pos
+POINT_LUN, filenum, next_pos
+readu, filenum, next_pos
+
 if(next_pos NE start_pos) THEN BEGIN
   print, "Extra arrays in input file"
   return, spect
+  ;Return because we don't know how to read a footer uncorrupted
 end
 
-POINT_LUN, filenum, start_pos
-readu, filenum, next_pos
 POINT_LUN, filenum, start_pos
 readu, filenum, next_pos
 
@@ -76,7 +79,14 @@ id_in = id_type
 readu, filenum, id_in
 PRINT, id_in
 spect=create_struct(spect, {block:id_in})
+smth=hdr.block_type
+POINT_LUN, -filenum, next_pos
 
+;If there is space for another int, should be smooth param
+IF next_pos LE file_end - int_sz THEN BEGIN
+  readu, filenum, smth
+  spect=create_struct(spect, {smooth:smth})
+END
 spect=create_struct(spect, {filename: filename})
 
 return, spect

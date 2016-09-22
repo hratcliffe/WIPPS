@@ -54,7 +54,7 @@ void safe_exit(){
 * Does minimal cleanup and exits
 */
 
-  MPI_Finalize();
+  if(mpi_info.n_procs >0) MPI_Finalize();
 
   exit(0);
 }

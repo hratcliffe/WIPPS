@@ -141,7 +141,7 @@ struct mpi_info_struc{
   int n_procs;
 };
 
-const struct mpi_info_struc mpi_info_null = {0, 0};/**< Null MPI struct for single threaded jobs, without having to compile the SDF libraries seperately*/
+const struct mpi_info_struc mpi_info_null = {0, -1};/**< Null MPI struct for single threaded jobs, without having to compile the SDF libraries seperately*/
 
 /** \brief Full refractive index
 *

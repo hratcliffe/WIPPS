@@ -758,7 +758,7 @@ calc_type plasma::get_dispersion(my_type in, int wave_type, bool reverse, bool d
         //k(omega)
         //NB! We have omitted the one so that our k and omega approxes are inverses!!!
         in = std::abs(in);
-        if(in >= om_ce_loc) break;
+        if(in >= om_ce_loc || in == 0.0) break;
         
         if(!deriv) ret = in/v0*std::sqrt(0.0 - std::pow(om_pe_loc, 2)/(in*(in - std::abs(om_ce_loc)*cos_th)) );
         else{

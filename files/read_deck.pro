@@ -40,7 +40,7 @@ WHILE (~EOF(filenum) AND ~(strcmp(tag, str, sz))) DO BEGIN
   ENDELSE
 
 ENDWHILE
-
+const = create_struct(const, "file", filename)
 close, filenum
 RETURN, const
 

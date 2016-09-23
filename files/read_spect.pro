@@ -113,5 +113,6 @@ IF next_pos LE file_end - int_sz THEN BEGIN
 END
 spect=create_struct(spect, {filename: filename})
 
+FREE_LUN, filenum
 return, spect
 END

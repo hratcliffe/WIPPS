@@ -234,7 +234,7 @@ void spectrum::init(){
 bool spectrum::generate_spectrum(data_array &parent, int om_fuzz, int angle_type){
 /**\brief Generate spectrum from data
 *
-*Takes a parent data array and uses the specified ids to generate a spectrum. Windows using the specified wave dispersion and integrates over frequency. Also adopts axes from parent. \todo Fill in the rest of logic etc @param parent Data array to read from @param om_fuzz Band width around dispersion curve in percent of central frequency \todo omega vs k, is there some normalising to do? \todo Did we do negative omega properly?
+*Takes a parent data array and uses the specified ids to generate a spectrum. Windows using the specified wave dispersion and integrates over frequency. Also adopts axes from parent. IMPORTANT: when using real angular data we roughly fuzz around the correct k values, but this is not uniform! Non-smooth or rapidly varying spectra may give odd results @param parent Data array to read from @param om_fuzz Band width around dispersion curve in percent of central frequency \todo omega vs k, is there some normalising to do? 
 */
 
   if(!this->is_good()){
@@ -250,7 +250,6 @@ bool spectrum::generate_spectrum(data_array &parent, int om_fuzz, int angle_type
 
     my_type *ax_ptr = parent.get_axis(1, len);
     //y-axis to work with
-//    my_type *k_ax_ptr = parent.get_axis(0, lenk);
 
     //Now we loop across x, calculate the wave cutout bounds, and total, putting result into data
 
@@ -259,9 +258,6 @@ bool spectrum::generate_spectrum(data_array &parent, int om_fuzz, int angle_type
     my_type om_disp, max=0.0;
     my_type tolerance = om_fuzz/100.0;
     my_type total = 0.0;
-/*    my_type max_om = parent.get_axis_element(1, len-1);
-    max_om /= this->get_length(0);*/
-    //for(int i=0; i<this->get_length(0); ++i) this->set_axis_element(0, i, )
 
     for(size_t i=0; i<get_B_dims(0); ++i){
       om_disp = get_omega(parent.get_axis_element(0,i), WAVE_WHISTLER);
@@ -270,6 +266,7 @@ bool spectrum::generate_spectrum(data_array &parent, int om_fuzz, int angle_type
       
       low_bnd = where(ax_ptr, len, om_disp *(1.0-tolerance));
       high_bnd = where(ax_ptr, len, om_disp *(1.0+tolerance));
+    /** \todo FIX THIS! SHould do it's best if not in raneg!!!*/
       if(low_bnd < 0 || high_bnd< 0){
         set_B_element(i,0.0);
         continue;
@@ -282,34 +279,100 @@ bool spectrum::generate_spectrum(data_array &parent, int om_fuzz, int angle_type
     }
 
     make_angle_distrib();
-    this->max_power = total;
+    this->max_power = max;
 
-  }else if(parent.is_good()){
- /** \todo general spectrum extracttion routine */
-  //TODO in this case we have to extract spectrim and angle data somehow......
+  }else if(parent.is_good() && parent.get_dims()==3){
+  //This will do a rough integral around the correct omega. Note it is not a neat sampling of the domain, so may give odd results for non-smooth cases
+  
+    this->copy_ids(parent);
 
-    //First we read axes from parent
-    size_t len;
+    my_type tolerance = om_fuzz/100.0;
 
-    my_type * ax_ptr = parent.get_axis(0, len);
-    //memcpy ((void *)this->axes, (void *)ax_ptr, len*sizeof(my_type));
-    ax_ptr = parent.get_axis(1, len);
-    //y-axis to work with
+    //Get the k_x and k_y axes for lookup
+    size_t len_x, len_y, len_om;
+    my_type * kx_ax = parent.get_axis(0, len_x);
+    my_type * ky_ax = parent.get_axis(1, len_y);
+    my_type * om_ax = parent.get_axis(2, len_om);
 
-    //Generate angle axis to work with
-  {int res = 1;
-  //set axis resolution somehow... TODO this
-  g_angle_array.make_linear_axis(0, res, 0);
-  }
+    my_type om_disp;
+    for(size_t i=0; i<len_x; ++i){
+    }
 
-  //and now we extract the data at each angle...
-  //tan theta = k_x/k_y
+    //Now generate angle axis to work with
+    calc_type res = (ANG_MAX - ANG_MIN)/get_g_dims(1);
+    int offset = -ANG_MIN/res;
+    g_angle_array.make_linear_axis(1, res, offset);
 
+    my_type k, k_y, tantheta, tmp, tmp_sum, decrement = 1.0+GEN_PRECISION, max_power=0.0;
+    int kx_low, kx_high, ky_low, ky_high, i_sgn, om_ind;
+    //Now we do a double loop
+    
+    for(size_t i = 0; i< len_x; i++){
 
+    //use the k_x axis to generate an omega one. Thus if fuzz=0 we match 1-1
+      om_disp = get_omega(parent.get_axis_element(0,i), WAVE_WHISTLER);
+      set_om_axis_element(i, om_disp);
 
+      //We assume we have +ve and -ve k but ignore possible negative omega
+      //Omega in parent data matching current value
+      om_ind = where(om_ax, len_om, om_disp);
+
+      //Signs so we always integrate from k_low to k_high
+      i_sgn = (i<len_x/2 ? -1: 1);
+      if(i_sgn > 0) decrement = 1.0 - GEN_PRECISION;
+      
+      tmp_sum = 0.0;
+      for(size_t j = 0; j< get_g_dims(1); j++){
+        tantheta = get_ang_axis_element(j);
+
+        //Put the fuzz in k_x assuming theta=0
+        k = get_k(get_om_axis_element(i)*(1.0-i_sgn*tolerance), WAVE_WHISTLER)*decrement*i_sgn;
+        //For theta = 0 we want to ensure we get back what we started with, and our where uses GE so we decrement very, very slightly
+        kx_low = where(kx_ax, len_x, k);
+        k = get_k(get_om_axis_element(i)*(1.0+i_sgn*tolerance), WAVE_WHISTLER)*decrement*i_sgn;
+        kx_high = where(kx_ax, len_x, k);
+        //Make sure we're in range: we allow to spill off but should do nothing if k_low is out upwards or k_high out downwards
+        if(k < *(kx_ax)) kx_high = 0;
+        if(kx_low < 0) kx_low = 0;
+        if(kx_high <0) kx_high = len_x-1;
+
+        //Put the fuzz in k_y so that we're fuzzing in omega only at the extrema
+        /** \todo Improve this One or two sided?*/
+        //As for kx we correct range spill
+        k_y = *(kx_ax+kx_low)*tantheta;
+        ky_low = where(ky_ax, len_y, k_y);
+        if(k_y > *(ky_ax+len_y-1)) ky_low = len_y;
+        k_y = *(kx_ax+kx_high)*tantheta;
+        ky_high = where(ky_ax, len_y, k_y);
+        if(k_y < *(ky_ax)) ky_high = -1;
+        if(ky_low < 0) ky_low = 0;
+        if(ky_high <0) ky_high = len_y-1;
+        
+        tmp = 0.0;
+        //Total over the ranges we just found
+        for(size_t ii=kx_low; ii<=kx_high; ii++){
+          for(size_t jj=ky_low; jj<=ky_high; jj++){
+            tmp += parent.get_element(ii, jj, om_ind);
+          }
+        }
+        //Tmp is now the convolved B(omega)g(omega, theta). We dump it into g as is for later norming and add to the sum which will end up as B.
+        /** \todo Is this the correct norm?*/
+        set_g_element(i, j, tmp);
+        tmp_sum += tmp;
+      }
+      //Now the angles are done, we norm. g and set B
+      //Use some small value to prevent a divide by zero
+      if(std::abs(tmp_sum) > tiny_my_type){
+        for(size_t j = 0; j< get_g_dims(1); j++) set_g_element(i, j, get_g_element(i, j)/tmp_sum);
+      }
+      set_B_element(i, tmp_sum);
+      //Store the max power for later
+      if(tmp_sum > max_power) max_power = tmp_sum;
+
+    }
+    this->max_power = max_power;
   }else{
     return 1;
-
   }
 
   return 0;

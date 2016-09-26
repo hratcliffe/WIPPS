@@ -1,5 +1,5 @@
 
-pro get_fields, start, stp, dir=dir, n_zeros=n_zeros, ex=ex, ey=ey, ez=ez, bx=bx, by=by, bz=bz, skip=skip
+pro get_fields, start, stp, dir=dir, n_zeros=n_zeros, ex=ex, ey=ey, ez=ez, bx=bx, by=by, bz=bz, skip=skip, res=res
 
 ;Created by H Ratcliffe, University of Warwick
 ;16/4/2015
@@ -13,6 +13,7 @@ pro get_fields, start, stp, dir=dir, n_zeros=n_zeros, ex=ex, ey=ey, ez=ez, bx=bx
 ; n_zeros: manually set number of zeros, otherwise is determined from the filenames
 ; skip: cadence of file reading
 ; ex, ey, ez, bx, by, bz: arrays to contain data. Only those requested will be read, and only if they are present in the file
+; res: return space and time resolution array
 ;Call example
 ; get_fields, 0, 500, ex=ex, ey=ey, bz=bz, skip=5
 
@@ -27,30 +28,54 @@ ENDIF
 IF(N_ELEMENTS(skip) EQ 0) THEN skip =1
 ;set increment of file read
 
-IF(N_ELEMENTS(n_zeros) EQ 0) THEN BEGIN
-  n_zeros=-1
-  FOR i=3, 9 DO BEGIN
-    fmt = '(I0'+string(format='(I01)', i, /print)+')'
-    if(STRCMP(string(format=fmt, start, /print), '********', i) EQ 1) THEN CONTINUE
+;IF(N_ELEMENTS(n_zeros) EQ 0) THEN BEGIN
+;  n_zeros=-1
+;  FOR i=3, 9 DO BEGIN
+;    fmt = '(I0'+string(format='(I01)', i, /print)+')'
+;    if(STRCMP(string(format=fmt, start, /print), '********', i) EQ 1) THEN CONTINUE
     ;check we have enough digits to print start
-    success=file_test(get_wkdir()+string(format=fmt, start,/print) +'.sdf')
-    IF(success EQ 1) THEN BEGIN
-      n_zeros=i
-      BREAK
-    ENDIF
-  END
+    ;print, get_wkdir()+string(format=fmt, start,/print) +'.sdf'
+;    success=file_test(get_wkdir()+'/'+string(format=fmt, start,/print) +'.sdf')
+;    IF(success EQ 1) THEN BEGIN
+;      n_zeros=i
+;      BREAK
+;    ENDIF
+;  END
   ;work out number of zeros in data files by testing for file numbered start
 
-  if(n_zeros EQ -1) THEN BEGIN
-    print, 'Cannot set file name length'
-    return
-  endif
+;  if(n_zeros EQ -1) THEN BEGIN
+;    print, 'Cannot set file name length'
+;    return
+;  endif
   ;Fail if no first file found
-ENDIF
+;ENDIF
 
 len=(stp-start)/skip +1
-q=getdata(start, n_zeros=n_zeros)
+;q=getdata(start, n_zeros=n_zeros)
+q=getdata(start)
 ;get first data file for sizes and tags
+;help, q
+;IF(ARG_PRESENT(res)) THEN BEGIN
+;We could do this only if requested but it's quick. So lets print it anyway eh?
+  IF(~TOTAL(STRCMP(TAG_NAMES(q), 'GRID'))) THEN BEGIN
+    PRINT, "No grid in start file"
+    RETURN
+    ;No grid, so no fields either...
+  ENDIF
+  tags = TAG_NAMES(q.grid)
+  ;n_dims=FIX(TOTAL(strcmp(tags, 'Z')+strcmp(tags, 'X')+strcmp(tags, 'Y')))
+  n_dims = (SIZE(q.grid.labels))[1]
+  ;Don't know which fields we have so use grids to get dimension
+  res=fltarr(n_dims+1)
+  FOR i=0, n_dims-1 DO BEGIN
+    res[i] = abs(((q.grid.(i))[0] - (q.grid.(i))[1]))
+  END
+  q_tmp = getdata(stp, /grid)
+  IF(NOT q_tmp.time) then return
+  res[n_dims] = abs((q.time - q_tmp.time)/(start-stp))
+  PRINT, res
+
+;ENDIF
 
 strs = ['EX', 'EY', 'EZ', 'BX', 'BY', 'BZ']
 get_vars = 0
@@ -99,7 +124,7 @@ FOR i=start, stp, skip DO BEGIN
 
   j = (i-start)/skip
 
-  q=getdata(i, n_zeros=n_zeros, _extra=extr)
+  q=getdata(i, _extra=extr)
   ;read only requested fields
 
   IF((get_vars AND 1) EQ 1) THEN ex[len_offset*j:len_offset*(j+1)-1]=q.ex[0:len_offset-1]
@@ -120,6 +145,6 @@ IF(N_ELEMENTS(old_dir) GT 0) THEN set_wkdir, old_dir
 CATCH, Err
 
 IF(Err NE 0) THEN print, 'Oopsie!'
-
+RETURN 
 END
 

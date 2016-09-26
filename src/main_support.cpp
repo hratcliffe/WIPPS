@@ -321,7 +321,7 @@ int whereb(my_type * ax_ptr, int len, my_type target,int &cut, int sign){
 void get_deck_constants(std::string file_prefix){
 /** \brief Setup run specific constants
 *
-*Reads deck.status and parses values for user defined constants etc. It will rely on using the specific deck, because it has to look for names. Any changes to deck may need updating here. Tag names are set as const strings in support.h
+*Reads deck.status and parses values for user defined constants etc. It will rely on using the specific deck, because it has to look for names. Any changes to deck may need updating here. Tag names are set as const strings in support.h. IMPORTANT: If we find additional density tags we fold those into om_pe. To prevent this, either remove from deck.status, or prefix their printed names with something so they do not match the strings in support.h
 */
 
 
@@ -365,6 +365,7 @@ void get_deck_constants(std::string file_prefix){
   
   my_const.omega_ce = 0;
   my_const.omega_pe = 0;
+  float tmp_rat=0.0, tmp_rath=0.0;
   
   for(size_t i=0; i< lines.size(); i++){
 
@@ -374,15 +375,15 @@ void get_deck_constants(std::string file_prefix){
   
     if(name == OMEGA_CE) my_const.omega_ce = val_f;
     else if(name == OMEGA_PE) my_const.omega_pe = val_f;
-    //else if(name == DENS_RAT) my_const.dens_rat = val_f;
-    //else if(name == PPC) my_const.ppc = val_f;
-    
+    else if(name == DENS_RAT) tmp_rat = val_f;
+    else if(name == DENS_RATH) tmp_rath = val_f;
   }
 
-//my_const.omega_ce = 17588.1111;
-
-//my_const.omega_pe =2.0*35176.401757;
-
+  if(tmp_rat != 0.0 || tmp_rath !=0.0){
+    my_print("Modifying density to " + mk_str(1.0+tmp_rat+tmp_rath, true));
+    my_const.omega_pe *= std::sqrt(1.0+tmp_rat+tmp_rath);
+    
+  }
   my_const.omega_ci = my_const.omega_ce * me/mp;
   //assumes same charge magnitude, I.e. H plasma
 

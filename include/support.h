@@ -29,6 +29,7 @@
 #define other_type double/**< The other of double and float*/
 #define my_sdf_type SDF_DATATYPE_REAL4 /**< SDF type matching \ref my_type*/
 #define MPI_MYTYPE MPI_FLOAT /**< MPI type matching \ref my_type*/
+const my_type tiny_my_type=1e-30; /**< Value below which we assume 0*/
 
 #else
 
@@ -38,6 +39,7 @@
 #define other_type float/**< The other of double and float*/
 #define my_sdf_type SDF_DATATYPE_REAL8 /**< SDF type matching \ref my_type*/
 #define MPI_MYTYPE MPI_DOUBLE /**< MPI type matching \ref my_type*/
+const my_type tiny_my_type=1d-60; /**< Value below which we assume 0*/
 
 #endif
 
@@ -88,6 +90,7 @@ const int FUNCTION_ISO = 3; /**< Code to id spectral angular distribution as iso
 const std::string OMEGA_CE = "wCe";/**< String specifying  omega_ce in deck.status*/
 const std::string OMEGA_PE = "wpe";/**< String specifying  omega_pe in deck.status*/
 const std::string DENS_RAT = "dens_rat";/**< String specifying  density ratio in deck.status*/
+const std::string DENS_RATH = "dens_rath";/**< String specifying  density ratio in deck.status*/
 const std::string DENS = "dens";/**< String specifying  density in deck.status*/
 const std::string PPC = "ppc";/**< String specifying ppc in deck.status*/
 const std::string VPAR = "vtherm_par";

@@ -295,8 +295,6 @@ bool spectrum::generate_spectrum(data_array &parent, int om_fuzz, int angle_type
     my_type * om_ax = parent.get_axis(2, len_om);
 
     my_type om_disp;
-    for(size_t i=0; i<len_x; ++i){
-    }
 
     //Now generate angle axis to work with
     calc_type res = (ANG_MAX - ANG_MIN)/get_g_dims(1);

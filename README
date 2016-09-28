@@ -1,0 +1,3 @@
+Work: code to post process data on whistler mode behaviour in the Earth's magnetosphere. Uses the FFTW libraries and SDF file format. 
+<br>
+Languages: C++, IDL (visualisation)

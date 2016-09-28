@@ -63,16 +63,22 @@ int main(int argc, char *argv[]){
     my_reader.read_dims(n_dims, dims, dist_blocks[i].second);
     for(int j=0; j<2; j++) dims_arr[j] = dims[j];
     dat = data_array((size_t)2, dims_arr);
+    if(!dat.is_good()){
+      std::cout<<"Error allocating array for "<<dist_blocks[i].second<<", skipping\n";
+      continue;
+    }
+    
     //The distribs are always 3-d, with absent dims of size 1. Ours should be 2-d initially
     err = my_reader.read_distrib(dat, dist_blocks[i].second, my_args.dump);
     if(err){
-      std::cout<<"Error reading distribs"<<'\n';
+      std::cout<<"Error reading distrib "<<dist_blocks[i].second<<'\n';
+      continue;
     }
     std::fstream file;
     size_t trim_size = 8; //Len of "dist_fn/" leading part
     std::string tag = replace_char((dist_blocks[i].first).substr(trim_size, std::string::npos), '/', '_');
     std::string filename = my_args.file_prefix+tag+'_'+mk_str(my_args.dump) +".dat";
-    std::cout<<"Writing"<<'\n';
+    std::cout<<"Writing "<<dist_blocks[i].second<<'\n';
     file.open(filename.c_str(),std::ios::out|std::ios::binary);
 
     if(my_args.blocks ==-1){

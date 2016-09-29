@@ -31,6 +31,7 @@ struct FFT_spect_args{
   size_t n_ang;
   int wave;
   int ang;
+  bool mask;
 };
 
 FFT_spect_args FFT_spect_process_command_line(int argc, char *argv[]);
@@ -50,13 +51,12 @@ int main(int argc, char *argv[]){
   /* Do this so we have the spectrum wavetype and angle codes*/
 
   controller contr = controller(my_args.file_prefix);
-  //For spectrum we need a plasma to dictate dispersion, so we go via controller
-  
+    //For spectrum we need a plasma to dictate dispersion, so we go via controller
   data_array data_in = data_array(my_args.file_prefix+my_args.file_in, 0);
 
   if(!data_in.is_good()){
-    my_print("Data array allocation failed. Aborting.");
-    return 0;
+      my_print("Data array allocation failed. Aborting.");
+      return 0;
   }
 
   my_type B_ref = 0.0;
@@ -68,14 +68,32 @@ int main(int argc, char *argv[]){
   contr.add_spectrum(k_len, my_args.n_ang, (my_args.ang != FUNCTION_NULL));
 
   contr.set_plasma_B0(B_ref);
-  contr.get_current_spectrum()->generate_spectrum(data_in, my_args.fuzz, my_args.ang);
+
+  data_array * mask;
+
+  if(my_args.mask){
+    mask = new data_array();
+    mask->clone_empty(data_in);
+    contr.get_current_spectrum()->generate_spectrum(data_in, my_args.fuzz, my_args.ang, mask);
+  }else{
+    contr.get_current_spectrum()->generate_spectrum(data_in, my_args.fuzz, my_args.ang);
+  }
   if(my_args.smth >1) contr.get_current_spectrum()->smooth_B(my_args.smth);
   std::fstream outfile;
   outfile.open(my_args.file_prefix+my_args.file_out, std::ios::binary|std::ios::out);
   contr.get_current_spectrum()->write_to_file(outfile);
   outfile.close();
+
+  if(my_args.mask){
+    std::string filename =my_args.file_prefix+my_args.file_out;
+    filename = append_into_string(filename, "_mask");
+    outfile.open(filename, std::ios::binary|std::ios::out);
+    mask->write_to_file(outfile);
+    outfile.close();
+
+  }
   
-  
+  return 0;
 }
 
 FFT_spect_args FFT_spect_process_command_line(int argc, char *argv[]){
@@ -86,6 +104,7 @@ FFT_spect_args FFT_spect_process_command_line(int argc, char *argv[]){
   values.file_out = "";
   values.fuzz = 10;
   values.smth = 0;
+  values.mask = false;
   values.n_ang = DEFAULT_N_ANG;
   values.wave = WAVE_WHISTLER;
   values.ang = FUNCTION_DELTA;
@@ -133,6 +152,9 @@ FFT_spect_args FFT_spect_process_command_line(int argc, char *argv[]){
       values.ang = FUNCTION_NULL;
       extr = true;
       //This _overrides_ -ang
+    }
+    else if(strcmp(argv[i], "-mask")==0){
+      values.mask = true;
     }
     else if(strcmp(argv[i], "-smooth")==0 && i < argc-1){
       values.smth = atoi(argv[i+1]);

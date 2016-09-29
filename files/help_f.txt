@@ -10,6 +10,8 @@ Command line options:
 -extr Extract angles from Data (N>1) only. Flatten data to 2 spatial dims and extract angular dependence. Overrides -ang
 -smooth <int> Smooth the output B spectrum using this boxcar width
 
+-mask Also output a mask, filename has _mask inserted before extension
+
 Sample usage:
 make utils TYPE=float
 ./FFT_to_spectrum -f ./Run1/ -in FFT_dat -out spect_dat -wave w

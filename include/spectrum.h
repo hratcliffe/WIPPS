@@ -39,6 +39,11 @@ class spectrum{
   my_type* normg;/**< Norms of g_w(x) for each w*/
   bool normaliseB();/**< Fills normB*/
   bool normaliseg(my_type omega);/**< Fills normg for omega*/
+  void make_angle_axis();
+  bool make_angle_distrib();
+  int where_omega(my_type value);
+  std::vector<int> all_where(my_type * ax_ptr, int len, my_type target, std::function<bool(my_type,my_type)> func = std::greater<my_type>());
+
   my_type max_power;/**<Value of maximum in spectral power*/
   bool angle_is_function;/**< Says we impose g(x) rather than have one g for each w*/
   int function_type;/**< Type code for angular function. See support.h */
@@ -60,16 +65,13 @@ public:
   void set_ids(float time1, float time2, int space1, int space2, int wave_id, char block_id[10], int function_type=FUNCTION_DELTA);
   void init();
   void smooth_B(int n_pts);
-  bool generate_spectrum(data_array& parent, int om_fuzz=10, int angle_type=FUNCTION_DELTA);
+  bool generate_spectrum(data_array& parent, int om_fuzz=10, int angle_type=FUNCTION_DELTA, data_array * mask=nullptr);
   bool truncate_om(my_type om_min, my_type om_max);
   bool truncate_x(my_type x_min, my_type x_max);
 
-  my_type get_omega(my_type k, int wave_type, bool deriv=0);
-  my_type get_k(my_type omega, int wave_type, bool deriv =0);
+  my_type get_omega(my_type k, int wave_type, bool deriv=0,my_type theta=0.0);
+  my_type get_k(my_type omega, int wave_type, bool deriv =0,my_type theta=0.0);
 
-  bool make_angle_distrib();
-  int where_omega(my_type value);
-  std::vector<int> all_where(my_type * ax_ptr, int len, my_type target, std::function<bool(my_type,my_type)> func = std::greater<my_type>());
   
   bool write_to_file(std::fstream &file);
   bool read_from_file(std::fstream &file);

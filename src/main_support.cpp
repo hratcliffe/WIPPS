@@ -593,12 +593,15 @@ template<typename T> void inplace_boxcar_smooth(T * start, int len, int width, b
   if(width > len) my_print("Really? How am I meant to smooth that?", mpi_info.rank);
   calc_type result = 0.0;
   int edge = width/2;
-  for(int i=0; i<width; ++i) result += start[i];
+  T * hold;
+  hold = (T*) malloc(len*sizeof(T));
+
+  for(int i=0; i<2*edge+1; ++i) result += start[i];
   for(int i=edge+1; i<len-edge; ++i){
     result -= start[i-edge-1];
     result += start[i+edge];
     //remove behind and add in front. Faster for width>2
-    start[i] = result / (calc_type) width;
+    hold[i] = result / (calc_type) width;
   }
 
   //Handle ends
@@ -626,7 +629,9 @@ template<typename T> void inplace_boxcar_smooth(T * start, int len, int width, b
     
   
   }
-
+  //Copy back into place
+  std::copy(hold, hold+len, start);
+  free(hold);
 
 }
 template void inplace_boxcar_smooth(calc_type *, int, int, bool);

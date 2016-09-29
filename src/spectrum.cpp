@@ -295,8 +295,6 @@ bool spectrum::generate_spectrum(data_array &parent, int om_fuzz, int angle_type
     my_type * kx_ax = parent.get_axis(0, len_x);
     my_type * ky_ax = parent.get_axis(1, len_y);
     my_type * om_ax = parent.get_axis(2, len_om);
-    my_type dky2 = std::abs(ky_ax[1]-ky_ax[0])/2;
-    my_type dkx2 = std::abs(kx_ax[1]-kx_ax[0])/2;
     
     bool one_sided = (std::abs(om_ax[0]) < std::abs(om_ax[len_om/2]));
     my_type om_disp;
@@ -308,33 +306,34 @@ bool spectrum::generate_spectrum(data_array &parent, int om_fuzz, int angle_type
     //Now we do a double loop
     
     for(size_t i = 0; i< len_x; i++){
-    //use the k_x axis to generate an omega one. Thus if fuzz=0 we match 1-1
-      om_disp = get_omega(parent.get_axis_element(0,i), WAVE_WHISTLER);
-      set_om_axis_element(i, om_disp);
-
-      //We assume we have +ve and -ve k but ignore possible negative omega
-      //Omega in parent data matching current value
-      om_ind = where(om_ax, len_om, om_disp);
-
       //Signs so we always integrate from k_low to k_high, if one sided is always 1
       if(!one_sided) i_sgn = (i<len_x/2 ? -1: 1);
       if(i_sgn > 0) decrement = 1.0 - GEN_PRECISION;
+
+      //use the k_x axis to generate an omega one. Thus if fuzz=0 we match 1-1
+      om_disp = get_omega(parent.get_axis_element(0,i), WAVE_WHISTLER);
+      set_om_axis_element(i, om_disp*i_sgn);
+
+      //We can assume either +ve and -ve k (include i_sgn in kx_high, or omega (include in om_low and high)
+      //Omega in parent data matching current value
+      om_ind = where(om_ax, len_om, om_disp);
       
       tmp_sum = 0.0;
       for(size_t j = 0; j< get_g_dims(1); j++){
         tantheta = get_ang_axis_element(j);
         theta = atan(tantheta);
-        //Fuzz omega
-        om_low = where(om_ax, len_om, om_disp*(1.0-tolerance));
-        om_high = where(om_ax, len_om, om_disp*(1.0+tolerance));
+//----------Fuzz omega--------------------
+        om_low = where(om_ax, len_om, om_disp*(1.0-i_sgn*tolerance)*i_sgn);
+        om_high = where(om_ax, len_om, om_disp*(1.0+i_sgn*tolerance)*i_sgn);
+//        om_low = where(om_ax, len_om, om_disp*(1.0-tolerance));
+//        om_high = where(om_ax, len_om, om_disp*(1.0+tolerance));
         if(om_low < 0) om_low = 0;
         if( om_disp*(1.0+tolerance) < *om_ax) om_high = 0;
         else if(om_high < 0) om_high = len_om - 1;
 
 
-        //No fuzz in k_x
-/*  V2   */
-        k = get_k(om_disp, WAVE_WHISTLER, 0, theta)*i_sgn;//*decrement;
+//-------No fuzz in k_x -----------------------
+        k = get_k(om_disp, WAVE_WHISTLER, 0, theta);//*i_sgn;//*decrement;
         
         kx_high = where(kx_ax, len_x, k*cos(theta));
         kx_low = kx_high;
@@ -343,6 +342,7 @@ bool spectrum::generate_spectrum(data_array &parent, int om_fuzz, int angle_type
         else if(kx_high <0) kx_high = len_x-1;
         if(kx_low < 0) kx_low = 0;
         
+//-------- k_y is fuzzy----------
         k = get_k(om_disp*(1.0+tolerance), WAVE_WHISTLER, 0, theta)*i_sgn;//*decrement;
         ky_high = where(ky_ax, len_y, k*sin(theta));
         if(std::abs(k)<GEN_PRECISION || std::abs(k*sin(theta))> *(ky_ax+len_y -1)) ky_high = -1;
@@ -353,98 +353,24 @@ bool spectrum::generate_spectrum(data_array &parent, int om_fuzz, int angle_type
         ky_low = where(ky_ax, len_y, k*sin(theta));
         if(ky_low < 0) ky_low = 0;
         
-//if(ky_low <= 41 && ky_high >= 41 && kx_high !=-1) std::cout<<i<<" "<<*(kx_ax+kx_high)<<" "<<om_low<<" "<<om_high<<" "<<*(ky_ax+ky_low)<<" "<<*(ky_ax+ky_high)<<" "<<k*sin(theta)<<" "<<kx_high<<'\n';
-if(ky_low <= 41 && ky_high >= 41 && kx_high !=-1 &&i!=82) std::cout<<i<<" "<<j<<" from "<<kx_high<<" "<<ky_low<<" - "<<ky_high<<" "<<om_low<<" - "<<om_high<<'\n';
-//std::abs(k*sin(theta))< dky2
-       // if(kx_high != -1 && ky_high != -1 && i>145 && i< 155)
-       // std::cout<<i<<" "<<(ky_high)<<" "<<(kx_high)<<" "<<j<<'\n';
-        //std::cout<<i<<" "<<*(ky_ax+ky_high)<<" "<<*(kx_ax+kx_high)<<" "<<j<<'\n';
-
-//std::cout<<i<<" "<<k*sin(theta)<<" "<<*(ky_ax+ky_high)<<" "<<k*cos(theta)<<" "<<*(kx_ax+kx_high)<<" "<<j<<'\n';
-
-//std::cout<<theta<<" "<<k<<" "<<std::sqrt((*(kx_ax+kx_high))*(*(kx_ax+kx_high))+(*(ky_ax+ky_high))*(*(ky_ax+ky_high)))<<"\n";
-        //std::cout<<k*sin(theta)<<" "<<*(ky_ax+ky_high)<<k*cos(theta)<<" "<<*(kx_ax+kx_high)<<'\n';
-        //std::cout<<theta<<" "<<k<<" "<<std::sqrt((*(kx_ax+kx_high))*(*(kx_ax+kx_high))+(*(ky_ax+ky_high))*(*(ky_ax+ky_high)))<<"\n";
-
-// ky_high =41;
-// kx_low = kx_high;
- //ky_low = ky_high;
- 
-  //       std::cout<<kx_low<<" "<<ky_low<<'\n';
-
-        //Put the fuzz in k_y so that we're fuzzing in omega only at the extrema
-        /** \todo Improve this One or two sided?*/
-        //As for kx we correct range spill
-
- /*       k = get_k(om_disp*(1.0-tolerance), WAVE_WHISTLER);
-      k_y = k*sin(theta);
-        ky_low = where(ky_ax, len_y, k_y);
-        k = get_k(om_disp*(1.0+tolerance), WAVE_WHISTLER);
-        k_y = k*sin(theta);
-        ky_high = where(ky_ax, len_y, k_y);
-        if(ky_low < 0) ky_low = 0;
-        if(k_y < *ky_ax) ky_high =0;
-        else if(ky_high < 0) ky_high = len_y-1;*/
-        
-
-        //Put the fuzz in k_x V1------------------------------
-/*        k = get_k(get_om_axis_element(i)*(1.0-i_sgn*tolerance), WAVE_WHISTLER)*decrement*i_sgn;
-        //For theta = 0 we want to ensure we get back what we started with, and our where uses GE so we decrement very, very slightly
-        kx_low = where(kx_ax, len_x, k);
-        k = get_k(get_om_axis_element(i)*(1.0+i_sgn*tolerance), WAVE_WHISTLER)*decrement*i_sgn;
-        kx_high = where(kx_ax, len_x, k);
-        //Make sure we're in range: we allow to spill off but should do nothing if k_low is out upwards or k_high out downwards
-        if(k < *(kx_ax)) kx_high = -1;
-        else if(kx_high <0) kx_high = len_x-1;
-        if(kx_low < 0) kx_low = 0;
-
-        k_y = *(kx_ax+kx_low)*tantheta;
-        ky_low = where(ky_ax, len_y, k_y);
-        if(k_y > *(ky_ax+len_y-1)) ky_low = len_y;
-        k_y = *(kx_ax+kx_high)*tantheta;
-        ky_high = where(ky_ax, len_y, k_y);
-        
-        if(k_y < *(ky_ax)) ky_high = -1;
-        else if(ky_high < 0) ky_high = len_y -1;
-        
-        if(ky_low < 0) ky_low = 0;*/
-//        if(ky_high <0) ky_high = len_y-1;*/
-
-//----------------V2---------
+//-------Total on small range and create mask if requested-----
         tmp = 0.0;
         if(kx_high != -1 && ky_high != -1){
-        for(int ii=om_low; ii<=om_high; ii++){
-          for(int jj=ky_low; jj<=ky_high; jj++){
-            tmp += parent.get_element(kx_high, jj, ii);
+          for(int ii=om_low; ii<=om_high; ii++){
+            for(int jj=ky_low; jj<=ky_high; jj++){
+              tmp += parent.get_element(kx_high, jj, ii);
+            }
           }
-        }
         }
         if(mask){
           if(kx_high != -1 && ky_high != -1){
-          for(int ii=om_low; ii<=om_high; ii++){
-            for(int jj=ky_low; jj<=ky_high; jj++){
-              mask->set_element(kx_high, jj, ii, mask->get_element(kx_high, jj, ii)+1);
+            for(int ii=om_low; ii<=om_high; ii++){
+              for(int jj=ky_low; jj<=ky_high; jj++){
+                mask->set_element(kx_high, jj, ii, mask->get_element(kx_high, jj, ii)+1);
+              }
             }
-          }
           }
        }
-//----------V1----------------
- /*       tmp = 0.0;
- //       if(kx_high != -1 && ky_high != -1){
-        for(int ii=kx_low; ii<=kx_high; ii++){
-          for(int jj=ky_low; jj<=ky_high; jj++){
-            tmp += parent.get_element(ii, jj, om_ind);
-          }
-        }
- //       }
-        if(mask){
-          for(int ii=kx_low; ii<=kx_high; ii++){
-            for(int jj=ky_low; jj<=ky_high; jj++){
-              mask->set_element(ii, jj, om_ind, mask->get_element(ii, jj, om_ind)+1);
-            }
-          }
-          }
-       }*/
 //------------------
         //Tmp is now the convolved B(omega)g(omega, theta). We dump it into g as is for later norming and add to the sum which will end up as B.
         /** \todo Is this the correct norm?*/

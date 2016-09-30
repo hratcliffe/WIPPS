@@ -10,6 +10,7 @@ cutout
 FFT_to_spectrum
 compress_distributions
 test_reading_code.cpp
+calculate_growth
 Code.xcworkspace
 *.txt
 Derivations.*
@@ -25,3 +26,5 @@ files/2dtest/
 callgrind*
 *.tgz
 *.png
+*.dump
+*.old

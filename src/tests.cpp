@@ -980,24 +980,29 @@ int test_entity_basic_maths::run(){
   //test it's correct to within some finite precision, defined in header
   if(err == TEST_PASSED) test_bed->report_info("Integrator OK", 1);
 
-  memcpy((void*)data_square, (void*)data_tmp, sizeof(calc_type)*size);
+  memcpy((void*)data_tmp, (void*)data_square, sizeof(calc_type)*size);
 
   inplace_boxcar_smooth(data_tmp, size, 2, 1);
   calc_type total=0;
-  for(int i=0;i<size; ++i){
-    total += data_tmp[i];
+  for(int i=1;i<size-1; ++i){
+    total += std::abs(data_tmp[i]);
+  }
+  inplace_boxcar_smooth(data_tmp+1, size-2, 2, 1);
+  for(int i=2;i<size-3; ++i){
+    total += std::abs(data_tmp[i]);
   }
   if(std::abs(total) > PRECISION) err |=TEST_WRONG_RESULT;
-  //Smooth of 2 on square wave should give 0
+  //Smooth of 2 on square wave should give 0. Do with and without offset as extra check. Omit ends in total
   
-  memcpy((void*)data_positive, (void*)data_tmp, sizeof(calc_type)*size);
+  memcpy((void*)data_tmp, (void*)data_positive, sizeof(calc_type)*size);
   
-  inplace_boxcar_smooth(data_tmp, size, 4, 0);
+  inplace_boxcar_smooth(data_tmp, size, 3, 0);
   total=0;
   for(int i=4;i<size-4; ++i){
+    //std::cout<<data_positive[i]<<" "<<data_tmp[i]<<'\n';
     total += std::abs(data_positive[i] - data_tmp[i]);
   }
-  //Smooth on straight line should do nothing except at ends...
+  //Smooth on straight line with odd width should do nothing except at ends...
   if(std::abs(total) > PRECISION) err |=TEST_WRONG_RESULT;
   if(err == TEST_PASSED) test_bed->report_info("Boxcar smooth OK", 1);
 

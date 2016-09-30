@@ -15,3 +15,16 @@ end
 return, mask
 end
 
+function apply_mask, array, mask
+;Applies a mask and sets all 0 elements to a tiny float so that we don't muck up contour too much
+
+;Check sizes match
+sz=size(array)
+IF( sz[0] NE (size(mask))[0]) THEN return, !NULL
+IF( total(sz[1:sz[0]] EQ (size(mask))[1:sz[0]]) NE sz[0]) THEN return, !NULL
+
+ret = array
+ret[where(mask EQ 0)] = 1e-30
+return, ret
+end
+

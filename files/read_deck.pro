@@ -42,6 +42,14 @@ WHILE (~EOF(filenum) AND ~(strcmp(tag, str, sz))) DO BEGIN
 ENDWHILE
 const = create_struct(const, "file", filename)
 close, filenum
+
+;Add the wpe amended by density
+tags=TAG_NAMES(const)
+rat = 1.0
+IF( total(tags EQ 'DENS_RAT') EQ 1) THEN rat = rat + const.dens_rat
+IF( total(tags EQ 'DENS_RATH') EQ 1) THEN rat = rat + const.dens_rath
+const = create_struct(const, "wpe_fix", const.wpe*sqrt(rat))
+
 RETURN, const
 
 END

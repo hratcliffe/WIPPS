@@ -330,6 +330,7 @@ int reader::read_data(data_array &my_data_in, int time_range[3], int space_range
   }
 
   if(source_sizes) free(source_sizes);
+  if(flat_data) free(flat_data);
 
   //Set 0th time
   size_t n_dims = my_data_in.get_dims();

@@ -184,6 +184,7 @@ void data_array::clone_empty(const data_array &src){
 *
 * Does not copy data or axes
 */
+  if(axes) free(axes);
   construct();
   my_array::clone_empty(src);
   size_t els= this->get_total_axis_elements();
@@ -876,6 +877,7 @@ data_array data_array::total(size_t dim, size_t min_ind, size_t max_ind){
     std::copy(this->get_axis(i, len2),this->get_axis(i, len2)+len, ax_new);
   }
   new_array.copy_ids(*this);
+  free(new_dims);
   return new_array;
 }
 

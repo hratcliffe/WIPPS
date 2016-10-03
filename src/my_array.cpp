@@ -184,7 +184,11 @@ void my_array::clone_empty(const my_array &src){
 
   if(!src.dims || src.n_dims==0) return;
   //Stop if src has no dims
-  
+
+  //Delete any previous allocation
+  if(data) free(data);
+  if(dims) free(dims);
+
   alloc_all(src.n_dims, src.dims);
   
 }

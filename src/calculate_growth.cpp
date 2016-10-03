@@ -123,9 +123,9 @@ int main(int argc, char *argv[]){
 
   non_thermal * my_elec = new non_thermal(cmd_line_args.file_prefix);
 
-  const size_t n_momenta = 10000;
+  const size_t n_momenta = 1000;
   calc_type * p_axis;
-  calc_type min_v = 0.0, max_v = 0.95;
+  calc_type min_v = 0.0, max_v = 0.45;
   p_axis = make_momentum_axis(n_momenta, max_v);
   calc_type growth_rate = 0.0;
 

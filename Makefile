@@ -19,7 +19,7 @@ LIB := $(LIBSDF)
 #========Edit these for optimisation, debug options etc===============
 CFLAGS = -c $(INCLUDE) -DVERSION=\"$(GIT_VERSION)\" -std=c++0x -pedantic
 CFLAGS += -g
-OPTIMISE = -O0
+OPTIMISE = -O3
 #Optimiser level for non-debug builds (debug includes test)
 
 #NO_FFT = 1

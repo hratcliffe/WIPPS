@@ -81,6 +81,9 @@ void share_consts(){
   MPI_Type_commit(&deckConstType);
 
   MPI_Bcast(&my_const, 1, deckConstType, 0, MPI_COMM_WORLD);
+  
+  
+  MPI_Type_free(&deckConstType);
 
 }
 

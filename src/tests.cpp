@@ -238,13 +238,14 @@ void tests::cleanup_tests(){
 
   }
   delete outfile;
-/*//  test_obj * obj;
+//  test_obj * obj;
   for(current_test_id=0; current_test_id< (int)test_list.size(); current_test_id++){
   //  obj = test_list[current_test_id];
    // test_list.erase(current_test_id);
-    //delete test_list[current_test_id];
+    delete test_list[current_test_id];
+    test_list[current_test_id] = nullptr;
   
-  }*/
+  }
 
   
 }
@@ -1084,7 +1085,12 @@ int test_entity_basic_maths::run(){
       if(*(out + (k*dims[0] + i)) != tot_on_dim1+ dims[1]*i) errs++;
     }
   }
-  if(errs > 0) err |= TEST_WRONG_RESULT;}
+  if(errs > 0) err |= TEST_WRONG_RESULT;
+
+  free(in);
+  free(out);
+  
+}
 
 {  size_t dims[2];
   size_t n_dims = 2;
@@ -1108,7 +1114,11 @@ int test_entity_basic_maths::run(){
       if(*(out + i) != tot_on_dim1+ dims[1]*i) errs++;
   }
   
-  if(errs > 0) err |= TEST_WRONG_RESULT;}
+  if(errs > 0) err |= TEST_WRONG_RESULT;
+  free(in);
+  free(out);
+
+}
   
   if(err == TEST_PASSED) test_bed->report_info("Flattener OK", 1);
 

@@ -123,9 +123,9 @@ int main(int argc, char *argv[]){
 
   non_thermal * my_elec = new non_thermal(cmd_line_args.file_prefix);
 
-  const size_t n_momenta = 1000;
+  const size_t n_momenta = 10000;
   calc_type * p_axis;
-  calc_type min_v = 0.0, max_v = 0.45;
+  calc_type min_v = 0.0, max_v = 0.95;
   p_axis = make_momentum_axis(n_momenta, max_v);
   calc_type growth_rate = 0.0;
 
@@ -186,7 +186,7 @@ calc_type get_growth_rate(plasma * my_plas, non_thermal * my_elec, int n_momenta
   
   //Calculate k using Eq 9 of Xiao k_paper = std::sqrt( (std::pow(omega_in, 2) - std::pow(om_pe, 2)*omega_in/om_diff)/std::pow(v0, 2));
   
-  calc_type f_tmp, a_par, a_perp, v_tmp, norm_f, S_tot=0.0, S_full_tot=0.0, dp, A_crit, A_rel, eta_rel;
+  calc_type S_tot=0.0, S_full_tot=0.0, dp, A_crit, A_rel, eta_rel;
   calc_type  *S, *S_full, * dp_ax;
   calc_type gamma, p_res, Delta_res;
 
@@ -197,14 +197,7 @@ calc_type get_growth_rate(plasma * my_plas, non_thermal * my_elec, int n_momenta
   
   //Get RMS momenta from velocities...
   // a_x = RMS p_x (Note factor of 2 in perp, not in par...)
-  v_tmp = my_elec->v_par;
-  a_par = std::sqrt(2.0)*v_tmp / std::sqrt(1.0 - (v_tmp/v0)*(v_tmp/v0));
 
-  v_tmp = my_elec->v_perp;
-  a_perp = v_tmp / std::sqrt(1.0 - (v_tmp/v0)*(v_tmp/v0));
-
-  norm_f = 1.0/(a_perp*a_perp*a_par * pi * std::sqrt(pi));
-  
   for(int j=0; j< n_momenta; ++j){
   
     gamma = - 1.0 + ck_om * std::sqrt( (ck_om*ck_om -1.0 )*(1.0 + p_axis[j]*p_axis[j]/v0/v0)*(omega_in*omega_in/om_ce/om_ce) + 1.0 );
@@ -213,19 +206,16 @@ calc_type get_growth_rate(plasma * my_plas, non_thermal * my_elec, int n_momenta
 
     p_res = (gamma * omega_in - om_ce)/k;
     //Resonant momentum
-    
     Delta_res = 1.0 - (omega_in*p_res / (v0*v0*k*gamma));
     //Xiao 15, no meaning given. Always +ve
     if(Delta_res < GEN_PRECISION) std::cout<<"ERROR!!"<<std::endl;
     
     //For f Maxwellian as Xiao 28: d f/ dp_x = 2 p_x a_x
     //Now p_par = p_res and p_perp is p_axis[j]
-    f_tmp = norm_f * std::exp(- (p_res*p_res/(a_par*a_par)) - (p_axis[j]*p_axis[j]/(a_perp*a_perp)));
+    
+    S[j] = std::pow(p_axis[j], 2) * my_elec->d_f_p(p_res, p_axis[j], 0) / Delta_res;
 
-    S[j] = -2.0 * std::pow(p_axis[j], 3) * f_tmp / Delta_res;
-
-    S_full[j] = 2.0 * std::pow(p_axis[j], 3) * f_tmp / Delta_res *(omega_in - om_ce/gamma) * (1.0 - a_perp*a_perp/a_par/a_par);
-    //Both of these have removed factor of a_perp**2
+    S_full[j] = - std::pow(p_axis[j], 2)/ Delta_res*(omega_in - om_ce/gamma) * (p_res*my_elec->d_f_p(p_res, p_axis[j], 0) - p_axis[j]*my_elec->d_f_p(p_res, p_axis[j], 1))/p_res;
 
   }
 
@@ -241,12 +231,10 @@ calc_type get_growth_rate(plasma * my_plas, non_thermal * my_elec, int n_momenta
     A_crit = - omega_in /om_diff;
     A_rel = S_full_tot/S_tot/om_diff;
     
-    eta_rel = pi * my_elec->fraction* om_diff/k * S_tot / a_perp/a_perp;
+    eta_rel = pi * om_diff/k * S_tot;
     
     ret = pi*om_pe*om_pe/(2.0*omega_in + om_pe*om_pe*om_ce/(std::pow(om_diff, 2))) * eta_rel * (A_rel - A_crit);
   
-    //ret = eta_rel;
-
   }
 
   free(S);
@@ -258,7 +246,7 @@ calc_type get_growth_rate(plasma * my_plas, non_thermal * my_elec, int n_momenta
 
 
 calc_type * make_momentum_axis(int n_mom, calc_type v_max){
-
+/** \todo This is v????*/
   //Max velocity to consider norm'd to c
   calc_type dp = v_max * v0/ std::sqrt(1.0- v_max*v_max) / (calc_type) (n_mom - 1);
   //Momentum step size, including gamma

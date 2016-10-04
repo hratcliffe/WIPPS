@@ -18,6 +18,14 @@ private:
   std::map<std::string, calc_type> parameters;
   calc_type norm;
   size_t ncomps;
+  calc_type total_dens;
+  calc_type dp;
+  calc_type ref_dens;/**<Reference density (background)*/
+  calc_type ref_B;/**<Reference B field*/
+  calc_type fraction;/**<Non-thermal fraction*/
+  calc_type v_par;/**<Parallel velocity*/
+  calc_type v_perp;/**Perpendicular velocity \todo Clean up redundant params*/
+
 public:
 
   non_thermal(std::string file_prefix);
@@ -25,13 +33,9 @@ public:
   void write(std::ofstream &outfile);
   void dump(std::fstream &outfile);
   calc_type f_p(calc_type p_par, calc_type p_perp);
+  calc_type d_f_p(calc_type p_par, calc_type p_perp, bool parallel);
   size_t get_n_pars(){return parameters.size();}
-  calc_type ref_dens;/**<Reference density (background)*/
-  calc_type ref_B;/**<Reference B field*/
-  calc_type fraction;/**<Non-thermal fraction*/
-  calc_type v_par;/**<Parallel velocity*/
-  calc_type v_perp;/**Perpendicular velocity*/
-  
+  void set_dp(calc_type dp){this->dp = dp;}/**<Set the dp used to get numerical derivative*/
 };
 
 calc_type bikappa(calc_type p, calc_type p2, calc_type kappa, calc_type v_k, calc_type v_k2, calc_type A);

@@ -28,7 +28,11 @@ non_thermal::non_thermal(std::string file_prefix){
   v_perp = 0.0;
   norm = 1.0;
   ncomps = 1;
+  total_dens = 0;
   //Defaults which are deliberately meaningless....
+  
+  dp = 1.0;
+  //Sensible dp for electrons
   
   bool err = configure_from_file(file_prefix);
   if(err) my_print("WARNING: Error getting electron data from .status file", mpi_info.rank);
@@ -96,7 +100,7 @@ bool non_thermal::configure_from_file(std::string file_prefix){
   etc where the RHS's are the string names in the deck and the function is either maxwell, kappa etc. ALL LOWER CASE. this then defines a plasma from deck constants*/
   /** \todo And in plasma, fix lower casing*/
   
-  std::cout<<file_prefix+"nonthermal.conf"<<'\n';
+  my_print("Reading "+file_prefix+"nonthermal.conf");
   infile.open(file_prefix+"nonthermal.conf");
   if(!infile){
     my_print("Using generic bimaxwellian electrons");
@@ -119,12 +123,20 @@ bool non_thermal::configure_from_file(std::string file_prefix){
     while(getline(infile, line)){
       if(line.find(':') != std::string::npos){
         //Create a plasma component function bound to these parameters and add to vector
-        
+        calc_type norm;
         if(function == "max"){
           //Check we have all params
           for(auto nam : {dens, vpar, vperp}) if(!parameters.count(nam)) my_print("Param "+nam+" not found!!!");
           
-          tmp_fn = std::bind(bimax, std::placeholders::_1, std::placeholders::_2, parameters[vpar], parameters[vperp], parameters[dens]);
+          calc_type a_par = std::sqrt(2.0)*parameters[vpar] / std::sqrt(1.0 - std::pow(parameters[vpar]/v0, 2));
+          
+          calc_type a_perp_sq = std::pow(parameters[vperp], 2)/(1.0 - std::pow(parameters[vperp]/v0, 2));
+
+          norm = 1.0/(pi*std::sqrt(pi)*a_par*a_perp_sq);
+
+          tmp_fn = std::bind(bimax, std::placeholders::_1, std::placeholders::_2, a_par, std::sqrt(a_perp_sq), norm*parameters[dens]);
+          total_dens +=parameters[dens];
+          
           f_p_private.push_back(tmp_fn);
         }
         else if(function =="kappa"){
@@ -169,6 +181,9 @@ bool non_thermal::configure_from_file(std::string file_prefix){
       my_print("Insufficient blocks in config file", mpi_info.rank);
     }
   }
+  this->v_par=parameters[VPAR];
+  this->v_perp=parameters[VPERP];
+  this->fraction =parameters[DENS_RAT];
   return 0;
 
 }
@@ -198,10 +213,18 @@ void non_thermal::dump(std::fstream &outfile){
   
 }
 
+calc_type non_thermal::d_f_p(calc_type p_par, calc_type p_perp, bool parallel){
+/** Simple Numerical derivative*/
+  
+  if(parallel) return (f_p(p_par+dp, p_perp) -f_p(p_par, p_perp))/dp;
+  else return (f_p(p_par, p_perp+dp) -f_p(p_par, p_perp))/dp;
+  
+}
+
 calc_type non_thermal::f_p(calc_type p_par, calc_type p_perp){
 /**\brief Return f(p)
 *
-*Evaluates function at p_perp, p_par and returns result. Calls bound function so we can use multiple functional forms for f, assuming always seperable into f_par, f_perp
+*Evaluates function at p_perp, p_par and returns result. Calls bound function so we can use multiple functional forms for f
 */
 
   calc_type ret = 0;

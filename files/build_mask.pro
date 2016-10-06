@@ -24,7 +24,7 @@ IF( sz[0] NE (size(mask))[0]) THEN return, !NULL
 IF( total(sz[1:sz[0]] EQ (size(mask))[1:sz[0]]) NE sz[0]) THEN return, !NULL
 
 ret = array
-ret[where(mask EQ 0)] = 1e-30
+ret[where(mask EQ 0)] = 1d-60
 return, ret
 end
 

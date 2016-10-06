@@ -158,6 +158,7 @@ int main(int argc, char *argv[]){
   
   }
   strcpy(analytic_data.block_id, "g_an");
+  //for(int j=1; j<n_momenta; j++) std::cout<<my_elec->f_p(p_axis[j], 0)<<", ";
 
   for(int i=0; i<analytic_data.get_dims(0); ++i){
     omega = analytic_data.get_axis_element(0, i);
@@ -210,7 +211,6 @@ calc_type get_growth_rate(plasma * my_plas, non_thermal * my_elec, int n_momenta
     //Xiao 15, no meaning given. Always +ve
     if(Delta_res < GEN_PRECISION) std::cout<<"ERROR!!"<<std::endl;
     
-    //For f Maxwellian as Xiao 28: d f/ dp_x = 2 p_x a_x
     //Now p_par = p_res and p_perp is p_axis[j]
     
     S[j] = std::pow(p_axis[j], 2) * my_elec->d_f_p(p_res, p_axis[j], 0) / Delta_res;
@@ -311,6 +311,7 @@ g_args g_command_line(int argc, char * argv[]){
     else if(strcmp(argv[i], "-h")==0){
       strcpy(argv[i], HANDLED_ARG);
       print_help('w');
+      exit(0);
     }
   }
   return extra_cmd_line;

@@ -335,8 +335,7 @@ void get_deck_constants(std::string file_prefix){
 
   std::ifstream infile;
   infile.open(file_prefix+"deck.status");
-  std::string header_row, line;
-  infile>> header_row;
+  std::string line;
   std::vector<std::string> lines;
   bool found=false;
   if(!infile.is_open()){

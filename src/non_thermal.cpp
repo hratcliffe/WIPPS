@@ -1,7 +1,7 @@
 
 
 //  Created by Heather Ratcliffe on 11/02/2016.
-/** Very small class to hold a non-thermal electron distribution we can operate on. Mainly contains routine to parse from deck.status assuming particular input deck format.*/
+/** Small class to hold a non-thermal electron distribution we can operate on. Mainly contains routine to parse from deck.status using nonthermal.conf defined params or a generic assumed deck*/
 
 #include <stdio.h>
 #include <cmath>
@@ -48,8 +48,7 @@ bool non_thermal::configure_from_file(std::string file_prefix){
 
   std::ifstream infile;
   infile.open(file_prefix+"deck.status");
-  std::string header_row, line;
-  infile>> header_row;
+  std::string line;
   std::vector<std::string> lines;
   bool found=false;
   if(!infile.is_open()){

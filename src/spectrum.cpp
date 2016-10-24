@@ -343,13 +343,13 @@ bool spectrum::generate_spectrum(data_array &parent, int om_fuzz, int angle_type
         if(kx_low < 0) kx_low = 0;
         
 //-------- k_y is fuzzy----------
-        k = get_k(om_disp*(1.0+tolerance), WAVE_WHISTLER, 0, theta);//*i_sgn;//*decrement;
+        k = get_k(om_disp*(1.0+i_sgn*tolerance), WAVE_WHISTLER, 0, theta)*i_sgn;//*decrement;
         ky_high = where(ky_ax, len_y, k*sin(theta));
         if(std::abs(k)<GEN_PRECISION || std::abs(k*sin(theta))> *(ky_ax+len_y -1)) ky_high = -1;
         else if(ky_high <0) ky_high = len_y-1;
 
 
-        k = get_k(om_disp*(1.0-tolerance), WAVE_WHISTLER, 0, theta);//*i_sgn;//*decrement;
+        k = get_k(om_disp*(1.0-i_sgn*tolerance), WAVE_WHISTLER, 0, theta)*i_sgn;//*decrement;
         ky_low = where(ky_ax, len_y, k*sin(theta));
         if(ky_low < 0) ky_low = 0;
         

@@ -175,6 +175,19 @@ my_array::my_array(const my_array &src){
 
 }
 
+my_type * my_array::disown_data(){
+/** \brief Disown and return data pointer
+*
+*Surrenders ownership of memory pointed to by data, nullifies dimensions and returns pointer. NB if this pointer is not kept an manually freed, memory will leak
+*/
+  my_type * data_pointer = this->data;
+  this->data = nullptr;
+  this->n_dims = 0;
+  free(this->dims);
+  this->dims = nullptr;
+  return data_pointer;
+}
+
 void my_array::clone_empty(const my_array &src){
 /** \brief Initialise this to same sizes as src
 *

@@ -179,10 +179,21 @@ data_array::data_array(const data_array &src) : my_array(src){
   copy_ids(src);
 }
 
+my_type * data_array::disown_axes(){
+/** \brief Disown and return axes pointer
+*
+*Surrenders ownership of memory pointed to by axes NB if this pointer is not kept an manually freed, memory will leak NB calling disown_data on a data_array will not orphan the axes, but will make them inaccessible using getter/setter functions
+*/
+  my_type * data_pointer = this->axes;
+  this->axes = nullptr;
+  return data_pointer;
+}
+
+
 void data_array::clone_empty(const data_array &src){
 /** \brief Initialise this to match sizes of src
 *
-* Does not copy data or axes
+* Allocates empty memory but does not copy data or axes
 */
   if(axes) free(axes);
   construct();

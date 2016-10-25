@@ -132,6 +132,7 @@ struct deck_constants{
   float omega_ce; /**< Electron cyclotron frequency (reference)*/
   float omega_ci; /**< Ion cyclotron frequency (reference)*/
   int ppc;/**< Particles per cell used */
+  float dens_factor;
   
 };
 

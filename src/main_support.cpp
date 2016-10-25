@@ -384,6 +384,7 @@ void get_deck_constants(std::string file_prefix){
   if(tmp_rat != 0.0 || tmp_rath !=0.0){
     my_print("Modifying density to " + mk_str(1.0+tmp_rat+tmp_rath, true));
     my_const.omega_pe *= std::sqrt(1.0+tmp_rat+tmp_rath);
+    my_const.dens_factor = 1.0+ tmp_rat+tmp_rath;
     
   }
   my_const.omega_ci = my_const.omega_ce * me/mp;

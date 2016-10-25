@@ -65,7 +65,8 @@ const calc_type mp = me*1836.15267; /**< Proton mass in kg */
 const calc_type q0 = 1.602176565e-19; /**< Electron charge in C*/
 const calc_type eps0 =8.85418782e-12; /**< Epsilon_0 permittivity of free space in F/m*/
 
-//kb = 1.3806488d-23   ; J/K
+
+const calc_type kb = 1.3806488e-23; /**< Boltzman constant J/K*/
 //mu0 = 4.0d-7 * !dpi  ; N/A^2
 //epsilon0 = 8.8541878176203899d-12 ; F/m
 //h_planck = 6.62606957d-34 ; J s

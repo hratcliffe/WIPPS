@@ -549,15 +549,13 @@ template<typename T> T integrator(T * start, int len, T * increment){
 *Uses trapezium rule. WARNING this is working with contiguous memory. Not very C++ but faster.
 */
 
-  T value=0.0;
+  T value = 0.0;
   
   for(int i=0; i<len-1; i++){
   
     value += 0.5*(start[i] + start[i+1]) * increment[i];
     
   }
-//  value += start[len-1]*increment[len-1];
-  //top bnd we assume flat
 
  return value;
 

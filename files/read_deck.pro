@@ -1,14 +1,19 @@
-function read_deck, dir=dir, pref=pref
+function read_deck, dir=dir, pref=pref, file=file
 
 ;Read from deck.status into a struct of the available constants
 ;/todo add file exists check
 COMPILE_OPT IDL2
 ;force long ints and proper brackets
 IF(N_ELEMENTS(pref) EQ 0) THEN pref = ""
+IF(N_ELEMENTS(file) GT 0) THEN BEGIN
+  name = file
+ENDIF ELSE BEGIN
+  name = pref +'deck.status'
+ENDELSE
 IF(N_ELEMENTS(dir) EQ 0) THEN BEGIN
-  filename = get_wkdir()+"/"+pref+"deck.status"
+  filename = get_wkdir()+"/"+name
 ENDIF ELSE BEGIN 
-  filename = dir[0]+'/'+pref+'deck.status'
+  filename = dir[0]+'/'+name
 ENDELSE
 
 OPENR, filenum, filename, /GET_LUN

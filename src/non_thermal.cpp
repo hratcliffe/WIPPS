@@ -11,6 +11,7 @@
 #include <boost/math/special_functions/sign.hpp>
 #include "support.h"
 #include "non_thermal.h"
+#include "data_array.h"
 
 extern deck_constants my_const;
 extern const mpi_info_struc mpi_info;
@@ -31,8 +32,8 @@ non_thermal::non_thermal(std::string file_prefix){
   total_dens = 0;
   //Defaults which are deliberately meaningless....
   
-  dp = 1.0;
-  //Sensible dp for electrons
+  dp = 10.0;
+  //Sensible dp for electrons (m/s)
   
   bool err = configure_from_file(file_prefix);
   if(err) my_print("WARNING: Error getting electron data from .status file", mpi_info.rank);
@@ -45,6 +46,7 @@ bool non_thermal::configure_from_file(std::string file_prefix){
 *Reads a [prefix]deck.status file and parses out the neccessary parameters. Note that this depends on the specific deck format used to get the parameter names \todo Multithermal
 */
 
+  this->total_dens = 1.0;
 
   std::ifstream infile;
   infile.open(file_prefix+"deck.status");
@@ -82,9 +84,14 @@ bool non_thermal::configure_from_file(std::string file_prefix){
 
     parse_err = parse_name_val(lines[i], name, val);
     if(parse_err) continue;
-    val_f = atof(val.c_str());
-    
-    parameters[name] = val_f;
+    if(name == "lookup"){
+    //Any stringy params here
+      extra_parameters[name] = val;
+    }else{
+      val_f = atof(val.c_str());
+      
+      parameters[name] = val_f;
+    }
   }
   infile.close();
   /*If electron setup file found, identify components. File should look like this:
@@ -106,6 +113,7 @@ bool non_thermal::configure_from_file(std::string file_prefix){
 
     auto tmp_fn = std::bind(bimax, std::placeholders::_1, std::placeholders::_2, parameters[VPAR], parameters[VPERP], parameters[DENS_RAT]);
     f_p_private.push_back(tmp_fn);
+    total_dens += parameters[DENS_RAT];
 
   }else{
     
@@ -116,25 +124,30 @@ bool non_thermal::configure_from_file(std::string file_prefix){
 
     //very naive parsing. We spin through until we find a ":"
     //if we don't find n_comps such blocks, we report and continue
-    std::string function="", dens="", vpar="", vperp="", kappa="";
+    std::string function="", dens="", vpar="", vperp="", kappa="", lookup="";
     std::function<calc_type(calc_type, calc_type)> tmp_fn;
 
     while(getline(infile, line)){
       if(line.find(':') != std::string::npos){
         //Create a plasma component function bound to these parameters and add to vector
         calc_type norm;
+        if(function !=""){
+          //Some general setups
+          
+          if(parameters.count(dens)!=0) total_dens += parameters[dens];
+        }
         if(function == "max"){
           //Check we have all params
           for(auto nam : {dens, vpar, vperp}) if(!parameters.count(nam)) my_print("Param "+nam+" not found!!!");
+          this->v_par = parameters[vpar];
+          this->v_perp = parameters[vperp];
+          calc_type a_par = std::sqrt(2.0)*parameters[vpar];
+          if(!this->norely) a_par/= std::sqrt(1.0 - std::pow(parameters[vpar]/v0, 2));
           
-          calc_type a_par = std::sqrt(2.0)*parameters[vpar] / std::sqrt(1.0 - std::pow(parameters[vpar]/v0, 2));
-          
-          calc_type a_perp_sq = std::pow(parameters[vperp], 2)/(1.0 - std::pow(parameters[vperp]/v0, 2));
-
-          norm = 1.0/(pi*std::sqrt(pi)*a_par*a_perp_sq);
-
+          calc_type a_perp_sq = 2.0*std::pow(parameters[vperp], 2);//
+          if(!this->norely) a_perp_sq /= (1.0 - 2.0*std::pow(parameters[vperp]/v0, 2));
+          norm = 1.0/(pi*std::sqrt(pi));//*a_par*a_perp_sq);
           tmp_fn = std::bind(bimax, std::placeholders::_1, std::placeholders::_2, a_par, std::sqrt(a_perp_sq), norm*parameters[dens]);
-          total_dens +=parameters[dens];
           
           f_p_private.push_back(tmp_fn);
         }
@@ -144,9 +157,13 @@ bool non_thermal::configure_from_file(std::string file_prefix){
           tmp_fn = std::bind(bikappa, std::placeholders::_1, std::placeholders::_2, parameters[kappa], parameters[vpar], parameters[vperp], parameters[dens]);
           f_p_private.push_back(tmp_fn);
         
+        }else if(function=="lookup"){
+          tmp_fn = configure_lookup(file_prefix, extra_parameters[lookup], this);
+          f_p_private.push_back(tmp_fn);
+        
         }
         block_num ++;
-        function=""; dens=""; vpar=""; vperp="";kappa="";
+        function=""; dens=""; vpar=""; vperp="";kappa="", lookup="";
         if(block_num >= ncomps) break;
         //Reset lookups
         continue;
@@ -156,6 +173,10 @@ bool non_thermal::configure_from_file(std::string file_prefix){
       //This might be an n_comps definition!
         parse_err = parse_name_val(line, name, val);
         if(!parse_err && name =="ncomps") this->ncomps = atoi(val.c_str());
+        if(!parse_err && name =="norely"){
+            if(val.size() >0 && val[0] == '1') this->norely=1;
+        }
+
       }
       if(block_num >= 0){
         //this line is a valid input one, probably!
@@ -167,6 +188,7 @@ bool non_thermal::configure_from_file(std::string file_prefix){
           if(name =="vpar") vpar = val;
           if(name =="vperp") vperp = val;
           if(name =="kappa") kappa = val;
+          if(name =="lookup") lookup = val;
         }
       }
       
@@ -180,9 +202,6 @@ bool non_thermal::configure_from_file(std::string file_prefix){
       my_print("Insufficient blocks in config file", mpi_info.rank);
     }
   }
-  this->v_par=parameters[VPAR];
-  this->v_perp=parameters[VPERP];
-  this->fraction =parameters[DENS_RAT];
   return 0;
 
 }
@@ -245,7 +264,6 @@ calc_type bimax(calc_type p, calc_type p2, calc_type p_th, calc_type p_th2, calc
   return A*std::exp(-p*p/p_th/p_th - p2*p2/p_th2/p_th2);
 }
 
-
 calc_type double_max(calc_type p, calc_type v_th, calc_type v_th2, calc_type A, calc_type A2){
 /** Double exp function*/
 
@@ -257,4 +275,199 @@ calc_type bikappa(calc_type p, calc_type p2, calc_type kappa, calc_type v_kpar, 
   return 0;
 }
 
+calc_type lookup(calc_type p_par, calc_type p_perp, my_type * data, size_t par_sz, size_t perp_sz,calc_type dp_par_ax, calc_type p_par_ax_min, calc_type dp_perp_ax, calc_type p_perp_ax_min){
+
+/** Lookup table returning values assuming LINEAR axes for p_par and perp and doing a weighed linear interpolation. Data is assumed to be 1-d with Fortran ordering, mapping to 2-d. Thus f(i, j) = data[j*par_sz+i] */
+
+  calc_type p_par_ind_decimal, p_perp_ind_decimal;
+  size_t p_par_ind, p_perp_ind;
+  calc_type f_tmp_plus, f_tmp_minus, par_diff, perp_diff, interp_val;
+  
+  //Calculate exact axis position
+  p_par_ind_decimal = (p_par - p_par_ax_min)/dp_par_ax;
+  p_perp_ind_decimal = (p_perp - p_perp_ax_min)/dp_perp_ax;
+  
+  p_par_ind = std::floor(p_par_ind_decimal);
+  p_perp_ind = std::floor( p_perp_ind_decimal);
+  
+  par_diff = p_par_ind_decimal - p_par_ind;
+  perp_diff = p_perp_ind_decimal - p_perp_ind;
+  
+  //4 point linear interpolation to "exact" location
+  //Calculate f at lower and upper perp values interpolated on par lines
+  
+  f_tmp_minus = par_diff *data[par_sz*p_perp_ind + p_par_ind] + (1.0 - par_diff)* data[par_sz*p_perp_ind + p_par_ind + 1];
+  f_tmp_plus = par_diff *data[par_sz*(p_perp_ind + 1) + p_par_ind] + (1.0 - par_diff)* data[par_sz*(p_perp_ind + 1) + p_par_ind + 1];
+  
+  interp_val = (perp_diff * f_tmp_minus + (1.0 - perp_diff)*f_tmp_plus);
+
+  return interp_val;
+
+}
+
+calc_type seperable_lookup(calc_type p_par, calc_type p_perp, my_type * data, size_t par_sz, size_t perp_sz,calc_type dp_par_ax, calc_type p_par_ax_min, calc_type dp_perp_ax, calc_type p_perp_ax_min){
+
+/** Lookup table for seperable functions (h(p_par)*g(p_perp)) returning values assuming LINEAR axes for p_par and perp and doing a weighed linear interpolation. Data is assumed to be sucessive 1-d arrays, f then g. Thus f(i, j) = data[i]*data[par_sz+j]*/
+
+  calc_type p_par_ind_decimal, p_perp_ind_decimal;
+  size_t p_par_ind, p_perp_ind;
+  calc_type par_diff, perp_diff, interp_val;
+  
+  //Calculate exact axis position
+  p_par_ind_decimal = (p_par - p_par_ax_min)/dp_par_ax;
+  p_perp_ind_decimal = (p_perp - p_perp_ax_min)/dp_perp_ax;
+  
+  p_par_ind = std::floor(p_par_ind_decimal);
+  p_perp_ind = std::floor( p_perp_ind_decimal);
+  
+  par_diff = p_par_ind_decimal - p_par_ind;
+  perp_diff = p_perp_ind_decimal - p_perp_ind;
+  
+  //2 point linear interpolation to "exact" location on par and perp
+  
+  interp_val = (par_diff *data[p_par_ind] + (1.0 - par_diff)*data[p_par_ind + 1]) * (perp_diff *data[par_sz+p_perp_ind] + (1.0 - perp_diff)*data[par_sz+p_perp_ind + 1]);
+
+  return interp_val;
+
+}
+
+
+std::function<calc_type(calc_type p_par, calc_type p_perp)> configure_lookup(std::string file_prefix, std::string file, non_thermal * my_nonth){
+/** Read lookup data from file(s) (supply comma-separated list) and bind lookup function
+*
+*We're going to be simple and require a pre-space averaged distribution. Either one file, in which case we assume f(x, y), or two, when we assume f(x)*g(y)
+
+*/
+
+  std::function<calc_type(calc_type p_par, calc_type p_perp)> bound_lookup;
+
+  calc_type dp_par_ax, p_par_ax_min, dp_perp_ax, p_perp_ax_min;
+  size_t par_sz, perp_sz;
+
+  //Open and read file sizes
+
+  bool sep = (file.find_first_of(',')!=std::string::npos);
+  
+  size_t tot_els;
+  std::ifstream infile;
+  
+  if(sep){
+    std::string file_par, file_perp;
+    file_par = file.substr(0, file.find_first_of(','));
+    file_perp = file.substr(file.find_first_of(',')+1, file.size());
+    trim_string(file_par);
+    trim_string(file_perp);
+
+    data_array tmp_array = data_array(file_prefix+file_par);
+    data_array tmp_array_perp = data_array(file_prefix+file_perp);
+
+    {
+      std::vector<size_t> par_dims, perp_dims;
+
+      for(size_t i=0; i <tmp_array.get_dims(); i++) par_dims.push_back(tmp_array.get_dims(i));
+      for(size_t i=0; i <tmp_array_perp.get_dims(); i++) perp_dims.push_back(tmp_array_perp.get_dims(i));
+      //Throw error if dims are not 1 or all larger dims = 1
+      size_t total =1;
+      for(size_t i=1; i< par_dims.size(); i++) total *=par_dims[i];
+      if(par_dims.size() != 1 || total > 1){
+        my_print("Error, seperable array read is not 1-D");
+        exit(1);
+      }
+      total=1;
+      for(size_t i=1; i< perp_dims.size(); i++) total *=perp_dims[i];
+      if(perp_dims.size() != 1 || total > 1){
+        my_print("Error, seperable array read is not 1-D");
+        exit(1);
+      }
+      par_sz = par_dims[0];
+      perp_sz = perp_dims[0];
+    }
+    my_type * par_axes = tmp_array.disown_axes();
+    my_type * par_data = tmp_array.disown_data();
+    my_type * perp_axes = tmp_array_perp.disown_axes();
+    my_type * perp_data = tmp_array_perp.disown_data();
+
+    //Quickly check axes are linear binned, else throw an error. Retain min and inc if good
+    p_par_ax_min = par_axes[0];
+    p_perp_ax_min = perp_axes[0];
+    my_type dp_par_ax = par_axes[1]-par_axes[0], dp_perp_ax = perp_axes[1]-perp_axes[0];
+    bool err=0;
+    for(size_t j=0; j<par_sz-1; j++){
+        if( (par_axes[j+1]-par_axes[j] - dp_par_ax) > GEN_PRECISION) err=1;
+    }
+    for(size_t j=0; j<perp_sz-1; j++){
+        if( (perp_axes[j+1]-perp_axes[j] - dp_perp_ax) > GEN_PRECISION) err=1;
+    }
+    if(err){
+      my_print("Error, axes are not linear");
+      exit(1);
+    }
+    free(par_axes);
+    free(perp_axes);
+    //Now we have data in two places. Realloc the parallel pointer to hold both and copy into place
+    tot_els = par_sz + perp_sz;
+    my_type * tmp = (my_type *) realloc((void*) par_data, tot_els*sizeof(my_type));
+    if(!tmp){
+      my_print("Error allocating memory");
+      exit(1);
+    }
+    std::copy(perp_data, perp_data+perp_sz, tmp+ par_sz);
+    //Copy perp data over
+    my_nonth->lookup_data = tmp;
+    //Keep pointer
+    free(perp_data);
+    //Free perp data. Par_data has been repurposed
+    
+    bound_lookup = std::bind(seperable_lookup, std::placeholders::_1, std::placeholders::_2, my_nonth->lookup_data, par_sz, perp_sz, dp_par_ax, p_par_ax_min, dp_perp_ax, p_perp_ax_min);
+
+    //Bind the lookup function
+
+  }else{
+    trim_string(file);
+
+    data_array tmp_array = data_array(file_prefix+file);
+
+    {
+      std::vector<size_t> dims;
+
+      for(size_t i=0; i <tmp_array.get_dims(); i++) dims.push_back(tmp_array.get_dims(i));
+      //Throw error if dims are not 2 or all larger dims = 1
+      size_t total =1;
+      for(size_t i=2; i< dims.size(); i++) total *=dims[i];
+      if(dims.size() != 2 || total > 1){
+        my_print("Error, seperable array read is not 1-D");
+        exit(1);
+      }
+      par_sz = dims[0];
+      perp_sz = dims[1];
+    }
+    my_type * axes = tmp_array.disown_axes();
+    my_type * data = tmp_array.disown_data();
+
+    //Quickly check axes are linear binned, else throw an error. Retain min and inc if good
+    p_par_ax_min = axes[0];
+    p_perp_ax_min = axes[par_sz+0];
+    my_type dp_par_ax = axes[1]-axes[0], dp_perp_ax = axes[par_sz+1]-axes[par_sz+0];
+    bool err=0;
+    for(size_t j=0; j<par_sz-1; j++){
+        if( (axes[j+1]-axes[j] - dp_par_ax) > GEN_PRECISION) err=1;
+    }
+    for(size_t j=0; j<perp_sz-1; j++){
+        if( (axes[par_sz+j+1]-axes[par_sz+j] - dp_perp_ax) > GEN_PRECISION) err=1;
+    }
+    if(err){
+      my_print("Error, axes are not linear");
+      exit(1);
+    }
+    free(axes);
+
+    my_nonth->lookup_data = data;
+    //Keep pointer
+    bound_lookup = std::bind(lookup, std::placeholders::_1, std::placeholders::_2, my_nonth->lookup_data, par_sz, perp_sz, dp_par_ax, p_par_ax_min, dp_perp_ax, p_perp_ax_min);
+
+    //Bind the lookup function
+
+  }
+  return bound_lookup;
+}
 

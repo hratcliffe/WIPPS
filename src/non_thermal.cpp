@@ -138,15 +138,16 @@ bool non_thermal::configure_from_file(std::string file_prefix){
         }
         if(function == "max"){
           //Check we have all params
+          my_print("Adding component "+dens);
           for(auto nam : {dens, vpar, vperp}) if(!parameters.count(nam)) my_print("Param "+nam+" not found!!!");
           this->v_par = parameters[vpar];
           this->v_perp = parameters[vperp];
           calc_type a_par = std::sqrt(2.0)*parameters[vpar];
           if(!this->norely) a_par/= std::sqrt(1.0 - std::pow(parameters[vpar]/v0, 2));
           
-          calc_type a_perp_sq = 2.0*std::pow(parameters[vperp], 2);//
+          calc_type a_perp_sq = 2.0*std::pow(parameters[vperp], 2);
           if(!this->norely) a_perp_sq /= (1.0 - 2.0*std::pow(parameters[vperp]/v0, 2));
-          norm = 1.0/(pi*std::sqrt(pi));//*a_par*a_perp_sq);
+          norm = 1.0/(pi*std::sqrt(pi)*a_par*a_perp_sq);
           tmp_fn = std::bind(bimax, std::placeholders::_1, std::placeholders::_2, a_par, std::sqrt(a_perp_sq), norm*parameters[dens]);
           
           f_p_private.push_back(tmp_fn);
@@ -170,13 +171,20 @@ bool non_thermal::configure_from_file(std::string file_prefix){
         // is next block, skip this header line
       }
       if(block_num == -1 && line.find('=')){
-      //This might be an n_comps definition!
+      //This might be an n_comps definition or nonrely flag!
         parse_err = parse_name_val(line, name, val);
-        if(!parse_err && name =="ncomps") this->ncomps = atoi(val.c_str());
-        if(!parse_err && name =="norely"){
-            if(val.size() >0 && val[0] == '1') this->norely=1;
+        if(!parse_err){
+          if(name =="ncomps") this->ncomps = atoi(val.c_str());
+          else if(name =="nonrely"){
+            if(val.size() >0 && val[0] == '1'){
+              this->norely=1;
+              my_print("Using nonrelativistic calculation!");
+            }
+          }else{
+            my_print("!!!!!Unknown name "+name);
+          }
+          
         }
-
       }
       if(block_num >= 0){
         //this line is a valid input one, probably!
@@ -184,11 +192,12 @@ bool non_thermal::configure_from_file(std::string file_prefix){
         if(!parse_err){
           //Grab the strings for each parameter
           if(name == "function") function = val;
-          if(name =="dens") dens = val;
-          if(name =="vpar") vpar = val;
-          if(name =="vperp") vperp = val;
-          if(name =="kappa") kappa = val;
-          if(name =="lookup") lookup = val;
+          else if(name =="dens") dens = val;
+          else if(name =="vpar") vpar = val;
+          else if(name =="vperp") vperp = val;
+          else if(name =="kappa") kappa = val;
+          else if(name =="lookup") lookup = val;
+          else my_print("!!!!Unknown name "+name);
         }
       }
       

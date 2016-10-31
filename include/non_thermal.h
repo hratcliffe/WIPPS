@@ -39,15 +39,16 @@ public:
   size_t get_n_pars(){return parameters.size();}
   void set_dp(calc_type dp){this->dp = dp;}/**<Set the dp used to get numerical derivative*/
   my_type * lookup_data;/** Data pointer for use with a lookup type function backend. Note type matched to MY EPOCH data*/
-//#ifdef RUN_TESTS_AND_EXIT
+#ifdef RUN_TESTS_AND_EXIT
   calc_type get_v_par(){return v_par;}
   calc_type get_v_perp(){return v_perp;}
-//#endif
   calc_type get_t_par(){/**WORKS FOR SINGLE COMP MAX ONLY*/ if(parameters.count("temp_par")>0)return parameters["temp_par"];else
     return v_par*v_par*me/kb;}
   calc_type get_t_perp(){/**WORKS FOR SINGLE COMP MAX ONLY*/ if(parameters.count("temp_perp")>0)return parameters["temp_perp"];else
   return v_perp*v_perp*me/kb;}
+#endif
   calc_type get_total_dens(){return this->total_dens;}
+
   bool get_norely(){return this->norely;}
 };
 

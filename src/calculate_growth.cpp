@@ -26,7 +26,7 @@
 #include "non_thermal.h"
 
 
-const int n_trials = 20;/**< Number of data points for analytic (if no real data)*/
+const int n_trials = 2000;/**< Number of data points for analytic (if no real data)*/
 
 deck_constants my_const;/**< Physical constants*/
 extern const mpi_info_struc mpi_info;/**< Link to mpi_info as const*/
@@ -134,10 +134,6 @@ int main(int argc, char *argv[]){
     if(p_axis) free(p_axis);
     safe_exit();
   }
-
-
-//for(int i=0; i< n_momenta-1; i++)std::cout<<my_elec->f_p(p_axis[i], 0)<<", ";
-
   calc_type omega;
   //Setup an array with desired omega axis
   if(!extra_args.real){
@@ -161,7 +157,6 @@ int main(int argc, char *argv[]){
   
   }
   strcpy(analytic_data.block_id, "g_an");
-  //for(int j=1; j<n_momenta; j++) std::cout<<my_elec->f_p(p_axis[j], 0)<<", ";
 
   for(int i=0; i<analytic_data.get_dims(0); ++i){
     omega = analytic_data.get_axis_element(0, i);
@@ -222,7 +217,6 @@ calc_type get_growth_rate(plasma * my_plas, non_thermal * my_elec, int n_momenta
       // Relativistic version---------------------------------
       S[j] = std::pow(p_axis[j], 2) * my_elec->d_f_p(p_res, p_axis[j], 0) / Delta_res;
 
-//    S_full[j] = - std::pow(p_axis[j], 2)/ Delta_res*(omega_in - om_ce/gamma) * (p_res*my_elec->d_f_p(p_res, p_axis[j], 0) - p_axis[j]*my_elec->d_f_p(p_res, p_axis[j], 1))/p_res;
       S_full[j] = std::pow(p_axis[j], 2)/ Delta_res/gamma * (p_axis[j]*my_elec->d_f_p(p_res, p_axis[j], 1) - p_res*my_elec->d_f_p(p_res, p_axis[j], 0));
     }else{
       //---Non-rely version--------------------------
@@ -231,9 +225,6 @@ calc_type get_growth_rate(plasma * my_plas, non_thermal * my_elec, int n_momenta
     
       S_full[j] = - std::pow(p_axis[j], 2)* (p_axis[j]*my_elec->d_f_p(v_res, p_axis[j], 1) - v_res*my_elec->d_f_p(v_res, p_axis[j], 0));
     }
-    //std::cout<<S_full[j]<<' '<<(std::pow(p_axis[j], 3)*v_res*(-2.0)*my_elec->f_p(v_res, p_axis[j])*(1.0/a_perp_sq - 1.0/(a_par*a_par)))<<' '<<S_full[j]/(std::pow(p_axis[j], 3)*v_res*(-2.0)*my_elec->f_p(v_res, p_axis[j])*(1.0/a_perp_sq - 1.0/(a_par*a_par))) -1.0 <<'\n';
-//S_full[j] = (std::pow(p_axis[j], 3)*v_res*(-2.0)*my_elec->f_p(v_res, p_axis[j])*(1.0/a_perp_sq - 1.0/(a_par*a_par)));
-//-----------------------------------------------------
   }
 
   dp_ax[0] = 0.0;
@@ -244,37 +235,16 @@ calc_type get_growth_rate(plasma * my_plas, non_thermal * my_elec, int n_momenta
 
   calc_type ret = 0.0;
 
-//  std::cout<<std::setprecision(10);
-  // std::cout<<"S new "<<S_tot/((my_elec->get_total_dens()-1.0)*0.5*a_perp_sq/(pi*std::sqrt(pi))*(1.0 - std::exp(-p_axis[n_momenta-1]*p_axis[n_momenta-1]/a_perp_sq))*std::exp(-v_res*v_res/a_par/a_par))<<'\n';
-
- //  std::cout<<"S new tot "<<S_full_tot/(-2.0*(1.0/a_perp_sq - 1.0/(a_par*a_par))*v_res*(my_elec->get_total_dens()-1.0)*0.5*a_perp_sq/(pi*std::sqrt(pi))*(a_perp_sq - (a_perp_sq + p_axis[n_momenta-1]*p_axis[n_momenta-1])*std::exp(-p_axis[n_momenta-1]*p_axis[n_momenta-1]/a_perp_sq))*std::exp(-v_res*v_res/a_par/a_par))<<'\n';
-
- //  std::cout<<"S new tot "<<S_full_tot/(-2.0*(1.0/a_perp_sq - 1.0/(a_par*a_par))*v_res*(my_elec->get_total_dens()-1.0)*0.5*a_perp_sq/(pi*std::sqrt(pi))*(a_perp_sq)*std::exp(-v_res*v_res/a_par/a_par))<<'\n';
-
-//   std::cout<<S_full_tot/S_tot/v_res<<'\n';
-
-//std::cout<<"A_an "<<(-2.0*(1.0/a_perp_sq - 1.0/(a_par*a_par))*(my_elec->get_total_dens()-1.0)*0.5*a_perp_sq/(pi*std::sqrt(pi))*(a_perp_sq)*std::exp(-v_res*v_res/a_par/a_par))/((my_elec->get_total_dens()-1.0)*0.5*a_perp_sq/(pi*std::sqrt(pi))*(1.0 - std::exp(-p_axis[n_momenta-1]*p_axis[n_momenta-1]/a_perp_sq))*std::exp(-v_res*v_res/a_par/a_par))<<'\n';
-
-//std::cout<<"A_an "<<(1.0 - a_perp_sq/(a_par*a_par))<<'\n';
-
-//(my_elec->get_total_dens()-1.0)*0.5*a_perp_sq
   if(std::abs(S_tot) > std::numeric_limits<calc_type>::min()){
     A_crit = - omega_in /om_diff;
 
     if(!norely){
       // Relativistic version---------------------------------
-
       A_rel = k*S_full_tot/S_tot/om_diff;
-    
       eta_rel = pi * om_diff/k * S_tot;
     }else{
-      //---Testing non-rely version--------------------------
+      //---Non-rely version--------------------------
       A_rel = S_full_tot/S_tot/2.0/v_res;
-  //std::cout<<S_full_tot<<' '<<S_tot<<' '<<v_res<<'\n';
-  std::cout<<"A "<<A_rel<<' '<<my_elec->get_t_perp()/my_elec->get_t_par() -1.0<<'\n';
-  std::cout<<"S "<<S_tot<<' '<<S_full_tot/v_res<<'\n';
-  //std::cout<<"S new "<<S_tot<<' '<<0.5 - 0.5*std::exp(-p_axis[n_momenta-1]*p_axis[n_momenta-1])<<'\n';
-//    A_rel = my_elec->get_t_perp()/my_elec->get_t_par() -1.0;
       eta_rel = -2.0*pi * v_res * S_tot;
     }
 
@@ -290,7 +260,7 @@ calc_type get_growth_rate(plasma * my_plas, non_thermal * my_elec, int n_momenta
 
 
 calc_type * make_momentum_axis(int n_mom, calc_type v_max){
-/** \todo This is v????*/
+
   //Max velocity to consider norm'd to c
   calc_type dp = v_max * v0/ (calc_type) (n_mom - 1)/std::sqrt(1.0- v_max*v_max);
   //Momentum step size, including gamma
@@ -302,7 +272,7 @@ calc_type * make_momentum_axis(int n_mom, calc_type v_max){
   p_axis[0] = 0.0;
   for(int i=1; i< n_mom; ++i) p_axis[i] = p_axis[i-1] + dp;
   //Set momenta from 0 to v_max. Do this once.
-  if( std::abs(p_axis[n_mom-1] -  (v_max * v0/ std::sqrt(1.0- v_max*v_max)))> 1e-4) my_print("Momentum axis error", mpi_info.rank);
+  if( std::abs(p_axis[n_mom-1] -  (v_max * v0/ std::sqrt(1.0- v_max*v_max)))> 1e-3) my_print("Momentum axis error of "+mk_str(std::abs(p_axis[n_mom-1] -  (v_max * v0/ std::sqrt(1.0- v_max*v_max)))), mpi_info.rank);
   
   return p_axis;
 

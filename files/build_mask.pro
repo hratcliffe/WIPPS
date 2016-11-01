@@ -1,3 +1,16 @@
+function apply_mask, array, mask
+;Applies a mask and sets all 0 elements to a tiny float so that we don't muck up contour too much
+
+;Check sizes match
+sz=size(array)
+IF( sz[0] NE (size(mask))[0]) THEN return, !NULL
+IF( total(sz[1:sz[0]] EQ (size(mask))[1:sz[0]]) NE sz[0]) THEN return, !NULL
+
+ret = array
+ret[where(mask EQ 0)] = 1d-60
+return, ret
+end
+
 function build_mask, ax_x, ax_y, ax_z, fzz=fzz, om_ce=om_ce, om_pe=om_pe
 
 sz=[(size(ax_x))[1], (size(ax_y))[1], (size(ax_z))[1]]
@@ -13,18 +26,5 @@ for i=0, sz[0]-1 DO BEGIN
   end
 end
 return, mask
-end
-
-function apply_mask, array, mask
-;Applies a mask and sets all 0 elements to a tiny float so that we don't muck up contour too much
-
-;Check sizes match
-sz=size(array)
-IF( sz[0] NE (size(mask))[0]) THEN return, !NULL
-IF( total(sz[1:sz[0]] EQ (size(mask))[1:sz[0]]) NE sz[0]) THEN return, !NULL
-
-ret = array
-ret[where(mask EQ 0)] = 1d-60
-return, ret
 end
 

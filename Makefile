@@ -22,7 +22,7 @@ CFLAGS += -g
 OPTIMISE = -O3
 #Optimiser level for non-debug builds (debug includes test)
 
-#NO_FFT = 1
+NO_FFT = 1
 #If defined, do not use FFT libraries. Note FFT routines will be unavailable if set, as will certain utilities
 
 ifdef NO_FFT
@@ -130,6 +130,7 @@ UTILSOBJS := $(UTILSSOURCE:.cpp=.o)
 UTILSOBJS := $(addprefix $(OBJDIR)/, $(UTILSOBJS))
 UTILSSOURCE := $(addprefix $(SRCDIR)/, $(UTILSSOURCE))
 
+INCLS += "main.h"
 #We need these for clean etc
 INCLS := $(addprefix include/, $(INCLS))
 
@@ -221,7 +222,8 @@ list:
 
 #Refresh dependencies before building the tarball
 tar: dependencies.log
-	tar --no-recursion -cvzf Source.tgz $(SOURCE) $(INCLS) $(MAINSOURCE) $(UTILSSOURCE) ./files/* Makefile redox.sh process_deps.sh dependencies.log
+	tar --no-recursion -cvzf Source.tgz $(SOURCE) $(INCLS) $(MAINSOURCE) $(UTILSSOURCE) ./files/* Makefile redox.sh process_deps.sh dependencies.log Doxyfile
+	tar -cvzf SDF.tgz ./SDF
 
 clean:
 	@rm -f main $(UTILS) $(OBJS) $(MAINOBJS)

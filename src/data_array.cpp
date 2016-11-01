@@ -541,8 +541,8 @@ bool data_array::read_from_file(std::fstream &file, bool no_version_check){
 
 }
 
-#ifndef NO_FFT
 bool data_array::fft_me(data_array & data_out){
+#ifndef NO_FFT
 /** \brief FFT data_array
 *
 * Data and axes in this object are FFT'd using FFTW and stored into the instance pointed to by data_out. Data_out must be created with correct dimensions first, but we check and return error (1) if it is not so. \todo extract and make friend?
@@ -652,8 +652,10 @@ bool data_array::fft_me(data_array & data_out){
 
   return 0;
 
-}
 #endif
+return 1;
+//Return for noFFT version
+}
 
 bool data_array::populate_mirror_fastest(my_type * result_in, size_t total_els){
 /** \brief Copy FFTW data into array

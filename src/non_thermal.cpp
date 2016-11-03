@@ -30,6 +30,7 @@ non_thermal::non_thermal(std::string file_prefix){
   norm = 1.0;
   ncomps = 1;
   total_dens = 0;
+  norely = 0;
   //Defaults which are deliberately meaningless....
   
   dp = 10.0;

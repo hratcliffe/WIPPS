@@ -67,6 +67,11 @@ int main(int argc, char *argv[]){
   size_t k_len = data_in.get_dims(0);//K_x length
   contr.add_spectrum(k_len, my_args.n_ang, (my_args.ang != FUNCTION_NULL));
 
+  if(data_in.get_dims() == 3 && my_args.ang != FUNCTION_NULL){
+    //2D data and want to use angle function, so squash in k_y
+    /** \todo Squash or use k_y==0??*/
+    data_in = data_in.total(1);
+  }
   contr.set_plasma_B0(B_ref);
 
   data_array * mask;

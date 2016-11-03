@@ -8,7 +8,6 @@
 #include <math.h>
 #include <cmath>
 #include <fstream>
-#include <boost/math/special_functions.hpp>
 //Provides Bessel functions, erf, and many more
 #include <iostream>
 #include <limits>
@@ -18,10 +17,8 @@
 
 #include "support.h"
 #include "main_support.h"
-#include "controller.h"
 #include "plasma.h"
 #include "my_array.h"
-#include "d_coeff.h"
 #include "spectrum.h"
 #include "non_thermal.h"
 
@@ -122,6 +119,7 @@ int main(int argc, char *argv[]){
   my_print("Calculating analytic growth rates", mpi_info.rank);
 
   non_thermal * my_elec = new non_thermal(cmd_line_args.file_prefix);
+  if(my_elec->get_norely()) my_print("Selected non relativistic calculation", mpi_info.rank);
 
   const size_t n_momenta = 10000;
   calc_type * p_axis;

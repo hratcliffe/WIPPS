@@ -259,14 +259,25 @@ bool spectrum::generate_spectrum(data_array &parent, int om_fuzz, int angle_type
     my_type tolerance = om_fuzz/100.0;
     my_type total = 0.0;
 
+    calc_type sgn;
+    bool one_sided = (std::abs(ax_ptr[0]) < std::abs(ax_ptr[len/2]));
+
     for(size_t i=0; i<get_B_dims(0); ++i){
       om_disp = get_omega(parent.get_axis_element(0,i), WAVE_WHISTLER);
+      if(!one_sided && i<= get_B_dims(0)/2) sgn = -1.0;
+      else sgn = 1.0;
       
+      om_disp *= sgn;
       set_om_axis_element(i, om_disp);
       
-      low_bnd = where(ax_ptr, len, om_disp *(1.0-tolerance));
-      high_bnd = where(ax_ptr, len, om_disp *(1.0+tolerance));
-    /** \todo FIX THIS! SHould do it's best if not in raneg!!!*/
+      low_bnd = where(ax_ptr, len, om_disp *(1.0-sgn*tolerance));
+      high_bnd = where(ax_ptr, len, om_disp *(1.0+sgn*tolerance));
+      
+      //Adjust for low off bottom or high off top
+      //Low off top or high off bottom will still be caught and skipped
+      if(low_bnd < 0 && om_disp *(1.0-sgn*tolerance) < ax_ptr[0]) low_bnd = 0;
+      if(high_bnd < 0 && om_disp *(1.0+sgn*tolerance) > ax_ptr[len-1]) high_bnd = len-1;
+
       if(low_bnd < 0 || high_bnd< 0){
         set_B_element(i,0.0);
         continue;

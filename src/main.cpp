@@ -211,8 +211,9 @@ int main(int argc, char *argv[]){
 #endif
 
   std::cout<<"Grep for FAKENUMBERS !!!!"<<std::endl;
-
+#ifndef NO_FFT
   ADD_FFTW(cleanup());
+#endif
   MPI_Finalize();
   //call these last...
 

@@ -234,7 +234,7 @@ void spectrum::init(){
 bool spectrum::generate_spectrum(data_array &parent, int om_fuzz, int angle_type, data_array * mask){
 /**\brief Generate spectrum from data
 *
-*Takes a parent data array and uses the specified ids to generate a spectrum. Windows using the specified wave dispersion and integrates over frequency. Also adopts axes from parent. IMPORTANT: when using real angular data we roughly fuzz around the correct k values, but this is not uniform! Non-smooth or rapidly varying spectra may give odd results @param parent Data array to read from @param om_fuzz Band width around dispersion curve in percent of central frequency \todo omega vs k, is there some normalising to do? 
+*Takes a parent data array and uses the specified ids to generate a spectrum. Windows using the specified wave dispersion and integrates over frequency. Also adopts axes from parent. IMPORTANT: when using real angular data we roughly fuzz around the correct k values, but this is not uniform! Non-smooth or rapidly varying spectra may give odd results @param parent Data array to read from @param om_fuzz Band width around dispersion curve in percent of central frequency \todo omega vs k, is there some normalising to do? \todo 2-d and 3-d extractions don't quite agree at k=0. factor ~10 and variations near 0
 */
 
   if(!this->is_good()){
@@ -374,7 +374,6 @@ bool spectrum::generate_spectrum(data_array &parent, int om_fuzz, int angle_type
               for(int jj=len_y-ky_high; jj<len_y-ky_low; jj++){
                 tmp += parent.get_element(kx_high, jj, ii);
               }
-              tmp/=2.0;
             }
           }
         }
@@ -382,7 +381,8 @@ bool spectrum::generate_spectrum(data_array &parent, int om_fuzz, int angle_type
           if(kx_high != -1 && ky_high != -1){
             for(int ii=om_low; ii<=om_high; ii++){
               for(int jj=ky_low; jj<=ky_high; jj++){
-                mask->set_element(kx_high, jj, ii, mask->get_element(kx_high, jj, ii)+0.5);
+                if(!one_sided) mask->set_element(kx_high, jj, ii, mask->get_element(kx_high, jj, ii)+0.5);
+                else mask->set_element(kx_high, jj, ii, mask->get_element(kx_high, jj, ii)+1.0);
               }
               if(!one_sided){
               //Also include negative k_y
@@ -396,6 +396,7 @@ bool spectrum::generate_spectrum(data_array &parent, int om_fuzz, int angle_type
 //------------------
         //Tmp is now the convolved B(omega)g(omega, theta). We dump it into g as is for later norming and add to the sum which will end up as B.
         /** \todo Is this the correct norm?*/
+        if(!one_sided) tmp /= 2.0;
         set_g_element(i, j, tmp);
         tmp_sum += tmp;
       }

@@ -339,7 +339,7 @@ bool spectrum::generate_spectrum(data_array &parent, int om_fuzz, int angle_type
 //        om_low = where(om_ax, len_om, om_disp*(1.0-tolerance));
 //        om_high = where(om_ax, len_om, om_disp*(1.0+tolerance));
         if(om_low < 0) om_low = 0;
-        if(om_disp*(1.0+tolerance) < *om_ax) om_high = 0;
+        if(om_disp*(1.0+i_sgn*tolerance) < *om_ax) om_high = 0;
         else if(om_high < 0) om_high = len_om - 1;
 
 

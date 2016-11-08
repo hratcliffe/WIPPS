@@ -313,7 +313,7 @@ bool spectrum::generate_spectrum(data_array &parent, int om_fuzz, int angle_type
     make_angle_axis();
     
     my_type k, k_y, tantheta, tmp, tmp_sum, decrement = 1.0+GEN_PRECISION, max_power=0.0, theta;
-    int kx_low, kx_high, ky_low, ky_high, i_sgn=1, om_ind, om_low, om_high;
+    int kx_high, ky_low, ky_high, i_sgn=1, om_ind, om_low, om_high;
     //Now we do a double loop
     
     for(size_t i = 0; i< len_x; i++){
@@ -339,7 +339,7 @@ bool spectrum::generate_spectrum(data_array &parent, int om_fuzz, int angle_type
 //        om_low = where(om_ax, len_om, om_disp*(1.0-tolerance));
 //        om_high = where(om_ax, len_om, om_disp*(1.0+tolerance));
         if(om_low < 0) om_low = 0;
-        if(om_disp*(1.0+i_sgn*tolerance) < *om_ax) om_high = 0;
+        if(om_disp*(1.0+tolerance) < *om_ax) om_high = 0;
         else if(om_high < 0) om_high = len_om - 1;
 
 
@@ -347,20 +347,18 @@ bool spectrum::generate_spectrum(data_array &parent, int om_fuzz, int angle_type
         k = get_k(om_disp, WAVE_WHISTLER, 0, theta);//*i_sgn;//*decrement;
         
         kx_high = where(kx_ax, len_x, k*cos(theta));
-        kx_low = kx_high;
         
         if(k*cos(theta)< *(kx_ax) || std::abs(k)<GEN_PRECISION || k*cos(theta)> *(kx_ax+len_x -1)) kx_high = -1;
         else if(kx_high <0) kx_high = len_x-1;
-        if(kx_low < 0) kx_low = 0;
-        
+       
 //-------- k_y is fuzzy----------
-        k = get_k(om_disp*(1.0+i_sgn*tolerance), WAVE_WHISTLER, 0, theta)*i_sgn;//*decrement;
+        k = get_k(om_disp*(1.0+tolerance), WAVE_WHISTLER, 0, theta);//*i_sgn;//*decrement;
         ky_high = where(ky_ax, len_y, k*sin(theta));
         if(std::abs(k)<GEN_PRECISION || std::abs(k*sin(theta))> *(ky_ax+len_y -1)) ky_high = -1;
         else if(ky_high <0) ky_high = len_y-1;
 
 
-        k = get_k(om_disp*(1.0-i_sgn*tolerance), WAVE_WHISTLER, 0, theta)*i_sgn;//*decrement;
+        k = get_k(om_disp*(1.0-tolerance), WAVE_WHISTLER, 0, theta);//*i_sgn;//*decrement;
         ky_low = where(ky_ax, len_y, k*sin(theta));
         if(ky_low < 0) ky_low = 0;
         
@@ -371,13 +369,26 @@ bool spectrum::generate_spectrum(data_array &parent, int om_fuzz, int angle_type
             for(int jj=ky_low; jj<=ky_high; jj++){
               tmp += parent.get_element(kx_high, jj, ii);
             }
+            if(!one_sided){
+            //Also include negative k_y
+              for(int jj=len_y-ky_high; jj<len_y-ky_low; jj++){
+                tmp += parent.get_element(kx_high, jj, ii);
+              }
+              tmp/=2.0;
+            }
           }
         }
         if(mask){
           if(kx_high != -1 && ky_high != -1){
             for(int ii=om_low; ii<=om_high; ii++){
               for(int jj=ky_low; jj<=ky_high; jj++){
-                mask->set_element(kx_high, jj, ii, mask->get_element(kx_high, jj, ii)+1);
+                mask->set_element(kx_high, jj, ii, mask->get_element(kx_high, jj, ii)+0.5);
+              }
+              if(!one_sided){
+              //Also include negative k_y
+                for(int jj=len_y-ky_high; jj<len_y-ky_low; jj++){
+                  mask->set_element(kx_high, jj, ii, mask->get_element(kx_high, jj, ii)+0.5);
+                }
               }
             }
           }

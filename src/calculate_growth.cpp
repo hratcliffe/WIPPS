@@ -23,6 +23,12 @@
 #include "non_thermal.h"
 
 
+/** \defgroup utils Utility programs
+*@{ */
+
+/** \defgroup growth_util Growth rate calculation utility
+*@{ */
+
 const int n_trials = 2000;/**< Number of data points for analytic (if no real data)*/
 
 deck_constants my_const;/**< Physical constants*/
@@ -92,6 +98,7 @@ int main(int argc, char *argv[]){
       B_prev = my_spect->copy_out_B();
       my_type delta_t = 0.0;
       for(size_t i=1; i<filelist.size(); i++){
+        my_print("Differencing "+filelist[i-1]+" and "+filelist[i]);
         delete my_spect;
         my_spect = new spectrum(cmd_line_args.file_prefix+filelist[i]);
         if(my_spect->get_B_dims() <1){
@@ -176,6 +183,7 @@ int main(int argc, char *argv[]){
 
 calc_type get_growth_rate(plasma * my_plas, non_thermal * my_elec, int n_momenta, calc_type * p_axis, calc_type omega_in){
 
+  omega_in = std::abs(omega_in);
   calc_type k = my_plas->get_dispersion(omega_in, WAVE_WHISTLER, 1), k_paper;
 
   calc_type ck_om = v0*k/omega_in, om_ce = std::abs(my_plas->get_omega_ref("ce")), om_pe = std::abs(my_plas->get_omega_ref("pe")), om_diff = omega_in - om_ce;
@@ -357,3 +365,6 @@ bool write_growth_closer(std::string in_file, plasma * my_plas, non_thermal * my
 
   return write_err;
 }
+
+/** @} */
+/** @} */

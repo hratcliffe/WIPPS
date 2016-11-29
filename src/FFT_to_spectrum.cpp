@@ -22,6 +22,12 @@
 extern const mpi_info_struc mpi_info;/**< Link to mpi_info as const*/
 deck_constants my_const;/**< Physical constants*/
 
+/** \defgroup utils Utility programs
+*@{ */
+
+/** \defgroup spect_util Spectrum generation utility
+*@{ */
+
 struct FFT_spect_args{
   std::string file_prefix;
   std::string file_in;
@@ -35,7 +41,6 @@ struct FFT_spect_args{
 };
 
 FFT_spect_args FFT_spect_process_command_line(int argc, char *argv[]);
-
 
 int main(int argc, char *argv[]){
 /** \todo FFT normalisation*/
@@ -100,6 +105,7 @@ int main(int argc, char *argv[]){
   
   return 0;
 }
+
 
 FFT_spect_args FFT_spect_process_command_line(int argc, char *argv[]){
 
@@ -174,3 +180,5 @@ FFT_spect_args FFT_spect_process_command_line(int argc, char *argv[]){
   return values;
 
 }
+/** @} */
+/** @} */

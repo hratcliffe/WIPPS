@@ -41,6 +41,11 @@ struct gen_cmd_line{
 };
 
 gen_cmd_line special_command_line(int argc, char *argv[]);
+/** \defgroup utils Utility programs
+*@{ */
+
+/** \defgroup fft_util FFT generator utility
+*@{ */
 
 int main(int argc, char *argv[]){
 
@@ -273,3 +278,5 @@ gen_cmd_line special_command_line(int argc, char *argv[]){
   
   return values;
 }
+/** @} */
+/** @} */

@@ -26,6 +26,12 @@ deck_constants my_const;/**< Physical constants*/
 
 dist_cmd_line special_command_line(int argc, char *argv[]);
 
+/** \defgroup utils Utility programs
+*@{ */
+
+/** \defgroup dist_util Distribution extraction utility
+*@{ */
+
 int main(int argc, char *argv[]){
 
   int err;
@@ -141,3 +147,6 @@ dist_cmd_line special_command_line(int argc, char *argv[]){
   }
   return values;
 }
+/** @} */
+/** @} */
+

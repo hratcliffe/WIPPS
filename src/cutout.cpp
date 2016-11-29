@@ -34,6 +34,12 @@ struct cutout_args{
 
 cutout_args cutout_process_command_line(int argc, char *argv[]);
 
+/** \defgroup utils Utility programs
+*@{ */
+
+/** \defgroup cutout_util FFT cutout utility
+*@{ */
+
 int main(int argc, char *argv[]){
 
   int err;
@@ -138,3 +144,6 @@ cutout_args cutout_process_command_line(int argc, char *argv[]){
   return values;
 
 }
+/** @} */
+/** @} */
+

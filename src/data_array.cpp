@@ -88,9 +88,10 @@ data_array::data_array(std::string filename, bool no_version_check){
   infile.open(filename, std::ios::in|std::ios::binary);
   
   construct();
-
-  if(!infile.is_open()) return;
-
+  if(!infile.is_open()){
+    my_print("File open or access error");
+    return;
+  }
   std::vector<size_t> dims_vec = my_array::read_dims_from_file(infile, no_version_check);
   size_t n_dims_in = dims_vec.size();
   //Now we have the dimensions, construct

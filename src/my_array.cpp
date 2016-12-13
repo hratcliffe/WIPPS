@@ -608,7 +608,8 @@ bool my_array::write_to_file(std::fstream &file){
   file.write((char*) &io_verify, my_sz);
   file.write((char*) &tmp_vers, sizeof(char)*15);
   //Sizeof ints and data, IO verification constant and Code version...
-
+  std::cout<<"here"<<'\n';
+std::cout<<size_sz<<' '<<my_sz<<' '<<io_verify<<'\n';
   if((size_t)file.tellg() != next_location) write_err=1;
   
   size_t total_size = get_total_elements();
@@ -787,6 +788,11 @@ std::vector<size_t> my_array::read_dims_from_file(std::fstream &file, bool no_ve
 
   char tmp_vers[15];
   my_type verf=0.0;
+
+  if(!file.good()){
+    my_print("File access error");
+    return dims_vec;
+  }
 
   size_t n_dims_in, dim_tmp, next_block;
   int size_sz=0, my_sz=0;

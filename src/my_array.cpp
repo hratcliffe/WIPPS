@@ -608,8 +608,6 @@ bool my_array::write_to_file(std::fstream &file){
   file.write((char*) &io_verify, my_sz);
   file.write((char*) &tmp_vers, sizeof(char)*15);
   //Sizeof ints and data, IO verification constant and Code version...
-  std::cout<<"here"<<'\n';
-std::cout<<size_sz<<' '<<my_sz<<' '<<io_verify<<'\n';
   if((size_t)file.tellg() != next_location) write_err=1;
   
   size_t total_size = get_total_elements();

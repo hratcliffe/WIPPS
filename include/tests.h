@@ -253,6 +253,15 @@ class test_entity_bounce: public test_entity{
     virtual int run();
 };
 
+class test_entity_nonthermal: public test_entity{
+  private:
+    int test_lookup();
+  public:
+    test_entity_nonthermal();
+    virtual ~test_entity_nonthermal();
+    virtual int run();
+
+};
 
 
 #endif

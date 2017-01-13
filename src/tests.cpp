@@ -20,6 +20,7 @@
 #include "data_array.h"
 #include "spectrum.h"
 #include "d_coeff.h"
+#include "non_thermal.h"
 
 #include <math.h>
 #include <boost/math/special_functions.hpp>
@@ -33,7 +34,7 @@ extern deck_constants my_const;
 
 const int err_codes[err_tot] ={TEST_PASSED, TEST_WRONG_RESULT, TEST_NULL_RESULT, TEST_ASSERT_FAIL, TEST_USERDEF_ERR1, TEST_USERDEF_ERR2, TEST_USERDEF_ERR3, TEST_USERDEF_ERR4, TEST_FATAL_ERR};/**< List of error codes available*/
 
-std::string err_names[err_tot]={"None", "Wrong result", "Invalid Null result", "Assignment or assertion failed", "", "", "", "", "Fatal error"};/**< Names corresponding to error codes, which are reported in log files*/
+std::string err_names[err_tot]={"None", "Wrong result", "Invalid Null result", "Assignment or assertion failed", "{Message 1 here}", "{Message 2 here}", "{Message 3 here}", "{Message 4 here}", "Fatal error"};/**< Names corresponding to error codes, which are reported in log files*/
 
 tests::tests(){
   setup_tests();
@@ -78,9 +79,11 @@ void tests::setup_tests(){
   add_test(test_obj);
   test_obj = new test_entity_spectrum();
   add_test(test_obj);
-  test_obj = new test_entity_levelone();
+/*  test_obj = new test_entity_levelone();
   add_test(test_obj);
   test_obj = new test_entity_d();
+  add_test(test_obj);*/
+  test_obj = new test_entity_nonthermal();
   add_test(test_obj);
 
 }
@@ -147,7 +150,9 @@ std::string tests::get_printable_error(int err, int test_id){
     for(int i=err_tot-1; i>0; --i){
       //Run most to least significant
       if((err & err_codes[i]) == err_codes[i]){
-        err_string +=err_names[i] + ", ";
+        err_string +=err_names[i];
+        if(i >1) err_string +=" &";
+        err_string += " ";
       }
     }
   
@@ -467,7 +472,7 @@ int test_entity_data_array::assign(){
 }
 
 int test_entity_data_array::basic_tests(){
-/** Test maxval, resizer*/
+/** Test maxval, resizer, maths*/
 
   int err = TEST_PASSED;
   if(!test_array.is_good()) return TEST_ASSERT_FAIL;
@@ -517,7 +522,36 @@ int test_entity_data_array::basic_tests(){
   my_type expected_av = ((new1-1)/2.0 + 1);
   //Average of (i+1) for i=0 to new1
 
-  if(av != expected_av) err |= TEST_WRONG_RESULT;
+  if(av != expected_av){
+    err |= TEST_WRONG_RESULT;
+    test_bed->report_info("Averager error", 1);
+  }
+  
+  //Test apply with simple +1 and log of constant values
+  std::function<calc_type(calc_type)> plus1_function = [](calc_type el) -> calc_type { return el+1.0; } ;
+
+  test_array.apply(plus1_function);
+  expected_av = av + 1.0;
+  av = test_array.avval();
+  if(av != expected_av){
+    err |= TEST_WRONG_RESULT;
+    test_bed->report_info("Apply function error", 1);
+  }
+  std::function<calc_type(calc_type)> log_function = [](calc_type el) -> calc_type { return log(el); } ;
+  
+  data_array test_array_hand_logged = test_array;
+  for(int i=0; i< test_array.get_dims(0); i++){
+    for(int j=0; j< test_array.get_dims(1); j++){
+      test_array_hand_logged.set_element(i, j, log(test_array_hand_logged.get_element(i, j)));
+    }
+  }
+  test_array.apply(log_function);
+  if(compare_2d(test_array, test_array_hand_logged)){
+  
+    err |= TEST_WRONG_RESULT;
+    test_bed->report_info("Apply function error", 1);
+  }
+  if(err == TEST_PASSED) test_bed->report_info("Basic tests OK");
   return err;
 }
 
@@ -2310,6 +2344,67 @@ int test_entity_bounce::run(){
 
   return err;
 
+}
+
+test_entity_nonthermal::test_entity_nonthermal(){
+  name = "nonthermal";
+}
+
+test_entity_nonthermal::~test_entity_nonthermal(){
+
+}
+
+int test_entity_nonthermal::run(){
+/** \brief Check nonthermal module
+*
+* Check function binding, df/dp values, lookup table
+*/
+  int err = TEST_PASSED;
+  
+  //Setup single Max non-thermal
+  non_thermal * my_elec = new non_thermal("./files/test");
+
+  calc_type a_par = std::sqrt(2.0)*my_elec->get_v_par() / std::sqrt(1.0 - std::pow(my_elec->get_v_par()/v0, 2));
+          
+  calc_type a_perp_sq = std::pow(my_elec->get_v_perp(), 2)/(1.0 - std::pow(my_elec->get_v_perp()/v0, 2));
+
+  calc_type df_tmp, f_tmp = my_elec->f_p(0, 0.5*std::sqrt(a_perp_sq));
+  if(std::abs(f_tmp - (my_elec->get_total_dens()-1.0)*std::exp(-0.25)/pi/std::sqrt(pi) ) > GEN_PRECISION) err |=TEST_WRONG_RESULT;
+  f_tmp = my_elec->f_p(0.5*a_par, 0);
+  if(std::abs(f_tmp - (my_elec->get_total_dens()-1.0)*std::exp(-0.25)/pi/std::sqrt(pi) ) > GEN_PRECISION) err |=TEST_WRONG_RESULT;
+
+  f_tmp = my_elec->f_p(0.3*a_par, 0);
+  if(std::abs(f_tmp - (my_elec->get_total_dens()-1.0)*std::exp(-0.09)/pi/std::sqrt(pi) ) > GEN_PRECISION) err |=TEST_WRONG_RESULT;
+
+
+  //Use ratio as d_f_p can be very small
+  f_tmp = my_elec->f_p(1.5*a_par, 0);
+  if(std::abs(f_tmp - (my_elec->get_total_dens()-1.0)*std::exp(-2.25)/pi/std::sqrt(pi) ) > GEN_PRECISION) err |=TEST_WRONG_RESULT;
+  
+  df_tmp = my_elec->d_f_p(0.5*a_par, 0, 1);
+  if(std::abs(df_tmp / ((-2.0)*0.5/a_par*my_elec->f_p(0.5*a_par, 0)) -1.0) > GEN_PRECISION) err |=TEST_WRONG_RESULT;
+  df_tmp = my_elec->d_f_p(0.3*a_par, 0, 1);
+  if(std::abs(df_tmp / ((-2.0)*0.3/a_par*my_elec->f_p(0.3*a_par, 0)) -1.0) > GEN_PRECISION) err |=TEST_WRONG_RESULT;
+
+  df_tmp = my_elec->d_f_p(0, 0.5*std::sqrt(a_perp_sq), 0);
+  if(std::abs(df_tmp / ((-2.0)*0.5/std::sqrt(a_perp_sq)*my_elec->f_p(0, 0.5*std::sqrt(a_perp_sq))) -1.0) > GEN_PRECISION) err |=TEST_WRONG_RESULT;
+
+  //This next is deep wings so we relax constraint so we're not trying to resolve 1e-60
+  df_tmp = my_elec->d_f_p(0, 10.0*std::sqrt(a_perp_sq), 0);
+  if(std::abs(df_tmp / ((-2.0)*10.0/std::sqrt(a_perp_sq)*my_elec->f_p(0, 10.0*std::sqrt(a_perp_sq))) -1.0) > 2e-6) err |=TEST_WRONG_RESULT;
+  
+  err |= test_lookup();
+  test_bed->report_err(err);
+  return err;
+
+}
+
+int test_entity_nonthermal::test_lookup(){
+  /** Check known lookup function against known analytic results \todo complete */
+  int err = TEST_PASSED;
+  
+
+  return err;
 }
 
 #endif

@@ -927,6 +927,7 @@ bool data_array::subtract(const data_array& rhs){
   if(this->get_dims() != rhs.get_dims()) return 1;
   for(size_t i=0; i< n_dims; i++) if(this->get_dims(i) != rhs.get_dims(i)) return 1;
 
+/** \todo Why is this copying the axes????*/
   size_t els= get_total_axis_elements();
   if(this->axes) std::copy(rhs.axes, rhs.axes+els, this->axes);
     //Copy axes

@@ -22,16 +22,20 @@ CFLAGS += -g
 OPTIMISE = -O3
 #Optimiser level for non-debug builds (debug includes test)
 
-NO_FFT = 1
+#NO_FFT = 1
 #If defined, do not use FFT libraries. Note FFT routines will be unavailable if set, as will certain utilities
 
 ifdef NO_FFT
   CFLAGS += -DNO_FFT
 endif
 
+#Don't check data file versions against code by default
+CFLAGS += -DDEFAULT_NOVERS
+
+
 DEBUG = -O0 -g -W -Wall -pedantic -D_GLIBCXX_DEBUG -Wextra
-DEBUG+= -Wno-sign-compare
-#DEBUG+= -Wno-unused-parameter
+#DEBUG+= -Wno-sign-compare
+DEBUG+= -Wno-unused-parameter
 #Comment/uncomment these to hide specific errors...
 PROFILE = -g
 LFLAGS = -g

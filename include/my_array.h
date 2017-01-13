@@ -50,6 +50,9 @@ public:
   template<typename T> void divide( T val){
     for(size_t i=0; i< this->get_total_elements(); i++) *(this->data+i) /= val;
   }//Works for any type T where my_type/T is defined
+  template<typename T> void apply( std::function<T(T arg)> func){
+    for(size_t i=0; i< this->get_total_elements(); i++) *(this->data+i) = func(*(this->data+i));
+  }//Apply function T -> T to all elements
 
   virtual bool is_good()const {return (data && dims);}/**< Check memory allocation etc worked*/
   void clone_empty(const my_array &src);

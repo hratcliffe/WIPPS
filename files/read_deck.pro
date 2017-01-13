@@ -46,7 +46,7 @@ WHILE (~EOF(filenum) AND ~(strcmp(tag, str, sz))) DO BEGIN
 
 ENDWHILE
 const = create_struct(const, "file", filename)
-close, filenum
+free_lun, filenum
 
 ;Add the wpe amended by density
 tags=TAG_NAMES(const)

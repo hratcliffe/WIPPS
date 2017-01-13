@@ -1,6 +1,6 @@
 /** \file calculate_growth.cpp \brief Helper program to get expected and/or actual growth rates of waves
 *
-* Can take derived spectrum files, extract the approximate wave growth rates (peak or integrated) (assumes spectra are in time-order and all have the same axes) and output these, plus a theoretical rate, OR just the theoretical rate. In former case we use the last files axes, in latter we use a wide coverage log axis with n_trials elements. Parameters are obtained as in Main, so requires a plasma.conf file and deck.status file. Output uses same format as our arrays etc A set of test arguments is supplied. Supply a file containing paths to spectra to use, in order. Paths should be relative to given -f parameter Call using ./calculate_growth `<growth_test_pars` to use these. Or try ./calculate_growth -h
+* Can take derived spectrum files, extract the approximate wave growth rates (peak or integrated) (assumes spectra are in time-order and all have the same axes) and output these, plus a theoretical rate, OR just the theoretical rate. In former case we use the last files axes, in latter we use a wide coverage log axis with n_trials elements. Parameters are obtained as in Main, so requires a plasma.conf file and deck.status file. Output uses same format as our arrays etc A set of test arguments is supplied. Supply a file containing paths to spectra to use, in order. Paths should be relative to given -f parameter Call using ./calculate_growth `<growth_test_pars` to use these. Or try ./calculate_growth -h \todo NOTE we're calling B but if we fed E ffts into spectra it's not B...
   \author Heather Ratcliffe \date 11/02/2016.
 */
 
@@ -94,28 +94,50 @@ int main(int argc, char *argv[]){
       //Wrap in quotes so we highlight stray trailing whitespace etc
         my_print("Invalid or missing spectrum file '"+cmd_line_args.file_prefix+filelist[0]+"'");
       }
-      data_array B_prev;
+      data_array B_prev, B_curr;
+      //Read and ln B for 0th step
+      std::function<calc_type(calc_type)> log_function = [](calc_type el) -> calc_type { return log(el); } ;
+
       B_prev = my_spect->copy_out_B();
+      
+//      B_prev.apply([](calc_type el) -> calc_type { return log(el); } );
+      B_prev.apply(log_function);
       my_type delta_t = 0.0;
-      for(size_t i=1; i<filelist.size(); i++){
-        my_print("Differencing "+filelist[i-1]+" and "+filelist[i]);
+      for(size_t i=0; i<filelist.size(); i++){
+        if(i> 0) my_print("Differencing "+filelist[i-1]+" and "+filelist[i]);
+        else my_print("Differencing noise estimate and "+filelist[i]);
         delete my_spect;
         my_spect = new spectrum(cmd_line_args.file_prefix+filelist[i]);
         if(my_spect->get_B_dims() <1){
           my_print("Invalid or missing spectrum file '"+cmd_line_args.file_prefix+filelist[i]+"'");
           continue;
         }
-        numeric_data = my_spect->copy_out_B();
-        //Now do difference between spectra
-        numeric_data.subtract(B_prev);
-        //Average prev and current time vals to get mid-point and then take difference
-        delta_t = (numeric_data.time[1] + numeric_data.time[0] -B_prev.time[1] - B_prev.time[0])/2;
-        
-        numeric_data.divide(delta_t);
+        //Read and ln B for this step
+        B_curr = my_spect->copy_out_B();
+        //B_curr.apply([](calc_type el) -> calc_type { return log(el); } );
+        B_curr.apply(log_function);
+        //Now calc gamma from \gamma = \ln (E_2/E_1) / (t_2 - t_1) and assuming E ~ c B so ratio is same
+        numeric_data = B_curr;
+        if(i > 0){
+          //Average prev and current time vals to get mid-point and then take difference
+          delta_t = (numeric_data.time[1] + numeric_data.time[0] -B_prev.time[1] - B_prev.time[0])/2.0;
+          numeric_data.subtract(B_prev);
+
+        }else{
+        //Assuming first file grows from '0' lets take e.g. the first two non edge values as an initial level. We subtract the logs as for the rest of the cases. I.e. we assume E(t_0) = ref_val. Perhaps should average raw not logged, but this will do.
+        /** \todo Now we can allow single el. spectrum list!*/
+          calc_type ref_val = (B_prev.get_element(1)+B_prev.get_element(2))/2.0;
+          
+          std::function<calc_type(calc_type)> minus_const_function = [ref_val](calc_type el) -> calc_type { return el - ref_val; } ;
+          numeric_data.apply(minus_const_function);
+          delta_t =(numeric_data.time[1] + numeric_data.time[0])/2.0;
+        }
+        //Since we're working with E^2 we also divide by 2
+        numeric_data.divide(delta_t*2.0);
         
         if(B_prev.get_dims() > 0 && numeric_data.get_dims() > 0) err |= numeric_data.write_to_file(file, false);
 
-        B_prev = numeric_data;
+        B_prev = B_curr;
       }
       delete my_spect;
     }

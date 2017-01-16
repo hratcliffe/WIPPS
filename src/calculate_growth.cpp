@@ -1,6 +1,6 @@
 /** \file calculate_growth.cpp \brief Helper program to get expected and/or actual growth rates of waves
 *
-* Can take derived spectrum files, extract the approximate wave growth rates (peak or integrated) (assumes spectra are in time-order and all have the same axes) and output these, plus a theoretical rate, OR just the theoretical rate. In former case we use the last files axes, in latter we use a wide coverage log axis with n_trials elements. Parameters are obtained as in Main, so requires a plasma.conf file and deck.status file. Output uses same format as our arrays etc A set of test arguments is supplied. Supply a file containing paths to spectra to use, in order. Paths should be relative to given -f parameter Call using ./calculate_growth `<growth_test_pars` to use these. Or try ./calculate_growth -h \todo NOTE we're calling B but if we fed E ffts into spectra it's not B...
+* Can take derived spectrum files, extract the approximate wave growth rates (peak or integrated) (assumes spectra are in time-order and all have the same axes) and output these, plus a theoretical rate, OR just the theoretical rate. In former case we use the last files axes, in latter we use a wide coverage log axis with n_trials elements. Parameters are obtained as in Main, so requires a plasma.conf file and deck.status file. Output uses same format as our arrays etc A set of test arguments is supplied. Supply a file containing paths to spectra to use, in order. Paths should be relative to given -f parameter Call using ./calculate_growth `<growth_test_pars` to use these. Or try ./calculate_growth -h 
   \author Heather Ratcliffe \date 11/02/2016.
 */
 
@@ -87,59 +87,62 @@ int main(int argc, char *argv[]){
     my_print("Processing spectrum files", mpi_info.rank);
     std::vector<std::string> filelist;
     filelist = read_filelist(cmd_line_args.file_prefix+extra_args.spect_file);
-    if(filelist.size() >= 2){
+    if(filelist.size() >= 1){
 
       spectrum * my_spect = new spectrum(cmd_line_args.file_prefix+ filelist[0]);
-      if(my_spect->get_B_dims() <1){
+      if(my_spect->get_B_dims() < 1){
       //Wrap in quotes so we highlight stray trailing whitespace etc
         my_print("Invalid or missing spectrum file '"+cmd_line_args.file_prefix+filelist[0]+"'");
       }
-      data_array B_prev, B_curr;
-      //Read and ln B for 0th step
+      //We read spetra which may be either E or B, so call it F
+      data_array F_prev, F_curr;
+      //Read and ln F for 0th step
       std::function<calc_type(calc_type)> log_function = [](calc_type el) -> calc_type { return log(el); } ;
-
-      B_prev = my_spect->copy_out_B();
-      
-//      B_prev.apply([](calc_type el) -> calc_type { return log(el); } );
-      B_prev.apply(log_function);
+      F_prev = my_spect->copy_out_B();
+      F_prev.apply(log_function);
       my_type delta_t = 0.0;
+      
       for(size_t i=0; i<filelist.size(); i++){
-        if(i> 0) my_print("Differencing "+filelist[i-1]+" and "+filelist[i]);
+        if(i > 0) my_print("Differencing "+filelist[i-1]+" and "+filelist[i]);
         else my_print("Differencing noise estimate and "+filelist[i]);
         delete my_spect;
         my_spect = new spectrum(cmd_line_args.file_prefix+filelist[i]);
-        if(my_spect->get_B_dims() <1){
+        if(my_spect->get_B_dims() < 1){
           my_print("Invalid or missing spectrum file '"+cmd_line_args.file_prefix+filelist[i]+"'");
           continue;
+        }else if(my_spect->get_B_dims(0) < 3){
+          //We use first few els in special case below, and < 3 els will never be useful growth rate
+          my_print("Invalid field in '"+cmd_line_args.file_prefix+filelist[i]+"'");
+          continue;
         }
-        //Read and ln B for this step
-        B_curr = my_spect->copy_out_B();
-        //B_curr.apply([](calc_type el) -> calc_type { return log(el); } );
-        B_curr.apply(log_function);
-        //Now calc gamma from \gamma = \ln (E_2/E_1) / (t_2 - t_1) and assuming E ~ c B so ratio is same
-        numeric_data = B_curr;
+        //Read and ln F for this step
+        F_curr = my_spect->copy_out_B();
+        F_curr.apply(log_function);
+        //Now calc gamma from \gamma = \ln (F_2/F_1) / (t_2 - t_1)
+        numeric_data = F_curr;
         if(i > 0){
           //Average prev and current time vals to get mid-point and then take difference
-          delta_t = (numeric_data.time[1] + numeric_data.time[0] -B_prev.time[1] - B_prev.time[0])/2.0;
-          numeric_data.subtract(B_prev);
+          delta_t = (numeric_data.time[1] + numeric_data.time[0] -F_prev.time[1] - F_prev.time[0])/2.0;
+          numeric_data.subtract(F_prev);
 
         }else{
-        //Assuming first file grows from '0' lets take e.g. the first two non edge values as an initial level. We subtract the logs as for the rest of the cases. I.e. we assume E(t_0) = ref_val. Perhaps should average raw not logged, but this will do.
-        /** \todo Now we can allow single el. spectrum list!*/
-          calc_type ref_val = (B_prev.get_element(1)+B_prev.get_element(2))/2.0;
+        //Assuming first file grows from '0' lets take e.g. the first two non edge values as an initial level. We subtract the logs as for the rest of the cases. I.e. we assume F(t_0) = ref_val. Perhaps should average raw not logged, but this will do.
+          calc_type ref_val = (F_prev.get_element(1) + F_prev.get_element(2))/2.0;
           
           std::function<calc_type(calc_type)> minus_const_function = [ref_val](calc_type el) -> calc_type { return el - ref_val; } ;
           numeric_data.apply(minus_const_function);
           delta_t =(numeric_data.time[1] + numeric_data.time[0])/2.0;
         }
-        //Since we're working with E^2 we also divide by 2
+        //Since we're working with F^2 we also divide by 2
         numeric_data.divide(delta_t*2.0);
         
-        if(B_prev.get_dims() > 0 && numeric_data.get_dims() > 0) err |= numeric_data.write_to_file(file, false);
+        if(numeric_data.get_dims() > 0) err |= numeric_data.write_to_file(file, false);
 
-        B_prev = B_curr;
+        F_prev = F_curr;
       }
       delete my_spect;
+    }else{
+      my_print("Empty or missing spectrum file '"+cmd_line_args.file_prefix+extra_args.spect_file+"'", mpi_info.rank);
     }
   }
   

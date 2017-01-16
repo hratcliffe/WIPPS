@@ -59,6 +59,7 @@ FOR i=0, sz[1]-1 DO BEGIN
 END
 
 k_distrib = exp( - (axes[0] - (axes[0])[n_pts[0]/2.0 + k_peak])^2 / 0.01/max(axes[0])^2 )
+k_distrib[n_pts[0]/2.0:n_pts[0]/2.0+10] = 0.0
 k_distrib[0:n_pts[0]/2.0 -1] = reverse(k_distrib[n_pts[0]/2.0:n_pts[0]-1])
 
 FOR i=0, sz[1]-1 DO BEGIN
@@ -66,6 +67,8 @@ FOR i=0, sz[1]-1 DO BEGIN
   IF(cells GT 0) THEN FFT_data[i, om_min_ind[i]:om_max_ind[i]] = k_distrib[i]/cells
 END
 
+;Mirror data
+FFT_data[*, 0:n_pts[1]/2-1] = (FFT_data[*, n_pts[1]-1:n_pts[1]/2:-1]) 
 
 ;Save the data
 err = write_data(output_file, FFT_data, axes, id='FFTd')
@@ -78,5 +81,4 @@ calculate_energy_density, FFT_data, axes, dispersion, output=spectrum, margin=om
 ;Save the spectrum
 err = write_data(spectrum_file, spectrum, list(dispersion), id="spect")
 
-stop
 end

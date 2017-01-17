@@ -39,6 +39,7 @@ public:
   size_t get_n_pars(){return parameters.size();}
   void set_dp(calc_type dp){this->dp = dp;}/**<Set the dp used to get numerical derivative*/
   my_type * lookup_data;/** Data pointer for use with a lookup type function backend. Note type matched to MY EPOCH data*/
+  size_t dims[2];
 #ifdef RUN_TESTS_AND_EXIT
   calc_type get_v_par(){return v_par;}
   calc_type get_v_perp(){return v_perp;}

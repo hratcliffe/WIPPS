@@ -4,6 +4,7 @@ Command line options:
 -dump <int> Dump number
 -x_blocks <int> Divide into this many x blocks. If this does not evenly divide the x-size overlap will occur
 -list Just list the present distributions (identified by presence of grid)
+-extr Extract and redump, do no compression
 
 Sample usage:
 make utils TYPE=float

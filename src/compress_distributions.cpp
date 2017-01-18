@@ -88,7 +88,13 @@ int main(int argc, char *argv[]){
     file.open(filename.c_str(),std::ios::out|std::ios::binary);
 
     if(my_args.blocks ==-1){
+      //Average all blocks
       dat=dat.average(0);
+      dat.write_to_file(file, false);
+      dat.write_closer(file);
+    }
+    else if(my_args.blocks ==0){
+      //Simply read and then dump
       dat.write_to_file(file, false);
       dat.write_closer(file);
     }
@@ -133,6 +139,9 @@ dist_cmd_line special_command_line(int argc, char *argv[]){
     }
     else if(strcmp(argv[i], "-list")==0){
       values.list = 1;
+    }
+    else if(strcmp(argv[i], "-extr")==0){
+      values.blocks = 0;
     }
     else if(strcmp(argv[i], "-dump")==0 && i < argc-1){
       values.dump= atoi(argv[i+1]);

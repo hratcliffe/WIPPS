@@ -1,8 +1,20 @@
+function write_data, filelabel, data, axes, usenum=usenum, _extra=extr
+;Write data wrapper. If usenum is set, assume filelabel is a lun. Otherwise assume it's a string name
+  IF(~KEYWORD_SET(usenum)) THEN BEGIN
+    filenum=0
+    print, filelabel
+    openw, filenum, filelabel, /get_lun
+    err=write_data_by_num(filenum, data, axes, _extra=extr, /close_file)
+    free_lun, filenum
+    return, err
+  ENDIF ELSE return, write_data_by_num(filelabel, data, axes, _extra=extr)
+end
 
-function write_data, filename, data, axes, id=id
+function write_data_by_num, filenum, data, axes, _extra=extr, close_file=close_file
 
 ;Written for commit ID from 801d57e to ... FILL IN IF IO CHNAGES....
 ;The id string is done as exactly 10 chars ending in null. To faffy to put the null terminator within the string
+;If file is not closed, make sure to 
 COMPILE_OPT IDL2
 ;force long ints and proper brackets
 
@@ -41,47 +53,53 @@ commit_out ='IDL data write'
 
 null_byte = BYTE(0)
 
-openw, 1, filename
-;open file
-writeu, 1, sz_sz
-writeu, 1, my_sz
+writeu, filenum, sz_sz
+writeu, filenum, my_sz
 
-writeu, 1, io_check
-writeu, 1, commit_out
-writeu, 1, null_byte
+writeu, filenum, io_check
+writeu, filenum, commit_out
+writeu, filenum, null_byte
 
 next_loc = 0ull
+;POINT_LUN, -filenum, next_loc
 next_loc = next_loc + 2*sz_sz+my_sz+15+sz_sz*(n_dims+2)
-writeu, 1, next_loc
+writeu, filenum, next_loc
 print, size(next_loc), next_loc
 
-writeu, 1, ulong64(n_dims)
-writeu, 1, ulong64(dims)
+writeu, filenum, ulong64(n_dims)
+writeu, filenum, ulong64(dims)
 
 next_loc = next_loc + ulong64(product(dims))*my_sz+sz_sz
-writeu, 1, next_loc
+writeu, filenum, next_loc
 print, size(next_loc), next_loc
 
-writeu, 1, data
+writeu, filenum, data
 
 next_loc = next_loc+sz_sz+ulong64(total(dims))*my_sz
-writeu, 1, next_loc
+writeu, filenum, next_loc
 FOR i=0, n_dims-1 DO BEGIN
-  writeu, 1, axes[i]
+  writeu, filenum, axes[i]
 END
 ftr_start = next_loc
 ;Footer data
 next_loc  = next_loc + my_sz*3 + sz_sz*3
-writeu, 1, next_loc
+writeu, filenum, next_loc
+extra_tags=tag_names(extr)
+IF(where(extra_tags EQ 'TIME') NE -1) THEN time=extr.time ELSE time=[0.0*io_check, 1.0]
+;Use io_check as we know it has correct type
+writeu, filenum, time
+IF(where(extra_tags EQ 'SPACE') NE -1) THEN space=extr.space ELSE space=[0ull, 1ull]
+writeu, filenum, space
+IF(where(extra_tags EQ 'B_REF') NE -1) THEN b_ref=extr.b_ref ELSE b_ref = 0.0*io_check
+writeu, filenum, b_ref
 
 next_loc = next_loc + sz_sz + 10
-writeu, 1, next_loc
-block_out = '10 chars '
-writeu, 1, block_out
-writeu, 1, null_byte
-writeu, 1, ftr_start
+writeu, filenum, next_loc
+id_out = '10 chars '
+writeu, filenum, id_out
+writeu, filenum, null_byte
 
-close, 1
+IF(KEYWORD_SET(close_file) || where(extra_tags EQ 'CLOSE_FILE') NE -1) THEN writeu, filenum, ftr_start
 
 RETURN, 0
 

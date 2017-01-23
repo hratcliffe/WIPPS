@@ -24,6 +24,7 @@ function plot_logger, filename, details, stack_levels=stack_levels
 ;E.g. details = {source:'data/run1/time0.dat', smooth: 1}
 ;set stack_levels to determine max depth of calls. Default 3 levels. Number does NOT include this function
   dir = strjoin(((strsplit(filename, '/', /extract))[0:-2]), '/')+'/'
+  if(strmid(filename, 0, 1) EQ '/') THEN dir = '/'+dir
   filename_part = (strsplit(filename, '/', /extract))[-1]
  ;Check this directory exists
   if(~file_test(dir)) THEN BEGIN
@@ -46,7 +47,7 @@ function plot_logger, filename, details, stack_levels=stack_levels
   details_print += call_stack+' '
   if(isa(details, 'struct')) THEN BEGIN
     tag_nams = tag_names(details)
-    for i=0, (size(tag_nams))[1]-1 DO details_print += tag_nams[i]+' '+strtrim(string(details.(i), /print), 2)+'; ' 
+    for i=0, (size(tag_nams))[1]-1 DO details_print += tag_nams[i]+' '+strjoin(strtrim(string(details.(i), /print), 2), ', ')+'; ' 
   endif else if(isa(details, /arr) && isa(details[0], 'string')) THEN BEGIN
       details_print = strjoin(details, ' ')
     endif

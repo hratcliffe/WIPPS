@@ -1,9 +1,9 @@
 function get_p_res, p_perp_ax, omega, om_ce=om_ce, om_pe=om_pe
 ;Calculate resonant p_parallel from cold plasma dispersion for omega
+common consts, q0, m0, v0, kb, mu0, epsilon0, h_planck
 
 if(N_ELEMENTS(om_ce) EQ 0) THEN om_ce=30000
 if(N_ELEMENTS(om_pe) EQ 0) THEN om_pe=om_ce*3
- v0 =  299792458.000
 
 sz=size(p_perp_ax)
 ret_val=p_perp_ax

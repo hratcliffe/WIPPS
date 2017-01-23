@@ -52,9 +52,7 @@ function average_pitch_angle, T_par=T_par, A=A, energy=energy, distrib=distrib, 
 ;Energy should be in keV, as should T_par
 ;n_angs is the number of angles to use in calculation, 500 by default
 
-q0 = 1.6021765650000000e-19
-m0 = 9.1093829099999999e-31
-v0 = 299792458.00000000
+common consts, q0, m0, v0, kb, mu0, epsilon0, h_planck
 
 IF(N_ELEMENTS(T_par) EQ 0 OR N_ELEMENTS(A) EQ 0) THEN BEGIN
   PRINT, "Distribution underspecified, require T_par and A"

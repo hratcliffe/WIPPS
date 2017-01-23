@@ -4,7 +4,7 @@ function write_data, filelabel, data, axes, usenum=usenum, _extra=extr
     filenum=0
     print, filelabel
     openw, filenum, filelabel, /get_lun
-    err=write_data_by_num(filenum, data, axes, _extra=extr, /close_file)
+    err=write_data_by_num(filenum, data, axes,  /close_file, _extra=extr)
     free_lun, filenum
     return, err
   ENDIF ELSE return, write_data_by_num(filelabel, data, axes, _extra=extr)

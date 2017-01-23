@@ -18,11 +18,13 @@ pro share_omegas, om_ce, om_pe
   om_pe_sh = om_pe
 end
 
-function plot_logger, filename, details
-;Stringify the details into a blob and write date/time and details to plots.log in directory of filename
+function plot_logger, filename, details, stack_levels=stack_levels
+;Stringify the details into a blob and write date/time, call stack and details to plots.log in directory of filename
 ;Generally either supply a struct in which case the tag names are included in strings, or pre-prepared string array
-;E.g. details = {routine:'plot_fft', source:'data/run1/time0.dat', smooth: 1}
+;E.g. details = {source:'data/run1/time0.dat', smooth: 1}
+;set stack_levels to determine max depth of calls. Default 3 levels. Number does NOT include this function
   dir = strjoin(((strsplit(filename, '/', /extract))[0:-2]), '/')+'/'
+  filename_part = (strsplit(filename, '/', /extract))[-1]
  ;Check this directory exists
   if(~file_test(dir)) THEN BEGIN
     print, 'plot_logger: no such directory '+dir
@@ -34,10 +36,17 @@ function plot_logger, filename, details
     PRINT, 'Invalid details, supply struct, or [array of] strings'
     RETURN, 1
   ENDIF
-  details_print = time+' '
+  details_print = time+' '+filename_part+' '
+  if(N_ELEMENTS(stack_levels) EQ 0) THEN stack_levels = 3
+  call_stack = ((scope_traceback(/structure)).routine)
+  if((size(call_stack))[1] GE stack_levels) THEN call_stack = call_stack[-stack_levels-1: -1]
+  ;Drop this level
+  call_stack = call_stack[0:-2]
+  call_stack = strjoin(call_stack, '->')
+  details_print += call_stack+' '
   if(isa(details, 'struct')) THEN BEGIN
     tag_nams = tag_names(details)
-    for i=0, (size(tag_nams))[1]-1 DO details_print += tag_nams[i]+' '+strtrim(string(details.(i), /print), 2)+' '
+    for i=0, (size(tag_nams))[1]-1 DO details_print += tag_nams[i]+' '+strtrim(string(details.(i), /print), 2)+'; ' 
   endif else if(isa(details, /arr) && isa(details[0], 'string')) THEN BEGIN
       details_print = strjoin(details, ' ')
     endif
@@ -50,6 +59,14 @@ function plot_logger, filename, details
   printf, filenum, details_print
   free_lun, filenum
   RETURN, 0
+end
+
+pro write_png_l, filename, im, details=details
+;Write image to png 
+
+write_png, filename, im
+if(n_elements(details) NE 0) THEN p=plot_logger(filename, details)
+
 end
 
 pro angular_distribs, spec_in, freqs=freqs, om_ce=om_ce, _extra = extr

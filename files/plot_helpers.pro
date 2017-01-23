@@ -1,5 +1,6 @@
 pro define_consts
-  common consts, q0, m0, v0, kb, mu0, epsilon0, h_planck
+;  common 
+consts, q0, m0, v0, kb, mu0, epsilon0, h_planck
   
   q0 = 1.602176565d-19 ; elementary charge [C]
   m0 = 9.10938291d-31  ; electron mass [kg]
@@ -15,6 +16,40 @@ pro share_omegas, om_ce, om_pe
   common omega_share, om_ce_sh, om_pe_sh
   om_ce_sh = om_ce
   om_pe_sh = om_pe
+end
+
+function plot_logger, filename, details
+;Stringify the details into a blob and write date/time and details to plots.log in directory of filename
+;Generally either supply a struct in which case the tag names are included in strings, or pre-prepared string array
+;E.g. details = {routine:'plot_fft', source:'data/run1/time0.dat', smooth: 1}
+  dir = strjoin(((strsplit(filename, '/', /extract))[0:-2]), '/')+'/'
+ ;Check this directory exists
+  if(~file_test(dir)) THEN BEGIN
+    print, 'plot_logger: no such directory '+dir
+    RETURN, 1
+  endif
+  ;grab time for log
+  time=systime()
+  if(~isa(details, 'struct') && (~isa(details[0], 'string'))) THEN BEGIN
+    PRINT, 'Invalid details, supply struct, or [array of] strings'
+    RETURN, 1
+  ENDIF
+  details_print = time+' '
+  if(isa(details, 'struct')) THEN BEGIN
+    tag_nams = tag_names(details)
+    for i=0, (size(tag_nams))[1]-1 DO details_print += tag_nams[i]+' '+strtrim(string(details.(i), /print), 2)+' '
+  endif else if(isa(details, /arr) && isa(details[0], 'string')) THEN BEGIN
+      details_print = strjoin(details, ' ')
+    endif
+ ; end
+  if(file_test(dir+'plots.log')) THEN BEGIN 
+    openu, filenum, dir+'plots.log', /get_lun, /append
+  endif else BEGIN
+    openw, filenum, dir+'plots.log', /get_lun
+  end
+  printf, filenum, details_print
+  free_lun, filenum
+  RETURN, 0
 end
 
 pro angular_distribs, spec_in, freqs=freqs, om_ce=om_ce, _extra = extr

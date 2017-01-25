@@ -50,7 +50,7 @@ Default and minimum is 4 or the length of first as a string, tries 5-7 also.
 
   std::string name = file_prefix + file_ref+".sdf";
   n_z=n_z_first;
-
+  file.open(name);
   while(!file.is_open()){
     name.insert(file_prefix.size(), "0");
     file.open(name);
@@ -72,6 +72,7 @@ std::vector<std::pair<std::string, std::string> > reader::list_blocks(){
   std::vector<std::pair<std::string, std::string> > list;
   handle = sdf_open(file_name.c_str(), MPI_COMM_WORLD, SDF_READ, 0);
   if(!handle){
+    my_print("Error reading file "+file_name);
     return list;
   }
   sdf_read_blocklist(handle);

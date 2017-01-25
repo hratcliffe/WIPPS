@@ -4,13 +4,13 @@ function write_data, filelabel, data, axes, usenum=usenum, _extra=extr
     filenum=0
     print, filelabel
     openw, filenum, filelabel, /get_lun
-    err=write_data_by_num(filenum, data, axes,  /close_file, _extra=extr)
+    err=write_data_by_num(filenum, data, axes, /close_file, _extra=extr)
     free_lun, filenum
     return, err
   ENDIF ELSE return, write_data_by_num(filelabel, data, axes, _extra=extr)
 end
 
-function write_data_by_num, filenum, data, axes, _extra=extr, close_file=close_file
+function write_data_by_num, filenum, data, axes, close_file=close_file, _extra=extr
 
 ;Written for commit ID from 801d57e to ... FILL IN IF IO CHNAGES....
 ;The id string is done as exactly 10 chars ending in null. To faffy to put the null terminator within the string
@@ -39,11 +39,6 @@ IF((sz[-2] EQ 5)) THEN my_sz = 8
 ;Floats are 4 or 8 bytes
 ;this matches the type of the C code my_type...
 
-id_out = '          '
-IF(N_ELEMENTS(id) GT 0) THEN strput, id_out, id, 0
-;copy id into correct length string
-;type for block id...
-
 io_check = 3.0/32.0
 if(my_sz EQ 8) THEN io_check = 3.0d0/32.0d0
 ;io verification const.
@@ -61,18 +56,15 @@ writeu, filenum, commit_out
 writeu, filenum, null_byte
 
 next_loc = 0ull
-;POINT_LUN, -filenum, next_loc
-next_loc = next_loc + 2*sz_sz+my_sz+15+sz_sz*(n_dims+2)
+POINT_LUN, -filenum, next_loc
+next_loc = next_loc + ulong64(sz_sz*(n_dims+2))
 writeu, filenum, next_loc
-print, size(next_loc), next_loc
 
 writeu, filenum, ulong64(n_dims)
 writeu, filenum, ulong64(dims)
 
 next_loc = next_loc + ulong64(product(dims))*my_sz+sz_sz
 writeu, filenum, next_loc
-print, size(next_loc), next_loc
-
 writeu, filenum, data
 
 next_loc = next_loc+sz_sz+ulong64(total(dims))*my_sz
@@ -80,11 +72,10 @@ writeu, filenum, next_loc
 FOR i=0, n_dims-1 DO BEGIN
   writeu, filenum, axes[i]
 END
-ftr_start = next_loc
-;Footer data
+
 next_loc  = next_loc + my_sz*3 + sz_sz*3
 writeu, filenum, next_loc
-extra_tags=tag_names(extr)
+IF(N_ELEMENTS(extr) GT 0) THEN extra_tags=tag_names(extr) else extra_tags=[]
 IF(where(extra_tags EQ 'TIME') NE -1) THEN time=extr.time ELSE time=[0.0*io_check, 1.0]
 ;Use io_check as we know it has correct type
 writeu, filenum, time
@@ -95,12 +86,22 @@ writeu, filenum, b_ref
 
 next_loc = next_loc + sz_sz + 10
 writeu, filenum, next_loc
+
 id_out = '10 chars '
+IF(where(extra_tags EQ 'BLOCK') NE -1) THEN strput, id_out, extr.block, 0
 writeu, filenum, id_out
 writeu, filenum, null_byte
 
-IF(KEYWORD_SET(close_file) || where(extra_tags EQ 'CLOSE_FILE') NE -1) THEN writeu, filenum, ftr_start
-
+IF(KEYWORD_SET(close_file) || where(extra_tags EQ 'CLOSE_FILE') NE -1) THEN BEGIN
+  ftr_start = 0ull
+  point_lun, -filenum, ftr_start
+  ftr_start = ulong64(ftr_start)
+  next_loc = next_loc + sz_sz + 10
+  writeu, filenum, next_loc
+  writeu, filenum, id_out
+  writeu, filenum, null_byte
+  writeu, filenum, ftr_start
+END
 RETURN, 0
 
 end

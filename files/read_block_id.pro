@@ -25,10 +25,8 @@ tmp = FSTAT(filenum)
 POINT_LUN, filenum, (tmp.size - int_sz)
 start_pos = hdr.block_type
 readu, filenum, start_pos
-print, start_pos
 POINT_LUN, filenum, start_pos
 readu, filenum, start_pos
-print, start_pos
 id_type ='1234567891'
 id_in = id_type
 ;type for block id...

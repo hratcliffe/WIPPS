@@ -58,3 +58,47 @@ const = create_struct(const, "wpe_fix", const.wpe*sqrt(rat))
 RETURN, const
 
 END
+
+function read_deck_all, dir=dir, pref=pref, file=file
+
+;Read all deck specs into struct
+;/todo add file exists check
+COMPILE_OPT IDL2
+;force long ints and proper brackets
+IF(N_ELEMENTS(pref) EQ 0) THEN pref = ""
+IF(N_ELEMENTS(file) GT 0) THEN BEGIN
+  name = file
+ENDIF ELSE BEGIN
+  name = pref +'deck.status'
+ENDELSE
+IF(N_ELEMENTS(dir) EQ 0) THEN BEGIN
+  filename = get_wkdir()+"/"+name
+ENDIF ELSE BEGIN
+  filename = dir[0]+'/'+name
+ENDELSE
+
+openr, filenum, filename, /get_lun
+
+str=''
+deck_specs=0
+WHILE (~EOF(filenum)) DO BEGIN
+  READF, filenum, str
+  IF(~strmatch(str, '*=*')) THEN CONTINUE
+  IF(strmatch(str, '*Element*handled OK')) THEN CONTINUE
+  nv=parse_name_val(str)
+  IF(~ ISA(nv, 'LIST')) THEN CONTINUE
+  IF((SIZE(nv))[1] LT 2) THEN CONTINUE
+  
+  IF( ISA(deck_specs, 'struct')) THEN BEGIN
+    if(where(tag_names(deck_specs) EQ strupcase(nv[0])) EQ -1) THEN deck_specs = create_struct(deck_specs, nv[0], nv[1])
+  ENDIF ELSE BEGIN
+    deck_specs = create_struct(nv[0], nv[1])
+  ENDELSE
+
+ENDWHILE
+deck_specs = create_struct(deck_specs, "file", filename)
+
+
+free_lun, filenum
+return, deck_specs
+end

@@ -1,6 +1,5 @@
 pro define_consts
-;  common 
-consts, q0, m0, v0, kb, mu0, epsilon0, h_planck
+  common consts, q0, m0, v0, kb, mu0, epsilon0, h_planck
   
   q0 = 1.602176565d-19 ; elementary charge [C]
   m0 = 9.10938291d-31  ; electron mass [kg]
@@ -40,7 +39,7 @@ function plot_logger, filename, details, stack_levels=stack_levels
   details_print = time+' '+filename_part+' '
   if(N_ELEMENTS(stack_levels) EQ 0) THEN stack_levels = 3
   call_stack = ((scope_traceback(/structure)).routine)
-  if((size(call_stack))[1] GE stack_levels) THEN call_stack = call_stack[-stack_levels-1: -1]
+  if((size(call_stack))[1] GE stack_levels+1) THEN call_stack = call_stack[-stack_levels-1: -1]
   ;Drop this level
   call_stack = call_stack[0:-2]
   call_stack = strjoin(call_stack, '->')
@@ -178,4 +177,27 @@ function px_axis, axis, index, value
 
 end
 
-  
+function read_spectra_from_file, dir, spec_file
+  openr, filenum, dir+spec_file, /get_lun
+  tmp='a'
+  readf, filenum, tmp
+  names = [tmp]
+  while(~EOF(filenum)) DO BEGIN
+    readf, filenum, tmp
+    names=[names, tmp]
+  endwhile
+
+  FOR i=0, (size(names))[1]-1 DO BEGIN
+    tmp=read_spect(dir+strtrim(names[i]))
+    if(i EQ 0) THEN all_spect = [tmp] ELSE all_spect = [all_spect, [tmp]]
+  END
+return, all_spect
+end
+function get_n_files, dir, lead=lead, ext=ext
+;Count files in directory
+  if(N_ELEMENTS(lead) EQ 0) THEN lead = '/Volumes/Seagate Backup Plus Drive/DiracWhistlers/'
+  if(N_ELEMENTS(ext) EQ 0) THEN ext='*.sdf'
+  a=file_search(lead+dir+'/'+ext, count=cnt)
+  return, cnt
+end
+ 

@@ -4,7 +4,7 @@ pro plot_all_tests, png=png
 
 common consts, q0, m0, v0, kb, mu0, epsilon0, h_planck
 !p.background=255
-window, 0
+window, /free
 growth_dir = '/Volumes/Seagate Backup Plus Drive/DiracWhistlers/GrowthTests/'
 names=['fu', 'mod1', 'mod2', 'mod3', 'mod4', 'mod5', 'mod6']
 
@@ -43,4 +43,44 @@ if(keyword_set(png)) THEN BEGIN
 end
 
 end
+pro plot_time_evol, dirs, outfile=outfile, return_data=return_data, _extra=extr
 
+base_dir = '/Volumes/Seagate Backup Plus Drive/DiracWhistlers/'
+
+IF(N_ELEMENTS(dirs) EQ 0) THEN return
+if(N_ELEMENTS(outfile) EQ 0) THEN outfile = base_dir+'time_evol_all.png'
+
+n_dirs=(size(dirs))[1]
+
+times_arr=list(fltarr(get_n_files(dirs[0])))
+for i=1, n_dirs-1 DO times_arr.add, fltarr(get_n_files(dirs[i]))
+
+cols = findgen(n_dirs)/float(n_dirs)*200+54
+;This is how to copy a list content, rather than get a new reference to it
+ens_arr = times_arr[*]
+ens_arr_max= ens_arr[*]
+
+for i=0, n_dirs-1 DO BEGIN
+ ; while(file_test(base_dir+dirs[i]+'/'+string(format='(I04)', j, /print)+'.sdf')) DO BEGIN
+  FOR j=0, (size(times_arr[i]))[1]-1 DO BEGIN
+; FOR j=0, 5 DO BEGIN
+    if(j mod 10 EQ 0) then print, j
+    q=getdata(j, wkdir=base_dir+dirs[i], /ey, /ez)
+    times_arr[i, j] = q.time
+    ens_arr_max[i, j] = max(gauss_smooth(abs(fft(q.ey^2+q.ez^2)), 1))
+    ens_arr[i, j] = total(sqrt(q.ey^2+q.ez^2))
+    ;This is IDl list of arrays syntax. first index is list index, second is the array index into that list element. 
+  END
+END
+  !p.background=255
+  window, /free
+  maxe = 1d-60
+  foreach en, ens_arr DO maxe = max([max(en), maxe])
+;  maxe=ceil(alog10(maxe))
+  plot, times_arr[0], smooth(ens_arr[0], 3), xtitle='Time [s]', ytitle ='Wave Power [arb units]', color=0, yrange=[0, maxe], _extra=extr 
+  for i=1, n_dirs-1 DO oplot, times_arr[i], smooth(ens_arr[i], 3), color=cols[i]
+  
+  im=tvrd(true=1)
+  write_png_l, outfile, im, details={smooth:3}
+  return_data = {times:times_arr, ens:ens_arr, dirs:dirs}
+END

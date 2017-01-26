@@ -51,6 +51,8 @@ bool write_growth_closer(std::string in_file, plasma * my_plas, non_thermal * my
 
 std::vector<std::string> read_filelist(std::string infile);
 
+void dump_distrib(non_thermal * my_elec, std::string filename);
+
 int main(int argc, char *argv[]){
 
   int err=0;
@@ -202,6 +204,7 @@ int main(int argc, char *argv[]){
   file.close();
   if(!err) my_print("Written in "+filename);
   else my_print("Error writing to "+filename);
+  dump_distrib(my_elec, cmd_line_args.file_prefix+"NonThermalDump.dat");
   safe_exit();
 
 }
@@ -332,7 +335,7 @@ std::vector<std::string> read_filelist(std::string infile){
 
 g_args g_command_line(int argc, char * argv[]){
 /** Check whether to handle real spectra. If -s we use the spectra (plural) listed in that file, if not we output analytic only*/
-
+/** \todo -spec is not an error???*/
   g_args extra_cmd_line;
 
   extra_cmd_line.real = false;
@@ -390,6 +393,31 @@ bool write_growth_closer(std::string in_file, plasma * my_plas, non_thermal * my
 
   return write_err;
 }
+
+void dump_distrib(non_thermal * my_elec, std::string filename){
+  //Write out a table of the current non_thermal distribution
+  
+  size_t x_len = 500, y_len=500;
+  my_type x_ax_max = 0.99*v0, y_ax_max = 0.99*v0;
+  std::string block_id = "nonth";
+
+  //Create array and axes
+  data_array created_array = data_array(500, 500);
+  strncpy(created_array.block_id, block_id.c_str(), ID_SIZE);
+  for(int i=0; i<x_len; i++) created_array.set_axis_element(0, i, -x_ax_max + (float)i*(x_ax_max*2.0/(float) x_len));
+  for(int i=0; i<y_len; i++) created_array.set_axis_element(1, i, -y_ax_max + (float)i*(y_ax_max*2.0/(float) y_len));
+  
+  for(int i=0; i< x_len; i++){
+    for(int j=0; j< y_len; j++){
+   // std::cout<<i<<' '<<j<<' '<<created_array.get_axis_element(0, i)<<' '<< created_array.get_axis_element(1, j)<<'\n';
+      created_array.set_element(i, j, my_elec->f_p(created_array.get_axis_element(0, i), created_array.get_axis_element(1, j)));
+    }
+  }
+  std::fstream outfile;
+  outfile.open(filename,std::ios::binary|std::ios::out);
+  if(outfile) created_array.write_to_file(outfile);
+}
+
 
 /** @} */
 /** @} */

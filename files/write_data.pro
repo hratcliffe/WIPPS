@@ -1,14 +1,3 @@
-function write_data, filelabel, data, axes, usenum=usenum, _extra=extr
-;Write data wrapper. If usenum is set, assume filelabel is a lun. Otherwise assume it's a string name
-  IF(~KEYWORD_SET(usenum)) THEN BEGIN
-    filenum=0
-    print, filelabel
-    openw, filenum, filelabel, /get_lun
-    err=write_data_by_num(filenum, data, axes, /close_file, _extra=extr)
-    free_lun, filenum
-    return, err
-  ENDIF ELSE return, write_data_by_num(filelabel, data, axes, _extra=extr)
-end
 
 function write_data_by_num, filenum, data, axes, close_file=close_file, _extra=extr
 
@@ -105,3 +94,16 @@ END
 RETURN, 0
 
 end
+
+function write_data, filelabel, data, axes, usenum=usenum, _extra=extr
+;Write data wrapper. If usenum is set, assume filelabel is a lun. Otherwise assume it's a string name
+  IF(~KEYWORD_SET(usenum)) THEN BEGIN
+    filenum=0
+    print, filelabel
+    openw, filenum, filelabel, /get_lun
+    err=write_data_by_num(filenum, data, axes, /close_file, _extra=extr)
+    free_lun, filenum
+    return, err
+  ENDIF ELSE return, write_data_by_num(filelabel, data, axes, _extra=extr)
+end
+

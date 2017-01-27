@@ -177,22 +177,6 @@ function px_axis, axis, index, value
 
 end
 
-function read_spectra_from_file, dir, spec_file
-  openr, filenum, dir+spec_file, /get_lun
-  tmp='a'
-  readf, filenum, tmp
-  names = [tmp]
-  while(~EOF(filenum)) DO BEGIN
-    readf, filenum, tmp
-    names=[names, tmp]
-  endwhile
-
-  FOR i=0, (size(names))[1]-1 DO BEGIN
-    tmp=read_spect(dir+strtrim(names[i]))
-    if(i EQ 0) THEN all_spect = [tmp] ELSE all_spect = [all_spect, [tmp]]
-  END
-return, all_spect
-end
 function get_n_files, dir, lead=lead, ext=ext
 ;Count files in directory
   if(N_ELEMENTS(lead) EQ 0) THEN lead = '/Volumes/Seagate Backup Plus Drive/DiracWhistlers/'

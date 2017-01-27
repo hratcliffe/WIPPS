@@ -17,8 +17,11 @@ pro smooth_distrib, filename, outfile=outfile, smth=smth
   
   dist_in.data = gauss_smooth(dist_in.data, smth)
   norm_factor = double(1.0)/(deck_specs.x_max*deck_specs.y_max*deck_specs.dens)/((dist_in.axes.x[1]-dist_in.axes.x[0])/m0*((dist_in.axes.y[1]-dist_in.axes.y[0])/m0)^2)
-  norm_factor = float(norm_factor)
-  print, "Norm is ", norm_factor
+  d_x_sz = (size(dist_in.data))[1]
+  d_y_sz = (size(dist_in.data))[2]
+  z_renorm = 1.0/dist_in.data[d_x_sz/2, d_y_sz/2]*total(dist_in.data[d_x_sz/2, *])
+  norm_factor = float(norm_factor/z_renorm)
+  print, "Norm is ", norm_factor, "and z renorm is", z_renorm
   err=write_data(outfile, dist_in.data*norm_factor, list(dist_in.axes.x/float(m0), dist_in.axes.y/float(m0)), time=dist_in.time, space=dist_in.space, B_ref=dist_in.B_ref, block=dist_in.block)
   PRINT, err
   if(err) THEN PRINT, "Error writing file"

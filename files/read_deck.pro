@@ -59,7 +59,7 @@ RETURN, const
 
 END
 
-function read_deck_all, dir=dir, pref=pref, file=file
+function read_deck_all, dir=dir, pref=pref, file=file, include_strings=include_strings
 
 ;Read all deck specs into struct
 ;/todo add file exists check
@@ -76,7 +76,7 @@ IF(N_ELEMENTS(dir) EQ 0) THEN BEGIN
 ENDIF ELSE BEGIN
   filename = dir[0]+'/'+name
 ENDELSE
-
+IF(N_ELEMENTS(include_strings) EQ 0) THEN include_strings = 0
 openr, filenum, filename, /get_lun
 
 str=''
@@ -84,11 +84,13 @@ deck_specs=0
 WHILE (~EOF(filenum)) DO BEGIN
   READF, filenum, str
   IF(~strmatch(str, '*=*')) THEN CONTINUE
-  IF(strmatch(str, '*Element*handled OK')) THEN CONTINUE
-  nv=parse_name_val(str)
+  ;IF(strmatch(str, '*Element*handled OK')) THEN CONTINUE
+  match = stregex(str, 'Element (.*) handled OK', /extract, /subexpr)
+  IF(match[0] NE "") THEN str = match[1]
+
+  nv=parse_name_val(str, include_strings=include_strings)
   IF(~ ISA(nv, 'LIST')) THEN CONTINUE
   IF((SIZE(nv))[1] LT 2) THEN CONTINUE
-  
   IF( ISA(deck_specs, 'struct')) THEN BEGIN
     if(where(tag_names(deck_specs) EQ strupcase(nv[0])) EQ -1) THEN deck_specs = create_struct(deck_specs, nv[0], nv[1])
   ENDIF ELSE BEGIN

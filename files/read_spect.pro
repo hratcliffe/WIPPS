@@ -7,7 +7,7 @@ COMPILE_OPT IDL2
 
 IF((N_ELEMENTS(filename) EQ 0)) THEN return, !NULL
 
-IF(~FILETEST(filename)) THEN BEGIN
+IF(~FILE_TEST(filename)) THEN BEGIN
   PRint, "No spectra " + filename+" found"
   RETURN, !NULL
 END

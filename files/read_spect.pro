@@ -7,9 +7,12 @@ COMPILE_OPT IDL2
 
 IF((N_ELEMENTS(filename) EQ 0)) THEN return, !NULL
 
+IF(~FILETEST(filename)) THEN BEGIN
+  PRint, "No spectra " + filename+" found"
+  RETURN, !NULL
+END
 OPENR, filenum,  filename, /GET_LUN
 ;open file
-
 hdr=read_header(filenum)
 IF(hdr.err) THEN BEGIN
   FREE_LUN, filenum

@@ -15,7 +15,10 @@ IF(N_ELEMENTS(dir) EQ 0) THEN BEGIN
 ENDIF ELSE BEGIN 
   filename = dir[0]+'/'+name
 ENDELSE
-
+IF(~FILE_TEST(filename)) THEN BEGIN 
+  PRINT, 'File ' + filename+' not found'
+  RETURN, !NULL
+END
 OPENR, filenum, filename, /GET_LUN
 
 str=''
@@ -77,6 +80,12 @@ ENDIF ELSE BEGIN
   filename = dir[0]+'/'+name
 ENDELSE
 IF(N_ELEMENTS(include_strings) EQ 0) THEN include_strings = 0
+
+IF(~FILE_TEST(filename)) THEN BEGIN 
+  PRINT, 'File ' + filename+' not found'
+  RETURN, !NULL
+END
+
 openr, filenum, filename, /get_lun
 
 str=''

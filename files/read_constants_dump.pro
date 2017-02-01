@@ -10,7 +10,10 @@ IF(N_ELEMENTS(dir) EQ 0) THEN BEGIN
 ENDIF ELSE BEGIN 
   filename = dir[0]+'/'+pref+'constants.dump'
 ENDELSE
-
+IF(~FILE_TEST(filename)) THEN BEGIN
+  PRINT, 'No dump found'
+  return, !NULL
+END
 OPENR, filenum, filename, /GET_LUN
 
 const=0

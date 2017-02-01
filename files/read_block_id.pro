@@ -6,6 +6,7 @@ COMPILE_OPT IDL2
 ;force long ints and proper brackets
 
 IF((N_ELEMENTS(filename) EQ 0)) THEN return, ''
+IF(~FILE_TEST(filename)) THEN return, ''
 
 OPENR, filenum,  filename, /GET_LUN
 ;open file

@@ -11,7 +11,10 @@ IF((N_ELEMENTS(filename) EQ 0)) THEN return, !NULL
 id_type ='1234567891'
 ;type for block_izes and block id...
 
-
+IF(~FILE_TEST(filename)) THEN BEGIN
+  PRINT, 'File '+filename+' not found'
+  RETURN, !NULL
+END
 OPENR, filenum,  filename, /GET_LUN
 ;open file
 
@@ -52,7 +55,7 @@ WHILE(~EOF(filenum) AND (next_block NE end_pos) ) DO BEGIN
   ENDIF
 
   data = read_block(filenum, hdr.my_type, hdr.block_type)
-
+  IF(N_ELEMENTS(data) EQ 0) THEN continue
   next_block = hdr.block_type
   readu, filenum, next_block
 

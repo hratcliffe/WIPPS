@@ -33,7 +33,7 @@ class reader{
   int pre_read(data_array& my_data_in, int ref_time, bool accum, int flatten_on, size_t &n_dims, size_t * &source_sizes);
   int read_acc_time(data_array & my_data_in, sdf_file_t * handle, size_t total_reads, size_t rows);
   int read_plain_time(data_array& my_data_in, sdf_file_t * handle, size_t pos);
-  
+  int get_filename_n_z(int file_num);
 public:
 
   std::string file_prefix;/**< Prefix of files before dump number*/
@@ -46,7 +46,7 @@ public:
   reader(std::string file_prefix_in,  char * block_id_in, int first=0);
   ~reader(){;}
 
-  void set_ref_filenum(int num){if(num > 0) this->ref_file_num = num;}/** Reference file number to get data dimensions etc*/
+  void update_ref_filenum(int num){if(num >= 0) this->ref_file_num = num; this->n_z = get_filename_n_z(num);}/** Reference file number to get data dimensions etc*/
 
   bool read_dims(size_t &n_dims, std::vector<size_t> &dims);
   bool read_dims(size_t &n_dims, std::vector<size_t> &dims, std::string b_id);

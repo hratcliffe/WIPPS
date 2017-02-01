@@ -719,7 +719,7 @@ my_type get_ref_Bx(std::string file_prefix, int space_in[2], int time_0, bool is
   //We use this to get the local average B field
   int bx_times[3] = {time_0, time_0+1, 1};
   //use specified file and read one row
-  bx_reader.set_ref_filenum(time_0);
+  bx_reader.update_ref_filenum(time_0);
 
   size_t n_dims;
   std::vector<size_t> dims;

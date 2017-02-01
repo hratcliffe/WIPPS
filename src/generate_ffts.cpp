@@ -75,7 +75,7 @@ int main(int argc, char *argv[]){
   char block_id[ID_SIZE];
   strcpy(block_id, cmd_line_args.block.c_str());
 
-  reader * my_reader = new reader(cmd_line_args.file_prefix, block_id);
+  reader * my_reader = new reader(cmd_line_args.file_prefix, block_id,cmd_line_args.time[0]);
   if(my_reader->current_block_is_accum()) cmd_line_args.use_row_time = true;
 
   int n_tims;
@@ -84,8 +84,6 @@ int main(int argc, char *argv[]){
   }else{
     n_tims = cmd_line_args.time[2];
   }
-  my_reader->set_ref_filenum(cmd_line_args.time[0]);
-
   int my_space[2];
   my_space[0] = cmd_line_args.space[0];
   my_space[1] = cmd_line_args.space[1];

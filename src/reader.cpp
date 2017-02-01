@@ -34,8 +34,7 @@ reader::reader(){
 reader::reader(std::string file_prefix_in,  char * block_id_in, int first){
 /** \brief Create reader
 *
-*Sets up ids and tests how many zeros are in filename by trial and error. First is by default 0, and is the reference dump number to use for testing dims and zeros.
-Default and minimum is 4 or the length of first as a string, tries 5-7 also.
+*Sets up ids, sets n_z etc. NOTE n_z must be correctly set before any reads are done. Either by supplying reference filenumber (any sdf file which exists) or using update_ref_filenum. 
 */
   strcpy(this->block_id, block_id_in);
   this->file_prefix = file_prefix_in;
@@ -47,9 +46,19 @@ Default and minimum is 4 or the length of first as a string, tries 5-7 also.
   if(n_z_first > MAX_FILENAME_DIGITS){
     my_print("Really that many files??", 0, mpi_info.rank);
   }
+  this->n_z = get_filename_n_z(ref_file_num);
+}
+
+int reader::get_filename_n_z(int file_num){
+/** Check on disk to see how many zeros in filenames by attempting to read a file of number filenum at various lengths. Default and minimum is 4 or the length of first as a string, tries up to MAX_FILENAME_DIGITS.*/
+
+  std::ifstream file;
+
+  std::string file_ref = mk_str(file_num);
+  int n_z_first = file_ref.size();
 
   std::string name = file_prefix + file_ref+".sdf";
-  n_z=n_z_first;
+  int n_z=n_z_first;
   file.open(name);
   while(!file.is_open()){
     name.insert(file_prefix.size(), "0");
@@ -58,6 +67,7 @@ Default and minimum is 4 or the length of first as a string, tries 5-7 also.
     if(n_z > MAX_FILENAME_DIGITS+1) break;
   }
   file.close();
+  return n_z;
 
 }
 
@@ -105,7 +115,7 @@ bool reader::read_dims(size_t &n_dims, std::vector<size_t> &dims, std::string b_
   sdf_block_t * block;
 
   if(!handle){
-    my_print("Bleh. File open error. Aborting", mpi_info.rank);
+    my_print("File open error "+file_name, mpi_info.rank);
     return 1;
   }
   
@@ -115,7 +125,7 @@ bool reader::read_dims(size_t &n_dims, std::vector<size_t> &dims, std::string b_
   block = sdf_find_block_by_id(handle, b_id.c_str());
 
   if(!block){
-    my_print("Requested block not found. Aborting", mpi_info.rank);
+    my_print("Requested block not found", mpi_info.rank);
     return 1;
   }
 

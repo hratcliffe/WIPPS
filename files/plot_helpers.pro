@@ -184,4 +184,15 @@ function get_n_files, dir, lead=lead, ext=ext
   a=file_search(lead+dir+'/'+ext, count=cnt)
   return, cnt
 end
- 
+
+function get_v_res, om_r, om_ce=om_ce, om_pe=om_pe
+  common consts, q0, m0, v0, kb, mu0, epsilon0, h_planck
+;  common omega_share, om_ce, om_pe
+
+IF(N_ELEMENTS(om_ce) EQ 0) THEN om_ce=2.0*!pi*10000.0
+IF(N_ELEMENTS(om_pe) EQ 0) THEN om_pe = 3.0*om_ce
+
+  k_tmp = get_dispersion(om_r*om_ce, om_ce=om_ce, om_pe=om_pe, /k)
+  return, om_ce*(1.0-om_r)/k_tmp/v0
+
+end

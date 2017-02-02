@@ -44,8 +44,35 @@ function pancake_g_wrapper, x, val=val
 end
 
 ;Compile overriding copy of fx_root
-@ fx_root_splunge.pro
+;@ fx_root_splunge.pro
+function binary_invert, val, func_name, precision=precision, _extra=ext
+;Locate val in func_name. Assumes monotonic and non-constant on args from 0 to 1
 
+;Check increasing or decreasing
+  grad = 1
+  IF( call_function(func_name,0.2, _extra=ext) LT call_function(func_name,0.1, _extra=ext)) THEN grad = -1
+
+  ;Fractional precision to terminate
+  IF(N_ELEMENTS(precision) EQ 0) THEN precision = 0.00001d0
+  selection = 0.5d0
+  tmp = call_function(func_name,selection, _extra=ext)
+  current_increment = 0.25d0
+  counter = 0
+  max_it = 50 ; 0.5^50 = 8e-16
+  while(abs((tmp - val)) GT precision AND counter LT max_it) DO BEGIN
+    tmp = call_function(func_name,selection, _extra=ext)
+    if(tmp GT val) THEN selection = selection - grad*current_increment
+    if(tmp LT val) THEN selection = selection + grad*current_increment
+    if(tmp EQ val) THEN break
+    current_increment = current_increment * 0.5
+    counter = counter + 1
+  END
+
+  IF(counter GT max_it -1) THEN return, -1
+  
+  return, selection
+
+end
 function pancake_distribution, om_ratio, px_ax, py_ax, f_py_0
   ;Create a pancake distribution. We know analytically the isolines for given resonant velocity. So we require supply of the f_py_0 values of density for each supplies ps in the x_axis supplied
   ;Then we have to invert the iso lines to work out which x_c the required point lies on
@@ -95,31 +122,4 @@ function pancake_distribution, om_ratio, px_ax, py_ax, f_py_0
   return, distrib
 end
 
-function binary_invert, val, func_name, precision=precision, _extra=ext
-;Locate val in func_name. Assumes monotonic and non-constant on args from 0 to 1
 
-;Check increasing or decreasing
-  grad = 1
-  IF( call_function(func_name,0.2, _extra=ext) LT call_function(func_name,0.1, _extra=ext)) THEN grad = -1
-
-  ;Fractional precision to terminate
-  IF(N_ELEMENTS(precision) EQ 0) THEN precision = 0.00001d0
-  selection = 0.5d0
-  tmp = call_function(func_name,selection, _extra=ext)
-  current_increment = 0.25d0
-  counter = 0
-  max_it = 50 ; 0.5^50 = 8e-16
-  while(abs((tmp - val)) GT precision AND counter LT max_it) DO BEGIN
-    tmp = call_function(func_name,selection, _extra=ext)
-    if(tmp GT val) THEN selection = selection - grad*current_increment
-    if(tmp LT val) THEN selection = selection + grad*current_increment
-    if(tmp EQ val) THEN break
-    current_increment = current_increment * 0.5
-    counter = counter + 1
-  END
-
-  IF(counter GT max_it -1) THEN return, -1
-  
-  return, selection
-
-end

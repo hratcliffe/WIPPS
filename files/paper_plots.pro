@@ -1,5 +1,6 @@
 ;Scripts to plot things for paper
 ;Mostly not reuseable
+
 pro plot_all_tests, png=png, eps=eps, legend=legend
 ;Set eps to create an eps. Else set png to make a PNG DO NOT set both Set legend to add a legend
 common consts, q0, m0, v0, kb, mu0, epsilon0, h_planck
@@ -194,11 +195,12 @@ END
 
 pro plot_pancake_distribs, distribs, nrm=nrm, line_vals=line_vals, line_cols=line_cols, outfile=outfile, _extra=extr
   ;Plot 4 time distributions with overlaid pancake lines
-
   common consts, q0, m0, v0, kb, mu0, epsilon0, h_planck
   common omega_share, om_ce, om_pe
- 
-  IF(N_ELEMENTS(outfile) EQ 0) THEN outfile = './GrowLin'
+  ;These make sure everything is compiled because IDL is IDL
+  RESOLVE_ROUTINE, 'pancake_functions', /IS_FUNCTION, /COMPILE_FULL_FILE
+  FORWARD_FUNCTION pancake_curves
+  IF(N_ELEMENTS(outfile) EQ 0) THEN outfile = './Disitrbs'
   n_lines = 1
   IF(N_ELEMENTS(line_vals) GT 1) THEN n_lines = (size(line_vals))[1]
   IF(N_ELEMENTS(line_vals) EQ 0) THEN add_lines = 0 ELSE add_lines = 1
@@ -206,6 +208,7 @@ pro plot_pancake_distribs, distribs, nrm=nrm, line_vals=line_vals, line_cols=lin
   IF((size(size(distribs)))[1] GT 3) THEN n_distribs = (size(distribs))[1] else n_distribs = 1
   loadct,41,file='colors1.tbl' ;Rainbow from white
   SET_PLOT, 'PS'
+  !p.charsize=1.2
   device, filename=outfile+'.eps', xsize=20, ysize=20, bits_per_pixel=64, /encaps, /color
   !p.multi=[0, 2, 2]
   print, n_distribs
@@ -224,10 +227,12 @@ pro plot_pancake_distribs, distribs, nrm=nrm, line_vals=line_vals, line_cols=lin
   END
 
   device, /close
- 
+  !p.charsize=1.5
   set_plot, 'X'
   out_dir = (stregex(outfile, '(.*/+)[^\/]+$', /extract, /subexpr))[1]
   ;This should allow list or array to work...
   a=plot_logger(out_dir+'plots.log', {inputs:distribs.filename ,pancake_lines:line_vals,colours:line_cols})
 
 END
+
+

@@ -1,24 +1,3 @@
-function pancake_curves, om_ratio, x_c, x_ax=x_ax
-  ;Calculate the pancake distribution as described in Meredith 1999 or Summers, 1998
-  ;om_ratio is Om_ce/om_pe, x_c is desired curve and x_ax is the (normalised to Om_ce) resonant frequency required
-
-  common consts, q0, m0, v0, kb, mu0, epsilon0, h_planck
-
-  IF(N_ELEMENTS(x_ax) LT 1) THEN x_ax= findgen(100)/100
-
-  E_crit = m0*v0*v0/2.0*(om_ratio)^2
-
-  C = sqrt(2.0*E_crit/m0)
-  len = (size(x_ax))[1]
-  v_perp = fltarr(len)
-  v_par=fltarr(len)
-  
-  FOR i=0, len-1 DO BEGIN
-    v_perp[i] = C*sqrt(pancake_f(x_c)-pancake_f(x_ax[i]))  
-    v_par[i] = C* pancake_g(x_ax[i])
-  END
-  return, create_struct({v_perp:v_perp, v_par:v_par, x_ax:x_ax})
-end
 
 function pancake_f, x
 ;Positive and Monotonic decreasing from x=0 to 1
@@ -73,6 +52,30 @@ function binary_invert, val, func_name, precision=precision, _extra=ext
   return, selection
 
 end
+
+function pancake_curves, om_ratio, x_c, x_ax=x_ax
+  ;Calculate the pancake distribution as described in Meredith 1999 or Summers, 1998
+  ;om_ratio is Om_ce/om_pe, x_c is desired curve and x_ax is the (normalised to Om_ce) resonant frequency required
+
+  common consts, q0, m0, v0, kb, mu0, epsilon0, h_planck
+
+  IF(N_ELEMENTS(x_ax) LT 1) THEN x_ax= findgen(100)/100
+
+  E_crit = m0*v0*v0/2.0*(om_ratio)^2
+
+  C = sqrt(2.0*E_crit/m0)
+  len = (size(x_ax))[1]
+  v_perp = fltarr(len)
+  v_par=fltarr(len)
+  
+  FOR i=0, len-1 DO BEGIN
+    v_perp[i] = C*sqrt(pancake_f(x_c)-pancake_f(x_ax[i]))  
+    v_par[i] = C* pancake_g(x_ax[i])
+  END
+  return, create_struct({v_perp:v_perp, v_par:v_par, x_ax:x_ax})
+end
+
+
 function pancake_distribution, om_ratio, px_ax, py_ax, f_py_0
   ;Create a pancake distribution. We know analytically the isolines for given resonant velocity. So we require supply of the f_py_0 values of density for each supplies ps in the x_axis supplied
   ;Then we have to invert the iso lines to work out which x_c the required point lies on
@@ -122,4 +125,6 @@ function pancake_distribution, om_ratio, px_ax, py_ax, f_py_0
   return, distrib
 end
 
-
+function pancake_functions
+;Empty function
+end

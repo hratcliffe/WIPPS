@@ -12,18 +12,19 @@ pro plot_growth, growth, _extra=_extra
 end
 
 ;Spectra plots
-pro plot_spect, spect_arr, _extra=_extra, smth=smth
+pro plot_spect_times, spect_arr, _extra=_extra, smth=smth, corr_fac=corr_fac
 ;Expects an array of spectrum objects, which contain .B.axes and .B.data
 
   common consts, q0, m0, v0, kb, mu0, epsilon0, h_planck
   common omega_share, om_ce, om_pe
   IF(N_ELEMENTS(smth) EQ 0) THEN smth=0
+  IF(N_ELEMENTS(corr_fac) EQ 0) THEN corr_fac = 1
   
-  max_y=(ceil(alog10(max(spect_arr.B.data))))
+  max_y=(ceil(alog10(max(spect_arr.B.data)))/2)
   spect_sz=(size(spect_arr))[1]
   cols=findgen(spect_sz)/spect_sz*(255-80) + 80
-  
-  plot, spect_arr[0].B.axes.x/om_ce, smooth(spect_arr[0].B.data, smth, /edge_wrap), /ylog, yrange=[10l^(max_y-8), 10l^max_y], xtitle='!4x/x!3!Dce!N', ytitle='Wave power', _extra=_extra
+ 
+  plot, spect_arr[0].B.axes.x/om_ce, smooth(sqrt(spect_arr[0].B.data)/corr_fac, smth, /edge_wrap), /ylog, yrange=[10l^(max_y-4), 10l^max_y], xtitle='!4x/x!3!Dce!N', ytitle='Wave power', _extra=_extra
   FOR i=0, spect_sz-1 DO oplot, spect_arr[i].B.axes.x/om_ce, smooth(spect_arr[i].B.data, smth, /edge_wrap), color=cols[i]
 
   tims=fltarr(spect_sz)
@@ -55,8 +56,9 @@ pro df_dp_plot, dist_arr, _extra=_extra, smth=smth, yspan=yspan
   tims=fltarr(dist_sz)
   tims = (dist_arr.time[0] + dist_arr.time[1])/2
 
-  legend_strings = strarr(dist_sz)
-  legend_strings = 't='+STRING(format='(F5.2)', tims, /print) + ' s'
-  legend, legend_strings, textcolors=cols, /right, /top
+;  legend_strings = strarr(dist_sz)
+;  legend_strings = 't='+STRING(format='(F5.2)', tims, /print) + ' s'
+;  legend, legend_strings, textcolors=cols, /right, /top
 
 end
+

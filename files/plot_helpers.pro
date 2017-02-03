@@ -177,6 +177,7 @@ function px_axis, axis, index, value
 
 end
 
+
 function get_n_files, dir, lead=lead, ext=ext
 ;Count files in directory
   if(N_ELEMENTS(lead) EQ 0) THEN lead = '/Volumes/Seagate Backup Plus Drive/DiracWhistlers/'
@@ -185,14 +186,84 @@ function get_n_files, dir, lead=lead, ext=ext
   return, cnt
 end
 
-function get_v_res, om_r, om_ce=om_ce, om_pe=om_pe
-  common consts, q0, m0, v0, kb, mu0, epsilon0, h_planck
-;  common omega_share, om_ce, om_pe
+function binary_invert, val, func_name, precision=precision, _extra=ext
+;Locate val in func_name. Assumes monotonic and non-constant on args from 0 to 1
 
-IF(N_ELEMENTS(om_ce) EQ 0) THEN om_ce=2.0*!pi*10000.0
-IF(N_ELEMENTS(om_pe) EQ 0) THEN om_pe = 3.0*om_ce
+;Check increasing or decreasing
+  grad = 1
+  IF( call_function(func_name,0.2, _extra=ext) LT call_function(func_name,0.1, _extra=ext)) THEN grad = -1
 
-  k_tmp = get_dispersion(om_r*om_ce, om_ce=om_ce, om_pe=om_pe, /k)
-  return, om_ce*(1.0-om_r)/k_tmp/v0
+  ;Fractional precision to terminate
+  IF(N_ELEMENTS(precision) EQ 0) THEN precision = 0.00001d0
+  selection = 0.5d0
+  tmp = call_function(func_name,selection, _extra=ext)
+  current_increment = 0.25d0
+  counter = 0
+  max_it = 50 ; 0.5^50 = 8e-16
+  while(abs((tmp - val)) GT precision AND counter LT max_it) DO BEGIN
+    tmp = call_function(func_name,selection, _extra=ext)
+    if(tmp GT val) THEN selection = selection - grad*current_increment
+    if(tmp LT val) THEN selection = selection + grad*current_increment
+    if(tmp EQ val) THEN break
+    current_increment = current_increment * 0.5
+    counter = counter + 1
+  END
+
+  IF(counter GT max_it -1) THEN return, -1
+
+  return, selection
 
 end
+
+function get_v_res, om_r, om_ce=om_ce, om_pe=om_pe
+;Convert from omega_res to p_res using gamma v_par = (n*Om_ce - om_r)/k_res, par, assuming parallel propagation and n=-1
+;NOTE om_r is om/om_ce and v is returned as v/v0
+  common consts, q0, m0, v0, kb, mu0, epsilon0, h_planck
+  common omega_share, om_ce_imp, om_pe_imp
+
+  ;If om_ce passed use it, else if the common block is defined use those, else use defaults
+  IF(N_ELEMENTS(om_ce) EQ 0) THEN IF(N_ELEMENTS(om_ce_imp) EQ 0) THEN om_ce=2.0*!pi*10000.0 else om_ce = om_ce_imp
+  IF(N_ELEMENTS(om_pe) EQ 0) THEN IF(N_ELEMENTS(om_pe_imp) EQ 0) THEN om_pe = 3.0*om_ce else om_pe=om_pe_imp
+
+  k_tmp = get_dispersion(om_r*om_ce, om_ce=om_ce, om_pe=om_pe, /k)
+  gv_1=om_ce*(1.0-om_r)/k_tmp/v0
+  ;Calc gamma from this v and do a second iteration
+  gamm = sqrt(1.0+gv_1^2)
+  gv_2 = om_ce*(1.0 - om_r*gamm)/k_tmp/v0
+  ;print, gv_1, gamm, gv_2
+  return, gv_2
+end
+
+function get_om_res, v_r, om_ce =om_ce, om_pe=om_pe
+;Convert from v_res to om_res using gamma v_par = (n*Om_ce - om_r)/k_res, par, assuming parallel propagation and n=-1
+;NOTE v_r (p) is expected as v/v0 and om is returned as om/om_ce
+  common consts, q0, m0, v0, kb, mu0, epsilon0, h_planck
+  common omega_share, om_ce_imp, om_pe_imp
+
+  ;If om_ce passed use it, else if the common block is defined use those, else use defaults
+  IF(N_ELEMENTS(om_ce) EQ 0) THEN IF(N_ELEMENTS(om_ce_imp) EQ 0) THEN om_ce=2.0*!pi*10000.0 else om_ce = om_ce_imp
+  IF(N_ELEMENTS(om_pe) EQ 0) THEN IF(N_ELEMENTS(om_pe_imp) EQ 0) THEN om_pe = 3.0*om_ce else om_pe=om_pe_imp
+  
+  ;Use basic binary interative inversion. Works as long as omega(k) strictly monotonic, with number of iterations depending on the slope
+  ;I.e. we hunt for the v_res input to get out the wanted value
+  om=binary_invert(v_r, 'get_v_res', om_ce=om_ce, om_pe=om_pe)
+  return, om
+end
+
+function om_axis, axis, index, value
+;Return string formatted resonant_px(omega)
+;Run share_omegas first to populate om_ce, om_pe
+;print, axis, index, value
+  common consts, q0, m0, v0, kb, mu0, epsilon0, h_planck
+  common omega_share, om_ce, om_pe
+  v_r=value
+  om=get_om_res(v_r, om_ce=om_ce, om_pe=om_pe)
+  str = string(FORMAT='(F5.2)',om)
+  if(om NE om) THEN str=""
+  if(om EQ 'Inf' OR om EQ '-Inf') THEN str=""
+  ;Blank out an Inf or Nan string
+  return, str
+
+end
+
+

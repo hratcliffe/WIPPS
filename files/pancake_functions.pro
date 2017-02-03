@@ -22,37 +22,6 @@ function pancake_g_wrapper, x, val=val
   ;avoid complex returns for x> 1
 end
 
-;Compile overriding copy of fx_root
-;@ fx_root_splunge.pro
-function binary_invert, val, func_name, precision=precision, _extra=ext
-;Locate val in func_name. Assumes monotonic and non-constant on args from 0 to 1
-
-;Check increasing or decreasing
-  grad = 1
-  IF( call_function(func_name,0.2, _extra=ext) LT call_function(func_name,0.1, _extra=ext)) THEN grad = -1
-
-  ;Fractional precision to terminate
-  IF(N_ELEMENTS(precision) EQ 0) THEN precision = 0.00001d0
-  selection = 0.5d0
-  tmp = call_function(func_name,selection, _extra=ext)
-  current_increment = 0.25d0
-  counter = 0
-  max_it = 50 ; 0.5^50 = 8e-16
-  while(abs((tmp - val)) GT precision AND counter LT max_it) DO BEGIN
-    tmp = call_function(func_name,selection, _extra=ext)
-    if(tmp GT val) THEN selection = selection - grad*current_increment
-    if(tmp LT val) THEN selection = selection + grad*current_increment
-    if(tmp EQ val) THEN break
-    current_increment = current_increment * 0.5
-    counter = counter + 1
-  END
-
-  IF(counter GT max_it -1) THEN return, -1
-  
-  return, selection
-
-end
-
 function pancake_curves, om_ratio, x_c, x_ax=x_ax
   ;Calculate the pancake distribution as described in Meredith 1999 or Summers, 1998
   ;om_ratio is Om_ce/om_pe, x_c is desired curve and x_ax is the (normalised to Om_ce) resonant frequency required

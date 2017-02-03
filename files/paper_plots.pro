@@ -295,8 +295,8 @@ pro df_dp_eps, dist_arr, _extra=_extra, smth=smth, yspan=yspan, outfile=outfile,
   plot, dist_arr[0].axes.x/m0/v0, abs(smooth(deriv(dist_arr[0].axes.x/m0/v0, dist_arr[0].data), smth)), /ylog, xrange=xran, /xsty, yrange=[10.0^(max_y-yspan), 10.0^max_y], /ysty,ytitle='df/d(p!Dx!N/m!D0!Nc)', xtitle='p!Dx!N/(m!D0!Nc)', /nodata, _extra=_extra, ytickformat='Exponent_axis', ymargin=ymargin
   FOR i=0, dist_sz-1 DO oplot, dist_arr[i].axes.x/m0/v0, abs(smooth(deriv(dist_arr[i].axes.x/m0/v0, dist_arr[i].data/nrm), smth)), color=cols[i]
   xtikn = ceil((xran[1]-xran[0])*10)+1
+  IF(ISA(_extra, 'struct') && (where(TAG_NAMES(_extra) EQ 'OM_TICKS') NE -1)) THEN xtikn = _extra.om_ticks
   xtiks = findgen(xtikn)*(xran[1]-xran[0])/(xtikn-1)
-  print, xtikn, xtiks
   IF(KEYWORD_SET(om_ax)) THEN axis, xaxis=1, xtickformat='om_axis', xticks=xtikn-1, xtickv=xtiks, xtitle='!4x/x!3!Dce!N'
 
 ;  tims=fltarr(dist_sz)

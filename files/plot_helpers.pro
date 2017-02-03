@@ -201,7 +201,7 @@ function binary_invert, val, func_name, precision=precision, _extra=ext
   counter = 0
   max_it = 50 ; 0.5^50 = 8e-16
   while(abs((tmp - val)) GT precision AND counter LT max_it) DO BEGIN
-    tmp = call_function(func_name,selection, _extra=ext)
+   tmp = call_function(func_name,selection, _extra=ext)
     if(tmp GT val) THEN selection = selection - grad*current_increment
     if(tmp LT val) THEN selection = selection + grad*current_increment
     if(tmp EQ val) THEN break
@@ -215,7 +215,7 @@ function binary_invert, val, func_name, precision=precision, _extra=ext
 
 end
 
-function get_v_res, om_r, om_ce=om_ce, om_pe=om_pe
+function get_p_res, om_r, om_ce=om_ce, om_pe=om_pe, n=n
 ;Convert from omega_res to p_res using gamma v_par = (n*Om_ce - om_r)/k_res, par, assuming parallel propagation and n=-1
 ;NOTE om_r is om/om_ce and v is returned as v/v0
   common consts, q0, m0, v0, kb, mu0, epsilon0, h_planck
@@ -224,17 +224,30 @@ function get_v_res, om_r, om_ce=om_ce, om_pe=om_pe
   ;If om_ce passed use it, else if the common block is defined use those, else use defaults
   IF(N_ELEMENTS(om_ce) EQ 0) THEN IF(N_ELEMENTS(om_ce_imp) EQ 0) THEN om_ce=2.0*!pi*10000.0 else om_ce = om_ce_imp
   IF(N_ELEMENTS(om_pe) EQ 0) THEN IF(N_ELEMENTS(om_pe_imp) EQ 0) THEN om_pe = 3.0*om_ce else om_pe=om_pe_imp
-
+  IF(N_ELEMENTS(n) EQ 0) THEN n= -1
   k_tmp = get_dispersion(om_r*om_ce, om_ce=om_ce, om_pe=om_pe, /k)
-  gv_1=om_ce*(1.0-om_r)/k_tmp/v0
+  gv_old=abs(om_ce*(1.0*n + om_r)/k_tmp/v0)
   ;Calc gamma from this v and do a second iteration
-  gamm = sqrt(1.0+gv_1^2)
-  gv_2 = om_ce*(1.0 - om_r*gamm)/k_tmp/v0
-  ;print, gv_1, gamm, gv_2
-  return, gv_2
+  gamm_prev = 1.0
+  precision = 0.002
+  MAX_IT = 10
+  gamm = sqrt(1.0+gv_old^2)
+  i=0
+  gv_new = gv_old
+  WHILE((abs(gamm_prev/gamm - 1.0) GT precision) && i LT MAX_IT) DO BEGIN
+ ;   gamm = sqrt(1.0+gv_old^2)
+    gv_new = abs(om_ce*(1.0*n + om_r*gamm)/k_tmp/v0)
+    ;print, gv_1, gamm, gv_2
+    gamm_prev = gamm
+    gamm = sqrt(1.0+gv_new^2)
+    gv_old=gv_new
+   i=i+1
+  END
+  IF(i EQ MAX_IT) THEN print, "Exceeded max iterations!!!!"
+  return, gv_new
 end
 
-function get_om_res, v_r, om_ce =om_ce, om_pe=om_pe
+function get_om_res, v_r, om_ce =om_ce, om_pe=om_pe, n=n
 ;Convert from v_res to om_res using gamma v_par = (n*Om_ce - om_r)/k_res, par, assuming parallel propagation and n=-1
 ;NOTE v_r (p) is expected as v/v0 and om is returned as om/om_ce
   common consts, q0, m0, v0, kb, mu0, epsilon0, h_planck
@@ -243,10 +256,11 @@ function get_om_res, v_r, om_ce =om_ce, om_pe=om_pe
   ;If om_ce passed use it, else if the common block is defined use those, else use defaults
   IF(N_ELEMENTS(om_ce) EQ 0) THEN IF(N_ELEMENTS(om_ce_imp) EQ 0) THEN om_ce=2.0*!pi*10000.0 else om_ce = om_ce_imp
   IF(N_ELEMENTS(om_pe) EQ 0) THEN IF(N_ELEMENTS(om_pe_imp) EQ 0) THEN om_pe = 3.0*om_ce else om_pe=om_pe_imp
+  IF(N_ELEMENTS(n) EQ 0) THEN n= -1
   
   ;Use basic binary interative inversion. Works as long as omega(k) strictly monotonic, with number of iterations depending on the slope
   ;I.e. we hunt for the v_res input to get out the wanted value
-  om=binary_invert(v_r, 'get_v_res', om_ce=om_ce, om_pe=om_pe)
+  om=binary_invert(v_r, 'get_p_res', om_ce=om_ce, om_pe=om_pe, n=n)
   return, om
 end
 

@@ -90,6 +90,7 @@ pro generate_lookup
   v_therm_par = v0*0.075
   v_therm_perp = v0*0.15
   dens = 0.17
+  FORWARD_FUNCTION create_lookup_testdata
   data = create_lookup_testdata(v_therm_par, v_therm_perp, dens, v_lim=0.5, n_els=500)
   err=write_data("./lookupanalytic_bimax.dat",data.data, list(data.ax_x, data.ax_y), id="lookup")
 end

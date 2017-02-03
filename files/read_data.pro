@@ -8,7 +8,7 @@ COMPILE_OPT IDL2
 
 IF((N_ELEMENTS(filename) EQ 0)) THEN return, !NULL
 
-IF(~FILE_TEST(filename) THEN BEGIN
+IF(~FILE_TEST(filename)) THEN BEGIN
   PRINT, "File " + filename+" not found"
   RETURN, !NULL
 END

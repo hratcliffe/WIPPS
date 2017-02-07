@@ -187,10 +187,11 @@ debug :
 
 .PHONY : echo_deps
 
+#Print warning if make run with dependencies.log not present
 dependencies.log :
 	@if [ ! -e dependencies.log ]; then echo "+++++++++++++++++Run make echo_deps to get correct file dependencies+++++++++"; fi
 
-echo_deps :
+echo_deps : process_deps.sh
 	@echo "Regenerating dependencies..."
 	@touch dependencies.log
 	@rm dependencies.log

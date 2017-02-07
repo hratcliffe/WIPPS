@@ -48,6 +48,7 @@ src/tests.cpp\
   include/controller.h\
   include/spectrum.h\
   include/d_coeff.h\
+  include/non_thermal.h\
 
 obj/reader.o:\
 src/reader.cpp\
@@ -71,6 +72,8 @@ obj/non_thermal.o:\
 src/non_thermal.cpp\
   include/support.h\
   include/non_thermal.h\
+  include/data_array.h\
+  include/my_array.h\
 
 obj/main_support.o:\
 src/main_support.cpp\
@@ -130,12 +133,10 @@ obj/calculate_growth.o:\
 src/calculate_growth.cpp\
   include/support.h\
   include/main_support.h\
-  include/reader.h\
-  include/controller.h\
   include/plasma.h\
   include/my_array.h\
-  include/d_coeff.h\
   include/spectrum.h\
+  include/controller.h\
   include/data_array.h\
   include/non_thermal.h\
 

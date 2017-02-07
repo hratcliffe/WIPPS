@@ -105,7 +105,7 @@ int main(int argc, char *argv[]){
     }
     n_tims = cmd_line_args.time[2];
   }
-  my_reader.set_ref_filenum(cmd_line_args.time[0]);
+  my_reader.update_ref_filenum(cmd_line_args.time[0]);
   int my_space[2];
   my_space[0] = cmd_line_args.space[0];
   my_space[1] = cmd_line_args.space[1];

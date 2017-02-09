@@ -2,7 +2,7 @@
 
 OMPI_MPICC=clang++
 CC = mpic++
-SDFPATH = ./SDF
+SDFPATH = ./SDF/C/
 #Path to the SDF libraries.
 
 GIT_VERSION := $(shell git describe --dirty --always --tags)
@@ -10,8 +10,8 @@ GIT_VERSION := $(shell git describe --dirty --always --tags)
 #-I ./matplotpp/
 SRCDIR = src
 OBJDIR = obj
-INCLUDE = -I /usr/include/ -I $(SDFPATH)/C/include/ -I ./include/
-LIBSDF = -L /usr/lib/ $(SDFPATH)/C/lib/libsdfc.a
+INCLUDE = -I /usr/local/include/ -I $(SDFPATH)/include/ -I ./include/
+LIBSDF = -L /usr/local/lib/ $(SDFPATH)/lib/libsdfc.a
 LIB := $(LIBSDF)
 #LIB += ./matplotpp/matplotpp.a -lglut
 #Add the libraries for glut (openGL) and the matplot library
@@ -144,11 +144,14 @@ WARN_STR = "**************Run make clean before changing MODE or TYPE. Run echo_
 
 #=========================Main rules=================================
 #Yes we have multiple "main"s we can compile. They aren't in OBJS but are in SOURCE (for the dependency gen, and tarball). Deal with it and add to these compile lines explicitly
-main : echo_float echo_warning $(OBJS) $(OBJDIR)/main.o 
+main : echo_float echo_warning $(OBJS) $(OBJDIR)/main.o $(SDFPATH)/lib/libsdfc.a
 	$(CC) $(LFLAGS) $(INCLUDE) $(OBJS) $(OBJDIR)/main.o $(LIB) -o main
 	@echo $(WARN_STR)
 	@$(SED_STR)
 	@$(SED_STR_Test)
+
+$(SDFPATH)/lib/libsdfc.a :
+	@./build_sdf.sh $(SDFPATH)
 
 echo_warning:
 	@echo $(WARN_STR)

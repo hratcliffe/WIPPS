@@ -427,6 +427,7 @@ bool parse_name_val(std::string in, std::string &name, std::string &val){
 *
 * Basic line parser. Takes a string and if it contains an '=' splits into the left and right segments, stripping leading and trailing spaces. Returns 0 if success, 1 if no equals sign. Standard comment character is # as first non-whitespace
 */
+  if(in.find_first_not_of(" \t\n") == std::string::npos) return 1;
   if(in[in.find_first_not_of(" \t\n")] == '#') return 1;
   size_t pos = in.find("=");
   if(pos == std::string::npos){

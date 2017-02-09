@@ -1,6 +1,7 @@
 # Choose compiler (currently only gcc) using FLAVOUR= when
 # invoking make or get the default of gcc
 FLAVOUR ?= gcc
+FLAVOUR = mpicc
 VARIANT = $(FLAVOUR)
 
 SRCDIR = src
@@ -13,13 +14,14 @@ EXTINC = ../extension/include
 
 ifeq (gcc,$(findstring gcc,$(FLAVOUR)))
    CC = gcc
-   CFLAGS_ALL  = -I$(INCDIR) -I$(SRCDIR) -I$(EXTINC) -fPIC
+   CFLAGS_ALL  = -I$(INCDIR) -I$(SRCDIR) -I$(EXTINC) -fPIC -I/usr/include/
    CFLAGS_OPT  = -O3
    CFLAGS_DBG  = -g -O0 -DSDF_DEBUG_ALL -D_XOPEN_SOURCE=600
    CFLAGS_DBG += -Wall -Wextra -Wno-unused-function -pedantic
    CFLAGS_PROF = -p
 endif
-
+CC = mpicc
+CFLAGS_ALL = -I$(INCDIR) -I$(SRCDIR) -I$(EXTINC) -fPIC -I/usr/include/
 # utils
 ECHO  = echo
 RM    = rm
@@ -34,7 +36,7 @@ RANLIB = ranlib
 mode = opt
 
 CFLAGS = $(CFLAGS_ALL)
-
+CFLAGS += -DPARALLEL
 # add flags for debugging if requested
 ifeq (dbg,$(findstring dbg,$(mode)))
    CFLAGS += $(CFLAGS_DBG)

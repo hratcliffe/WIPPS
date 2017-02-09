@@ -10,19 +10,19 @@ GIT_VERSION := $(shell git describe --dirty --always --tags)
 #-I ./matplotpp/
 SRCDIR = src
 OBJDIR = obj
-INCLUDE = -I /usr/local/include/ -I $(SDFPATH)/C/include/ -I ./include/
-LIBSDF = -L /usr/local/lib/ $(SDFPATH)/C/lib/libsdfc.a
+INCLUDE = -I /usr/include/ -I $(SDFPATH)/C/include/ -I ./include/
+LIBSDF = -L /usr/lib/ $(SDFPATH)/C/lib/libsdfc.a
 LIB := $(LIBSDF)
 #LIB += ./matplotpp/matplotpp.a -lglut
 #Add the libraries for glut (openGL) and the matplot library
 
 #========Edit these for optimisation, debug options etc===============
-CFLAGS = -c $(INCLUDE) -DVERSION=\"$(GIT_VERSION)\" -std=c++0x -pedantic
+CFLAGS = -c $(INCLUDE) -DVERSION=\"$(GIT_VERSION)\" -std=c++0x -pedantic -DPARALLEL
 CFLAGS += -g
 OPTIMISE = -O3
 #Optimiser level for non-debug builds (debug includes test)
 
-#NO_FFT = 1
+NO_FFT = 1
 #If defined, do not use FFT libraries. Note FFT routines will be unavailable if set, as will certain utilities
 
 ifdef NO_FFT
@@ -102,7 +102,6 @@ else ifdef TYPE
   $(error Unknown TYPE)
 endif
 #Check we have a valid TYPE selection and set the right flags and docs
-
 ifeq ($(strip $(MODE)),debug)
   CFLAGS += $(DEBUG)
   #CFLAGS += -DDEBUG_DIMS
@@ -120,6 +119,8 @@ else ifdef MODE
 else
   CFLAGS += $(OPTIMISE)
 endif
+LIB += -ldl
+
 #Check we have a valid MODE selection and set the right flags and docs
 #---------------------------------------------------------------------
 

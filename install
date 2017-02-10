@@ -1,0 +1,143 @@
+#!/bin/bash
+
+#Do all the necessary config, i.e.
+#Check for FFTW install and local install if necessary
+#Update FFTW path in Makefile
+#Set NO_FFT if necessary
+#Build sdf libraries for first time
+#Build the test code and run it
+#Wipe and build with supplied build args
+
+DOCSTRING=$'Script to assist in getting the code running.\nIf FFTW is installed on your system, supply the path with --fftw-path <installed path>. If not, use --install-fftw <path-to-install> (must exist!).\nTo build without FFTW (some functions unavailable!) use --no-fft.\nThe final version will be built using whatever is supplied in --build-args (use quotes to supply more than one). For example, --build-args "TYPE=float".\nUse --help to see this documentation.'
+
+
+#Process args
+FFTW_PATH=""
+NO_FFT=0
+INSTALL_FFTW=0
+INSTALL_PATH=""
+BUILD_ARGS=""
+
+while [[ $# > 0 ]]; do
+  case $1 in
+    --help)
+      echo "$DOCSTRING"
+      exit 0
+      ;;
+    --fftw-path)
+      shift
+      FFTW_PATH=$1
+      ;;
+    --install-fftw)
+      shift
+      INSTALL_PATH=$1
+      INSTALL_FFTW=1
+      ;;
+    --no-fft)
+      NO_FFT=1
+      ;;
+    --build-args)
+      shift
+      BUILD_ARGS=$1
+      ;;
+    *)
+      echo "Unknown option "$1
+      ;;
+  esac
+  shift
+done
+
+MAKEFILE=Makefile
+
+#Based on NO_FFT we try and un/comment the makefile line.
+if [ $NO_FFT -eq 1 ]; then
+  sed -i.bak -e 's/\#NO_FFT = 1/NO_FFT = 1/' $MAKEFILE
+fi
+if [ $NO_FFT -eq 0 ]; then
+  sed -i.bak -e 's/^NO_FFT = 1/\#NO_FFT = 1/' $MAKEFILE
+fi
+
+#If we've been told to install we don't do anything with potential set FFTW_PATH
+if [ $INSTALL_FFTW -eq 0 ]; then
+
+  #Now if an FFTW path was given & we find ./include/fftw3.h and ./lib/libfftw3(f).a there we set the path in Makefile to match. 
+  #If we don't find both libs we report on it
+  #If we find neither we also report and suggest using --install-fftw <desired-path>
+  if [ -e $FFTW_PATH/include/fftw3.h ] && ( [ -e $FFTW_PATH/lib/libfftw3.a ] || [ -e $FFTW_PATH/lib/libfftw3f.a ] ); then
+    echo "Found FFTW files at "$FFTW_PATH
+    if [ ! -e $FFTW_PATH/lib/libfftw3.a ]; then echo "No double library found, use only TYPE=float and float data or reinstall FFTW without --use-float"; fi
+    if [ ! -e $FFTW_PATH/lib/libfftw3f.a ]; then echo "No float library found, use only TYPE=double and double data or reinstall FFTW with --use-float"; fi
+    #Now set the path in Makefile
+    sed -i.bak 's#FFTW_PATH =.*$#FFTW_PATH = '$FFTW_PATH'#' $MAKEFILE
+  else
+    echo "Cannot find FFTW files at "$FFTW_PATH" Expecting ./include/fftw3.h and ./lib/libfftw3(f).a"
+    echo "Check for correct path or try installing FFTW locally using ./configure --install-fftw <path to install>"
+    exit 1
+  fi
+else
+  #If asked to install FFTW we run the install script on correct path:
+  if [ -w $INSTALL_PATH ]; then
+    echo "Installing FFTW in "$INSTALL_PATH
+    echo "This may take some time"
+    ./install_fftw $INSTALL_PATH
+    if [ $? -ne 0 ]; then
+      echo "Error building FFTW!!!!!"
+      exit 1
+    fi
+  else
+    echo "Cannot write to "$INSTALL_PATH" Check permissions and retry"
+    exit 1
+  fi
+fi
+
+#By here we should have working FFTW install.
+
+#Build sdf libraries explicitly
+echo "Building SDF file libraries"
+if [ -e ./SDF/C/lib/libsdfc.a ]; then echo "SDF already present"
+else
+  make ./SDF/C/lib/libsdfc.a >> /dev/null && echo "SDF built successfully"
+  if [ $? -ne 0 ]; then
+    #If we got an error, we can try cleaning
+    echo "Error building SDF. Trying black magic"
+    ORIG_WD=`pwd`
+    cd ./SDF/C/ && make clean && make cleanall
+    cd $ORIG_WD
+    make ./SDF/C/lib/libsdfc.a >> /dev/null && echo "SDF built successfully"
+    if [ $? -ne 0 ]; then
+      echo "Cannot build SDF"
+      exit 1
+    fi
+  fi
+fi
+
+
+#Now build the test code and run it
+make clean
+echo "Building test version of code"
+make MODE=test > /dev/null 2>&1
+if [ $? -ne 0 ]; then
+#In case of build error, try proper clean and rebuild
+  make veryclean
+  make MODE=test > /dev/null 2>&1
+fi
+if [ -e ./main ]; then
+  echo "Running test version of code" 
+  ./main > tests.out.tmp
+else
+  echo "Error building test code. Try make MODE=test"
+  exit 1
+fi
+if [ $? -ne 0 ]; then
+  echo "Some tests failed!!!!!"
+  cat tests.out.tmp
+  rm tests.out.tmp
+fi
+
+echo "Building final version of code"
+make clean
+make $BUILD_ARGS > /dev/null 2>&1
+echo "Building utilities"
+make $BUILD_ARGS utils
+
+echo "Build complete!"

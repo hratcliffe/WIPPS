@@ -163,8 +163,10 @@ bool non_thermal::configure_from_file(std::string file_prefix){
 
         }else if(function=="lookup"){
           tmp_fn = configure_lookup(file_prefix, lookup, this);
-          f_p_private.push_back(tmp_fn);
-          function_set = true;
+          if(tmp_fn){
+            f_p_private.push_back(tmp_fn);
+            function_set = true;
+          }
         }
         if(function_set) my_print("Configured function "+function);
         block_num ++;
@@ -400,13 +402,13 @@ std::function<calc_type(calc_type p_par, calc_type p_perp)> configure_lookup(std
       for(size_t i=1; i< par_dims.size(); i++) total *=par_dims[i];
       if(par_dims.size() != 1 || total > 1){
         my_print("Error, seperable array read is not 1-D");
-        exit(1);
+        return bound_lookup;
       }
       total=1;
       for(size_t i=1; i< perp_dims.size(); i++) total *=perp_dims[i];
       if(perp_dims.size() != 1 || total > 1){
         my_print("Error, seperable array read is not 1-D");
-        exit(1);
+        return bound_lookup;
       }
       par_sz = par_dims[0];
       perp_sz = perp_dims[0];
@@ -429,7 +431,7 @@ std::function<calc_type(calc_type p_par, calc_type p_perp)> configure_lookup(std
     }
     if(err){
       my_print("Error, axes are not linear");
-      exit(1);
+      return bound_lookup;
     }
     free(par_axes);
     free(perp_axes);
@@ -438,7 +440,7 @@ std::function<calc_type(calc_type p_par, calc_type p_perp)> configure_lookup(std
     my_type * tmp = (my_type *) realloc((void*) par_data, tot_els*sizeof(my_type));
     if(!tmp){
       my_print("Error allocating memory");
-      exit(1);
+      return bound_lookup;
     }
     std::copy(perp_data, perp_data+perp_sz, tmp+ par_sz);
     //Copy perp data over
@@ -465,7 +467,7 @@ std::function<calc_type(calc_type p_par, calc_type p_perp)> configure_lookup(std
       for(size_t i=2; i< dims.size(); i++) total *=dims[i];
       if(dims.size() != 2 || total > 1){
         my_print("Error, array read is not 2-D");
-        exit(1);
+        return bound_lookup;
       }
       par_sz = dims[0];
       perp_sz = dims[1];
@@ -486,7 +488,7 @@ std::function<calc_type(calc_type p_par, calc_type p_perp)> configure_lookup(std
     }
     if(err){
       my_print("Error, axes are not linear");
-      exit(1);
+      return bound_lookup;
     }
     free(axes);
     my_nonth->lookup_data = data;

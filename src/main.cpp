@@ -84,8 +84,9 @@ int main(int argc, char *argv[]){
 
   test_bed = new tests();
   test_bed->set_verbosity(2);
-  test_bed->run_tests();
+  err = test_bed->run_tests();
   delete test_bed;
+  exit(err);
 
 #else
   //Actually do the code...

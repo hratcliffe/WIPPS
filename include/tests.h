@@ -86,7 +86,7 @@ class tests{
     void setup_tests();
     void add_test(test_entity* test);
     void cleanup_tests();
-    void run_tests();
+    bool run_tests();
     void set_verbosity(int verb);
     void set_colour(char col=0);
     bool is_fatal(int err);

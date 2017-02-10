@@ -255,7 +255,7 @@ void tests::cleanup_tests(){
   
 }
 
-void tests::run_tests(){
+bool tests::run_tests(){
 /** \brief Run scheduled tests
 *
 *Runs each test in list and reports total errors found
@@ -269,6 +269,7 @@ void tests::run_tests(){
   this->set_colour('r');
   this->report_info(mk_str(total_errs)+" failed tests", mpi_info.rank);
   this->set_colour();
+  return total_errs > 0;
 
 }
 //----------------------------------------------------------------

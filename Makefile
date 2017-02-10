@@ -2,16 +2,28 @@
 
 OMPI_MPICC=clang++
 CC = mpic++
-SDFPATH = ./SDF/C/
+SDFPATH = ./SDF/C
 #Path to the SDF libraries.
+
+#This works for me on OSX and Ubuntu
+#Looking for /usr/???/include/boost/ and /usr/???/lib/libboost, libfftw etc
+#Default to assuming just usr/include
+USR = /usr
+UNAME_S := $(shell uname -s)
+ifeq ($(UNAME_S),Darwin)
+  USR = /usr/local
+endif
+ifeq ($(UNAME_S),Linux)
+  USR = /usr
+endif
 
 GIT_VERSION := $(shell git describe --dirty --always --tags)
 # This cleverness encodes the git commit version into the source so we can write version number with data
 #-I ./matplotpp/
 SRCDIR = src
 OBJDIR = obj
-INCLUDE = -I /usr/local/include/ -I $(SDFPATH)/include/ -I ./include/
-LIBSDF = -L /usr/local/lib/ $(SDFPATH)/lib/libsdfc.a
+INCLUDE = -I $(USR)/include/ -I $(SDFPATH)/include/ -I ./include/
+LIBSDF = -L $(USR)/lib/ $(SDFPATH)/lib/libsdfc.a
 LIB := $(LIBSDF)
 #LIB += ./matplotpp/matplotpp.a -lglut
 #Add the libraries for glut (openGL) and the matplot library
@@ -158,7 +170,9 @@ echo_warning:
 echo_float:
 	@echo $(ISFLOAT)
 #These are rules so we can ensure they happen before any dependencies are built
-
+#This is a test of the usr dir setting
+echo_usr:
+	@echo $(USR)
 read_test : $(OBJDIR)/read_test.o
 	$(CC) $(INCLUDE) $(SRCDIR)/read_test.cpp $(LIBSDF) -o read_test
 

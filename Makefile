@@ -5,7 +5,7 @@ CC = mpic++
 SDFPATH = ./SDF/C
 #Path to the SDF libraries.
 
-#This works for me on OSX and Ubuntu
+#This works for me on OSX and Ubuntu. It will NOT work on windows.
 #Looking for /usr/???/include/boost/ and /usr/???/lib/libboost, libfftw etc
 #Default to assuming just usr/include
 USR = /usr
@@ -16,6 +16,7 @@ endif
 ifeq ($(UNAME_S),Linux)
   USR = /usr
 endif
+#$(info USR is $(USR))
 
 GIT_VERSION := $(shell git describe --dirty --always --tags)
 # This cleverness encodes the git commit version into the source so we can write version number with data
@@ -221,7 +222,7 @@ echo_deps : process_deps.sh
 	@cp dependencies.log dependencies.log.bak
 	@./process_deps.sh
   #post processing to fix up lines and remove irrelevant deps
-	@sed -i .bak 's,[a-zA-Z/_]*\.o,$(OBJDIR)\/&,' dependencies.log
+	@sed -i.bak 's,[a-zA-Z/_]*\.o,$(OBJDIR)\/&,' dependencies.log
   #prepend OBJDIR string
 
 
@@ -254,6 +255,7 @@ clean:
 veryclean:
 	@rm -f main $(UTILS) dependencies.log*
 	@rm -rf $(OBJDIR)
+	@rm $(SDFPATH)/lib/libsdfc.a
 
 docs:
 	@echo Running Doxygen...

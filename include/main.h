@@ -37,17 +37,20 @@
  * \section docs This Documentation
  * These docs describe all classes and methods under the classes section. Helper functions, constants etc are grouped under modules.
  * \section build Building or Editing the Code
- * Build using make. If input data is type double, use make TYPE=double to build with correct libraries. 
- *Any changes to code include files or addition of files will change dependencies. In this case run make echo_deps before a clean build
+ * Build using make. If input data is type double, use \verbatim make TYPE=double \endverbatim to build with correct libraries.
+ *Any changes to code include files or addition of files will change dependencies. In this case run \verbatim make echo_deps \endverbatim before a clean build
  *
  *\section test Integrated Testing
- * All (hopefully) significant (copout!) parts of the code should be covered by inbuilt tests. These are defined in test.cpp and cover a mixture of unit testing, science testing and library integration tests. To run the tests, clean build with make MODE=test and run. To add tests, see class \ref tests. Consider adding tests for any significant additions or changes, and running the existing ones ditto. To include tests in this documentation, run make docs after make MODE=test. Similarly, to omit them, make without test mode
+ * All (hopefully) significant (copout!) parts of the code should be covered by inbuilt tests. These are defined in tests.cpp and cover a mixture of unit testing, science testing and library integration tests. To run the tests, clean build with \verbatim make MODE=test \endverbatim
+* and run. To add tests, see class \ref tests. Consider adding tests for any significant additions or changes, and running the existing ones ditto. To include tests in this documentation, run 
+ \verbatim make MODE=test
+make docs
+ \endverbatim Similarly, to omit them, make without test mode
  *\section idl IDL routines
- *Some IDL helpers are provided for reading the output files, reading the deck.status file etc. To enable those which depend on SDF library IO, use the .idlstartup file in the files subdirectory, like, for example, IDL> pref_set, 'IDL_STARTUP', '/path/to/.idlstartup',/commit
+ *Some IDL helpers are provided for reading the output files, reading the deck.status file etc. To enable those which depend on SDF library IO, use the .idlstartup file in the files subdirectory, like, for example, \code IDL> pref_set, 'IDL_STARTUP', '/path/to/.idlstartup',/commit \endcode
  *
  *\section utils Utilities
- *As well as the main program, some utility programs are defined. These are built using make utils. For example, generate_ffts processes input data and outputs trimmed FFTs, or growth calculates theoretical growth rates of whistlers
- 
+ *As well as the main program, some utility programs are defined. These are built using make utils. For example, generate_ffts processes input data and outputs trimmed FFTs, or growth calculates theoretical growth rates of whistlers. These are described in the Utility subsection of the Modules tab
 
 \section cpp Minimally wrong description of C++ as used here
 *\subsection types Types and typedefs

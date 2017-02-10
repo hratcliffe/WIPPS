@@ -8,7 +8,7 @@
 #Build the test code and run it
 #Wipe and build with supplied build args
 
-DOCSTRING=$'Script to assist in getting the code running.\nIf FFTW is installed on your system, supply the path with --fftw-path <installed path>. If not, use --install-fftw <path-to-install> (must exist!).\nTo build without FFTW (some functions unavailable!) use --no-fft.\nThe final version will be built using whatever is supplied in --build-args (use quotes to supply more than one). For example, --build-args "TYPE=float".\nUse --help to see this documentation.'
+DOCSTRING=$'Script to assist in getting the code running.\nIf FFTW is installed on your system, supply the path with --fftw-path <installed path>. If not, use --install-fftw <path-to-install> (must exist!).\nTo build without FFTW (some functions unavailable!) use --no-fft.\nTo build ONLY a double or floating point version supply --double or --float (not both!) respectively.\nThe final version will be built using whatever is supplied in --build-args (use quotes to supply more than one). If --double or --float is given, TYPE will be set automatically. Otherwise float will be used, but an explicit TYPE in --build-args will override this. For example, --build-args "TYPE=float".\nUse --help to see this documentation.'
 
 
 #Process args
@@ -17,7 +17,9 @@ NO_FFT=0
 INSTALL_FFTW=0
 INSTALL_PATH=""
 BUILD_ARGS=""
-
+NO_DOUBLE=0
+NO_FLOAT=0
+SELECTED_PRECISION="float"
 while [[ $# > 0 ]]; do
   case $1 in
     --help)
@@ -39,6 +41,13 @@ while [[ $# > 0 ]]; do
     --build-args)
       shift
       BUILD_ARGS=$1
+      ;;
+    --double)
+      NO_FLOAT=1
+      SELECTED_PRECISION="double"
+      ;;
+    --float)
+      NO_DOUBLE=1
       ;;
     *)
       echo "Unknown option "$1
@@ -79,7 +88,11 @@ else
   if [ -w $INSTALL_PATH ]; then
     echo "Installing FFTW in "$INSTALL_PATH
     echo "This may take some time"
-    ./install_fftw $INSTALL_PATH
+    extra_args=""
+    if [ $NO_DOUBLE -eq 1 ]; then extra_args="--no-double";fi
+    if [ $NO_FLOAT -eq 1 ]; then extra_args="--no-float";fi
+
+    ./install_fftw.sh $INSTALL_PATH $extra_args
     if [ $? -ne 0 ]; then
       echo "Error building FFTW!!!!!"
       exit 1
@@ -111,15 +124,14 @@ else
   fi
 fi
 
-
 #Now build the test code and run it
 make clean
 echo "Building test version of code"
-make MODE=test > /dev/null 2>&1
+make MODE=test TYPE=$SELECTED_PRECISION > /dev/null 2>&1
 if [ $? -ne 0 ]; then
 #In case of build error, try proper clean and rebuild
   make veryclean
-  make MODE=test > /dev/null 2>&1
+  make MODE=test TYPE=$SELECTED_PRECISION > /dev/null 2>&1
 fi
 if [ -e ./main ]; then
   echo "Running test version of code" 
@@ -136,8 +148,11 @@ fi
 
 echo "Building final version of code"
 make clean
-make $BUILD_ARGS > /dev/null 2>&1
-echo "Building utilities"
-make $BUILD_ARGS utils
+if [[ ! $BUILD_ARGS == *"MODE"* ]]; then
+  BUILD_ARGS+="TYPE="$SELECTED_PRECISION
+fi
+make $BUILD_ARGS > /dev/null 2>&1 && echo "Building utilities" && make $BUILD_ARGS utils
+if [ $? -eq 0 ]; then
+  echo "Build complete without errors!"
+fi
 
-echo "Build complete!"

@@ -425,7 +425,6 @@ void spectrum::make_angle_axis(){
 * Uniform angle axis from ANG_MIN to ANG_MAX
 */
   calc_type res = (ANG_MAX - ANG_MIN)/get_g_dims(1);
-  size_t len;
   int offset = -ANG_MIN/res;
   g_angle_array.make_linear_axis(1, res, offset);
 

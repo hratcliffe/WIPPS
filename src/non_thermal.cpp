@@ -121,7 +121,6 @@ bool non_thermal::configure_from_file(std::string file_prefix){
     std::string line, name, val;
     int block_num = -1;
     bool parse_err;
-    size_t pos;
 
     //very naive parsing. We spin through until we find a ":"
     //if we don't find n_comps such blocks, we report and continue
@@ -371,7 +370,7 @@ std::function<calc_type(calc_type p_par, calc_type p_perp)> configure_lookup(std
   my_print("Configuring lookup from "+file_prefix+file);
   std::function<calc_type(calc_type p_par, calc_type p_perp)> bound_lookup;
 
-  calc_type dp_par_ax, p_par_ax_min, dp_perp_ax, p_perp_ax_min;
+  calc_type p_par_ax_min, p_perp_ax_min;
   size_t par_sz, perp_sz;
 
   //Open and read file sizes

@@ -541,8 +541,8 @@ std::string mk_str(bool b){
 
 }
 
-std::string mk_str(long double i, bool noexp){return mk_str((double) i, noexp);};
-std::string mk_str(float i, bool noexp){return mk_str((double) i, noexp);};
+std::string mk_str(long double i, bool noexp){return mk_str((double) i, noexp);}
+std::string mk_str(float i, bool noexp){return mk_str((double) i, noexp);}
 
 template<typename T> T integrator(T * start, int len, T * increment){
 /** \brief Basic numerical integrator
@@ -766,15 +766,10 @@ Think of the array as being 3-D. The dim we;re flattening is dim-1. All the less
   if(flat_start >= dims_in[flatten_on_dim]) return 1;
   if(flat_stop >= dims_in[flatten_on_dim]) flat_stop = dims_in[flatten_on_dim];
   
-  //my_print("Flattening array", mpi_info.rank);
-
-  size_t part_sz = 1;
   size_t els_to_copy = 1, n_segments = 1, sz = 1;
 
   for(size_t i=0; i<flatten_on_dim; ++i) els_to_copy*= dims_in[i];
   for(size_t i=flatten_on_dim+1; i< n_dims_in; ++i) n_segments *= dims_in[i];
-
-  part_sz = els_to_copy*n_segments;
 
   size_t chunk_sz = els_to_copy;
   for(size_t i=0; i< n_segments; ++i) std::copy(src_ptr + i*chunk_sz*dims_in[flatten_on_dim] +els_to_copy*flat_start, src_ptr + i*chunk_sz*dims_in[flatten_on_dim]+ els_to_copy+ els_to_copy*flat_start, dest_ptr + i*chunk_sz*sz);

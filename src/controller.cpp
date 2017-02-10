@@ -29,7 +29,7 @@ controller::controller(std::string file_prefix){
   my_plas = plasma(file_prefix);
   current_spect=0;
   current_d=0;
-};
+}
 
 controller::~controller(){
 /** \brief Delete 
@@ -42,7 +42,7 @@ controller::~controller(){
     my_list[i].first = nullptr;
     my_list[i].second = nullptr;
   }
-};
+}
 
 bool controller::add_spectrum(std::string file){
 /** \brief Add spectrum from dump

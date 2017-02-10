@@ -53,6 +53,8 @@ std::vector<std::string> read_filelist(std::string infile);
 
 void dump_distrib(non_thermal * my_elec, std::string filename);
 
+calc_type estimate_spectrum_noise(spectrum & spec_in);
+
 int main(int argc, char *argv[]){
 
   int err=0;
@@ -128,9 +130,11 @@ int main(int argc, char *argv[]){
           numeric_data.subtract(F_prev);
 
         }else{
-        //Assuming first file grows from '0' lets take e.g. the first two non edge values as an initial level. We subtract the logs as for the rest of the cases. I.e. we assume F(t_0) = ref_val. Perhaps should average raw not logged, but this will do.
-          calc_type ref_val = (F_prev.get_element(1) + F_prev.get_element(2))/2.0;
-          
+        //We need some sort of estimate of the spectrum "noise" to eliminate this in the first file. Then we assume F(t_0) = ref_val. Perhaps should average raw not logged, but this will do.
+//          calc_type ref_val = (F_prev.get_element(6) + F_prev.get_element(7))/2.0;
+          calc_type ref_val = estimate_spectrum_noise(*my_spect);
+          ref_val = log_function(ref_val);
+          my_print("Noise estimate: "+mk_str(ref_val));
           std::function<calc_type(calc_type)> minus_const_function = [ref_val](calc_type el) -> calc_type { return el - ref_val; } ;
           numeric_data.apply(minus_const_function);
           delta_t =(numeric_data.time[1] + numeric_data.time[0])/2.0;
@@ -335,7 +339,7 @@ std::vector<std::string> read_filelist(std::string infile){
 
 g_args g_command_line(int argc, char * argv[]){
 /** Check whether to handle real spectra. If -s we use the spectra (plural) listed in that file, if not we output analytic only*/
-/** \todo -spec is not an error???*/
+/** \todo -spec is not an error??? Nor is -in*/
   g_args extra_cmd_line;
 
   extra_cmd_line.real = false;
@@ -418,6 +422,16 @@ void dump_distrib(non_thermal * my_elec, std::string filename){
   if(outfile) created_array.write_to_file(outfile);
 }
 
+calc_type estimate_spectrum_noise(spectrum & spec_in){
+/** Estimates the "noise" in a given spectrum. 
+*
+* There are many ways we might do this, using varying amounts of additional information about the "spectrum". Averaging the end values works poorly. Averaging the largest two values that are greater than something? Fit a straight line to the 0.8 to 1 region?
+*/
+/** \todo Find better noise estimate...*/
+  calc_type noise_val = (spec_in.get_B_element(6) + spec_in.get_B_element(7))/2.0;
+
+  return noise_val;
+}
 
 /** @} */
 /** @} */

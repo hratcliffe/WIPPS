@@ -28,3 +28,5 @@ callgrind*
 *.png
 *.dump
 *.old
+*.swp
+SDF/C/lib/libsdfc.a

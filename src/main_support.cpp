@@ -338,10 +338,17 @@ void get_deck_constants(std::string file_prefix){
   std::string line;
   std::vector<std::string> lines;
   bool found=false;
+  
+  my_const.omega_ce = 0.0;
+  my_const.omega_pe = 0.0;
+  my_const.dens_factor = 0.0;
+  my_const.omega_ci = 0.0;
+  my_const.v_t = 0.0;
+  my_const.ppc = 0;
+  
   if(!infile.is_open()){
     my_print("No deck.status file found, aborting", mpi_info.rank);
-    safe_exit();
-  
+    return;
   }
   while(infile){
     getline(infile, line);
@@ -352,7 +359,7 @@ void get_deck_constants(std::string file_prefix){
   }
   if(!found){
     my_print("No constants dump found in deck.status, aborting", mpi_info.rank);
-    safe_exit();
+    return;
   }
 
   while(infile){
@@ -365,8 +372,6 @@ void get_deck_constants(std::string file_prefix){
   bool parse_err;
   float val_f;
   
-  my_const.omega_ce = 0;
-  my_const.omega_pe = 0;
   float tmp_rat=0.0, tmp_rath=0.0;
   
   for(size_t i=0; i< lines.size(); i++){

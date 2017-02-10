@@ -55,8 +55,8 @@ bool non_thermal::configure_from_file(std::string file_prefix){
   std::vector<std::string> lines;
   bool found=false;
   if(!infile.is_open()){
-    my_print("No deck.status file found, aborting", mpi_info.rank);
-    safe_exit();
+    my_print("No deck.status file found", mpi_info.rank);
+    return 1;
   
   }
   while(infile){
@@ -67,8 +67,8 @@ bool non_thermal::configure_from_file(std::string file_prefix){
     }
   }
   if(!found){
-    my_print("No constants dump found in deck.status, aborting", mpi_info.rank);
-    safe_exit();
+    my_print("No constants dump found in deck.status", mpi_info.rank);
+    return 1;
   }
 
   while(infile){

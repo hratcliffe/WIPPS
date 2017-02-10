@@ -35,13 +35,19 @@ CFLAGS += -g
 OPTIMISE = -O3
 #Optimiser level for non-debug builds (debug includes test)
 
-NO_FFT = 1
-#If defined, do not use FFT libraries. Note FFT routines will be unavailable if set, as will certain utilities
+#NO_FFT = 1
+#Uncomment to not use FFT libraries. Note FFT routines will be unavailable if set, as will certain utilities
 
 ifdef NO_FFT
   CFLAGS += -DNO_FFT
 endif
 
+FFTW_PATH = ../../../FFTW_testdir/fftw-3.3.4/
+
+ifneq ($(strip $(FFTW_PATH)),) 
+  INCLUDE += -I $(FFTW_PATH)
+endif
+#$(info $(INCLUDE))
 #Don't check data file versions against code by default
 CFLAGS += -DDEFAULT_NOVERS
 

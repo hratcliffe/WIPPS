@@ -273,28 +273,17 @@ calc_type non_thermal::f_p(calc_type p_par, calc_type p_perp){
 
 calc_type max(calc_type p, calc_type p_th, calc_type A){
 /** Exp function*/
-
   return A*std::exp(-p*p/p_th/p_th);
 }
 
 calc_type bimax(calc_type p, calc_type p2, calc_type p_th, calc_type p_th2, calc_type A){
+/** Bimaxwellian (different parallel and perp temperatures)*/
   return A*std::exp(-p*p/p_th/p_th - p2*p2/p_th2/p_th2);
 }
 
-calc_type double_max(calc_type p, calc_type v_th, calc_type v_th2, calc_type A, calc_type A2){
-/** Double exp function*/
-
-  return A*std::exp(-p*p/v_th/v_th/me/me) + A2*std::exp(-p*p/v_th2/v_th2/me/me);
-}
-
 calc_type bikappa(calc_type p, calc_type p2, calc_type kappa, calc_type v_kpar, calc_type v_kperp, calc_type A){
-
-  return 0;
-}
-
-calc_type pancake(calc_type p, calc_type p2, size_t px_sz, calc_type * px_vals){
-
-  return 0.0;
+/* Bikappa function*/
+  return A*std::pow( 1.0 + (std::pow(p/v_kpar, 2) + std::pow(p2/v_kperp, 2))/kappa , -kappa-1);
 }
 
 calc_type lookup(calc_type p_par, calc_type p_perp, my_type * data, size_t par_sz, size_t perp_sz,calc_type dp_par_ax, calc_type p_par_ax_min, calc_type dp_perp_ax, calc_type p_perp_ax_min){
@@ -356,9 +345,11 @@ calc_type seperable_lookup(calc_type p_par, calc_type p_perp, my_type * data, si
   perp_diff = p_perp_ind_decimal - p_perp_ind;
   
   //2 point linear interpolation to "exact" location on par and perp
-  
-  interp_val = (par_diff *data[p_par_ind + 1] + (1.0 - par_diff)*data[p_par_ind]) * (perp_diff *data[par_sz + p_perp_ind + 1] + (1.0 - perp_diff)*data[par_sz+p_perp_ind]);
-
+  if(p_par_ind < par_sz && p_perp_ind < perp_sz){
+    interp_val = (par_diff *data[p_par_ind + 1] + (1.0 - par_diff)*data[p_par_ind]) * (perp_diff *data[par_sz + p_perp_ind + 1] + (1.0 - perp_diff)*data[par_sz+p_perp_ind]);
+  }else{
+    interp_val = 0.0;
+  }
   return interp_val;
 
 }

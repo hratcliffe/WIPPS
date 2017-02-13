@@ -55,7 +55,6 @@ public:
 
 calc_type bikappa(calc_type p, calc_type p2, calc_type kappa, calc_type v_k, calc_type v_k2, calc_type A);
 calc_type max(calc_type p, calc_type v_th, calc_type A);
-calc_type double_max(calc_type p, calc_type p_th, calc_type p_th2, calc_type A, calc_type A2);
 calc_type bimax(calc_type p, calc_type p2, calc_type p_th, calc_type p_th2, calc_type A);
 
 calc_type lookup(calc_type p_par, calc_type p_perp, my_type * data, size_t par_sz, size_t perp_sz,calc_type dp_par_ax, calc_type p_par_ax_min, calc_type dp_perp_ax, calc_type p_perp_ax_min);

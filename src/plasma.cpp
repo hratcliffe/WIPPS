@@ -145,6 +145,15 @@ mu plasma::get_root(calc_type th, calc_type w, calc_type psi, bool Righthand){
   mu mu_ret;
   calc_type dndr[ncomps], dndth[ncomps];
   calc_type dB0dr, dB0dth;
+
+#ifdef DEBUG_ALL
+  //Argument preconditions. Check only in debug mode for speed
+  if(psi < 0 || psi >= pi) my_print("!!!!!!!!Error in get_root, pitch angle (psi="+mk_str(psi)+") out of range!!!!!!", 0);
+  if(th < 0 || th >= pi/2.0) my_print("!!!!!!!!Error in get_root, position angle (th="+mk_str(th)+") out of range!!!!!!", 0);
+  //I don't think there's an upper or lower bound on w we need to enforce
+  
+#endif
+
   
   /** \todo get or calc these...*/
   // FAKENUMBERS
@@ -296,7 +305,7 @@ mu plasma::get_root(calc_type th, calc_type w, calc_type psi, bool Righthand){
 
 mu_dmudom plasma::get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int n, calc_type omega_n, bool Righthand)const{
 /**Get's the Phi defined by Lyons 1974, and mu, dmu/dom i.e. the set needed for D.
-*Also needs particle pitch angle alpha \todo Fix relativistic gamma... WATCH for Clares version which uses a different alpha entirely...
+*Also needs particle pitch angle alpha \todo Fix relativistic gamma... WATCH for Clares version which uses a different alpha entirely... \todo Why do we pass omega_n??
 
  */
  
@@ -306,6 +315,14 @@ mu_dmudom plasma::get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int
 
   calc_type dndr[ncomps], dndth[ncomps];
   calc_type dB0dr, dB0dth;
+
+#ifdef DEBUG_ALL
+  //Argument preconditions. Check only in debug mode for speed
+  if(psi < 0 || psi >= pi) my_print("!!!!!!!!Error in get_phi_mu_om, pitch angle (psi="+mk_str(psi)+") out of range!!!!!!", 0);
+  if(alpha < 0 || alpha >= pi) my_print("!!!!!!!!Error in get_phi_mu_om, particle pitch angle (alpha="+mk_str(alpha)+") out of range!!!!!!", 0);
+  //I don't think there's an upper or lower bound on w we need to enforce
+  //Nor any actual bounds on n
+#endif
   
   w2 = w*w;
   w3 = w2*w;
@@ -480,6 +497,14 @@ mu_dmudom plasma::get_high_dens_phi_mu_om(calc_type w, calc_type psi, calc_type 
   calc_type dndr[ncomps], dndth[ncomps];
   calc_type dB0dr, dB0dth;
   
+#ifdef DEBUG_ALL
+  //Argument preconditions. Check only in debug mode for speed
+  if(psi < 0 || psi >= pi) my_print("!!!!!!!!Error in get_high_dens_phi_mu_om, pitch angle (psi="+mk_str(psi)+") out of range!!!!!!", 0);
+  if(alpha < 0 || alpha >= pi) my_print("!!!!!!!!Error in get_high_dens_phi_mu_om, particle pitch angle (alpha="+mk_str(alpha)+") out of range!!!!!!", 0);
+  //I don't think there's an upper or lower bound on w we need to enforce
+  //Nor any bounds on n
+#endif
+  
   w2 = w*w;
   w3 = w2*w;
   
@@ -645,12 +670,17 @@ mu_dmudom plasma::get_high_dens_phi_mu_om(calc_type w, calc_type psi, calc_type 
 }
 
 std::vector<calc_type> plasma::get_resonant_omega(calc_type x, calc_type v_par, calc_type n)const{
-/**Get resonant frequency for particular x, v_parallel, n
+/**Get resonant frequency for particular x (tan theta), v_parallel, n
 *
 *Solve high density approx to get omega. for pure electron proton plasma....
 * Calls cubic_solve Note for slowly changing v_par, suggests Newtons method might be more efficient. Although much of this could be precomputed for given grids.
 Return empty vector if no valid solutions \todo Extend to general case?
 */
+
+#ifdef DEBUG_ALL
+  //Argument preconditions. Check only in debug mode for speed
+  if(v_par >= v0) my_print("!!!!!!!!Error in get_resonant_omega, velocity (v_par="+mk_str(v_par)+") out of range!!!!!!", 0);
+#endif
 
   std::vector<calc_type> ret_vec;
 //  ret_vec.resize(0);
@@ -716,6 +746,13 @@ calc_type plasma::get_omega_ref(std::string code)const{
 *Takes a two char code string and returns the specified frequency at local position. ce is actual Cyclotron freq. c0 is a reference value
 */
 
+#ifdef DEBUG_ALL
+  std::string codes = "c0 pe ce";
+  //Argument preconditions. Check only in debug mode for speed
+  if(codes.find(code) == std::string::npos) my_print("!!!!!!!!Error in get_omega_ref, unknown code (code="+code+")!!!!!!", 0);
+#endif
+
+
   if(code == "c0") return this->om_ce_ref;
   if(code == "pe") return my_const.omega_pe;
   if(code == "ce") return this->om_ce_local;
@@ -728,6 +765,14 @@ calc_type plasma::get_dispersion(my_type in, int wave_type, bool reverse, bool d
 /** \brief Solve analytic dispersion (approx)
 *
 * By default returns omega for a given k (see reverse and deriv params param). Uses local reference cyclotron and plasma frequencies and works with UNNORMALISED quantitites. NB: parameters out of range will silently return 0. NB: For Whistler modes this is an approximation and intended to be perfectly reversible. @param k Wavenumber @param wave_type wave species (see support.h) @param reverse Return k for input omega @param deriv Whether to instead return anayltic v_g */
+
+#ifdef DEBUG_ALL
+  //Argument preconditions. Check only in debug mode for speed
+  if(wave_type < WAVE_WHISTLER || wave_type > WAVE_X) my_print("!!!!!!!!Error in get_dispersion, wave_type unknown (wave_type="+mk_str(wave_type)+")!!!!!!", 0);
+  //Theta is not conditioned because we reduce it below. This may change though
+  //In is either a frequency or a wavenumber and thus has no limits, although may wish to add sanity limits
+#endif
+
 
   calc_type ret = 0.0;
   calc_type om_ce_loc, om_pe_loc;

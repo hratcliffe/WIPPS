@@ -266,7 +266,9 @@ bool tests::run_tests(){
     total_errs += (bool) test_list[current_test_id]->run();
     //Add one if is any error returned
   }
-  this->set_colour('r');
+  this->set_colour('*');
+  if(total_errs > 0) this->set_colour('r');
+  else this->set_colour('b');
   this->report_info(mk_str(total_errs)+" failed tests", mpi_info.rank);
   this->set_colour();
   return total_errs > 0;

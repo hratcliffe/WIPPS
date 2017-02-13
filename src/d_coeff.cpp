@@ -112,7 +112,7 @@ void diffusion_coeff::make_velocity_axis(){
 }
 
 void diffusion_coeff::make_pitch_axis(){
-/**\brief Set pitch angle axis (tan theta)
+/**\brief Set pitch angle axis (tan theta? alpha???)
 *
 *Makes linear axis between ANG_MIN and ANG_MAX
 */
@@ -236,7 +236,7 @@ Get mu, dmu/domega which are used to:
 //    for(int k =0; k< ((1 <dims[1]) ? 1: dims[1]); k++){
     for(size_t k =0; k< dims[1]; k++){
       //particle pitch angle
-      alpha = get_axis_element(1, k);
+      alpha = atan(get_axis_element(1, k));
       s2alpha = std::pow(std::sin(alpha), 2);
 
       for(int j=0;j<n_thetas; ++j){

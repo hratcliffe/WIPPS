@@ -79,7 +79,7 @@ spectrum::spectrum(std::string filename){
   std::vector<size_t> dims = B_omega_array.read_dims_from_file(file);
 
   if(dims.size() !=1){
-    my_print("Invalid dimensions for B", mpi_info.rank);
+    my_error_print("Invalid dimensions for B", mpi_info.rank);
     cont = 0;
   }else{
     my_print("B size "+mk_str(dims[0]), mpi_info.rank);
@@ -93,14 +93,14 @@ spectrum::spectrum(std::string filename){
     err = B_omega_array.read_from_file(file);
   }
   if(cont && err){
-    my_print("File read failed", mpi_info.rank);
+    my_error_print("File read failed", mpi_info.rank);
     cont = 0;
   }
   if(cont){
     file.read((char*) &next_block, sizeof(size_t));
     if(next_block == end_block){
       //Early termination of file...
-      my_print("Insufficent arrays in file", mpi_info.rank);
+      my_error_print("Insufficent arrays in file", mpi_info.rank);
       cont =0;
     }
   }
@@ -112,7 +112,7 @@ spectrum::spectrum(std::string filename){
     dims = g_angle_array.read_dims_from_file(file);
 
     if(dims.size() !=2){
-      my_print("Wrong dimensions for g", mpi_info.rank);
+      my_error_print("Wrong dimensions for g", mpi_info.rank);
       cont = 0;
     }else{
       my_print("g size "+mk_str(dims[0])+'x'+mk_str(dims[1]), mpi_info.rank);
@@ -138,7 +138,7 @@ spectrum::spectrum(std::string filename){
     err = g_angle_array.read_from_file(file);
   
     if(err){
-      my_print("File read failed", mpi_info.rank);
+      my_error_print("File read failed", mpi_info.rank);
       cont =0;
     }
   }
@@ -148,7 +148,7 @@ spectrum::spectrum(std::string filename){
     //If we're done, this should be the
      if(next_block != end_block){
       //File is not done!
-      my_print("Excess arrays in file", mpi_info.rank);
+      my_error_print("Excess arrays in file", mpi_info.rank);
       cont = 0;
     }
   }
@@ -238,7 +238,7 @@ bool spectrum::generate_spectrum(data_array &parent, int om_fuzz, int angle_type
 */
 
   if(!this->is_good()){
-    my_print("Spectrum object invalid. Returning", mpi_info.rank);
+    my_error_print("Spectrum object invalid. Returning", mpi_info.rank);
     return 1;
   }
 
@@ -438,11 +438,11 @@ bool spectrum::make_angle_distrib(){
 
 
   if(!angle_is_function){
-    my_print("Angular distrib is not a function. Returning", mpi_info.rank);
+    my_error_print("Angular distrib is not a function. Returning", mpi_info.rank);
     return 1;
   }
   if(!g_angle_array.is_good()){
-    my_print("Angular array invalid. Returning", mpi_info.rank);
+    my_error_print("Angular array invalid. Returning", mpi_info.rank);
     return 1;
   }
   make_angle_axis();
@@ -473,7 +473,7 @@ bool spectrum::make_angle_distrib(){
 
   }else{
   
-    my_print("Invalid function type. Returning", mpi_info.rank);
+    my_error_print("Invalid function type. Returning", mpi_info.rank);
     return 1;
 
   }
@@ -546,7 +546,7 @@ bool spectrum::write_to_file(std::fstream &file){
   file.write((char*) & smooth, sizeof(size_t));
 
   if((size_t)file.tellg() != next_location) write_err=1;
-  if(write_err) my_print("Error writing offset positions", mpi_info.rank);
+  if(write_err) my_error_print("Error writing offset positions", mpi_info.rank);
   file.write((char*) & ftr_start, sizeof(size_t));
 
   return err;
@@ -568,21 +568,21 @@ bool spectrum::read_from_file(std::fstream &file){
 
   err = B_omega_array.read_from_file(file);
   if(err){
-    my_print("File read failed", mpi_info.rank);
+    my_error_print("File read failed", mpi_info.rank);
     return err;
   }
   file.seekg(-1*sizeof(size_t), std::ios::cur);
   file.read((char*) &next_block, sizeof(size_t));
   if(next_block == end_block){
     //Early termination of file...
-    my_print("Insufficent arrays in file", mpi_info.rank);
+    my_error_print("Insufficent arrays in file", mpi_info.rank);
     B_omega_array = data_array();
     return 1;
   }
 
   err = g_angle_array.read_from_file(file);
   if(err){
-    my_print("File read failed", mpi_info.rank);
+    my_error_print("File read failed", mpi_info.rank);
     return err;
   }
   file.seekg(-1*sizeof(size_t), std::ios::cur);
@@ -590,7 +590,7 @@ bool spectrum::read_from_file(std::fstream &file){
 
   if(next_block != end_block){
     //File is not done!
-    my_print("Excess arrays in file", mpi_info.rank);
+    my_error_print("Excess arrays in file", mpi_info.rank);
   }
 
   char id_in[ID_SIZE];
@@ -610,7 +610,7 @@ void spectrum::make_test_spectrum(int angle_type, bool two_sided, my_type om_ce)
 */
 
   if(!this->is_good()){
-    my_print("Spectrum object invalid, returning", mpi_info.rank);
+    my_error_print("Spectrum object invalid, returning", mpi_info.rank);
     return;
   }
   char id[ID_SIZE] = "ex";
@@ -670,7 +670,7 @@ bool spectrum::truncate_om(my_type om_min, my_type om_max){
 */
 
   if(om_min >= om_max){
-    my_print("Invalid omega range, aborting truncate", mpi_info.rank);
+    my_error_print("Invalid omega range, aborting truncate", mpi_info.rank);
     return 1;
   }
 
@@ -701,7 +701,7 @@ bool spectrum::truncate_x(my_type x_min, my_type x_max){
 */
 
   if(x_min >= x_max){
-    my_print("Invalid x range, aborting truncate", mpi_info.rank);
+    my_error_print("Invalid x range, aborting truncate", mpi_info.rank);
     return 1;
   }
 

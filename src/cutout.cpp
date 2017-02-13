@@ -72,7 +72,7 @@ int main(int argc, char *argv[]){
     std::cout<<my_args.file_prefix<<" "<<my_args.file_in<<" "<<my_args.file_out<<'\n';
     
     if(my_args.limits.size() !=2*n_dims){
-      my_print("******Please supply 2 limits per dimension*****", mpi_info.rank);
+      my_error_print("******Please supply 2 limits per dimension*****", mpi_info.rank);
       exit(1);
     }
     if(my_const.omega_ce != 0){

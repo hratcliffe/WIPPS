@@ -60,7 +60,7 @@ int main(int argc, char *argv[]){
   data_array data_in = data_array(my_args.file_prefix+my_args.file_in, 0);
 
   if(!data_in.is_good()){
-      my_print("Data array allocation failed. Aborting.");
+      my_error_print("Data array allocation failed. Aborting.");
       return 0;
   }
 

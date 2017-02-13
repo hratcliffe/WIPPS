@@ -52,12 +52,12 @@ void my_array::alloc_all(const size_t n_dims, const size_t * const dims){
   }
   //tot_dims now 0 if any dim is 0
   if(tot_dims==0){
-    my_print("Array cannot have 0 dim", mpi_info.rank);
+    my_error_print("Array cannot have 0 dim", mpi_info.rank);
     return;
   }
   if(too_large || tot_dims > MAX_SIZE_TOT){
-    if(too_large) my_print("Array size exceeds max per-dimension size of "+mk_str(MAX_SIZE), mpi_info.rank);
-    if(tot_dims> MAX_SIZE_TOT) my_print("Array size exceeds max overall size of "+mk_str(MAX_SIZE_TOT), mpi_info.rank);
+    if(too_large) my_error_print("Array size exceeds max per-dimension size of "+mk_str(MAX_SIZE), mpi_info.rank);
+    if(tot_dims> MAX_SIZE_TOT) my_error_print("Array size exceeds max overall size of "+mk_str(MAX_SIZE_TOT), mpi_info.rank);
     return;
   }
   
@@ -240,7 +240,7 @@ Etc */
 
   if(n_dims != 1){
 #ifdef DEBUG_DIMS
-    my_print("Wrong array dimension, attempting 1 with "+mk_str(n_dims), mpi_info.rank);
+    my_error_print("Wrong array dimension, attempting 1 with "+mk_str(n_dims), mpi_info.rank);
 #endif
     return -1;
 
@@ -269,7 +269,7 @@ Etc
 
   if(n_dims != 2){
 #ifdef DEBUG_DIMS
-    my_print("Wrong array dimension, attempting 2 with "+mk_str(n_dims), mpi_info.rank);
+    my_error_print("Wrong array dimension, attempting 2 with "+mk_str(n_dims), mpi_info.rank);
 #endif
     return -1;
 
@@ -288,7 +288,7 @@ long my_array::get_index(size_t nx, size_t ny, size_t nz)const{
 
   if(n_dims != 3){
 #ifdef DEBUG_DIMS
-    my_print("Wrong array dimension, attempting 3 with "+mk_str(n_dims), mpi_info.rank);
+    my_error_print("Wrong array dimension, attempting 3 with "+mk_str(n_dims), mpi_info.rank);
 #endif
     return -1;
   }
@@ -307,7 +307,7 @@ long my_array::get_index(size_t nx, size_t ny, size_t nz, size_t nt)const{
 
   if(n_dims != 4){
 #ifdef DEBUG_DIMS
-    my_print("Wrong array dimension, attempting 4 with "+mk_str(n_dims), mpi_info.rank);
+    my_error_print("Wrong array dimension, attempting 4 with "+mk_str(n_dims), mpi_info.rank);
 #endif
     return -1;
   }
@@ -634,7 +634,7 @@ bool my_array::write_to_file(std::fstream &file){
 
   if((size_t)file.tellg() != next_location) write_err=1;
 
-  if(write_err) my_print("Error writing offset positions", mpi_info.rank);
+  if(write_err) my_error_print("Error writing offset positions", mpi_info.rank);
 
   return 0;
 
@@ -730,7 +730,7 @@ bool my_array::write_section_to_file(std::fstream &file, std::vector<size_t> bou
   
   if((size_t)file.tellg() != next_location) write_err=1;
 
-  if(write_err) my_print("Error writing offset positions", mpi_info.rank);
+  if(write_err) my_error_print("Error writing offset positions", mpi_info.rank);
 
   return 0;
 
@@ -752,13 +752,13 @@ bool my_array::read_from_file(std::fstream &file, bool no_version_check){
   size_t next_block;
   
   if(dims_vec.size() !=n_dims){
-    my_print("Dimensions do not match, aborting read", mpi_info.rank);
+    my_error_print("Dimensions do not match, aborting read", mpi_info.rank);
     return 1;
   }
   size_t tot_els =1;
   for(size_t i=0;i<dims_vec.size();i++){
     if(dims_vec[i] !=dims[i]){
-      my_print("Dimensions do not match, aborting read", mpi_info.rank);
+      my_error_print("Dimensions do not match, aborting read", mpi_info.rank);
       return 1;
     }
     tot_els *= dims[i];
@@ -788,7 +788,7 @@ std::vector<size_t> my_array::read_dims_from_file(std::fstream &file, bool no_ve
   my_type verf=0.0;
 
   if(!file.good()){
-    my_print("File access error");
+    my_error_print("File access error");
     return dims_vec;
   }
 
@@ -797,8 +797,8 @@ std::vector<size_t> my_array::read_dims_from_file(std::fstream &file, bool no_ve
   file.read((char*) &size_sz, sizeof(int));
   file.read((char*) &my_sz, sizeof(int));
 
-  if(size_sz !=sizeof(size_t)) my_print("size_t size does not match file", mpi_info.rank);
-  if(my_sz !=sizeof(my_type)) my_print("my_type size does not match file", mpi_info.rank);
+  if(size_sz !=sizeof(size_t)) my_error_print("size_t size does not match file", mpi_info.rank);
+  if(my_sz !=sizeof(my_type)) my_error_print("my_type size does not match file", mpi_info.rank);
   if(my_sz !=sizeof(my_type) ||size_sz !=sizeof(size_t)) return dims_vec;
   
   file.read((char*) &verf, sizeof(my_type));
@@ -806,8 +806,8 @@ std::vector<size_t> my_array::read_dims_from_file(std::fstream &file, bool no_ve
 
   if(verf != io_verify){
   //equality even though floats as should be identical
-    my_print("File read error", mpi_info.rank);
-    if(strcmp(tmp_vers, VERSION) !=0 && strcmp(tmp_vers, "IDL data write")!= 0 ) my_print("Incompatible code versions", mpi_info.rank);
+    my_error_print("File read error", mpi_info.rank);
+    if(strcmp(tmp_vers, VERSION) !=0 && strcmp(tmp_vers, "IDL data write")!= 0 ) my_error_print("Incompatible code versions", mpi_info.rank);
     return dims_vec;
   }else{
     if(!no_version_check && strcmp(tmp_vers, VERSION) !=0){
@@ -856,7 +856,7 @@ bool my_array::resize(size_t dim, size_t sz, bool verbose){
 
     new_data = (my_type *) realloc((void*) this->data, part_sz*sz*sizeof(my_type));
     if(!new_data){
-      my_print("Failed to reallocate memory", mpi_info.rank);
+      my_error_print("Failed to reallocate memory", mpi_info.rank);
       return 1;
       //failure. leave as was.
     }

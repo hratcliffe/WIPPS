@@ -96,7 +96,7 @@ int main(int argc, char *argv[]){
       spectrum * my_spect = new spectrum(cmd_line_args.file_prefix+ filelist[0]);
       if(my_spect->get_B_dims() < 1){
       //Wrap in quotes so we highlight stray trailing whitespace etc
-        my_print("Invalid or missing spectrum file '"+cmd_line_args.file_prefix+filelist[0]+"'");
+        my_error_print("Invalid or missing spectrum file '"+cmd_line_args.file_prefix+filelist[0]+"'");
       }
       //We read spetra which may be either E or B, so call it F
       data_array F_prev, F_curr;
@@ -112,11 +112,11 @@ int main(int argc, char *argv[]){
         delete my_spect;
         my_spect = new spectrum(cmd_line_args.file_prefix+filelist[i]);
         if(my_spect->get_B_dims() < 1){
-          my_print("Invalid or missing spectrum file '"+cmd_line_args.file_prefix+filelist[i]+"'");
+          my_error_print("Invalid or missing spectrum file '"+cmd_line_args.file_prefix+filelist[i]+"'");
           continue;
         }else if(my_spect->get_B_dims(0) < 3){
           //We use first few els in special case below, and < 3 els will never be useful growth rate
-          my_print("Invalid field in '"+cmd_line_args.file_prefix+filelist[i]+"'");
+          my_error_print("Invalid field in '"+cmd_line_args.file_prefix+filelist[i]+"'");
           continue;
         }
         //Read and ln F for this step
@@ -148,7 +148,7 @@ int main(int argc, char *argv[]){
       }
       delete my_spect;
     }else{
-      my_print("Empty or missing spectrum file '"+cmd_line_args.file_prefix+extra_args.spect_file+"'", mpi_info.rank);
+      my_error_print("Empty or missing spectrum file '"+cmd_line_args.file_prefix+extra_args.spect_file+"'", mpi_info.rank);
     }
   }
   
@@ -166,7 +166,7 @@ int main(int argc, char *argv[]){
   calc_type growth_rate = 0.0;
 
   if(!p_axis){
-    my_print("Cannot allocate memory for arrays", mpi_info.rank);
+    my_error_print("Cannot allocate memory for arrays", mpi_info.rank);
     if(p_axis) free(p_axis);
     safe_exit();
   }
@@ -207,7 +207,7 @@ int main(int argc, char *argv[]){
 
   file.close();
   if(!err) my_print("Written in "+filename);
-  else my_print("Error writing to "+filename);
+  else my_error_print("Error writing to "+filename);
   dump_distrib(my_elec, cmd_line_args.file_prefix+"NonThermalDump.dat");
   safe_exit();
 
@@ -310,7 +310,7 @@ calc_type * make_momentum_axis(int n_mom, calc_type v_max){
   p_axis[0] = 0.0;
   for(int i=1; i< n_mom; ++i) p_axis[i] = p_axis[i-1] + dp;
   //Set momenta from 0 to v_max. Do this once.
-  if( std::abs(p_axis[n_mom-1] -  (v_max * v0/ std::sqrt(1.0- v_max*v_max)))> 1e-3) my_print("Momentum axis error of "+mk_str(std::abs(p_axis[n_mom-1] -  (v_max * v0/ std::sqrt(1.0- v_max*v_max)))), mpi_info.rank);
+  if( std::abs(p_axis[n_mom-1] -  (v_max * v0/ std::sqrt(1.0- v_max*v_max)))> 1e-3) my_error_print("Momentum axis error of "+mk_str(std::abs(p_axis[n_mom-1] -  (v_max * v0/ std::sqrt(1.0- v_max*v_max)))), mpi_info.rank);
   
   return p_axis;
 
@@ -392,7 +392,7 @@ bool write_growth_closer(std::string in_file, plasma * my_plas, non_thermal * my
   file.write(in_file.c_str(), len*sizeof(char));
 
   if((size_t)file.tellg() != next_location) write_err=1;
-  if(write_err) my_print("Error writing offset positions", mpi_info.rank);
+  if(write_err) my_error_print("Error writing offset positions", mpi_info.rank);
   file.write((char*) & ftr_start, sizeof(size_t));
 
   return write_err;

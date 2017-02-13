@@ -156,7 +156,7 @@ setup_args process_command_line(int argc, char *argv[]){
       i++;
     }
     else if(strcmp(argv[i], "-start")==0 && i < argc-1){
-      if(argv[i+1] >= 0){
+      if(atoi(argv[i+1]) >= 0){
         values.time[0] = atoi(argv[i+1]);
       }else{
         my_error_print("Start cannot be negative!!!!!!");
@@ -164,7 +164,7 @@ setup_args process_command_line(int argc, char *argv[]){
       i++;
     }
     else if(strcmp(argv[i], "-end")==0 && i < argc-1){
-      if(argv[i+1] >= 0){
+      if(atoi(argv[i+1]) >= 0){
         values.time[1] = atoi(argv[i+1]);
       }else{
         my_error_print("End cannot be negative!!!!!");
@@ -172,7 +172,7 @@ setup_args process_command_line(int argc, char *argv[]){
       i++;
     }
     else if(strcmp(argv[i], "-rows")==0 && i < argc-1){
-      if(argv[i+1] >= 0){
+      if(atoi(argv[i+1]) >= 0){
         values.time[2] = atoi(argv[i+1]);
       }else{
         my_error_print("Rows cannot be negative!!!!!");
@@ -184,7 +184,7 @@ setup_args process_command_line(int argc, char *argv[]){
       i++;
     }
     else if(strcmp(argv[i], "-n")==0 && i < argc-1){
-      if(argv[i+1] >= 0){
+      if(atoi(argv[i+1]) >= 0){
         values.n_space = atoi(argv[i+1]);
       }else{
         my_error_print("N cannot be negative!!!!!");
@@ -192,7 +192,7 @@ setup_args process_command_line(int argc, char *argv[]){
       i++;
     }
     else if(strcmp(argv[i], "-space")==0 && i < argc-2){
-      if(argv[i+1] >= 0 && argv[i+2] >= 0){
+      if(atoi(argv[i+1]) >= 0 && atoi(argv[i+2]) >= 0){
         values.space[0] = atoi(argv[i+1]);
         values.space[1] = atoi(argv[i+2]);
       }else{
@@ -201,7 +201,7 @@ setup_args process_command_line(int argc, char *argv[]){
       i+=2;
     }
     else if(strcmp(argv[i], "-d")==0 && i < argc-2){
-      if(argv[i+1] >= 0 && argv[i+2] >= 0){
+      if(atoi(argv[i+1]) >= 0 && atoi(argv[i+2]) >= 0){
         values.d[0] = atoi(argv[i+1]);
         values.d[1] = atoi(argv[i+2]);
       }else{
@@ -249,11 +249,11 @@ setup_args process_command_line(int argc, char *argv[]){
   //If unspecified use 1 row per file
   if(values.d[0] >MAX_SIZE){
     values.d[0] = MAX_SIZE;
-    my_print("WARNING: Requested size exceeds MAXSIZE", mpi_info.rank);
+    my_error_print("WARNING: Requested size exceeds MAXSIZE", mpi_info.rank);
   }
   if(values.d[1] >MAX_SIZE){
     values.d[1] = MAX_SIZE;
-    my_print("WARNING: Requested size exceeds MAXSIZE", mpi_info.rank);
+    my_error_print("WARNING: Requested size exceeds MAXSIZE", mpi_info.rank);
   }
   //Protect from invalid user input
   
@@ -371,7 +371,7 @@ void get_deck_constants(std::string file_prefix){
   my_const.ppc = 0;
   
   if(!infile.is_open()){
-    my_print("No deck.status file found, aborting", mpi_info.rank);
+    my_error_print("No deck.status file found, aborting", mpi_info.rank);
     return;
   }
   while(infile){
@@ -382,7 +382,7 @@ void get_deck_constants(std::string file_prefix){
     }
   }
   if(!found){
-    my_print("No constants dump found in deck.status, aborting", mpi_info.rank);
+    my_error_print("No constants dump found in deck.status, aborting", mpi_info.rank);
     return;
   }
 
@@ -651,7 +651,7 @@ template<typename T> void inplace_boxcar_smooth(T * start, int len, int width, b
 *Smooths the array given by start and len using specified width. If periodic is set the ends wrap around. Otherwise they one-side
 */
 
-  if(width > len) my_print("Really? How am I meant to smooth that?", mpi_info.rank);
+  if(width > len) my_print("Smoothing width exceeds array size", mpi_info.rank);
   calc_type result = 0.0;
   int edge = width/2;
   int off = width - edge*2;
@@ -795,7 +795,7 @@ my_type get_ref_Bx(std::string file_prefix, size_t space_in[2], size_t time_0, b
   }else if(n_dims == 2){
     err = bx_reader.read_data(bx, bx_times, space_in, 1);
   }else{
-    my_print("3-D space not added...", mpi_info.rank);
+    my_error_print("3-D space not added...", mpi_info.rank);
   }
   
   if(err == 0 || err ==2 ) return bx.avval();

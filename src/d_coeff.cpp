@@ -162,7 +162,7 @@ Get mu, dmu/domega which are used to:
     spect = my_controller->get_current_spectrum();
   }
   else{
-    my_print("No controller", mpi_info.rank);
+    my_error_print("No controller", mpi_info.rank);
     return report;
   }
 

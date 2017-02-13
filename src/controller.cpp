@@ -57,7 +57,7 @@ bool controller::add_spectrum(std::string file){
     current_spect = my_list.size()-1;
     return 0;
   }else{
-    my_print("Spectrum construction failed", mpi_info.rank);
+    my_error_print("Spectrum construction failed", mpi_info.rank);
     return 1;
   }
 }
@@ -76,7 +76,7 @@ bool controller::add_spectrum(int nx, int n_ang, bool separable){
     return 0;
 
   }else{
-    my_print("Spectrum construction failed", mpi_info.rank);
+    my_error_print("Spectrum construction failed", mpi_info.rank);
     return 1;
   }
 }

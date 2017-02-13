@@ -57,7 +57,7 @@ void tests::setup_tests(){
   outfile = new std::fstream();
   outfile->open(filename.c_str(), std::ios::out);
   if(!outfile->is_open()){
-    my_print("Error opening "+filename, mpi_info.rank);
+    my_error_print("Error opening "+filename, mpi_info.rank);
     //can't log so return with empty test list
     return;
   }
@@ -104,7 +104,7 @@ bool tests::check_for_abort(int err){
   if(is_fatal(err)){
     set_colour('r');
     set_colour('*');
-    my_print("Fatal error occured. Aborting test "+test_list[current_test_id]->name, mpi_info.rank);
+    my_error_print("Fatal error occured. Aborting test "+test_list[current_test_id]->name, mpi_info.rank);
     set_colour();
     return true;
   }
@@ -120,8 +120,8 @@ void tests::report_err(int err, int test_id){
   if(err ==TEST_PASSED) set_colour('b');
   else set_colour('r');
   if(is_fatal(err)) set_colour('*');
-  my_print(outfile, get_printable_error(err, test_id), mpi_info.rank);
-  my_print(nullptr, get_printable_error(err, test_id), mpi_info.rank);
+  my_error_print(outfile, get_printable_error(err, test_id), mpi_info.rank);
+  my_error_print(nullptr, get_printable_error(err, test_id), mpi_info.rank);
   set_colour();
 
 }
@@ -1879,7 +1879,7 @@ int test_entity_spectrum::albertGs_tests(){
   test_contr->add_spectrum(5000, DEFAULT_N_ANG, true);
 
   if(!test_contr->get_current_spectrum()->is_good()){
-    my_print("Spectrum in invalid state. Aborting", mpi_info.rank);
+    my_error_print("Spectrum in invalid state. Aborting", mpi_info.rank);
     err |=TEST_ASSERT_FAIL;
     err |=TEST_FATAL_ERR;
     return err;
@@ -2046,7 +2046,7 @@ int test_entity_levelone::basic_tests(){
   strcpy(dat.block_id, block_id);
 
   if(!dat.is_good()){
-    my_print("Data array allocation failed.", mpi_info.rank);
+    my_error_print("Data array allocation failed.", mpi_info.rank);
     err |= TEST_ASSERT_FAIL;
     err |= TEST_FATAL_ERR;
   }
@@ -2132,7 +2132,7 @@ int test_entity_levelone::twod_tests(){
   strcpy(dat.block_id, block_id);
 
   if(!dat.is_good()){
-    my_print("Data array allocation failed.", mpi_info.rank);
+    my_error_print("Data array allocation failed.", mpi_info.rank);
     err |= TEST_ASSERT_FAIL;
     err |= TEST_FATAL_ERR;
   }
@@ -2217,7 +2217,7 @@ int test_entity_levelone::twod_space_tests(){
   strcpy(dat.block_id, block_id);
 
   if(!dat.is_good()){
-    my_print("Data array allocation failed.", mpi_info.rank);
+    my_error_print("Data array allocation failed.", mpi_info.rank);
     err |= TEST_ASSERT_FAIL;
     err |= TEST_FATAL_ERR;
   }
@@ -2415,7 +2415,7 @@ int test_entity_nonthermal::run(){
   df_tmp = my_elec->d_f_p(0, 10.0*std::sqrt(a_perp_sq), 0);
   if(std::abs(df_tmp /((-2.0)*10.0/std::sqrt(a_perp_sq)*my_elec->f_p(0, 10.0*std::sqrt(a_perp_sq))) -1.0) > 2e-6) err |=TEST_WRONG_RESULT;
   
-  if(err == TEST_PASSED) my_print("Nonthermal values OK", mpi_info.rank);
+  if(err == TEST_PASSED) test_bed->report_info("Nonthermal values OK",1);
   
   err |= test_lookup();
   test_bed->report_err(err);
@@ -2444,7 +2444,7 @@ int test_entity_nonthermal::test_lookup(){
       }
     }
   }
-  if(err == TEST_PASSED) my_print("Lookup OK", mpi_info.rank);
+  if(err == TEST_PASSED) test_bed->report_info("Lookup OK", 1);
   return err;
 }
 

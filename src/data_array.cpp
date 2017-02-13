@@ -45,8 +45,8 @@ void data_array::alloc_ax(const size_t els){
   if(els > 0 && els <= this->n_dims*MAX_SIZE){
     axes=(my_type*)calloc((els),sizeof(my_type));
   }else{
-    if(els != 0) my_print("Array size exceeds max. Axes alloc failed", mpi_info.rank);
-    else my_print("Array size cannot be 0. Axes alloc failed", mpi_info.rank);
+    if(els != 0) my_error_print("Array size exceeds max. Axes alloc failed", mpi_info.rank);
+    else my_error_print("Array size cannot be 0. Axes alloc failed", mpi_info.rank);
   }
 }
 
@@ -89,7 +89,7 @@ data_array::data_array(std::string filename, bool no_version_check){
   
   construct();
   if(!infile.is_open()){
-    my_print("File open or access error");
+    my_error_print("File open or access error");
     return;
   }
   std::vector<size_t> dims_vec = my_array::read_dims_from_file(infile, no_version_check);
@@ -114,13 +114,13 @@ data_array::data_array(std::string filename, bool no_version_check){
     infile.seekg(0, std::ios::beg);
     bool err= this->read_from_file(infile, no_version_check);
     if(err){
-      my_print("IO error, could not read", mpi_info.rank);
+      my_error_print("IO error, could not read", mpi_info.rank);
       if(axes) delete axes;
       if(data) delete data;
     }
   
   }else{
-    my_print("Invalid dimensionality in input file", mpi_info.rank);
+    my_error_print("Invalid dimensionality in input file", mpi_info.rank);
   }
 }
 
@@ -364,7 +364,7 @@ IMPORTANT: the VERSION specifier links output files to code. If modifying output
   file.write(block_id, sizeof(char)*ID_SIZE);
 
   if((size_t)file.tellg() != next_location) write_err=1;
-  if(write_err) my_print("Error writing offset positions", mpi_info.rank);
+  if(write_err) my_error_print("Error writing offset positions", mpi_info.rank);
   if(close_file) file.write((char*) & ftr_start, sizeof(size_t));
   //Finish with position of start of footer!
   return 0;
@@ -392,7 +392,7 @@ bool data_array::write_raw_section_to_file(std::fstream &file, std::vector<size_
   bool write_err = 0;
 
   if(index_limits.size() != 2*n_dims){
-    my_print("Limits vector size does not match array!", mpi_info.rank);
+    my_error_print("Limits vector size does not match array!", mpi_info.rank);
     return 1;
   }
 
@@ -439,7 +439,7 @@ bool data_array::write_raw_section_to_file(std::fstream &file, std::vector<size_
   file.write(block_id, sizeof(char)*ID_SIZE);
 
   if((size_t)file.tellg() != next_location) write_err=1;
-  if(write_err) my_print("Error writing offset positions", mpi_info.rank);
+  if(write_err) my_error_print("Error writing offset positions", mpi_info.rank);
   if(close_file) file.write((char*) & ftr_start, sizeof(size_t));
 
   return 0;
@@ -459,7 +459,7 @@ bool data_array::write_closer(std::fstream &file){
   file.write(block_id, sizeof(char)*ID_SIZE);
 
   if((size_t)file.tellg() != next_location) write_err=1;
-  if(write_err) my_print("Error writing offset positions", mpi_info.rank);
+  if(write_err) my_error_print("Error writing offset positions", mpi_info.rank);
   file.write((char*) & ftr_start, sizeof(size_t));
 
   return write_err;
@@ -470,7 +470,7 @@ std::vector<size_t> data_array::get_bounds(std::vector<my_type> limits){
   std::vector<size_t> index_limits;
 
   if(limits.size() != 2*n_dims){
-    my_print("Limits vector size does not match array!", mpi_info.rank);
+    my_error_print("Limits vector size does not match array!", mpi_info.rank);
     return index_limits;
   }
 
@@ -508,7 +508,7 @@ bool data_array::read_from_file(std::fstream &file, bool no_version_check){
 
   if(file.good()) err=my_array::read_from_file(file, no_version_check);
   if(err){
-    my_print("File read failed", mpi_info.rank);
+    my_error_print("File read failed", mpi_info.rank);
     return err;
   }
   //call parent class to read data, checking we read id ok first
@@ -550,16 +550,16 @@ bool data_array::fft_me(data_array & data_out){
 */
 
   if(!data_out.is_good()){
-    my_print("Output array for FFT undefined", mpi_info.rank);
+    my_error_print("Output array for FFT undefined", mpi_info.rank);
     return 1;
   }
   if(data_out.n_dims != this->n_dims){
-    my_print("Wrong output dimensions for FFT", mpi_info.rank);
+    my_error_print("Wrong output dimensions for FFT", mpi_info.rank);
     return 1;
   }
   for(size_t i=0; i<n_dims;++i){
     if(data_out.dims[i] != this->dims[i]){
-      my_print("Wrong output dimensions for FFT", mpi_info.rank);
+      my_error_print("Wrong output dimensions for FFT", mpi_info.rank);
       return 1;
     }
   }
@@ -629,7 +629,7 @@ bool data_array::fft_me(data_array & data_out){
   //Copy result into out array
 
   if(err){
-    my_print("Error populating result array", mpi_info.rank);
+    my_error_print("Error populating result array", mpi_info.rank);
     return 1;
   }
 
@@ -752,7 +752,7 @@ bool data_array::resize(size_t dim, size_t sz, bool verbose){
       //product of all other dims
       new_ax = (my_type *) realloc((void*) this->axes, (part_sz+sz)*sizeof(my_type));
       if(!new_ax){
-        my_print("Failed to reallocate axes", mpi_info.rank);
+        my_error_print("Failed to reallocate axes", mpi_info.rank);
         return 1;
         //failure. leave as was.
       }
@@ -810,7 +810,7 @@ bool data_array::shift(size_t dim, long n_els, bool axis){
     my_type * ax = get_axis(dim, len);
     my_type * new_data=(my_type*)malloc(len*sizeof(my_type));
     if(!new_data){
-      my_print("Error allocating spare memory for shift", mpi_info.rank);
+      my_error_print("Error allocating spare memory for shift", mpi_info.rank);
       return 1;
     
     }

@@ -37,7 +37,7 @@ non_thermal::non_thermal(std::string file_prefix){
   //Sensible dp for electrons (m/s)
   
   bool err = configure_from_file(file_prefix);
-  if(err) my_print("WARNING: Error getting electron data from .status file", mpi_info.rank);
+  if(err) my_error_print("WARNING: Error getting electron data from .status file", mpi_info.rank);
 
 }
 
@@ -55,7 +55,7 @@ bool non_thermal::configure_from_file(std::string file_prefix){
   std::vector<std::string> lines;
   bool found=false;
   if(!infile.is_open()){
-    my_print("No deck.status file found", mpi_info.rank);
+    my_error_print("No deck.status file found", mpi_info.rank);
     return 1;
   
   }
@@ -67,7 +67,7 @@ bool non_thermal::configure_from_file(std::string file_prefix){
     }
   }
   if(!found){
-    my_print("No constants dump found in deck.status", mpi_info.rank);
+    my_error_print("No constants dump found in deck.status", mpi_info.rank);
     return 1;
   }
 
@@ -141,7 +141,7 @@ bool non_thermal::configure_from_file(std::string file_prefix){
         if(function == "max"){
           //Check we have all params
           my_print("Adding component '"+block_name+"'");
-          for(auto nam : {dens, vpar, vperp}) if(!parameters.count(nam)) my_print("Param "+nam+" not found!!!");
+          for(auto nam : {dens, vpar, vperp}) if(!parameters.count(nam)) my_error_print("Param "+nam+" not found!!!");
           this->v_par = parameters[vpar];
           this->v_perp = parameters[vperp];
           calc_type a_par = std::sqrt(2.0)*parameters[vpar];
@@ -155,7 +155,7 @@ bool non_thermal::configure_from_file(std::string file_prefix){
           function_set = true;
         }
         else if(function =="kappa"){
-          for(auto nam : {dens, vpar, vperp, kappa}) if(!parameters.count(nam)) my_print("Param "+nam+" not found!!!");
+          for(auto nam : {dens, vpar, vperp, kappa}) if(!parameters.count(nam)) my_error_print("Param "+nam+" not found!!!");
 
           tmp_fn = std::bind(bikappa, std::placeholders::_1, std::placeholders::_2, parameters[kappa], parameters[vpar], parameters[vperp], parameters[dens]);
           f_p_private.push_back(tmp_fn);
@@ -189,7 +189,7 @@ bool non_thermal::configure_from_file(std::string file_prefix){
               my_print("Using nonrelativistic calculation!");
             }
           }else{
-            my_print("!!!!!Unknown name "+name);
+            my_error_print("!!!!!Unknown name "+name);
           }
           
         }
@@ -205,7 +205,7 @@ bool non_thermal::configure_from_file(std::string file_prefix){
           else if(name =="vperp") vperp = val;
           else if(name =="kappa") kappa = val;
           else if(name =="lookup") lookup = val;
-          else my_print("!!!!Unknown name "+name);
+          else my_error_print("!!!!Unknown name "+name);
         }
       }
       
@@ -403,13 +403,13 @@ std::function<calc_type(calc_type p_par, calc_type p_perp)> configure_lookup(std
       size_t total =1;
       for(size_t i=1; i< par_dims.size(); i++) total *=par_dims[i];
       if(par_dims.size() != 1 || total > 1){
-        my_print("Error, seperable array read is not 1-D");
+        my_error_print("Error, seperable array read is not 1-D");
         return bound_lookup;
       }
       total=1;
       for(size_t i=1; i< perp_dims.size(); i++) total *=perp_dims[i];
       if(perp_dims.size() != 1 || total > 1){
-        my_print("Error, seperable array read is not 1-D");
+        my_error_print("Error, seperable array read is not 1-D");
         return bound_lookup;
       }
       par_sz = par_dims[0];
@@ -432,7 +432,7 @@ std::function<calc_type(calc_type p_par, calc_type p_perp)> configure_lookup(std
         if( (perp_axes[j+1]-perp_axes[j] - dp_perp_ax) > GEN_PRECISION*v0) err=1;
     }
     if(err){
-      my_print("Error, axes are not linear");
+      my_error_print("Error, axes are not linear");
       return bound_lookup;
     }
     free(par_axes);
@@ -441,7 +441,7 @@ std::function<calc_type(calc_type p_par, calc_type p_perp)> configure_lookup(std
     tot_els = par_sz + perp_sz;
     my_type * tmp = (my_type *) realloc((void*) par_data, tot_els*sizeof(my_type));
     if(!tmp){
-      my_print("Error allocating memory");
+      my_error_print("Error allocating memory");
       return bound_lookup;
     }
     std::copy(perp_data, perp_data+perp_sz, tmp+ par_sz);
@@ -468,7 +468,7 @@ std::function<calc_type(calc_type p_par, calc_type p_perp)> configure_lookup(std
       size_t total =1;
       for(size_t i=2; i< dims.size(); i++) total *=dims[i];
       if(dims.size() != 2 || total > 1){
-        my_print("Error, array read is not 2-D");
+        my_error_print("Error, array read is not 2-D");
         return bound_lookup;
       }
       par_sz = dims[0];
@@ -489,7 +489,7 @@ std::function<calc_type(calc_type p_par, calc_type p_perp)> configure_lookup(std
         if( (axes[par_sz+j+1]-axes[par_sz+j] - dp_perp_ax) > GEN_PRECISION*v0) err=1;
     }
     if(err){
-      my_print("Error, axes are not linear");
+      my_error_print("Error, axes are not linear");
       return bound_lookup;
     }
     free(axes);

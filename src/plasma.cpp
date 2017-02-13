@@ -148,8 +148,8 @@ mu plasma::get_root(calc_type th, calc_type w, calc_type psi, bool Righthand){
 
 #ifdef DEBUG_ALL
   //Argument preconditions. Check only in debug mode for speed
-  if(psi < 0 || psi >= pi) my_print("!!!!!!!!Error in get_root, pitch angle (psi="+mk_str(psi)+") out of range!!!!!!", 0);
-  if(th < 0 || th >= pi/2.0) my_print("!!!!!!!!Error in get_root, position angle (th="+mk_str(th)+") out of range!!!!!!", 0);
+  if(psi < 0 || psi >= pi) my_error_print("!!!!!!!!Error in get_root, pitch angle (psi="+mk_str(psi)+") out of range!!!!!!", 0);
+  if(th < 0 || th >= pi/2.0) my_error_print("!!!!!!!!Error in get_root, position angle (th="+mk_str(th)+") out of range!!!!!!", 0);
   //I don't think there's an upper or lower bound on w we need to enforce
   
 #endif
@@ -318,8 +318,8 @@ mu_dmudom plasma::get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int
 
 #ifdef DEBUG_ALL
   //Argument preconditions. Check only in debug mode for speed
-  if(psi < 0 || psi >= pi) my_print("!!!!!!!!Error in get_phi_mu_om, pitch angle (psi="+mk_str(psi)+") out of range!!!!!!", 0);
-  if(alpha < 0 || alpha >= pi) my_print("!!!!!!!!Error in get_phi_mu_om, particle pitch angle (alpha="+mk_str(alpha)+") out of range!!!!!!", 0);
+  if(psi < 0 || psi >= pi) my_error_print("!!!!!!!!Error in get_phi_mu_om, pitch angle (psi="+mk_str(psi)+") out of range!!!!!!", 0);
+  if(alpha < 0 || alpha >= pi) my_error_print("!!!!!!!!Error in get_phi_mu_om, particle pitch angle (alpha="+mk_str(alpha)+") out of range!!!!!!", 0);
   //I don't think there's an upper or lower bound on w we need to enforce
   //Nor any actual bounds on n
 #endif
@@ -499,8 +499,8 @@ mu_dmudom plasma::get_high_dens_phi_mu_om(calc_type w, calc_type psi, calc_type 
   
 #ifdef DEBUG_ALL
   //Argument preconditions. Check only in debug mode for speed
-  if(psi < 0 || psi >= pi) my_print("!!!!!!!!Error in get_high_dens_phi_mu_om, pitch angle (psi="+mk_str(psi)+") out of range!!!!!!", 0);
-  if(alpha < 0 || alpha >= pi) my_print("!!!!!!!!Error in get_high_dens_phi_mu_om, particle pitch angle (alpha="+mk_str(alpha)+") out of range!!!!!!", 0);
+  if(psi < 0 || psi >= pi) my_error_print("!!!!!!!!Error in get_high_dens_phi_mu_om, pitch angle (psi="+mk_str(psi)+") out of range!!!!!!", 0);
+  if(alpha < 0 || alpha >= pi) my_error_print("!!!!!!!!Error in get_high_dens_phi_mu_om, particle pitch angle (alpha="+mk_str(alpha)+") out of range!!!!!!", 0);
   //I don't think there's an upper or lower bound on w we need to enforce
   //Nor any bounds on n
 #endif
@@ -679,7 +679,7 @@ Return empty vector if no valid solutions \todo Extend to general case?
 
 #ifdef DEBUG_ALL
   //Argument preconditions. Check only in debug mode for speed
-  if(v_par >= v0) my_print("!!!!!!!!Error in get_resonant_omega, velocity (v_par="+mk_str(v_par)+") out of range!!!!!!", 0);
+  if(v_par >= v0) my_error_print("!!!!!!!!Error in get_resonant_omega, velocity (v_par="+mk_str(v_par)+") out of range!!!!!!", 0);
 #endif
 
   std::vector<calc_type> ret_vec;
@@ -749,7 +749,7 @@ calc_type plasma::get_omega_ref(std::string code)const{
 #ifdef DEBUG_ALL
   std::string codes = "c0 pe ce";
   //Argument preconditions. Check only in debug mode for speed
-  if(codes.find(code) == std::string::npos) my_print("!!!!!!!!Error in get_omega_ref, unknown code (code="+code+")!!!!!!", 0);
+  if(codes.find(code) == std::string::npos) my_error_print("!!!!!!!!Error in get_omega_ref, unknown code (code="+code+")!!!!!!", 0);
 #endif
 
 
@@ -768,7 +768,7 @@ calc_type plasma::get_dispersion(my_type in, int wave_type, bool reverse, bool d
 
 #ifdef DEBUG_ALL
   //Argument preconditions. Check only in debug mode for speed
-  if(wave_type < WAVE_WHISTLER || wave_type > WAVE_X) my_print("!!!!!!!!Error in get_dispersion, wave_type unknown (wave_type="+mk_str(wave_type)+")!!!!!!", 0);
+  if(wave_type < WAVE_WHISTLER || wave_type > WAVE_X) my_error_print("!!!!!!!!Error in get_dispersion, wave_type unknown (wave_type="+mk_str(wave_type)+")!!!!!!", 0);
   //Theta is not conditioned because we reduce it below. This may change though
   //In is either a frequency or a wavenumber and thus has no limits, although may wish to add sanity limits
 #endif

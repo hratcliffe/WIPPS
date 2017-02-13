@@ -44,7 +44,10 @@ reader::reader(std::string file_prefix_in,  char * block_id_in, int first){
   std::string file_ref = mk_str(ref_file_num);
   int n_z_first = file_ref.size();
   if(n_z_first > MAX_FILENAME_DIGITS){
-    my_print("Really that many files??", 0, mpi_info.rank);
+    this->ref_file_num = std::pow(10, MAX_FILENAME_DIGITS);
+    file_ref=mk_str(ref_file_num);
+    n_z_first = file_ref.size();
+    my_error_print("Reference file number out of range, truncating to "+file_ref, 0, mpi_info.rank);
   }
   this->n_z = get_filename_n_z(ref_file_num);
 }
@@ -82,7 +85,7 @@ std::vector<std::pair<std::string, std::string> > reader::list_blocks(){
   std::vector<std::pair<std::string, std::string> > list;
   handle = sdf_open(file_name.c_str(), MPI_COMM_WORLD, SDF_READ, 0);
   if(!handle){
-    my_print("Error reading file "+file_name);
+    my_error_print("Error reading file "+file_name);
     return list;
   }
   sdf_read_blocklist(handle);
@@ -115,17 +118,17 @@ bool reader::read_dims(size_t &n_dims, std::vector<size_t> &dims, std::string b_
   sdf_block_t * block;
 
   if(!handle){
-    my_print("File open error "+file_name, mpi_info.rank);
+    my_error_print("File open error "+file_name, mpi_info.rank);
     return 1;
   }
   
   bool err=sdf_read_blocklist(handle);
-  if(err) my_print("Block read failed", mpi_info.rank);
+  if(err) my_error_print("Block read failed", mpi_info.rank);
 
   block = sdf_find_block_by_id(handle, b_id.c_str());
 
   if(!block){
-    my_print("Requested block not found", mpi_info.rank);
+    my_error_print("Requested block not found", mpi_info.rank);
     return 1;
   }
 
@@ -167,12 +170,12 @@ int reader::pre_read(data_array& my_data_in, int ref_time, bool accumulated, int
 
   //checks type is plain i/e/ even gridded mesh
   if(block->blocktype != SDF_BLOCKTYPE_PLAIN_MESH){
-    my_print("Uh oh, grids look wrong", mpi_info.rank);
+    my_error_print("Uh oh, grids look wrong", mpi_info.rank);
   }
   sdf_read_data(handle);
 
   if(block->datatype != my_sdf_type){
-    my_print("Wrong data type detected. Converting grids", mpi_info.rank);//Print a warning about needing to type-convert
+    my_error_print("Wrong data type detected. Converting grids", mpi_info.rank);//Print a warning about needing to type-convert
   }
 
   //Copy (all) the spatial axes
@@ -211,7 +214,7 @@ int reader::read_data(data_array &my_data_in, size_t time_range[3], size_t space
 */
   
   if(!my_data_in.is_good()){
-    my_print("Cannot read into invalid array", mpi_info.rank);
+    my_error_print("Cannot read into invalid array", mpi_info.rank);
     return 1;
   }
   strcpy(my_data_in.block_id, block_id);
@@ -355,7 +358,7 @@ int reader::read_data(data_array &my_data_in, size_t time_range[3], size_t space
     //Set last time
     my_data_in.time[1] = my_data_in.get_axis_element(n_dims-1, my_data_in.get_dims(n_dims-1)-1);
     
-    if(!accumulated) my_print("Read stopped by error at file "+file_name + " ("+mk_str(total_reads)+" times)", mpi_info.rank);
+    if(!accumulated) my_error_print("Read stopped by error at file "+file_name + " ("+mk_str(total_reads)+" times)", mpi_info.rank);
     else my_print("Read "+mk_str(total_reads)+" times", mpi_info.rank);
     return 2;
   }
@@ -406,7 +409,7 @@ bool reader::read_distrib(data_array & my_data_in, std::string dist_id, int dump
 *Reads the distribution function dist_id into data_in. ID has dist_fn removed and is trimmed to 10 chars max. If data type does not match compiled type we cast to match. 
 */
   if(!my_data_in.is_good()){
-    my_print("Cannot read into invalid array", mpi_info.rank);
+    my_error_print("Cannot read into invalid array", mpi_info.rank);
     return 1;
   }
   sdf_file_t *handle;

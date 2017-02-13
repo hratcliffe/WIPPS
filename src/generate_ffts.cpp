@@ -92,7 +92,7 @@ int main(int argc, char *argv[]){
   std::vector<size_t> dims;
   err = my_reader->read_dims(n_dims, dims);
   if(err){
-    my_print("File read error, aborting", mpi_info.rank);
+    my_error_print("File read error, aborting", mpi_info.rank);
     safe_exit();
   }
   int space_dim = dims[0];
@@ -123,11 +123,11 @@ int main(int argc, char *argv[]){
       dat = data_array(space_dim, dims[1], dims[2], n_tims);
     
     }else{
-      my_print("More than 3-D input data not supported by this utility", mpi_info.rank);
+      my_error_print("More than 3-D input data not supported by this utility", mpi_info.rank);
     }//Here I have no more than 3-D in space
   
     if(!dat.is_good()){
-      my_print("Data array allocation failed. Aborting.", mpi_info.rank);
+      my_error_print("Data array allocation failed. Aborting.", mpi_info.rank);
       return 0;
     }
 
@@ -136,7 +136,7 @@ int main(int argc, char *argv[]){
     //IMPORTANT: we use the same array for each space block. So if we had insufficient files etc this will truncate the array ONLY ONCE
     
     if(err == 1){
-      my_print("Data read failed. Aborting", mpi_info.rank);
+      my_error_print("Data read failed. Aborting", mpi_info.rank);
       safe_exit();
     }
     if(err == 2) n_tims = dat.get_dims(1);
@@ -167,7 +167,7 @@ int main(int argc, char *argv[]){
     dat_fft.clone_empty(dat);
 
     if(!dat_fft.is_good()){
-      my_print("Data array allocation failed. Aborting.", mpi_info.rank);
+      my_error_print("Data array allocation failed. Aborting.", mpi_info.rank);
       return 0;
     }
 

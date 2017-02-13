@@ -169,10 +169,9 @@ Get mu, dmu/domega which are used to:
 
   this->copy_ids(spect);
   //copy block id, ranges etc from spect.
-  calc_type theta, lat, omega_n=0.0, D_tmp, k_thresh;
+  calc_type theta, omega_n=0.0, D_tmp, k_thresh;
   calc_type alpha, v_par, c2th, s2alpha; /** temporaries for clarity*/
   calc_type Eq6, mu_dom_mu, Eq7, dmudx, numerator;
-
   int n_min, n_max;
   std::vector<calc_type> omega_calc;
   mu_dmudom my_mu;
@@ -205,8 +204,8 @@ Get mu, dmu/domega which are used to:
   //Alpha remains, as does particle v.
 
 
-  int last_report=0;
-  int report_interval = dims[0]/10; //10 prints per round
+  size_t last_report=0;
+  size_t report_interval = dims[0]/10; //10 prints per round
   if(report_interval > 20) report_interval = 20;
   if(report_interval < 1) report_interval = 1;
 

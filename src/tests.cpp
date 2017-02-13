@@ -304,7 +304,8 @@ int test_entity_reader::run(){
   size_t n_dims;
   std::vector<size_t> dims;
   rd_err = accum_reader->read_dims(n_dims, dims);
-  int time[3]={0,10, 40}, space[2]={0, (int)dims[0]};
+  size_t time[3]={0,10, 40};
+  size_t space[2]={0, dims[0]};
 
   if(!rd_err){
     
@@ -543,8 +544,8 @@ int test_entity_data_array::basic_tests(){
   std::function<calc_type(calc_type)> log_function = [](calc_type el) -> calc_type { return log(el); } ;
   
   data_array test_array_hand_logged = test_array;
-  for(int i=0; i< test_array.get_dims(0); i++){
-    for(int j=0; j< test_array.get_dims(1); j++){
+  for(size_t i=0; i< test_array.get_dims(0); i++){
+    for(size_t j=0; j< test_array.get_dims(1); j++){
       test_array_hand_logged.set_element(i, j, log(test_array_hand_logged.get_element(i, j)));
     }
   }
@@ -731,13 +732,14 @@ int test_entity_get_and_fft::run(){
 int test_entity_get_and_fft::one_d(){
   int err = TEST_PASSED;
 
-  int tim_in[3], space_in[2];
+  size_t tim_in[3];
+  size_t space_in[2];
   tim_in[0]=0;
   tim_in[1]=1;
   tim_in[2]=0;
   space_in[0]=0;
 
-  int n_tims = std::max(tim_in[1]-tim_in[0], 1);
+  int n_tims = std::max((int) (tim_in[1]-tim_in[0]), 1);
 
   size_t n_dims;
   std::vector<size_t> dims;
@@ -841,7 +843,8 @@ int test_entity_get_and_fft::one_d(){
 int test_entity_get_and_fft::two_d(){
   int err = TEST_PASSED;
 
-  int tim_in[3], space_in[2];
+  size_t tim_in[3];
+  size_t space_in[2];
   tim_in[0]=0;
   tim_in[1]=3;
   tim_in[2]=100;
@@ -2016,7 +2019,7 @@ int test_entity_levelone::setup(){
   if(my_reader->current_block_is_accum()) use_row_time = true;
 
   if(!use_row_time){
-    n_tims = std::max(time_in[1]-time_in[0], 1);
+    n_tims = std::max((int) (time_in[1]-time_in[0]), 1);
   }else{
     n_tims = time_in[2];
   }
@@ -2381,7 +2384,7 @@ int test_entity_nonthermal::run(){
   calc_type inc = 0.1, p_par, p_perp;
 
   //Test f against expected values
-  for(int i=0; i<n_trials*n_trials; i++){
+  for(size_t i=0; i<n_trials*n_trials; i++){
     p_perp = inc* (i % n_trials);
     p_par = inc* (int)(i/n_trials);
     f_tmp = my_elec->f_p(p_par*a_par, p_perp*std::sqrt(a_perp_sq));
@@ -2396,7 +2399,7 @@ int test_entity_nonthermal::run(){
   if(std::abs(f_tmp /( norm*std::exp(-p_par*p_par)*std::exp(-p_perp*p_perp)) -1.0) > GEN_PRECISION) err |=TEST_WRONG_RESULT;
 
   //Test f against expected values
-  for(int i=0; i<n_trials; i++){
+  for(size_t i=0; i<n_trials; i++){
     p_perp = inc*i + inc;
     p_par = inc*i + inc;
     //close to 0 deriv -> 0

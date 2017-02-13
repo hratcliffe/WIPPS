@@ -182,14 +182,14 @@ struct mu_dmudom{
 * Processed command line arguments used in main
 */
 struct setup_args{
-  int time[3];/**< Start and end dump numbers*/
+  size_t time[3];/**< Start and end dump numbers*/
   bool use_row_time;/**Whether to use time[2] for sizing*/
   int space[2];/**< Local space block start and end*/
   std::string block;/**< Block ID to use (ex, bz etc)*/
   std::string file_prefix;/**< Prefix part of SDF file names*/
   int n_space;/**< Number of space blocks in global x direction*/
-  int per_proc;/**< Resulting number of space blocks per proc*/
-  int d[2];/**< Dimensions of D to produce*/
+  size_t per_proc;/**< Resulting number of space blocks per proc*/
+  size_t d[2];/**< Dimensions of D to produce*/
   bool is_list;/**< Use FFT or spectrum list rather than sdf input*/
   bool is_spect;/**< Use spectrum list rather than sdf input*/
 };
@@ -216,6 +216,8 @@ void safe_exit();
 
 void my_print(std::string text, int rank=0, int rank_to_write=0, bool noreturn=false);
 void my_print(std::fstream * handle, std::string text, int rank=0, int rank_to_write=0, bool noreturn=false);
+void my_error_print(std::string text, int rank=0, int rank_to_write=0, bool noreturn=false);
+void my_error_print(std::fstream * handle, std::string text, int rank=0, int rank_to_write=0, bool noreturn=false);
 
 std::string mk_str(int i);/**<Converts int to string*/
 std::string mk_str(size_t i); /**< Long int to string*/

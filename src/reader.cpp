@@ -204,7 +204,7 @@ int reader::pre_read(data_array& my_data_in, int ref_time, bool accumulated, int
 }
 
 
-int reader::read_data(data_array &my_data_in, int time_range[3], int space_range[2], int flatten_on){
+int reader::read_data(data_array &my_data_in, size_t time_range[3], size_t space_range[2], int flatten_on){
 /** \brief Read data into given array
 *
 *This will open the files dictated by time range sequentially, and populate them into the data_array. It'll stop when the end of range is reached, or it goes beyond the size available. Space range upper entry of -1 is taken as respective limit. NB: blocking is only supported on the X axis. @return 0 for success, 1 for error 2 for unusual exit, i.e. early termination 
@@ -251,9 +251,9 @@ int reader::read_data(data_array &my_data_in, int time_range[3], int space_range
   }
 
   //pointer to last axis, i.e. the time axis time
-  int i;
-  int last_report=0;
-  int report_interval = (time_range[1]-time_range[0])/10;
+  size_t i;
+  size_t last_report=0;
+  size_t report_interval = (time_range[1]-time_range[0])/10;
   if(report_interval > 20) report_interval = 20;
   if(report_interval < 1) report_interval = 1;
     //Say we want to report 10 times over the list, or every 20th file if  more than 200.

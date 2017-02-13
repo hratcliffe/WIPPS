@@ -80,11 +80,11 @@ int main(int argc, char *argv[]){
 
   int n_tims;
   if(!cmd_line_args.use_row_time){
-    n_tims = std::max(cmd_line_args.time[1]-cmd_line_args.time[0], 1);
+    n_tims = std::max((int)(cmd_line_args.time[1]-cmd_line_args.time[0]), 1);
   }else{
     n_tims = cmd_line_args.time[2];
   }
-  int my_space[2];
+  size_t my_space[2];
   my_space[0] = cmd_line_args.space[0];
   my_space[1] = cmd_line_args.space[1];
 

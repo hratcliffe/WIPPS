@@ -217,7 +217,8 @@ class test_entity_levelone: public test_entity{
     controller * test_contr;
     reader * my_reader;
     std::string file_prefix;
-    int time_in[3], space_in[2];
+    size_t time_in[3];
+    size_t space_in[2];
     char block_id[ID_SIZE];
     int n_tims;
     int setup();

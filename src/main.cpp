@@ -99,7 +99,7 @@ int main(int argc, char *argv[]){
   if(my_reader.current_block_is_accum()) cmd_line_args.use_row_time = true; /** \todo Remove this and use is_accum() directly?*/
   int n_tims;
   if(!cmd_line_args.use_row_time){
-    n_tims = std::max(cmd_line_args.time[1]-cmd_line_args.time[0], 1);
+    n_tims = std::max((int) (cmd_line_args.time[1]-cmd_line_args.time[0]), 1);
   }else{
     if(cmd_line_args.time[2] == 0){
       my_print("Please specify number of rows to read", mpi_info.rank);
@@ -108,25 +108,25 @@ int main(int argc, char *argv[]){
     n_tims = cmd_line_args.time[2];
   }
   my_reader.update_ref_filenum(cmd_line_args.time[0]);
-  int my_space[2];
-  my_space[0] = cmd_line_args.space[0];
-  my_space[1] = cmd_line_args.space[1];
+  size_t my_space[2]={0, 0};
+  //my_space[0] = cmd_line_args.space[0];
+  //my_space[1] = cmd_line_args.space[1];
 
   size_t n_dims;
   std::vector<size_t> dims;
   err = my_reader.read_dims(n_dims, dims);
   if(err) safe_exit();
   int space_dim = dims[0];
-  /* This replaces any -1 in space input with suitable sizes*/
   
   controller contr = controller(cmd_line_args.file_prefix);
 
   //---------------- Now we loop over blocks per proc-------
-  for(int block_num = 0; block_num<cmd_line_args.per_proc; block_num++){
+  for(size_t block_num = 0; block_num<cmd_line_args.per_proc; block_num++){
     
     data_array dat_fft;
     
     if(!cmd_line_args.is_list){
+      /* This replaces any -1 in space input with suitable sizes*/
       divide_domain(dims, my_space, cmd_line_args.per_proc, block_num);
       space_dim = my_space[1]-my_space[0];
       

@@ -319,8 +319,8 @@ calc_type lookup(calc_type p_par, calc_type p_perp, my_type * data, size_t par_s
   }else{
     p_perp_ind = -1;
   }
-
-  if(p_par_ind >= par_sz || p_perp_ind >= perp_sz || p_par_ind <0 || p_perp_ind < 0){
+  //Casts here should only ever widen the type
+  if(p_par_ind >= (long long) par_sz || p_perp_ind >= (long long)perp_sz || p_par_ind <0 || p_perp_ind < 0){
     //If out of range, assume 0. Would also be reasonable to assume last in-range value.
     return 0.0;
   }

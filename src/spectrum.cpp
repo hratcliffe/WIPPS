@@ -312,7 +312,7 @@ bool spectrum::generate_spectrum(data_array &parent, int om_fuzz, int angle_type
 
     make_angle_axis();
     
-    my_type k, k_y, tantheta, tmp, tmp_sum, decrement = 1.0+GEN_PRECISION, max_power=0.0, theta;
+    my_type k, tantheta, tmp, tmp_sum, decrement = 1.0+GEN_PRECISION, max_power=0.0, theta;
     int kx_high, ky_low, ky_high, i_sgn=1, om_ind, om_low, om_high;
     //Now we do a double loop
     
@@ -371,7 +371,7 @@ bool spectrum::generate_spectrum(data_array &parent, int om_fuzz, int angle_type
             }
             if(!one_sided){
             //Also include negative k_y
-              for(int jj=len_y-ky_high; jj<len_y-ky_low; jj++){
+              for(int jj=len_y-ky_high; jj<(long)len_y-ky_low; jj++){
                 tmp += parent.get_element(kx_high, jj, ii);
               }
             }
@@ -386,7 +386,7 @@ bool spectrum::generate_spectrum(data_array &parent, int om_fuzz, int angle_type
               }
               if(!one_sided){
               //Also include negative k_y
-                for(int jj=len_y-ky_high; jj<len_y-ky_low; jj++){
+                for(int jj=len_y-ky_high; jj<(long)len_y-ky_low; jj++){
                   mask->set_element(kx_high, jj, ii, mask->get_element(kx_high, jj, ii)+0.5);
                 }
               }
@@ -890,7 +890,7 @@ calc_type spectrum::get_G2(calc_type omega, calc_type x){
   offset = where(axis, len, x);
   
   //Interpolate if possible, else use the end
-  if(offset > 0 && offset < len){
+  if(offset > 0 && offset < (long)len){
     data_bit[0] = get_g_element(offset-1, om_ind);
     data_bit[1] = get_g_element(offset, om_ind);
     tmpg = interpolate(axis + offset-1, data_bit, (my_type)x, 2);

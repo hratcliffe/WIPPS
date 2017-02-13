@@ -38,7 +38,7 @@ public:
 
   std::string file_prefix;/**< Prefix of files before dump number*/
 
-  int space_range[2];/**< Space range in x to extract*/
+  size_t space_range[2];/**< Space range in x to extract*/
   int time_range[3];/**< Time range to extract*/
 
   char block_id[ID_SIZE];/**< Name of block to extract*/
@@ -52,7 +52,7 @@ public:
   bool read_dims(size_t &n_dims, std::vector<size_t> &dims, std::string b_id);
   std::vector<std::pair<std::string, std::string> > list_blocks();
 
-  int read_data(data_array & my_data_in, int time_range[3], int space_range[2], int flatten_on = -1);
+  int read_data(data_array & my_data_in, size_t time_range[3], size_t space_range[2], int flatten_on = -1);
   
   bool read_distrib(data_array & my_data_in, std::string dist_id,int dump_number);
   bool current_block_is_accum();

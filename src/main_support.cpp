@@ -156,15 +156,27 @@ setup_args process_command_line(int argc, char *argv[]){
       i++;
     }
     else if(strcmp(argv[i], "-start")==0 && i < argc-1){
-      values.time[0] = atoi(argv[i+1]);
+      if(argv[i+1] >= 0){
+        values.time[0] = atoi(argv[i+1]);
+      }else{
+        my_error_print("Start cannot be negative!!!!!!");
+      }
       i++;
     }
     else if(strcmp(argv[i], "-end")==0 && i < argc-1){
-      values.time[1] = atoi(argv[i+1]);
+      if(argv[i+1] >= 0){
+        values.time[1] = atoi(argv[i+1]);
+      }else{
+        my_error_print("End cannot be negative!!!!!");
+      }
       i++;
     }
     else if(strcmp(argv[i], "-rows")==0 && i < argc-1){
-      values.time[2] = atoi(argv[i+1]);
+      if(argv[i+1] >= 0){
+        values.time[2] = atoi(argv[i+1]);
+      }else{
+        my_error_print("Rows cannot be negative!!!!!");
+      }
       i++;
     }
     else if(strcmp(argv[i], "-block")==0 && i < argc-1){
@@ -172,17 +184,29 @@ setup_args process_command_line(int argc, char *argv[]){
       i++;
     }
     else if(strcmp(argv[i], "-n")==0 && i < argc-1){
-      values.n_space= atoi(argv[i+1]);
+      if(argv[i+1] >= 0){
+        values.n_space = atoi(argv[i+1]);
+      }else{
+        my_error_print("N cannot be negative!!!!!");
+      }
       i++;
     }
     else if(strcmp(argv[i], "-space")==0 && i < argc-2){
-      values.space[0] = atoi(argv[i+1]);
-      values.space[1] = atoi(argv[i+2]);
+      if(argv[i+1] >= 0 && argv[i+2] >= 0){
+        values.space[0] = atoi(argv[i+1]);
+        values.space[1] = atoi(argv[i+2]);
+      }else{
+        my_error_print("Space cannot be negative!!!!!");
+      }
       i+=2;
     }
     else if(strcmp(argv[i], "-d")==0 && i < argc-2){
-      values.d[0] = atoi(argv[i+1]);
-      values.d[1] = atoi(argv[i+2]);
+      if(argv[i+1] >= 0 && argv[i+2] >= 0){
+        values.d[0] = atoi(argv[i+1]);
+        values.d[1] = atoi(argv[i+2]);
+      }else{
+        my_error_print("D cannot be negative!!!!!");
+      }
       i+=2;
     }
     else if(((strcmp(argv[i], "-Finput")==0)||(strcmp(argv[i], "-Sinput")==0)) && i < argc-1){
@@ -207,22 +231,22 @@ setup_args process_command_line(int argc, char *argv[]){
   if(values.space[0] == -1 && values.space[1] == -1 && values.n_space == -1){
     values.n_space = mpi_info.n_procs;
     values.per_proc = 1;
+    //By default do one block per processor
   }
-  //By default do one block per processor
+  else if(values.n_space == -1){
+    //If we've asked for just a single block with given limits, do that. We will NOT account for asking for one block on more than 1 processor
+    values.n_space = 1;
+    values.per_proc = 1;
+  }
   else{
     values.per_proc = values.n_space / mpi_info.n_procs;
     //integer division!
     values.n_space = values.per_proc * mpi_info.n_procs;
-  //Exactly divide
+    //Exactly divide
   }
 
-  if(values.time[0]< 0 ) values.time[0] = 0;
-  if(values.time[1]< 0 ) values.time[1] = 0;
-  if(values.time[1]< 0 ) values.time[1] = 0;
   if(values.time[1] < values.time[0]) values.time[1] = values.time[0] + 1;
   //If unspecified use 1 row per file
-  if(values.d[0] < 0) values.d[0] = 0;
-  if(values.d[1] < 0) values.d[1] = 0;
   if(values.d[0] >MAX_SIZE){
     values.d[0] = MAX_SIZE;
     my_print("WARNING: Requested size exceeds MAXSIZE", mpi_info.rank);
@@ -257,13 +281,13 @@ void print_help(char code){
   }
 }
 
-void divide_domain(std::vector<size_t> dims, int space[2], int per_proc, int block_num){
+void divide_domain(std::vector<size_t> dims, size_t space[2], int per_proc, int block_num){
 /** \brief Divide dims evenly between procs
 *
 *Uses the number of space blocks from args (if specified) and the domain size from dims to ensure perfect subdivision and set current proc's bounds. We can ignore incoming space vals as they should be -1
 */
 
-    int end, block_start, block_end, block_len;
+    size_t end, block_start, block_end, block_len;
     float per_proc_size;
     end = dims[0];
     per_proc_size = std::ceil( (float) end / (float) mpi_info.n_procs);
@@ -496,6 +520,36 @@ void my_print(std::fstream * handle, std::string text, int rank, int rank_to_wri
 
 }
 
+void my_error_print(std::string text, int rank, int rank_to_write, bool noreturn){
+/** \brief Write output
+*
+* Currently dump to term. Perhaps also to log file. Accomodates MPI also. Set rank_to_write to -1 to dump from all. Default value is 0
+*/
+  if(rank == rank_to_write || rank_to_write == -1){
+  
+    std::cerr<< text;
+    if(!noreturn)std::cerr<<std::endl;
+  }
+
+}
+void my_error_print(std::fstream * handle, std::string text, int rank, int rank_to_write, bool noreturn){
+/** \brief Write output
+*
+* Currently dump to term. Perhaps also to log file. Accomodates MPI also. Set rank_to_write to -1 to dump from all. Default value is 0
+*/
+  if((rank == rank_to_write || rank_to_write == -1) && handle!=nullptr){
+    *handle<<text;
+    if(!noreturn)*handle<<std::endl;
+  }else if(rank == rank_to_write || rank_to_write == -1){
+    std::cerr<<text;
+    if(!noreturn)std::cerr<<std::endl;
+
+  }
+
+}
+
+
+
 std::string append_into_string(const std::string &in, const std::string &infix){
 /** \brief Insert infix in string
 *
@@ -714,7 +768,7 @@ template<typename T> T interpolate(T* axis, T* vals, T target, int pts){
 template float interpolate(float*, float*, float, int);
 template double interpolate(double*, double*, double, int);
 
-my_type get_ref_Bx(std::string file_prefix, int space_in[2], int time_0, bool is_acc){
+my_type get_ref_Bx(std::string file_prefix, size_t space_in[2], size_t time_0, bool is_acc){
 /** Read reference B_x from the specfied file prefix as given, dump number time_0*/
   my_print("Getting ref B");
   char block_id[ID_SIZE];
@@ -723,7 +777,7 @@ my_type get_ref_Bx(std::string file_prefix, int space_in[2], int time_0, bool is
   
   reader bx_reader = reader(file_prefix, block_id);
   //We use this to get the local average B field
-  int bx_times[3] = {time_0, time_0+1, 1};
+  size_t bx_times[3] = {time_0, time_0+1, 1};
   //use specified file and read one row
   bx_reader.update_ref_filenum(time_0);
 

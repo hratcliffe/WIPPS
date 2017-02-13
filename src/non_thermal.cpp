@@ -119,12 +119,12 @@ bool non_thermal::configure_from_file(std::string file_prefix){
   }else{
     
     std::string line, name, val;
-    int block_num = -1;
+    size_t block_num = 0; //0th block is header stuff. First species is block 1 etc
     bool parse_err;
 
     //very naive parsing. We spin through until we find a ":"
     //if we don't find n_comps such blocks, we report and continue
-    std::string function="", dens="", vpar="", vperp="", kappa="", lookup="";
+    std::string function="", dens="", vpar="", vperp="", kappa="", lookup="", block_name="";
     std::function<calc_type(calc_type, calc_type)> tmp_fn;
     bool function_set = false;
 
@@ -140,7 +140,7 @@ bool non_thermal::configure_from_file(std::string file_prefix){
         }
         if(function == "max"){
           //Check we have all params
-          my_print("Adding component "+dens);
+          my_print("Adding component '"+block_name+"'");
           for(auto nam : {dens, vpar, vperp}) if(!parameters.count(nam)) my_print("Param "+nam+" not found!!!");
           this->v_par = parameters[vpar];
           this->v_perp = parameters[vperp];
@@ -171,12 +171,14 @@ bool non_thermal::configure_from_file(std::string file_prefix){
         if(function_set) my_print("Configured function "+function);
         block_num ++;
         function=""; dens=""; vpar=""; vperp="";kappa="", lookup="";
-        if(block_num >= ncomps) break;
+        
+        if(block_num > ncomps) break;
         //Reset lookups
+        block_name=line.substr(0, line.find(':'));
         continue;
-        // is next block, skip this header line
+        // is next block. Record name, skip this header line and jump continue to read next line
       }
-      if(block_num == -1 && line.find('=')){
+      if(block_num == 0 && line.find('=')){
       //This might be an n_comps definition or nonrely flag!
         parse_err = parse_name_val(line, name, val);
         if(!parse_err){
@@ -192,7 +194,7 @@ bool non_thermal::configure_from_file(std::string file_prefix){
           
         }
       }
-      if(block_num >= 0){
+      if(block_num > 0){
         //this line is a valid input one, probably!
         parse_err = parse_name_val(line, name, val);
         if(!parse_err){
@@ -208,10 +210,10 @@ bool non_thermal::configure_from_file(std::string file_prefix){
       }
       
     }
-    if(block_num > ncomps){
+    if(block_num > ncomps+1){
     my_print("Too many blocks in plasma file, ignoring", mpi_info.rank);
     }
-    else if(block_num < ncomps-1){
+    else if(block_num < ncomps){
       my_print(mk_str(block_num), mpi_info.rank);
   
       my_print("Insufficient blocks in config file", mpi_info.rank);

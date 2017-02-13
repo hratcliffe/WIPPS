@@ -54,7 +54,7 @@ CFLAGS += -DDEFAULT_NOVERS
 
 DEBUG = -O0 -g -W -Wall -pedantic -D_GLIBCXX_DEBUG -Wextra
 #DEBUG+= -Wno-sign-compare
-DEBUG+= -Wno-unused-parameter
+DEBUG+= -Wno-unused-parameter -DDEBUG_ALL
 #Comment/uncomment these to hide specific errors...
 PROFILE = -g
 LFLAGS = -g

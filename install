@@ -8,7 +8,7 @@
 #Build the test code and run it
 #Wipe and build with supplied build args
 
-DOCSTRING=$'Script to assist in getting the code running.\nIf FFTW is installed on your system, supply the path with --fftw-path <installed path>. If not, use --install-fftw <path-to-install> (must exist!).\nTo build without FFTW (some functions unavailable!) use --no-fft.\nTo build ONLY a double or floating point version supply --double or --float (not both!) respectively.\nThe final version will be built using whatever is supplied in --build-args (use quotes to supply more than one). If --double or --float is given, TYPE will be set automatically. Otherwise float will be used, but an explicit TYPE in --build-args will override this. For example, --build-args "TYPE=float".\nUse --help to see this documentation.'
+DOCSTRING=$'Script to assist in getting the code running.\nIf FFTW is installed somewhere locally, supply the path with --fftw-path <installed path>. If not, use --install-fftw <path-to-install> (must exist!) to install locally, or install with your package manager (apt, homebrew, etc).\nTo build without FFTW (some functions unavailable!) use --no-fft.\nTo build ONLY a double or floating point version supply --double or --float (not both!) respectively.\nThe final version will be built using whatever is supplied in --build-args (use quotes to supply more than one). If --double or --float is given, TYPE will be set automatically. Otherwise float will be used, but an explicit TYPE in --build-args will override this. For example, --build-args "TYPE=float".\nUse --help to see this documentation.'
 
 
 #Process args
@@ -68,20 +68,38 @@ fi
 
 #If we've been told to install we don't do anything with potential set FFTW_PATH
 if [ $INSTALL_FFTW -eq 0 ]; then
-
-  #Now if an FFTW path was given & we find ./include/fftw3.h and ./lib/libfftw3(f).a there we set the path in Makefile to match. 
-  #If we don't find both libs we report on it
-  #If we find neither we also report and suggest using --install-fftw <desired-path>
-  if [ -e $FFTW_PATH/include/fftw3.h ] && ( [ -e $FFTW_PATH/lib/libfftw3.a ] || [ -e $FFTW_PATH/lib/libfftw3f.a ] ); then
-    echo "Found FFTW files at "$FFTW_PATH
-    if [ ! -e $FFTW_PATH/lib/libfftw3.a ]; then echo "No double library found, use only TYPE=float and float data or reinstall FFTW without --use-float"; fi
-    if [ ! -e $FFTW_PATH/lib/libfftw3f.a ]; then echo "No float library found, use only TYPE=double and double data or reinstall FFTW with --use-float"; fi
-    #Now set the path in Makefile
-    sed -i.bak 's#FFTW_PATH =.*$#FFTW_PATH = '$FFTW_PATH'#' $MAKEFILE
+  #If no path given, is there a system-wide install?
+  if [ "$FFTW_PATH" = "" ]; then
+    SYS=`uname -s`
+    HAS_LIB=0
+    #Look for headers and assume good if found
+    case $SYS in
+      Darwin)
+        if [ -e /usr/local/include/fftw3.h ]; then HAS_LIB=1;fi
+      ;;
+      Linux)
+       if [ -e /usr/include/fftw3.h ]; then HAS_LIB=1;fi
+      ;;
+      *)
+        echo "Unknown system. Attempting to continue"
+      ;;
+    esac
+    if [ $HAS_LIB -eq 0 ]; then echo "FFTW not found on expected path. Attempting to continue";else echo "Found FFTW libraries";fi
   else
-    echo "Cannot find FFTW files at "$FFTW_PATH" Expecting ./include/fftw3.h and ./lib/libfftw3(f).a"
-    echo "Check for correct path or try installing FFTW locally using ./configure --install-fftw <path to install>"
-    exit 1
+    #Now if an FFTW path was given & we find ./include/fftw3.h and ./lib/libfftw3(f).a there we set the path in Makefile to match. 
+    #If we don't find both libs we report on it
+    #If we find neither we also report and suggest using --install-fftw <desired-path>
+    if [ -e $FFTW_PATH/include/fftw3.h ] && ( [ -e $FFTW_PATH/lib/libfftw3.a ] || [ -e $FFTW_PATH/lib/libfftw3f.a ] ); then
+      echo "Found FFTW files at "$FFTW_PATH
+      if [ ! -e $FFTW_PATH/lib/libfftw3.a ]; then echo "No double library found, use only TYPE=float and float data or reinstall FFTW without --use-float"; fi
+      if [ ! -e $FFTW_PATH/lib/libfftw3f.a ]; then echo "No float library found, use only TYPE=double and double data or reinstall FFTW with --use-float"; fi
+      #Now set the path in Makefile
+      sed -i.bak 's#FFTW_PATH =.*$#FFTW_PATH = '$FFTW_PATH'#' $MAKEFILE
+    else
+      echo "Cannot find FFTW files at "$FFTW_PATH" Expecting ./include/fftw3.h and ./lib/libfftw3(f).a"
+      echo "Check for correct path or try installing FFTW locally using ./configure --install-fftw <path to install>"
+      exit 1
+    fi
   fi
 else
   #If asked to install FFTW we run the install script on correct path:

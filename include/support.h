@@ -57,6 +57,7 @@ const my_type tiny_my_type=1d-60; /**< Value below which we assume 0*/
 const size_t MAX_SIZE = 100000;/**< Maximum per-dim array size allowed (per processor if MPI in use) */
 const size_t MAX_SIZE_TOT = MAX_SIZE*MAX_SIZE;/**< Maximum overall array size allowed (per processor if MPI in use) */
 const int MAX_FILENAME_DIGITS = 7;/**< Maximum number of digits in filename dump number string*/
+const int GIT_VERSION_SIZE = 15;
 const my_type io_verify = 3.0/32.0;/**< An exactly binary representable my_type to verify we're reading what we're writing.*/
 const calc_type pi = 3.14159265359;/**< Pi */
 const calc_type v0 = 2.997924e8; /**< Speed of light in m/s^2 */

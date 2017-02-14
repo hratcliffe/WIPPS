@@ -22,6 +22,8 @@
 
 extern const mpi_info_struc mpi_info;
 
+/********Basic setup and allocation functions ****/
+
 my_array::my_array(){
 /** Default constructor*/
   construct();
@@ -30,11 +32,11 @@ my_array::my_array(){
 void my_array::construct(){
 /** \brief Shared contructor code
 *
-*Sets default values of things
+*Sets default values
 */
   n_dims = 0;
-  data=nullptr;
-  dims=nullptr;
+  data = nullptr;
+  dims = nullptr;
 
 }
 
@@ -45,9 +47,9 @@ void my_array::alloc_all(const size_t n_dims, const size_t * const dims){
 */
 
   size_t tot_dims = 1;
-  bool too_large=false;
+  bool too_large = false;
   for(size_t i=0; i< n_dims; i++){
-    tot_dims*=dims[i];
+    tot_dims *= dims[i];
     if(dims[i] > MAX_SIZE) too_large = true;
   }
   //tot_dims now 0 if any dim is 0
@@ -61,46 +63,46 @@ void my_array::alloc_all(const size_t n_dims, const size_t * const dims){
     return;
   }
   
-  this->n_dims =n_dims;
+  this->n_dims = n_dims;
   this->dims = (size_t*)malloc(n_dims*sizeof(size_t));
   if(dims){
-  //If allocation succeeds, we can copy in dims data and allocate data array, else stop
+  //If allocation succeeds, we can copy in dims data and allocate space for data, else stop
     std::copy(dims, dims+n_dims, this->dims);
-    data=(my_type*)calloc(tot_dims,sizeof(my_type));
+    data = (my_type*) calloc(tot_dims, sizeof(my_type));
   }
 
 }
 my_array::my_array(size_t nx, size_t ny, size_t nz, size_t nt){
-/** \brief 1 to 4 d rectangular array helper
+/** \brief 1 to 4 d rectangular array creator
 *
-*Sets up a n-d rectangular array for n = 1 to 4. Helper avoids user having to construct size_t array of dims
+*Sets up a n-d rectangular array for n = 1 to 4. Helper avoids user having to construct size_t array of dims. Default values mean any dimensions not supplied will be 0
 */
   construct();
   
   size_t * dims_in;
-  size_t n_dims_in, n_dims_act = 4;
-  n_dims_in = 4;
-  dims_in = (size_t*)malloc(n_dims_in*sizeof(size_t));
+  size_t n_dims_act = 4;
+
+  //Construct the dims array to pass to normal constructor
+  dims_in = (size_t*) malloc(n_dims_act*sizeof(size_t));
   dims_in[0] = nx;
   dims_in[1] = ny;
   dims_in[2] = nz;
   dims_in[3] = nt;
   
+  //Find highest non-zero dimension
   for(size_t i=4; i>0; i--){
     if(dims_in[i-1] == 0) n_dims_act --;
     else break;
   }
-  //Check which dims are zero
+  //Allocate as normal using dims_in[0:n_dims_act]
   alloc_all(n_dims_act, dims_in);
-  
   free(dims_in);
-  
 }
 
 my_array::my_array(size_t n_dims, size_t * dims ){
 /** \brief Arbitrary dim rectangular array
 *
-*Sets up a n_dims array of dimensions dims and allocates data arrays.
+*Sets up internals to define an array of rank n_dims and dimensions dims, including memory allocation
 */
   construct();
   alloc_all(n_dims, dims);
@@ -118,21 +120,23 @@ my_array::~my_array(){
 
 }
 
+/********Technical stuff making my_array a proper "object" ****/
+
 my_array & my_array::operator=(const my_array& src){
 /** \brief Copy assignment
 *
-*Sets this equal to a copy of source
+*Sets this equal to a (deep) copy of source
 */
-
 
   if(this->data) free(data);
   if(this->dims) free(dims);
-  //Clean up in case this was already a thing
+  //Clean up in case this was already allocated
   my_array::construct();
 
+  //Don't copy if src is not well-formed
   if(!src.is_good()) return *this;
-  //No copy if src is zero
   
+  //Construct this and copy all necessary
   alloc_all(src.n_dims, src.dims);
   size_t tot_els = this->get_total_elements();
   if(this->data && src.data) std::copy(src.data, src.data + tot_els, this->data);
@@ -152,11 +156,11 @@ my_array::my_array(my_array && src){
   
   this->n_dims = src.n_dims;
   src.n_dims = 0;
+  //Inherit memory and unlink from src
   this->dims = src.dims;
   src.dims = nullptr;
   this->data = src.data;
   src.data = nullptr;
-  //Steal memory from src
 }
 
 my_array::my_array(const my_array &src){
@@ -175,10 +179,12 @@ my_array::my_array(const my_array &src){
 
 }
 
+/********Helpers for working with my_array ****/
+
 my_type * my_array::disown_data(){
 /** \brief Disown and return data pointer
 *
-*Surrenders ownership of memory pointed to by data, nullifies dimensions and returns pointer. NB if this pointer is not kept an manually freed, memory will leak
+*Surrenders ownership of memory pointed to by data, nullifies dimensions and returns pointer. NB if this pointer is not kept and manually freed, memory will leak. This array will then be an empty array
 */
   my_type * data_pointer = this->data;
   this->data = nullptr;
@@ -191,7 +197,7 @@ my_type * my_array::disown_data(){
 void my_array::clone_empty(const my_array &src){
 /** \brief Initialise this to same sizes as src
 *
-* Duplicates sizes of src but do not copy data
+* This will be a valid empty array of size matching src.
 */
   construct();
 
@@ -206,139 +212,11 @@ void my_array::clone_empty(const my_array &src){
   
 }
 
-long my_array::get_index(size_t n_dims, size_t * inds_in)const{
-/** Passing integer array and loop so going to be slower
-*/
-  if(n_dims != this-> n_dims) return -1;
-  for(size_t i=0; i< n_dims; i++){
-   // std::cout<<i<<' '<<inds_in[i]<<' ';
-      if(inds_in[i] >=dims[i]) return -1;
-  }
-
-  long ind = inds_in[0];
-  size_t subdims = dims[0];
-  for(size_t i=1; i< n_dims; i++){
-    ind += subdims*inds_in[i];
-    subdims *= dims[i];
-  }
-  return ind;
-  
-}
-long my_array::get_index(size_t nx)const{
-/** \brief Get index for location
-*
-*Takes care of all bounds checking and disposition in memory. Returns -1 if out of range of any sort, otherwise, suitable index. NB. Let this function do all bounds checks. Just call it plain. This function is called often so we make it as simple as possible and write one for each number of args
-
-* A 2-d array 5x3 is
-|ooooo||ooooo||ooooo|
-<-row->
-
-A 3-d 5x3x2 is
-[|ooooo||ooooo||ooooo|][|ooooo||ooooo||ooooo|]
-<--------'slice'------>
-Etc */
-
-  if(n_dims != 1){
-#ifdef DEBUG_DIMS
-    my_error_print("Wrong array dimension, attempting 1 with "+mk_str(n_dims), mpi_info.rank);
-#endif
-    return -1;
-
-  }
-  if((nx < dims[0])){
-    return (long) nx;
-  }else{
-    return -1;
-  }
-
-}
-long my_array::get_index(size_t nx, size_t ny)const{
-/** \brief Get index for location
-*
-*Takes care of all bounds checking and disposition in memory. Returns -1 if out of range of any sort, otherwise, suitable index. NB. Let this function do all bounds checks. Just call it plain. This function is called often so we make it as simple as possible and write one for each number of args
-
-* A 2-d array 5x3 is
-|ooooo||ooooo||ooooo|
-<-row->
-
-A 3-d 5x3x2 is <-row->
-[|ooooo||ooooo||ooooo|][|ooooo||ooooo||ooooo|]
-<---------slice------->
-Etc
-*/
-
-  if(n_dims != 2){
-#ifdef DEBUG_DIMS
-    my_error_print("Wrong array dimension, attempting 2 with "+mk_str(n_dims), mpi_info.rank);
-#endif
-    return -1;
-
-  }
-  if((nx < dims[0]) && (ny<dims[1])){
-    return (long) (ny*dims[0] + nx);
-  }else{
-    return -1;
-  }
-}
-long my_array::get_index(size_t nx, size_t ny, size_t nz)const{
-/** \brief Get index for location
-*
-*Takes care of all bounds checking and disposition in memory. Returns -1 if out of range of any sort, otherwise, suitable index. NB. Let this function do all bounds checks. Just call it plain. This function is called often so we make it as simple as possible and write one for each number of args
-*/
-
-  if(n_dims != 3){
-#ifdef DEBUG_DIMS
-    my_error_print("Wrong array dimension, attempting 3 with "+mk_str(n_dims), mpi_info.rank);
-#endif
-    return -1;
-  }
-
-  if((nx < dims[0]) && (ny<dims[1]) && ((nz<dims[2]))){
-    return (nz*dims[1]+ ny)*dims[0] + nx;
-  }else{
-    return -1;
-  }
-}
-long my_array::get_index(size_t nx, size_t ny, size_t nz, size_t nt)const{
-/** \brief Get index for location
-*
-*Takes care of all bounds checking and disposition in memory. Returns -1 if out of range of any sort, otherwise, suitable index. NB. Let this function do all bounds checks. Just call it plain. This function is called often so we make it as simple as possible and write one for each number of args
-*/
-
-  if(n_dims != 4){
-#ifdef DEBUG_DIMS
-    my_error_print("Wrong array dimension, attempting 4 with "+mk_str(n_dims), mpi_info.rank);
-#endif
-    return -1;
-  }
-  if((nx < dims[0]) && (ny<dims[1])&& ((nz<dims[2]))&& ((nt<dims[3]))){
-    return ((nt*dims[2] +nz)*dims[1]+ ny)*dims[0] + nx;
-  }else{
-    return -1;
-  }
-}
-
-std::vector<size_t> my_array::get_index_from_offset(size_t offset)const{
-
-  std::vector<size_t> pos;
-  pos.resize(n_dims);
-  size_t tmp_offset = offset;
-  
-  size_t stride=1;
-  for(size_t i=0; i< n_dims-1; i++) stride*=dims[i];
-
-  for(size_t i=n_dims-1; i>0; i--){
-    pos[i] = tmp_offset/stride;
-    //INTEGER division!!!
-    tmp_offset = tmp_offset%stride;
-    stride/=dims[i-1];
-  
-  }
-  pos[0] = tmp_offset/stride;
-  return pos;
-}
+/********Indexers, getters and setters ****/
 
 size_t my_array::get_dims()const{
+/** \brief Return rank of array
+*/
   return n_dims;
 }
 size_t my_array::get_dims(size_t dim)const{
@@ -351,18 +229,142 @@ size_t my_array::get_dims(size_t dim)const{
   }else{return 0;}
 }
 
+long my_array::get_index(size_t n_dims, size_t * inds_in)const{
+/** \brief Convert n-d index into 1-d index
+*
+*This requires passing integer array and loop so is slower than the dedicated functions (get_index(nx, ...)) that follow
+*/
+  //Check rank and bounds
+  if(n_dims != this-> n_dims) return -1;
+  for(size_t i=0; i< n_dims; i++){
+      if(inds_in[i] >=dims[i]) return -1;
+  }
+  //Construct 1-d index from array
+  long ind = inds_in[0];
+  size_t subdims = dims[0];
+  for(size_t i=1; i< n_dims; i++){
+    ind += subdims*inds_in[i];
+    subdims *= dims[i];
+  }
+  return ind;
+  
+}
+
+long my_array::get_index(size_t nx)const{
+/** \brief Get index for location
+*
+*Takes care of all bounds checking and disposition in memory. Returns -1 if out of range of any sort, otherwise, suitable index. This function is called often so we make it as simple as possible and write one for each number of args.
+*/
+/* A 2-d array 5x3 is
+|ooooo||ooooo||ooooo|
+<-row->
+
+A 3-d 5x3x2 is
+[|ooooo||ooooo||ooooo|][|ooooo||ooooo||ooooo|]
+<--------'slice'------>
+Etc */
+
+#ifdef DEBUG_DIMS
+  if(n_dims != 1){
+  //Debug message
+    my_error_print("Wrong array dimension, attempting 1 with "+mk_str(n_dims), mpi_info.rank);
+    return -1;
+  }
+#endif
+  if((nx < dims[0])){
+    //Long should be big enough
+    return (long) nx;
+  }else{
+    return -1;
+  }
+
+}
+long my_array::get_index(size_t nx, size_t ny)const{
+/**
+  See my_array::get_index(size_t nx) const
+*/
+#ifdef DEBUG_DIMS
+  if(n_dims != 2){
+    my_error_print("Wrong array dimension, attempting 2 with "+mk_str(n_dims), mpi_info.rank);
+    return -1;
+  }
+#endif
+  if((nx < dims[0]) && (ny<dims[1])){
+    return (long) (ny*dims[0] + nx);
+  }else{
+    return -1;
+  }
+}
+long my_array::get_index(size_t nx, size_t ny, size_t nz)const{
+/**
+  See my_array::get_index(size_t nx) const
+*/
+#ifdef DEBUG_DIMS
+  if(n_dims != 3){
+    my_error_print("Wrong array dimension, attempting 3 with "+mk_str(n_dims), mpi_info.rank);
+    return -1;
+  }
+#endif
+  if((nx < dims[0]) && (ny<dims[1]) && ((nz<dims[2]))){
+    return (nz*dims[1]+ ny)*dims[0] + nx;
+  }else{
+    return -1;
+  }
+}
+long my_array::get_index(size_t nx, size_t ny, size_t nz, size_t nt)const{
+/**
+  See my_array::get_index(size_t nx) const
+*/
+#ifdef DEBUG_DIMS
+  if(n_dims != 4){
+    my_error_print("Wrong array dimension, attempting 4 with "+mk_str(n_dims), mpi_info.rank);
+    return -1;
+  }
+#endif
+  if((nx < dims[0]) && (ny<dims[1])&& ((nz<dims[2]))&& ((nt<dims[3]))){
+    return ((nt*dims[2] +nz)*dims[1]+ ny)*dims[0] + nx;
+  }else{
+    return -1;
+  }
+}
+
+std::vector<size_t> my_array::get_indices_from_offset(size_t offset)const{
+/** \brief Get vector of indices from 1-d index
+*
+*Takes a 1-d index and returns the n-d index vector. If offset is out of range, empty vector is returned.
+*/
+  std::vector<size_t> pos;
+  if(offset > this->get_total_elements()) return pos;
+
+  pos.resize(n_dims);
+  size_t tmp_offset = offset;
+  
+  size_t stride = 1;
+  for(size_t i=0; i< n_dims-1; i++) stride*=dims[i];
+
+  for(size_t i=n_dims-1; i>0; i--){
+    pos[i] = tmp_offset/stride;
+    //INTEGER division!!!
+    tmp_offset = tmp_offset%stride;
+    stride/=dims[i-1];
+  }
+  pos[0] = tmp_offset/stride;
+  return pos;
+}
+
 my_type my_array::get_element(size_t nx)const{
-/** Return element at nx, ny. Out of range etc will return 0.0*/
+/** \brief Get element
+*
+* Return element at nx. Out of range etc will return 0.0*/
   long ind = get_index(nx);
   if(ind  != -1){
     return data[ind];
   }else{
     return 0.0;
   }
-
 }
 my_type my_array::get_element(size_t nx, size_t ny)const{
-/** Return element at nx, ny. Out of range etc will return 0.0*/
+/** As my_array::get_element(size_t nx) const but for 2-D arrays*/
   long ind = get_index(nx, ny);
   if(ind  != -1){
     return data[ind];
@@ -371,36 +373,37 @@ my_type my_array::get_element(size_t nx, size_t ny)const{
   }
 }
 my_type my_array::get_element(size_t nx, size_t ny, size_t nz)const{
-/** Return element at nx, ny, nz. Out of range etc will return 0.0*/
+/** As my_array::get_element(size_t nx) const but for 3-D arrays*/
   long ind = get_index(nx, ny, nz);
   if(ind  != -1){
     return data[ind];
   }else{
     return 0.0;
   }
-
 }
 my_type my_array::get_element(size_t nx, size_t ny, size_t nz, size_t nt)const{
-/** Return element at nx, ny, nz, nt. Out of range etc will return 0.0*/
+/** As my_array::get_element(size_t nx) const but for 4-D arrays*/
   long ind = get_index(nx, ny, nz, nt);
   if(ind  != -1){
     return data[ind];
   }else{
     return 0.0;
   }
-
 }
 my_type my_array::get_element(size_t n_dims, size_t* dims)const{
-/** Return element at nx, ny. Out of range etc will return 0.0*/
+/** As my_array::get_element(size_t nx) const but for arbitrary dimension arrays. Supply n_dims and an array of the required indices*/
   long ind = get_index(n_dims, dims);
   if(ind  != -1){
     return data[ind];
   }else{
     return 0.0;
   }
-
 }
 my_type my_array::get_element_from_index(size_t ind)const{
+/* \brief Get element by 1-d offset
+*
+*Returns the element at index in the 1-D backing array. Ind should be found using one of the get_index options
+*/
   if(ind < get_total_elements()){
     return *(data+ind);
   }else{
@@ -420,7 +423,7 @@ size_t my_array::get_total_elements()const{
 bool my_array::set_element(size_t nx, my_type val){
 /** \brief Sets array element
 *
-*Sets elements at nx, @return 1 if out of range, wrong number of args, 0 else.
+*Sets elements at nx. @return 1 if nx is out of range or array is not rank 1, 0 else.
 */
 
   long index = get_index(nx);
@@ -430,13 +433,9 @@ bool my_array::set_element(size_t nx, my_type val){
   }else{
     return 1;
   }
-  
 }
 bool my_array::set_element(size_t nx, size_t ny, my_type val){
-/** \brief Sets array element
-*
-*Sets elements at nx, ny, @return 1 if out of range, wrong number of args, 0 else.
-*/
+/**As my_array::set_element(size_t nx, my_type val) for 2-D arrays*/
 
   long index = get_index(nx, ny);
   if(index >= 0){
@@ -445,13 +444,9 @@ bool my_array::set_element(size_t nx, size_t ny, my_type val){
   }else{
     return 1;
   }
-  
 }
 bool my_array::set_element(size_t nx, size_t ny, size_t nz, my_type val){
-/** \brief Sets array element
-*
-*Sets elements at nx, ny, nz, @return 1 if out of range, wrong number of args, 0 else.
-*/
+/**As my_array::set_element(size_t nx, my_type val) for 3-D arrays*/
 
   long index = get_index(nx, ny, nz);
   if(index >= 0){
@@ -460,13 +455,9 @@ bool my_array::set_element(size_t nx, size_t ny, size_t nz, my_type val){
   }else{
     return 1;
   }
-  
 }
 bool my_array::set_element(size_t nx, size_t ny, size_t nz, size_t nt, my_type val){
-/** \brief Sets array element
-*
-*Sets elements at nx, ny, nz, nt, @return 1 if out of range, wrong number of args, 0 else.
-*/
+/**As my_array::set_element(size_t nx, my_type val) for 4-D arrays*/
 
   long index = get_index(nx, ny, nz, nt);
   if(index >= 0){
@@ -475,66 +466,68 @@ bool my_array::set_element(size_t nx, size_t ny, size_t nz, size_t nt, my_type v
   }else{
     return 1;
   }
-  
 }
-bool my_array::set_element(size_t n_dims_in, size_t * dims_in, my_type val){
-/** \brief Sets array element
-*
-*Sets elements at nx, ny, nz, nt, @return 1 if out of range, wrong number of args, 0 else.
-*/
+bool my_array::set_element(size_t n_dims_in, size_t * indices, my_type val){
+/**As my_array::set_element(size_t nx, my_type val) for N-D arrays, using array of indexes*/
 
-  long index = get_index(n_dims_in, dims_in);
+  long index = get_index(n_dims_in, indices);
   if(index >= 0){
     data[index] = val;
     return 0;
   }else{
     return 1;
   }
-  
-
 }
 
-bool my_array::populate_data(my_type * dat_in, size_t n_tot, bool convert){
+/********Data fillers, file IO ****/
+
+template<typename T> bool my_array::populate_data(T dat_in, size_t n_tot){
 /** \brief Fill array
 *
-*Populates data with the total number of elements specified, as long as n_tot is less than the product of dims. Parameter needed so we can't overflow dat_int. Assumes same row-column order etc etc @return 0 (sucess) 1 (error). If convert is set we convert to the other of double and float in the copy
+*Populates this array from dat_in. n_tot should be the total number of elements in dat_in. The smaller of n_tot and the total number of elements in this array are copied. dat_in must match this array in row-column ordering and rank. @return 0 (sucess) 1 (error).
 */
-
   size_t tot_els = get_total_elements();
-//  if(n_tot > tot_els) return 1;
+#ifdef DEBUG_DIMS
+  if(tot_els != n_tot){
+    my_error_print("Attempting fill with mismatched array"+mk_str(tot_els)+" vs "+mk_str(n_tot), mpi_info.rank);
+    return 1;
+  }
+#endif
   if(n_tot < tot_els) tot_els = n_tot;
   //Use min of n_tot, tot_els
-
-
-  if(!convert) std::copy(dat_in, dat_in+tot_els, this->data);
-  else std::copy( (other_type *) dat_in, (other_type *) dat_in+tot_els, this->data);
+  std::copy(dat_in, dat_in+tot_els, this->data);
   return 0;
 
 }
+//Create only my_type and other_type versions of the populate function though
+template bool my_array::populate_data(my_type *, size_t);
+template bool my_array::populate_data(other_type *, size_t);
+
 
 bool my_array::populate_slice(my_type * dat_in, size_t n_dims_in, size_t * offsets){
-/** \brief Populate a slice of the array from the input array.
+/** \brief Populate a slice of array from the input array.
 *
-* Extends populate_row to fill an array slice, that is a section of dimension m, with some finite offset in dimensions from m to n only. E.g. to fill a row of a 3-d array call with n_dims_in = 3-1=2 and offsets={column, plane}
+* Extends populate_row to fill an array slice, that is a section of dimension m, with some finite offset in dimensions from m to n only. E.g. to fill a row of a 3-d array call with n_dims_in = 3-1=2 and offsets={column, plane}. Used for example with array of (x, y, t) to fill a single time value.
  @param dat_in pointer to data @param n_dims Dimensionality of input (must be less than dimension of array) @param offsets Offsets in the other dimensions
 */
 
   if(n_dims_in >= n_dims) return 1;
 
   long indx;
-  size_t sz_in=1;
+  //Infer size of dat_in as product of sizes of all dims not sliced on
+  size_t sz_in = 1;
   size_t * inds_arr;
-  inds_arr = (size_t *) malloc(n_dims*sizeof(size_t));
+  inds_arr = (size_t *) calloc(n_dims,sizeof(size_t));
   for(size_t i=0; i<n_dims-n_dims_in; i++){
-    inds_arr[i] = 0;
     sz_in *=dims[i];
   }
+  //Location to copy to is 0 in all the matched dimensions and matches offsets in all the rest
   for(size_t i = n_dims-n_dims_in; i<n_dims; i++){
     inds_arr[i] = offsets[i-(n_dims-n_dims_in)];
   }
+  //Now convert N-d position into 1-d index and do the copy
   indx = get_index(n_dims, inds_arr);
   if(indx==-1) return 1;
-
   std::copy(dat_in, dat_in + sz_in, data+indx);
 
   free(inds_arr);
@@ -543,36 +536,39 @@ bool my_array::populate_slice(my_type * dat_in, size_t n_dims_in, size_t * offse
 }
 
 bool my_array::populate_complex_slice(my_type * dat_in, size_t n_dims_in, size_t * offsets, size_t* sizes){
-/** \brief Populate a slice of the array from the input array.
+/** \brief Populate a slice of array from the input array.
 *
 * Extends populate_slice to fill an array slice from a larger array. As populate slice, assumes destination is a section of dimension m, with some finite offset in dimensions from m to n only. Assuming dat_in is a 1-d array in Fortran order (see get_element) this will read the proper subsection. Note this works fine for simple slices but costs more
- @param dat_in pointer to data @param n_dims Dimensionality of input (must be less than dimension of array) @param offsets Offsets in the other dimensions @param sizes Sizes of input array
+ @param dat_in pointer to data @param n_dims Dimensionality of input (must be less than dimension of array) @param offsets Offsets in the other dimensions @param sizes Sizes of input array \todo Add testing of this
 */
-  std::cout<<"populate_complex_slice IS AN UNTESTED ROUTINE!!!!!!!!!!!!!!!"<<'\n';
+  std::cerr<<"populate_complex_slice IS AN UNTESTED ROUTINE AT PRESENT !!!!!!!!!!!!!!!"<<'\n';
   if(n_dims_in >= n_dims) return 1;
 
   long indx;
+  //Infer size of dat_in as product of sizes of all dims not sliced on
   size_t sz_in=1;
   size_t * inds_arr;
-  inds_arr = (size_t *) malloc(n_dims*sizeof(size_t));
+  inds_arr = (size_t *) calloc(n_dims,sizeof(size_t));
   for(size_t i=0; i<n_dims-n_dims_in; i++){
-    inds_arr[i] = 0;
     sz_in *=dims[i];
   }
+  //Location to copy to is 0 in all the matched dimensions and matches offsets in all the rest
   for(size_t i = n_dims-n_dims_in; i<n_dims; i++){
     inds_arr[i] = offsets[i-(n_dims-n_dims_in)];
   }
-  indx = get_index(n_dims, inds_arr);
+  //Now convert N-d position into 1-d index
 
+  indx = get_index(n_dims, inds_arr);
   if(indx==-1) return 1;
 
+  //Match up the sections and copy into place
   size_t input_n_dims= n_dims-n_dims_in, tot_sz=this->get_total_elements();
   std::vector<size_t> dest_inds_vec;
   size_t dest_ind, input_ind;
   for(size_t i=0; i< tot_sz; i++){
     //Destination index
     dest_ind = i + indx;
-    dest_inds_vec = get_index_from_offset(dest_ind);
+    dest_inds_vec = get_indices_from_offset(dest_ind);
     //Source index
     input_ind = dest_inds_vec[0];
     for(size_t j=1; j < input_n_dims; j++) input_ind += sizes[j-1]*dest_inds_vec[i];
@@ -585,14 +581,20 @@ bool my_array::populate_complex_slice(my_type * dat_in, size_t n_dims_in, size_t
 
 }
 
+//Dummy to document file format
+/**
+    * @class dummy_file_format
+    * The layout is:
+    * sizeof(size_t) sizeof(my_type) io_verification_code Version string
+    *Next_block n_dims dims[n_dims]
+    *Next_block data
+  *IMPORTANT: the VERSION specifier links output files to code. If the file output is changed, commit and clean build to correctly specify this
+*/
 bool my_array::write_to_file(std::fstream &file){
 /** \brief Write array to file
 *
-*Writes array to file. Data is in a few blocks each starting with a number defining their end position in the file. The layout is:
-* Next_block sizeof(size_t) sizeof(my_type) io_verification_code Version string
-*Next_block n_dims dims[n_dims]
-*Next_block data
-  *IMPORTANT: this VERSION specifier links output files to code. If modifying output or order commit and clean build before using. @return 0 (sucess) 1 (error)
+*Writes array to file. Data is in a few blocks each starting with a number defining their end position in the file. \copydoc dummy_file_format
+   @return 0 (sucess) 1 (error)
 */
   if(!file.is_open() || (this->data ==nullptr)) return 1;
 
@@ -600,22 +602,26 @@ bool my_array::write_to_file(std::fstream &file){
   int my_sz = sizeof(my_type);
   bool write_err = 0;
   
-  size_t next_location = (size_t) file.tellg() + 2*sizeof(int)+my_sz + 15*sizeof(char);
+  //Next location is current position plus sizes we're about to write
+  size_t next_location = (size_t) file.tellg() + 2*sizeof(int)+my_sz + GIT_VERSION_SIZE*sizeof(char);
   
-  const char tmp_vers[15] = VERSION;
+  //Write Size of ints and data, IO verification constant and Code version.
+  const char tmp_vers[GIT_VERSION_SIZE] = VERSION;
   file.write((char*) & size_sz, sizeof(int));
   file.write((char*) & my_sz, sizeof(int));
   file.write((char*) &io_verify, my_sz);
-  file.write((char*) &tmp_vers, sizeof(char)*15);
-  //Sizeof ints and data, IO verification constant and Code version...
+  file.write((char*) &tmp_vers, sizeof(char)*GIT_VERSION_SIZE);
+ 
+  //Check file location matches what we expected
   if((size_t)file.tellg() != next_location) write_err=1;
   
+
+  //Next prepare dimension info
   size_t total_size = get_total_elements();
-  //dimension info
   next_location += size_sz*(n_dims+2);
+  //Write position of next section
   file.write((char*) & next_location, size_sz);
-  //Position of next section
-  
+  //Now write the dims stuff
   size_t n_dims_tmp = n_dims;
   file.write((char*) & n_dims_tmp, size_sz);
   size_t dim_tmp;
@@ -623,17 +629,16 @@ bool my_array::write_to_file(std::fstream &file){
     dim_tmp = dims[i];
     file.write((char*) &dim_tmp, size_sz);
   }
-
+  //Check file location matches what we expected
   if((size_t)file.tellg() != next_location) write_err=1;
 
+  //Next we write the data
   next_location += my_sz*total_size + size_sz;
   file.write((char*) & next_location, size_sz);
-  //Position of next section
-
   file.write((char *) data , my_sz*total_size);
-
   if((size_t)file.tellg() != next_location) write_err=1;
 
+  //Report if any of our offsets didn't match the file
   if(write_err) my_error_print("Error writing offset positions", mpi_info.rank);
 
   return 0;
@@ -643,14 +648,12 @@ bool my_array::write_to_file(std::fstream &file){
 bool my_array::write_section_to_file(std::fstream &file, std::vector<size_t> bounds){
 /**\brief Write a subsection of array to file
 *
-*See write_to_file for format
-
-  * We use lazy method of get_element for each element, less prone to offset errors and memory is already much faster than disk
-  *
-  *IMPORTANT: this VERSION specifier links output files to code. If modifying output or order commit and clean build before using. @return 0 (sucess) 1 (error) \todo Probably need arb dims version...
+*We write only the section delimited by bounds, which should have two elements for each dimension of this array. \copydoc dummy_file_format
+   @return 0 (sucess) 1 (error) \todo Probably need arb dims version...
 */
 
   if(!file.is_open() || (this->data ==nullptr)) return 1;
+  //Check we have enough bounds and they're all valid
   if(bounds.size() != n_dims*2) return 1;
   for(size_t i=0; i< n_dims; i++){
     if(bounds[2*i+1] > dims[i]) return 1;
@@ -659,23 +662,23 @@ bool my_array::write_section_to_file(std::fstream &file, std::vector<size_t> bou
   int size_sz = sizeof(size_t);
   int my_sz = sizeof(my_type);
   bool write_err = 0;
+
+//This section matches write_to_file exactly -------------------
+  size_t next_location = (size_t) file.tellg() + 2*sizeof(int)+my_sz + GIT_VERSION_SIZE*sizeof(char);
   
-  size_t next_location = (size_t) file.tellg() + 2*sizeof(int)+my_sz + 15*sizeof(char);
-  
-  const char tmp_vers[15] = VERSION;
+  const char tmp_vers[GIT_VERSION_SIZE] = VERSION;
   file.write((char*) & size_sz, sizeof(int));
   file.write((char*) & my_sz, sizeof(int));
   file.write((char*) &io_verify, my_sz);
-  file.write((char*) &tmp_vers, sizeof(char)*15);
-  //Sizeof ints and data, IO verification constant and Code version...
+  file.write((char*) &tmp_vers, sizeof(char)*GIT_VERSION_SIZE);
 
   if((size_t)file.tellg() != next_location) write_err=1;
+//--------------------------------------------------------------
 
+  //Write dims information, correcting the sizes to that of the subsection as we do
   size_t total_size = 1;
-  //dimension info
   next_location += size_sz*(n_dims+2);
   file.write((char*) & next_location, size_sz);
-  //Position of next section
   
   size_t n_dims_tmp = n_dims;
   file.write((char*) & n_dims_tmp, size_sz);
@@ -689,9 +692,10 @@ bool my_array::write_section_to_file(std::fstream &file, std::vector<size_t> bou
 
   if((size_t)file.tellg() != next_location) write_err=1;
 
+  //Now we write the data
+  //We use get_element and nested loops for simplicity
   next_location += my_sz*total_size + size_sz;
   file.write((char*) & next_location, size_sz);
-  //Position of next section
 
   my_type element;
   if(n_dims ==1){
@@ -730,6 +734,7 @@ bool my_array::write_section_to_file(std::fstream &file, std::vector<size_t> bou
   
   if((size_t)file.tellg() != next_location) write_err=1;
 
+  //Report if any of our offsets didn't match the file
   if(write_err) my_error_print("Error writing offset positions", mpi_info.rank);
 
   return 0;
@@ -737,20 +742,14 @@ bool my_array::write_section_to_file(std::fstream &file, std::vector<size_t> bou
 }
 
 bool my_array::read_from_file(std::fstream &file, bool no_version_check){
-/** \brief Read array dump file
+/** \brief Read array from file
 *
-*Reads dims and data from file. Requires the dimensions of array to be already setup and will check for consistency with those in file
-
-*/
-/** sizeof(size_t) sizeof(my_type) io_verification_code Version string
-*Next_block n_dims dims[n_dims]
-*Next_block data
+*Reads data from file. This array should have already been created in the correct shape, otherwise we return an error.
+  \copydoc dummy_file_format
 */
 
+  //Read the dimensions from file and check they match this array
   std::vector<size_t> dims_vec = read_dims_from_file(file, no_version_check);
-
-  size_t next_block;
-  
   if(dims_vec.size() !=n_dims){
     my_error_print("Dimensions do not match, aborting read", mpi_info.rank);
     return 1;
@@ -762,10 +761,11 @@ bool my_array::read_from_file(std::fstream &file, bool no_version_check){
       return 1;
     }
     tot_els *= dims[i];
-    //Check dims
   }
-  file.read((char*) &next_block, sizeof(size_t));
 
+  //Read the next-block tag and then the data
+  size_t next_block;
+  file.read((char*) &next_block, sizeof(size_t));
   file.read((char *) data , sizeof(my_type)*tot_els);
 
   return 0;
@@ -773,18 +773,12 @@ bool my_array::read_from_file(std::fstream &file, bool no_version_check){
 }
 
 std::vector<size_t> my_array::read_dims_from_file(std::fstream &file, bool no_version_check){
-/** \brief Read array dump file for dimension
+/** \brief Read dimensions from array file
 *
-*Reads dims into vector. Returns empty vector on read error
-
-*/
-/** sizeof(size_t) sizeof(my_type) io_verification_code Version string
-*Next_block n_dims dims[n_dims]
-*Next_block data
+*Reads dims from file into vector. Returns empty vector on read error \copydoc dummy_file_format
 */
   std::vector<size_t> dims_vec;
-
-  char tmp_vers[15];
+  char tmp_vers[GIT_VERSION_SIZE];
   my_type verf=0.0;
 
   if(!file.good()){
@@ -793,6 +787,7 @@ std::vector<size_t> my_array::read_dims_from_file(std::fstream &file, bool no_ve
   }
 
   size_t n_dims_in, dim_tmp, next_block;
+  //Read the data size specifiers and check they match ours, otherwise error
   int size_sz=0, my_sz=0;
   file.read((char*) &size_sz, sizeof(int));
   file.read((char*) &my_sz, sizeof(int));
@@ -801,15 +796,18 @@ std::vector<size_t> my_array::read_dims_from_file(std::fstream &file, bool no_ve
   if(my_sz !=sizeof(my_type)) my_error_print("my_type size does not match file", mpi_info.rank);
   if(my_sz !=sizeof(my_type) ||size_sz !=sizeof(size_t)) return dims_vec;
   
+  //Read the verification constant and the Version code
   file.read((char*) &verf, sizeof(my_type));
-  file.read((char*) &tmp_vers, sizeof(char)*15);
+  file.read((char*) &tmp_vers, sizeof(char)*GIT_VERSION_SIZE);
 
   if(verf != io_verify){
   //equality even though floats as should be identical
+    //If we have a read error and the versions don't match, that might be the problem...
     my_error_print("File read error", mpi_info.rank);
-    if(strcmp(tmp_vers, VERSION) !=0 && strcmp(tmp_vers, "IDL data write")!= 0 ) my_error_print("Incompatible code versions", mpi_info.rank);
+    if(strcmp(tmp_vers, VERSION) !=0 && strcmp(tmp_vers, "IDL data write")!= 0 ) my_error_print("Incompatible code version or file", mpi_info.rank);
     return dims_vec;
   }else{
+    //Otherwise we report on verson mismatch according to no_version_check parameter
     if(!no_version_check && strcmp(tmp_vers, VERSION) !=0){
        my_print("WARNING: A different code version was used to write this data. Proceed with caution. Fields may not align correctly.", mpi_info.rank);
       std::string tmp = tmp_vers;
@@ -818,7 +816,7 @@ std::vector<size_t> my_array::read_dims_from_file(std::fstream &file, bool no_ve
       my_print(tmp, mpi_info.rank);
     }
   }
-
+  //Read the dimensions information
   file.read((char*) &next_block, sizeof(size_t));
   file.read((char*) &n_dims_in, sizeof(size_t));
 
@@ -830,6 +828,8 @@ std::vector<size_t> my_array::read_dims_from_file(std::fstream &file, bool no_ve
   return dims_vec;
 }
 
+/********Helpful functions working on entire array as a thing ****/
+
 bool my_array::resize(size_t dim, size_t sz, bool verbose){
 /** \brief Resize my_array on the fly
 *
@@ -838,9 +838,10 @@ bool my_array::resize(size_t dim, size_t sz, bool verbose){
 
   if(verbose) my_print("Attempting to resize", mpi_info.rank);
 
-  if(sz == 0 || sz > MAX_SIZE)return 1;
-  //size errors. Don't allow to resize to 0!!!
+  if(sz == 0 || sz > MAX_SIZE) return 1;
+  //size errors. We don't allow to resize any dimension to 0!!!
   if(dim > this->n_dims) return 1;
+  //Shortcut if nothing to do
   if(sz == dims[dim]){
      if(verbose) my_print("Size matches", mpi_info.rank);
      return 1;
@@ -852,7 +853,7 @@ bool my_array::resize(size_t dim, size_t sz, bool verbose){
   if(dim == n_dims-1){
     //special case as we can shrink and maybe grow without copy
     for(size_t i=0; i<n_dims-1; ++i) part_sz*= dims[i];
-    //product of all other dims
+    //Calculate product of all other dims
 
     new_data = (my_type *) realloc((void*) this->data, part_sz*sz*sizeof(my_type));
     if(!new_data){
@@ -860,23 +861,25 @@ bool my_array::resize(size_t dim, size_t sz, bool verbose){
       return 1;
       //failure. leave as was.
     }
-
+    //zero the newly added elements
     long new_els = part_sz*(sz - dims[dim]);
-    
     if(new_els > 0) memset((void*)(new_data + part_sz*dims[dim]), 0.0, new_els*sizeof(my_type));
-    //zero new elements
   }
   else{
     //have to allocate a new block and copy across.
+    //We do this in segments rather than element-wise.
     size_t els_to_copy = 1, n_segments = 1;
 
     for(size_t i=0; i<dim; ++i) els_to_copy *= dims[i];
     for(size_t i=dim+1; i< n_dims; ++i) n_segments *= dims[i];
 
-//    for(size_t i=0; i<dim; ++i) part_sz*= dims[i];
     part_sz = els_to_copy*n_segments;
     new_data=(my_type*)calloc(part_sz*sz,sizeof(my_type));
-
+    if(!new_data){
+      my_error_print("Failed to allocate memory", mpi_info.rank);
+      return 1;
+      //failure. leave as was.
+    }
     // Now we know dim is zeroth or a middle dimension. (1 for n_dims==3, 1 or 2 for n_dims==4.So we copy in chunks
     size_t chunk_sz = els_to_copy;
     (sz> dims[dim])? els_to_copy *= dims[dim] : els_to_copy *= sz;
@@ -884,7 +887,7 @@ bool my_array::resize(size_t dim, size_t sz, bool verbose){
 
     free(data);
   }
-
+  //Set data to be the amended/new array and update dims
   data = new_data;
   dims[dim] = sz;
 
@@ -1017,7 +1020,10 @@ A 3-d 5x3x2 is
 }
 
 my_type my_array::minval(size_t offset){
-/** Find minimum value of data, allows linear search through contiguous memory*/
+/** \brief Find minimum value of data
+*
+*Finds the minimum of the array after offset, using linear search through contiguous memory. Offset should be obtained using one of the get_index functions.
+*/
   size_t total_size=get_total_elements();
   if(offset > total_size) return std::numeric_limits<my_type>::min();
 
@@ -1025,36 +1031,43 @@ my_type my_array::minval(size_t offset){
 
 }
 my_type my_array::minval(std::vector<size_t> &ind, size_t offset){
-/** Find minimum value of data, allows linear search through contiguous memory*/
+/** \brief Find minimum value of data
+*
+*Finds the minimum of the array after offset, using linear search through contiguous memory. Offset should be obtained using one of the get_index functions. The ind vector returns the indices where the minimum was located.
+*/
 
   size_t total_size=get_total_elements();
   if(offset > total_size) return std::numeric_limits<my_type>::min();
 
   auto it = std::min_element(data+offset, data+total_size);
-  ind = get_index_from_offset(it - data);
+  ind = get_indices_from_offset(it - data);
   return *(it);
   
-
 }
 
 my_type my_array::maxval(size_t offset){
-/** Find maximum value of data, allows linear search through contiguous memory*/
+/** \brief Find maximum value of data
+*
+*Finds the maximum of the array after offset, using linear search through contiguous memory. Offset should be obtained using one of the get_index functions.
+*/
 
   size_t total_size=get_total_elements();
   if(offset > total_size) return std::numeric_limits<my_type>::max();
 
   return *(std::max_element(data+offset, data+total_size));
+
 }
 my_type my_array::maxval(std::vector<size_t> &ind, size_t offset){
-/** Find maximum value of data, allows linear search through contiguous memory*/
+/** \brief Find maximum value of data
+*
+*Finds the maximum of the array after offset, using linear search through contiguous memory. Offset should be obtained using one of the get_index functions. The ind vector returns the indices where the maximum was located.
+*/
 
   size_t total_size=get_total_elements();
   if(offset > total_size) return std::numeric_limits<my_type>::max();
 
   auto it = std::max_element(data+offset, data+total_size);
-  ind = get_index_from_offset(it - data);
-//  ind.push_back(it - data);
-
+  ind = get_indices_from_offset(it - data);
   return *(it);
 
 }
@@ -1079,7 +1092,7 @@ my_type my_array::partial_maxval(std::vector<std::pair<size_t, size_t> > ranges,
 
 }
 my_type my_array::avval(){
-/** Find average value of data */
+/** Find average value of data array*/
   my_type av = 0.0;
   size_t total_size=get_total_elements();
 
@@ -1088,6 +1101,10 @@ my_type my_array::avval(){
 }
 
 void my_array::smooth_1d(int n_pts){
+/** \brief Smooth a 1-d data_array
+*
+*Smooths the data backing array.
+*/
   if(n_dims !=1) return;
   inplace_boxcar_smooth(data, (int) get_total_elements(), n_pts);
 

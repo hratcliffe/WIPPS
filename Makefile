@@ -53,8 +53,12 @@ CFLAGS += -DDEFAULT_NOVERS
 
 
 DEBUG = -O0 -g -W -Wall -pedantic -D_GLIBCXX_DEBUG -Wextra
-#DEBUG+= -Wno-sign-compare
-DEBUG+= -Wno-unused-parameter -DDEBUG_ALL
+#DEBUG+= -Wno-sign-compare -Wno-unused-parameter
+DEBUG+= -DDEBUG_ALL
+
+#Flags just for modern gcc which is very pedantic
+#DEBUG += -Wnounused-but-set-variable
+
 #Comment/uncomment these to hide specific errors...
 PROFILE = -g
 LFLAGS = -g
@@ -93,7 +97,7 @@ DEPSFLAGS = -DRUN_TESTS_AND_EXIT
 #and also deals with make options like MODE=debug or MODE=test
 
 SED_STR = sed -i.bak 's/ _USE_FLOAT/ _NO_USE_FLOAT/' Doxyfile
-SED_STR_Test = sed -i.bak 's/ RUN_TESTS_AND_EXIT/ _NORUN_TESTS_AND_EXIT/' Doxyfile
+SED_STR_Test = sed -i.bak 's/RUN_TESTS_AND_EXIT/NO_RUN_TESTS_AND_EXIT/' Doxyfile
 #Sed strings to put the options chosen here into our Doxyfile so we document the right version
 
 ifeq ($(strip $(TYPE)),float)
@@ -128,7 +132,7 @@ else ifeq ($(strip $(MODE)),test)
   CFLAGS += -DRUN_TESTS_AND_EXIT
   #CFLAGS += $(PROFILE)
   CFLAGS += $(DEBUG)
-  SED_STR_Test = sed -i.bak 's/ NO_RUN_TESTS_AND_EXIT/ RUN_TESTS_AND_EXIT/' Doxyfile
+  SED_STR_Test = sed -i.bak 's/NO_RUN_TESTS_AND_EXIT/RUN_TESTS_AND_EXIT/' Doxyfile
 else ifeq ($(strip $(MODE)),profile)
   CFLAGS += $(PROFILE)
   CFLAGS += $(OPTIMISE)
@@ -265,5 +269,5 @@ veryclean:
 
 docs:
 	@echo Running Doxygen...
-	@if ! [[ `which Doxygen` ]]; then echo "Doxygen not found"; else echo "Mode: " $(MODE) "Type: " $(TYPE); doxygen Doxyfile &> Doxy.log; echo Processing Doxygen output...; ./redox.sh; echo Running pdftex...; cd latex ; pdflatex --file-line-error --synctex=1 -interaction nonstopmode ./refman.tex &> ../docs.log; cd ..; echo "Docs built. See Doxy.log and docs.log for details"; fi
+	@if ! [[ `which Doxygen` ]]; then echo "Doxygen not found"; else printf "Options:\nType: ";egrep '_USE_FLOAT' ./Doxyfile >>/dev/null && echo "Float" || echo "Double";printf "Mode: ";egrep '[ \t]+RUN_TESTS_AND_EXIT' ./Doxyfile >>/dev/null && echo "Test"; echo; doxygen Doxyfile &> Doxy.log; echo Processing Doxygen output...; ./redox.sh; echo Running pdftex...; cd latex ; pdflatex --file-line-error --synctex=1 -interaction nonstopmode ./refman.tex &> ../docs.log; cd ..; echo "Docs built. See Doxy.log and docs.log for details"; fi
 

@@ -521,27 +521,26 @@ template<typename T> bool my_array::populate_data(T dat_in, size_t n_tot){
 template bool my_array::populate_data(my_type *, size_t);
 template bool my_array::populate_data(other_type *, size_t);
 
-
-bool my_array::populate_slice(my_type * dat_in, size_t n_dims_in, size_t * offsets){
+bool my_array::populate_slice(my_type * dat_in, size_t offsets_n_dims, size_t * offsets){
 /** \brief Populate a slice of array from the input array.
 *
-* Extends populate_row to fill an array slice, that is a section of dimension m, with some finite offset in dimensions from m to n only. E.g. to fill a row of a 3-d array call with n_dims_in = 3-1=2 and offsets={column, plane}. Used for example with array of (x, y, t) to fill a single time value.
+* Extends populate_row to fill an array slice, that is a section of rank m < n_dims, with some finite offset in dimensions from m to n_dims only. offsets_n_dims = n_dims - m is the size of the array of offsets provided. E.g. to fill a row of a 3-d array call with n_dims_in = 3-1=2 and offsets={column, plane}. Or to fill an array of shape (x, y, t) at a single time value t_0, use n_dims_in=1, offsets={t_0}.
  @param dat_in pointer to data @param n_dims Dimensionality of input (must be less than dimension of array) @param offsets Offsets in the other dimensions
 */
 
-  if(n_dims_in >= n_dims) return 1;
+  if(offsets_n_dims >= n_dims) return 1;
 
   long indx;
   //Infer size of dat_in as product of sizes of all dims not sliced on
   size_t sz_in = 1;
   size_t * inds_arr;
   inds_arr = (size_t *) calloc(n_dims,sizeof(size_t));
-  for(size_t i=0; i<n_dims-n_dims_in; i++){
+  for(size_t i=0; i<n_dims-offsets_n_dims; i++){
     sz_in *=dims[i];
   }
   //Location to copy to is 0 in all the matched dimensions and matches offsets in all the rest
-  for(size_t i = n_dims-n_dims_in; i<n_dims; i++){
-    inds_arr[i] = offsets[i-(n_dims-n_dims_in)];
+  for(size_t i = n_dims-offsets_n_dims; i<n_dims; i++){
+    inds_arr[i] = offsets[i-(n_dims-offsets_n_dims)];
   }
   //Now convert N-d position into 1-d index and do the copy
   indx = get_index(n_dims, inds_arr);

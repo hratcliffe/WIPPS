@@ -806,7 +806,7 @@ my_type get_ref_Bx(std::string file_prefix, size_t space_in[2], size_t time_0, b
 bool flatten_fortran_slice(my_type * src_ptr, my_type* dest_ptr, size_t n_dims_in, size_t * dims_in, size_t flatten_on_dim, size_t flat_start, size_t flat_stop){
 /** \brief Flatten a Fortran-style array on the specified dimension
 *
-* The result is a Fortran-style array of rank n_dims_in - 1, containing the total along each value of the flattening dim. dest_ptr is assumed to point to an allocated block sufficient to hold the result. NB this produces a total not an average
+* The result is a Fortran-style array of rank n_dims_in - 1, containing the total along each value of the flattening dim. dest_ptr is assumed to point to an allocated block sufficient to hold the result. NB this produces a total not an average. NB flat_start and flat_stop must be valid indices into the dim to be flattened. They CANNOT be checked
 */
 /*
 * A 2-d array 5x3 is

@@ -42,7 +42,7 @@
  *
  *\section test Integrated Testing
  * All (hopefully) significant (copout!) parts of the code should be covered by inbuilt tests. These are defined in tests.cpp and cover a mixture of unit testing, science testing and library integration tests. To run the tests, clean build with \verbatim make MODE=test \endverbatim
-* and run. To add tests, see class \ref tests. Consider adding tests for any significant additions or changes, and running the existing ones ditto. To include tests in this documentation, run 
+* and run. Errors and outcomes are written to stderr, information to stdout. Thus \verbatim ./main > /dev/null \endverbatim will show only the former, etc. To add tests, see class \ref tests. Consider adding tests for any significant additions or changes, and running the existing ones ditto. To include tests in this documentation, run 
  \verbatim make MODE=test
 make docs
  \endverbatim Similarly, to omit them, make without test mode

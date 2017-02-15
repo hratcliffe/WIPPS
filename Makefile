@@ -278,7 +278,7 @@ tar: dependencies.log
 	tar -cvzf SDF.tgz ./SDF
 
 clean:
-	@rm -f main $(UTILS) $(OBJS) $(MAINOBJS)
+	@rm -f main $(UTILS) $(OBJS) $(MAINOBJS) $(UTILSOBJS)
 
 veryclean:
 	@rm -f main $(UTILS) dependencies.log*

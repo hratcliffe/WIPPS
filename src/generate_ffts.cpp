@@ -106,7 +106,7 @@ int main(int argc, char *argv[]){
   logfile.open(logfilename.c_str(),std::ios::app);
 
   //---------------- Now we loop over blocks per proc-------
-  for(int block_num = 0; block_num<cmd_line_args.per_proc; block_num++){
+  for(size_t block_num = 0; block_num<cmd_line_args.per_proc; block_num++){
 
     divide_domain(dims, my_space, cmd_line_args.per_proc, block_num);
     space_dim = my_space[1]-my_space[0];
@@ -152,7 +152,8 @@ int main(int argc, char *argv[]){
       if(extra_args.limits.size() != 2*(dat.get_dims() - do_flat)) my_print("Please supply 2 limits per dimension. Output will be untrimmed");
       else{
         lims = extra_args.limits;
-        if(extra_args.flat_dim != dat.get_dims()-1){
+        //Check for -1 to avoid overflow in second comparison
+        if(extra_args.flat_dim != -1 && (size_t) extra_args.flat_dim != dat.get_dims()-1){
           lims[lims.size()-2] *= (dat.B_ref*q0/me);
           lims[lims.size()-1] *= (dat.B_ref*q0/me);
         }

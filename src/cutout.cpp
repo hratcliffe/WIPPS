@@ -42,8 +42,6 @@ cutout_args cutout_process_command_line(int argc, char *argv[]);
 
 int main(int argc, char *argv[]){
 
-  int err;
-  
   int ierr = local_MPI_setup(argc, argv);
   if(ierr){
     std::cout<< "Error initialising MPI. ABORTING!";
@@ -64,12 +62,7 @@ int main(int argc, char *argv[]){
     
     data_array FFT_in = data_array(my_args.file_prefix+my_args.file_in);
     //Set cutout limits on FFT
-    int n_dims = FFT_in.get_dims();
-
-    for(int i=0; i< my_args.limits.size(); i++){
-      std::cout<<my_args.limits[i]<<' ';
-    }
-    std::cout<<my_args.file_prefix<<" "<<my_args.file_in<<" "<<my_args.file_out<<'\n';
+    size_t n_dims = FFT_in.get_dims();
     
     if(my_args.limits.size() !=2*n_dims){
       my_error_print("******Please supply 2 limits per dimension*****", mpi_info.rank);

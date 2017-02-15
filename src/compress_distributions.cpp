@@ -51,13 +51,13 @@ int main(int argc, char *argv[]){
 
   {  //Read block list and create list of just the distrib fns
     std::vector<std::pair<std::string, std::string> > blocks = my_reader.list_blocks();
-    for(int i=0; i< blocks.size(); i++){
+    for(size_t i=0; i< blocks.size(); i++){
       if(special_tag.compare(blocks[i].first.substr(0, special_tag.size())) ==0) dist_blocks.push_back(blocks[i]);
     }
   }
   if(dist_blocks.size() == 0) my_print("No distribution functions found");
   if(my_args.list){
-    for(int i=0; i< dist_blocks.size(); i++) std::cout<<dist_blocks[i].first<<'\n';
+    for(size_t i=0; i< dist_blocks.size(); i++) my_print(dist_blocks[i].first);
     exit(0);
   }
   //Now we extract any distributions and flatten them on x into the specified number of blocks, and output
@@ -65,26 +65,26 @@ int main(int argc, char *argv[]){
   size_t n_dims;
   std::vector<size_t> dims;
   size_t dims_arr[2];
-  for(int i=0; i< dist_blocks.size() ; i++){
+  for(size_t i=0; i< dist_blocks.size(); i++){
     my_reader.read_dims(n_dims, dims, dist_blocks[i].second);
-    for(int j=0; j<2; j++) dims_arr[j] = dims[j];
+    for(size_t j=0; j<2; j++) dims_arr[j] = dims[j];
     dat = data_array((size_t)2, dims_arr);
     if(!dat.is_good()){
-      std::cout<<"Error allocating array for "<<dist_blocks[i].second<<", skipping\n";
+      my_error_print("Error allocating array for "+dist_blocks[i].second+", skipping");
       continue;
     }
     
     //The distribs are always 3-d, with absent dims of size 1. Ours should be 2-d initially
     err = my_reader.read_distrib(dat, dist_blocks[i].second, my_args.dump);
     if(err){
-      std::cout<<"Error reading distrib "<<dist_blocks[i].second<<'\n';
+      my_error_print("Error reading distrib "+dist_blocks[i].second);
       continue;
     }
     std::fstream file;
     size_t trim_size = 8; //Len of "dist_fn/" leading part
     std::string tag = replace_char((dist_blocks[i].first).substr(trim_size, std::string::npos), '/', '_');
     std::string filename = my_args.file_prefix+tag+'_'+mk_str(my_args.dump) +".dat";
-    std::cout<<"Writing "<<dist_blocks[i].second<<'\n';
+    my_print("Writing "+dist_blocks[i].second);
     file.open(filename.c_str(),std::ios::out|std::ios::binary);
 
     if(my_args.blocks ==-1){
@@ -101,7 +101,7 @@ int main(int argc, char *argv[]){
     else{
       data_array section;
       size_t block_size = ceil(dat.get_dims(0) / (float)my_args.blocks);
-      for(size_t j = 0; j< my_args.blocks; j++){
+      for(int j = 0; j< my_args.blocks; j++){
         //Just current block in x
         section=dat.average(0, block_size*j, block_size*(j+1));
         section.space[0] =block_size*j;
@@ -113,7 +113,7 @@ int main(int argc, char *argv[]){
       dat.write_closer(file);
     }
 
-    std::cout<<"Closing"<<'\n';
+    my_print("Closing");
     file.close();
   }
 
@@ -151,7 +151,7 @@ dist_cmd_line special_command_line(int argc, char *argv[]){
       values.blocks= atoi(argv[i+1]);
       i++;
     }
-    else std::cout<<"UNKNOWN OPTION " <<argv[i]<<'\n';
+    else my_error_print(std::string("UNKNOWN OPTION ")+argv[i]);
     
   }
   return values;

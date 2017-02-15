@@ -47,7 +47,7 @@ calc_type * make_momentum_axis(int n_momenta, calc_type v_max_over_c);
 calc_type get_growth_rate(plasma * my_plas, non_thermal * my_elec, int n_momenta, calc_type * p_axis, calc_type omega_in);
 g_args g_command_line(int argc, char * argv[]);
 
-bool write_growth_closer(std::string in_file, plasma * my_plas, non_thermal * my_elec, size_t n_momenta, calc_type min_v, calc_type max_v, std::fstream &file);
+bool write_growth_closer(std::string in_file, non_thermal * my_elec, size_t n_momenta, calc_type min_v, calc_type max_v, std::fstream &file);
 
 std::vector<std::string> read_filelist(std::string infile);
 
@@ -194,7 +194,7 @@ int main(int argc, char *argv[]){
   }
   strcpy(analytic_data.block_id, "g_an");
 
-  for(int i=0; i<analytic_data.get_dims(0); ++i){
+  for(size_t i=0; i<analytic_data.get_dims(0); ++i){
     omega = analytic_data.get_axis_element(0, i);
     growth_rate = get_growth_rate(my_plas, my_elec, n_momenta, p_axis, omega);
     analytic_data.set_element(i, growth_rate);
@@ -203,7 +203,7 @@ int main(int argc, char *argv[]){
   err |= analytic_data.write_to_file(file, false);
   
   //Special finish for the file  
-  err |=write_growth_closer(cmd_line_args.file_prefix, my_plas, my_elec, n_momenta, min_v, max_v, file);
+  err |=write_growth_closer(cmd_line_args.file_prefix, my_elec, n_momenta, min_v, max_v, file);
 
   file.close();
   if(!err) my_print("Written in "+filename);
@@ -216,7 +216,7 @@ int main(int argc, char *argv[]){
 calc_type get_growth_rate(plasma * my_plas, non_thermal * my_elec, int n_momenta, calc_type * p_axis, calc_type omega_in){
 
   omega_in = std::abs(omega_in);
-  calc_type k = my_plas->get_dispersion(omega_in, WAVE_WHISTLER, 1), k_paper;
+  calc_type k = my_plas->get_dispersion(omega_in, WAVE_WHISTLER, 1);
 
   calc_type ck_om = v0*k/omega_in, om_ce = std::abs(my_plas->get_omega_ref("ce")), om_pe = std::abs(my_plas->get_omega_ref("pe")), om_diff = omega_in - om_ce;
   //This corrects omega_pe to match the fast electrons we're using, which may not match the deck exactly
@@ -224,9 +224,9 @@ calc_type get_growth_rate(plasma * my_plas, non_thermal * my_elec, int n_momenta
   
   //Calculate k using Eq 9 of Xiao  k_paper = std::sqrt( (std::pow(omega_in, 2) - std::pow(om_pe, 2)*omega_in/om_diff)/std::pow(v0, 2));
 
-  calc_type S_tot=0.0, S_full_tot=0.0, dp, A_crit, A_rel, eta_rel;
+  calc_type S_tot=0.0, S_full_tot=0.0, A_crit, A_rel, eta_rel;
   calc_type  *S, *S_full, * dp_ax;
-  calc_type gamma, p_res, Delta_res, v_res, tmp;
+  calc_type gamma, p_res, Delta_res, v_res;
   bool norely = my_elec->get_norely();
 
   S = (calc_type *)malloc(n_momenta*sizeof(calc_type));
@@ -370,7 +370,7 @@ g_args g_command_line(int argc, char * argv[]){
 
 }
 
-bool write_growth_closer(std::string in_file, plasma * my_plas, non_thermal * my_elec, size_t n_momenta, calc_type min_v, calc_type max_v, std::fstream &file){
+bool write_growth_closer(std::string in_file, non_thermal * my_elec, size_t n_momenta, calc_type min_v, calc_type max_v, std::fstream &file){
   /** Write the general parameters as a file footer with offsets*/
   
   
@@ -408,11 +408,11 @@ void dump_distrib(non_thermal * my_elec, std::string filename){
   //Create array and axes
   data_array created_array = data_array(500, 500);
   strncpy(created_array.block_id, block_id.c_str(), ID_SIZE);
-  for(int i=0; i<x_len; i++) created_array.set_axis_element(0, i, -x_ax_max + (float)i*(x_ax_max*2.0/(float) x_len));
-  for(int i=0; i<y_len; i++) created_array.set_axis_element(1, i, -y_ax_max + (float)i*(y_ax_max*2.0/(float) y_len));
+  for(size_t i=0; i<x_len; i++) created_array.set_axis_element(0, i, -x_ax_max + (float)i*(x_ax_max*2.0/(float) x_len));
+  for(size_t i=0; i<y_len; i++) created_array.set_axis_element(1, i, -y_ax_max + (float)i*(y_ax_max*2.0/(float) y_len));
   
-  for(int i=0; i< x_len; i++){
-    for(int j=0; j< y_len; j++){
+  for(size_t i=0; i< x_len; i++){
+    for(size_t j=0; j< y_len; j++){
    // std::cout<<i<<' '<<j<<' '<<created_array.get_axis_element(0, i)<<' '<< created_array.get_axis_element(1, j)<<'\n';
       created_array.set_element(i, j, my_elec->f_p(created_array.get_axis_element(0, i), created_array.get_axis_element(1, j)));
     }

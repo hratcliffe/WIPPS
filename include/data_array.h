@@ -24,44 +24,54 @@ class data_array : public my_array{
 
 protected:
 
-  my_type *axes;/**< 1-d array in sections, so can be arbitary length and dims*/
-
+  my_type *axes;/**< Axes data*/
+  
+/********Basic setup and allocation functions ****/
   virtual void construct();
   void alloc_ax(const size_t els);
-  float get_res(size_t i);
+
+/********Indexers, getters and setters ****/
   size_t get_total_axis_elements();
   long get_axis_index(size_t dim, size_t pt)const;
-
   std::vector<size_t> get_bounds(std::vector<my_type> limits);
-public:
-  //friend class spectrum;/**< \todo Can we remove this plz?*/
-  char block_id[ID_SIZE]; /**< The field name id from SDF file*/
 
+public:
+  char block_id[ID_SIZE]; /**< ID describing data*/
   my_type time[2];/**< Time range over which data are taken*/
   size_t space[2];/**< Space range over which data are taken*/
   my_type B_ref;/**< Reference average B field by location*/
+
+/********Basic setup and allocation functions ****/
   data_array();
   data_array(size_t nx, size_t ny=0, size_t nz=0, size_t nt=0);
-  data_array(const data_array &src);
-  data_array(data_array && src);
-
-  data_array & operator=(const data_array& src);
+  data_array(size_t n_dims, size_t * dims);
 #ifdef DEFAULT_NOVERS
   data_array(std::string filename, bool no_version_check = true);
 #else
   data_array(std::string filename, bool no_version_check = false);
 #endif
-  data_array(size_t n_dims, size_t * dims);
   virtual ~data_array();
-  void clone_empty(const data_array &src);
-
   virtual bool is_good()const{return my_array::is_good() && axes;}
-  void copy_ids( const data_array & src);
 
+/********Technical stuff making my_array a proper "object" ****/
+  data_array(const data_array &src);
+  data_array(data_array && src);
+  data_array & operator=(const data_array& src);
+
+/********Helpers for working with data_array ****/
+  my_type * disown_axes();
+  void clone_empty(const data_array &src);
+  void copy_ids( const data_array & src);
+  bool check_ids(const data_array & src);
+
+/********Indexers, getters and setters ****/
   my_type get_axis_element(size_t dim, size_t pt)const;
   bool set_axis_element(size_t dim, size_t pt, my_type val);
-  bool populate_axis(size_t dim, my_type * dat_in, size_t n_tot);
   my_type * get_axis(size_t dim, size_t & length);
+  float get_res(size_t i)const;
+
+/********Data/axis fillers, file IO ****/
+  bool populate_axis(size_t dim, my_type * dat_in, size_t n_tot);
   void make_linear_axis(size_t dim, float res, long offset=0);
 
   bool write_to_file(std::fstream &file, bool close_file=true);
@@ -74,11 +84,7 @@ public:
   bool write_raw_section_to_file(std::fstream &file, std::vector<size_t> limits, bool close_file=true);
   bool write_closer(std::fstream &file);
   
-  my_type * disown_axes();
-  
-  bool fft_me(data_array & data_out);
-  bool populate_mirror_fastest(my_type * result_in, size_t total_els);
-  bool check_ids(const data_array & src);
+/********Helpful functions working on entire array as a thing ****/
   bool resize(size_t dim, size_t sz, bool verbose=0);
   bool shift(size_t dim, long n_els, bool axis=1);
   data_array total(size_t dim);
@@ -90,6 +96,10 @@ public:
   bool subtract(const data_array& rhs);
 
 };
+
+/********FFT functions and helpers ****/
+bool fft_array(const data_array &data_in, data_array &data_out);
+bool populate_mirror_fastest(data_array &data_out, my_type * result_in, size_t total_els);
 
 
 

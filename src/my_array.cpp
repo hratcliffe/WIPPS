@@ -138,9 +138,10 @@ my_array & my_array::operator=(const my_array& src){
   
   //Construct this and copy all necessary
   alloc_all(src.n_dims, src.dims);
-  size_t tot_els = this->get_total_elements();
-  if(this->data && src.data) std::copy(src.data, src.data + tot_els, this->data);
-
+  if(this->dims){
+    size_t tot_els = this->get_total_elements();
+    if(this->data && src.data) std::copy(src.data, src.data + tot_els, this->data);
+  }
   return *this;
 
 }
@@ -199,17 +200,34 @@ void my_array::clone_empty(const my_array &src){
 *
 * This will be a valid empty array of size matching src.
 */
-  construct();
 
   if(!src.dims || src.n_dims==0) return;
   //Stop if src has no dims
 
-  //Delete any previous allocation
+  //Delete any previous memory allocations and reset sizes
   if(data) free(data);
   if(dims) free(dims);
+  construct();
 
   alloc_all(src.n_dims, src.dims);
   
+}
+
+bool my_array::copy_data(my_type * destination)const{
+/** \brief Copy the data into destination array
+*
+*Data is not lost, but a direct copy is made. Destination size will NOT be checked, the entirety of data is copied.
+*/
+  std::copy(this->data, this->data+this->get_total_elements(), destination);
+  return 0; //Add error checking??
+}
+
+void my_array::zero_data(){
+/** \brief Reset data to 0
+*
+*
+*/
+  memset(data, 0.0, this->get_total_elements()*sizeof(my_type));
 }
 
 /********Indexers, getters and setters ****/
@@ -251,9 +269,9 @@ long my_array::get_index(size_t n_dims, size_t * inds_in)const{
 }
 
 long my_array::get_index(size_t nx)const{
-/** \brief Get index for location
+/** \brief Get index of element at nx
 *
-*Takes care of all bounds checking and disposition in memory. Returns -1 if out of range of any sort, otherwise, suitable index. This function is called often so we make it as simple as possible and write one for each number of args.
+*Takes care of all bounds checking and disposition in memory. Returns -1 if out of range of any sort, otherwise, the index into backing data array. This function is called often so we make it as simple as possible and write one for each number of args.
 */
 /* A 2-d array 5x3 is
 |ooooo||ooooo||ooooo|

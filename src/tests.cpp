@@ -79,10 +79,10 @@ void tests::setup_tests(){
   add_test(test_obj);
   test_obj = new test_entity_spectrum();
   add_test(test_obj);
-/*  test_obj = new test_entity_levelone();
+  test_obj = new test_entity_levelone();
   add_test(test_obj);
   test_obj = new test_entity_d();
-  add_test(test_obj);*/
+  add_test(test_obj);
   test_obj = new test_entity_nonthermal();
   add_test(test_obj);
 
@@ -171,6 +171,12 @@ void tests::set_colour(char col){
 
   my_print(this->get_color_escape(col), mpi_info.rank, 0, true);
 }
+
+/**
+     * @class dummy_colour
+     * Available colour codes are RGB, CMYK and W(hite) plus * (bold) _ (underlined) ? (blink, irritating and not supported on some terminals) and $ (reverse foreground and background). A call with no arguments, or with 0 or '0' reset to default.
+*/
+
 
 inline std::string tests::get_color_escape(char col){
 /** \brief
@@ -269,7 +275,7 @@ bool tests::run_tests(){
   this->set_colour('*');
   if(total_errs > 0) this->set_colour('r');
   else this->set_colour('b');
-  this->report_info(mk_str(total_errs)+" failed tests", mpi_info.rank);
+  my_error_print(mk_str(total_errs)+" failed tests", mpi_info.rank);
   this->set_colour();
   return total_errs > 0;
 
@@ -531,6 +537,26 @@ int test_entity_data_array::basic_tests(){
     test_bed->report_info("Averager error", 1);
   }
   
+  //Test subtraction
+  //Difference identical arrays and compare to 0-array. Also tests zero_data function
+  data_array test_array2 = test_array, empty_array=test_array2;
+  empty_array.zero_data();
+  test_array2.subtract(test_array);
+  
+  if(compare_2d(test_array2, empty_array)){
+    err |= TEST_WRONG_RESULT;
+    test_bed->report_info("Subtractor error", 1);
+  }
+  //Inverse check, this should fail to match, else our subtraction is nullifying stuff
+  test_array2 = test_array;
+  test_array2.set_element(test_array2.get_dims(0)/2, (size_t)0, -23.0);
+  test_array2.subtract(test_array);
+  
+  if(!compare_2d(test_array2, empty_array)){
+    err |= TEST_WRONG_RESULT;
+    test_bed->report_info("Subtractor error", 1);
+  }
+  
   //Test apply with simple +1 and log of constant values
   std::function<calc_type(calc_type)> plus1_function = [](calc_type el) -> calc_type { return el+1.0; } ;
 
@@ -763,7 +789,7 @@ int test_entity_get_and_fft::one_d(){
   test_rdr->read_data(test_dat, tim_in, space_in);
 
   {
-    bool tmp_err = test_dat.fft_me(test_dat_fft);
+    bool tmp_err = fft_array(test_dat,test_dat_fft);
     if(tmp_err) err|=TEST_ASSERT_FAIL;
     if(test_dat_fft.check_ids(test_dat)) err |= TEST_WRONG_RESULT;
     if(err == TEST_PASSED) test_bed->report_info("1D read and FFT reports no error", 1);
@@ -800,7 +826,7 @@ int test_entity_get_and_fft::one_d(){
 
     test_dat.resize(0, dims[0]-1, true);
     test_dat_fft.resize(0, dims[0]-1, true);
-    bool tmp_err = test_dat.fft_me(test_dat_fft);
+    bool tmp_err = fft_array(test_dat,test_dat_fft);
 
     if(tmp_err) err|=TEST_ASSERT_FAIL;
     if(test_dat_fft.check_ids(test_dat)) err |= TEST_WRONG_RESULT;
@@ -877,7 +903,7 @@ int test_entity_get_and_fft::two_d(){
   
   test_rdr->read_data(test_dat, tim_in, space_in);
 
-  bool tmp_err = test_dat.fft_me(test_dat_fft);
+  bool tmp_err = fft_array(test_dat,test_dat_fft);
   if(tmp_err) err|=TEST_ASSERT_FAIL;
   if(test_dat_fft.check_ids(test_dat)) err |= TEST_WRONG_RESULT;
   if(err == TEST_PASSED) test_bed->report_info("2D read and FFT reports no error", 1);
@@ -2064,7 +2090,7 @@ int test_entity_levelone::basic_tests(){
   }
   dat.B_ref = get_ref_Bx(file_prefix, space_in, 1);
   //Use first file. 0th accumulator is perhaps broken
-  err2 = dat.fft_me(dat_fft);
+  err2 = fft_array(dat,dat_fft);
 
   test_bed->report_info("FFT returned err_state " + mk_str(err2));
 
@@ -2153,7 +2179,7 @@ int test_entity_levelone::twod_tests(){
     return TEST_FATAL_ERR;
   }
   dat.B_ref = -1;
-  err2 = dat.fft_me(dat_fft);
+  err2 = fft_array(dat,dat_fft);
 
   test_bed->report_info("FFT returned err_state " + mk_str(err2));
 
@@ -2239,7 +2265,7 @@ int test_entity_levelone::twod_space_tests(){
     return TEST_FATAL_ERR;
   }
 
-  err2 = dat.fft_me(dat_fft);
+  err2 = fft_array(dat,dat_fft);
 
   dat_fft = dat_fft.total(2, 0.01f*my_const.omega_ce, 1.5f*my_const.omega_ce);
 

@@ -155,7 +155,7 @@ int main(int argc, char *argv[]){
         return 0;
       }
 
-      err = dat.fft_me(dat_fft);
+      err = fft_array(dat, dat_fft);
       
       if(mpi_info.rank ==0) MPI_Reduce(MPI_IN_PLACE, &err, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
       else MPI_Reduce(&err, NULL, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);

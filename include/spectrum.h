@@ -17,81 +17,115 @@
 
 class plasma;
 class controller;
+#ifdef RUN_TESTS_AND_EXIT
+#include "tests.h"
+#endif
 
 /** \brief A spectrum in omega and angle
 *
-*Holds data on the omega and angle distributions. The latter can depend on omega! Can be created/destroyed only by controllers. IMPORTANT: because we are working with FFT data, we assume the angle/frequency axis either covers some small cutout in +ve domain, or is symmetrical in positive and negative values. A few of the specific routines here use this to simplify things. The sign of omega is simply copied from the sign of k. The "angle" axis is stored as tan(theta) for theta the wave normal angle. Access to elements should use the wrappers at the bottom of the file as internal layout may change
+*Holds data on the omega and angle distributions. The latter can depend on omega! Can be created/destroyed only by controllers, so has not public constructor/destructors. IMPORTANT: because we are working with FFT data, we assume the angle/frequency axis either covers some small cutout in +ve domain, or is symmetrical in positive and negative values. A few of the specific routines here use this to simplify things. The sign of omega is simply copied from the sign of k. The "angle" axis is stored as tan(theta) for theta the wave normal angle. Access to elements should use the wrappers at the bottom of the file as internal layout may change
   \author Heather Ratcliffe \date 24/09/2015
 */
 class spectrum{
-  friend bool controller::add_spectrum(int nx, int n_ang, bool separable);
-  friend bool controller::add_spectrum(std::string file);
-  friend controller::~controller();
-
+  friend class controller;
   controller * my_controller;/**< Links this to a plasma object*/
-  void construct();
-  spectrum();
-  spectrum(int nx, int n_ang, bool separable);/**< Private because only controllers can create/destroy*/
-  spectrum & operator=(const spectrum& src);/**<For setting one spectrum equal another*/
-  spectrum(const spectrum &src);/**<For copying a spectrum*/
-  spectrum(spectrum && src) = default;
+
+/******** The data ****/
+  data_array g_angle_array;/**< Angular component*/
+  data_array B_omega_array;/**< Magnitude component*/
+
+/********Tags and info ****/
+  my_type max_power;/**<Value of maximum in spectral power*/
+  bool angle_is_function;/**< Whether we have g(omega, x) (false) or just g(x) (true) */
+  int function_type;/**< Type code for angular function. See support.h */
+  size_t smooth;/**<Smoothing applied to B_omega, if any*/
   my_type normB;/**< Norm of B(w)*/
-  my_type* normg;/**< Norms of g_w(x) for each w*/
-  bool normaliseB();/**< Fills normB*/
-  bool normaliseg(my_type omega);/**< Fills normg for omega*/
+  my_type * normg;/**< Norms of g_w(x) for each w*/
+
+/********Basic setup and allocation functions ****/
+  void construct();
+  void init();
+  spectrum();
+  spectrum(int nx, int n_ang, bool separable);
+  spectrum(std::string filename);
+  ~spectrum();
+
+/********Technical stuff making my_array a proper "object" ****/
+  spectrum & operator=(const spectrum& src);
+  spectrum(const spectrum &src);
+  spectrum(spectrum && src) = default;
+  bool operator==(const spectrum &rhs)const;
+  bool operator!=(const spectrum &rhs)const{return !(*this == rhs);}
+
+/********Setup helper functions ****/
   void make_angle_axis();
   bool make_angle_distrib();
+
+/******** Access helper functions ****/
   int where_omega(my_type value);
-  std::vector<int> all_where(my_type * ax_ptr, int len, my_type target, std::function<bool(my_type,my_type)> func = std::greater<my_type>());
 
-  my_type max_power;/**<Value of maximum in spectral power*/
-  bool angle_is_function;/**< Says we impose g(x) rather than have one g for each w*/
-  int function_type;/**< Type code for angular function. See support.h */
-  size_t smooth;
+/********Spectrum operation helpers ****/
+  bool normaliseB();
+  bool normaliseg(my_type omega);
 
-  data_array g_angle_array;
-  data_array B_omega_array;
+/********Access wrappers ****/
+/** \ingroup spectAcc *@{ */
+  my_type * get_omega_axis(size_t &len){return B_omega_array.get_axis(0, len);}
+  my_type * get_angle_axis(size_t &len){return g_angle_array.get_axis(1, len);}
+/** @} */
 
 public:
 
-  spectrum(std::string filename);
-  ~spectrum();/**< Reloading a spectrum can be done by anyone. Creating a new is restricted*/
-
   char block_id[ID_SIZE]; /**< The field name id from SDF file*/
-
   my_type time[2];/**< Time range over which data are taken*/
   size_t space[2];/**< Space range over which data are taken*/
   int wave_id; /**< ID for which wave mode cutout we're going for. See support.h*/
-  void set_ids(float time1, float time2, int space1, int space2, int wave_id, char block_id[10], int function_type=FUNCTION_DELTA);
-  void init();
-  void smooth_B(int n_pts);
-  bool generate_spectrum(data_array& parent, int om_fuzz=10, int angle_type=FUNCTION_DELTA, data_array * mask=nullptr);
-  bool truncate_om(my_type om_min, my_type om_max);
-  bool truncate_x(my_type x_min, my_type x_max);
 
+/********Setup helper functions ****/
+  inline bool is_good()const{return (B_omega_array.is_good() && g_angle_array.is_good() && normg);}
+#ifdef RUN_TESTS_AND_EXIT
+  void make_test_spectrum(int angle_type=FUNCTION_DELTA, bool two_sided=false, my_type om_ce=17000.0);
+#endif
+  bool generate_spectrum(data_array& parent, int om_fuzz=10, int angle_type=FUNCTION_DELTA, data_array * mask=nullptr);
+
+  void set_ids(float time1, float time2, int space1, int space2, int wave_id, char block_id[10], int function_type=FUNCTION_DELTA);
+  void copy_ids(const data_array & src);
+  bool check_ids(const data_array & src)const;
+  void copy_tags(const spectrum & src);
+  bool check_tags(const spectrum & src)const;
+
+/******** Access helper functions ****/
   my_type get_omega(my_type k, int wave_type, bool deriv=0,my_type theta=0.0);
   my_type get_k(my_type omega, int wave_type, bool deriv =0,my_type theta=0.0);
 
-  
+/********Spectrum operation helpers ****/
+  void smooth_B(int n_pts);
+  bool truncate_om(my_type om_min, my_type om_max);
+  bool truncate_x(my_type x_min, my_type x_max);
+  calc_type check_upper();
+  calc_type get_peak_omega();
+
+/********File IO ****/
   bool write_to_file(std::fstream &file);
   bool read_from_file(std::fstream &file);
   
-  void make_test_spectrum(int angle_type=FUNCTION_DELTA, bool two_sided=false, my_type om_ce=17000.0);
-
+/********Main spectral calculations ****/
   calc_type get_G1(calc_type omega);
   calc_type get_G2(calc_type omega, calc_type x);
-  calc_type check_upper();
-  calc_type get_peak_omega();
   
-  void copy_ids(data_array & src);
-  bool check_ids( data_array & src);
-  inline bool is_good(){return (B_omega_array.is_good() && g_angle_array.is_good() && normg);}
+/********Data release (for testing) ****/
+  data_array  copy_out_B();
+  data_array  copy_out_g();
   
-  
-  //The following are all wrappers around the getter/setters for the g and B arrays. USE THEM!
+/********Access wrappers ****/
+/** \defgroup spectAcc Spectrum access wrappers
+*Spectrum does not guarantee the internal representation of the B and g parts, so these should be used to get/set the data and axes for B and g parts
+*@{ */
+
   inline my_type get_B_element(size_t n_om)const{return B_omega_array.get_element(n_om);}
   inline my_type get_g_element(size_t n_ang)const{return g_angle_array.get_element((size_t) 0, n_ang);}
   inline my_type get_g_element(size_t n_om, size_t n_ang)const{return g_angle_array.get_element(n_om, n_ang);}
+  
   inline void set_B_element(size_t n_om, my_type val){B_omega_array.set_element(n_om, val);}
   inline void set_g_element(size_t n_ang, my_type val){g_angle_array.set_element(0, n_ang, val);}
   inline void set_g_element(size_t n_om, size_t n_ang, my_type val){g_angle_array.set_element(n_om, n_ang, val);}
@@ -106,9 +140,12 @@ public:
   inline size_t get_g_dims(size_t i)const{return this->g_angle_array.get_dims(i);}
   inline size_t get_B_dims()const{return this->B_omega_array.get_dims();}
   inline size_t get_B_dims(size_t i)const{return this->B_omega_array.get_dims(i);}
-  
-  data_array  copy_out_B();
-  data_array  copy_out_g();
+/** @} */
+
+#ifdef RUN_TESTS_AND_EXIT
+  //Allow deep testing
+  friend class test_entity_spectrum;
+#endif
   
 };
 

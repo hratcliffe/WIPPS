@@ -48,7 +48,7 @@ calc_type * make_momentum_axis(int n_momenta, calc_type v_max_over_c);
 calc_type get_growth_rate(plasma * my_plas, non_thermal * my_elec, int n_momenta, calc_type * p_axis, calc_type omega_in);
 g_args g_command_line(int argc, char * argv[]);
 
-bool write_growth_closer(std::string in_file, non_thermal * my_elec, size_t n_momenta, calc_type min_v, calc_type max_v, std::fstream &file);
+bool write_growth_closer(std::string in_file, size_t n_momenta, calc_type min_v, calc_type max_v, std::fstream &file);
 
 std::vector<std::string> read_filelist(std::string infile);
 
@@ -211,7 +211,7 @@ int main(int argc, char *argv[]){
   err |= analytic_data.write_to_file(file, false);
   
   //Special finish for the file  
-  err |=write_growth_closer(cmd_line_args.file_prefix, my_elec, n_momenta, min_v, max_v, file);
+  err |=write_growth_closer(cmd_line_args.file_prefix, n_momenta, min_v, max_v, file);
 
   file.close();
   if(!err) my_print("Written in "+filename);
@@ -378,13 +378,13 @@ g_args g_command_line(int argc, char * argv[]){
 
 }
 
-bool write_growth_closer(std::string in_file, non_thermal * my_elec, size_t n_momenta, calc_type min_v, calc_type max_v, std::fstream &file){
+bool write_growth_closer(std::string in_file, size_t n_momenta, calc_type min_v, calc_type max_v, std::fstream &file){
   /** Write the general parameters as a file footer with offsets*/
   
   
   size_t ftr_start = file.tellg();
   bool write_err =false;
-  size_t next_location = ftr_start + (in_file.size()+1)*sizeof(char)+sizeof(size_t)*3 +sizeof(calc_type)*6;
+  size_t next_location = ftr_start + (in_file.size()+1)*sizeof(char)+sizeof(size_t)*3 +sizeof(calc_type)*2;
   //Nonthermal dumps 4 calc types
 
   file.write((char*) & next_location, sizeof(size_t));
@@ -392,8 +392,6 @@ bool write_growth_closer(std::string in_file, non_thermal * my_elec, size_t n_mo
   file.write((char*)& n_momenta, sizeof(size_t));
   file.write((char*) &min_v, sizeof(calc_type));
   file.write((char*) &max_v, sizeof(calc_type));
-  
-  my_elec->dump(file);
   
   size_t len =in_file.size()+1;
   file.write((char*)&len, sizeof(size_t));

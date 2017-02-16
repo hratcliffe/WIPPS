@@ -50,6 +50,8 @@ public:
   my_array(const my_array &src);
   my_array(my_array && src);
   my_array & operator=(const my_array& src);
+  bool operator==(const my_array &rhs)const;
+  bool operator!=(const my_array &rhs)const{return !(*this == rhs);}
 
 /********Helpers for working with my_array ****/
   my_type * disown_data();

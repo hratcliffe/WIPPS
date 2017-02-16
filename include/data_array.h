@@ -31,7 +31,7 @@ protected:
   void alloc_ax(const size_t els);
 
 /********Indexers, getters and setters ****/
-  size_t get_total_axis_elements();
+  size_t get_total_axis_elements()const;
   long get_axis_index(size_t dim, size_t pt)const;
   std::vector<size_t> get_bounds(std::vector<my_type> limits);
 
@@ -57,12 +57,14 @@ public:
   data_array(const data_array &src);
   data_array(data_array && src);
   data_array & operator=(const data_array& src);
+  bool operator==(const data_array &rhs)const;
+  bool operator!=(const data_array &rhs)const{return !(*this == rhs);}
 
 /********Helpers for working with data_array ****/
   my_type * disown_axes();
   void clone_empty(const data_array &src);
   void copy_ids( const data_array & src);
-  bool check_ids(const data_array & src);
+  bool check_ids(const data_array & src)const;
 
 /********Indexers, getters and setters ****/
   my_type get_axis_element(size_t dim, size_t pt)const;

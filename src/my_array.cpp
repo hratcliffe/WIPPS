@@ -125,16 +125,16 @@ my_array::~my_array(){
 my_array & my_array::operator=(const my_array& src){
 /** \brief Copy assignment
 *
-*Sets this equal to a (deep) copy of source
+*Sets this equal to a (deep) copy of source \todo Behaviour if src is bad?
 */
 
+  //Trap self-assigning or bad copy before destructing
+  if(&src == this || !src.is_good()) return *this;
+  
   if(this->data) free(data);
   if(this->dims) free(dims);
   //Clean up in case this was already allocated
   my_array::construct();
-
-  //Don't copy if src is not well-formed
-  if(!src.is_good()) return *this;
   
   //Construct this and copy all necessary
   alloc_all(src.n_dims, src.dims);
@@ -178,6 +178,16 @@ my_array::my_array(const my_array &src){
   size_t tot_els = this->get_total_elements();
   if(this->data && src.is_good()) std::copy(src.data, src.data + tot_els, this->data);
 
+}
+
+bool my_array::operator==(const my_array &rhs)const{
+
+  if(this->get_dims() != rhs.get_dims()) return false;
+  for(size_t i=0; i< this->get_dims(); i++) if(this->get_dims(i) != rhs.get_dims(i)) return false;
+  //Check each element in 1-D array
+  for(size_t i=0; i< this->get_total_elements(); i++) if(*(this->data + i) != *(rhs.data + i)) return false;
+
+  return true;
 }
 
 /********Helpers for working with my_array ****/

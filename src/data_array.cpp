@@ -144,7 +144,8 @@ data_array & data_array::operator=(const data_array& src){
 *
 *Set this array equal to src by (deep) copying src including data
 */
-
+  //Trap self-assigning or bad copy before destructing
+  if(&src == this || !src.is_good()) return *this;
   //Clear any existing axes and reset sizes etc
   if(this->axes) free(axes);
   this->construct();
@@ -188,6 +189,17 @@ data_array::data_array(const data_array &src) : my_array(src){
   copy_ids(src);
 }
 
+bool data_array::operator==(const data_array &rhs)const{
+
+  if(!my_array::operator==(rhs)) return false;
+
+  //Check axes elementwise
+  for(size_t i=0; i< this->get_total_axis_elements(); i++) if(*(this->axes + i) != *(rhs.axes + i)) return false;
+  if(this->check_ids(rhs)) return false;
+
+  return true;
+}
+
 /********Helpers for working with data_array ****/
 
 my_type * data_array::disown_axes(){
@@ -223,11 +235,11 @@ void data_array::copy_ids( const data_array &src){
   this->B_ref = src.B_ref;
 }
 
-bool data_array::check_ids( const data_array & src){
+bool data_array::check_ids( const data_array & src)const{
 /** Checks ID fields match src */
 
-  bool err=false;
-  if(strcmp(this->block_id, src.block_id) != 0) err =true;
+  bool err = false;
+  if(strcmp(this->block_id, src.block_id) != 0) err = true;
   for(size_t i=0; i< 2; i++) if(src.time[i] != this->time[i]) err=true;
   for(size_t i=0; i < 2; ++i) if(this->space[i] != src.space[i]) err=true;
   if(this->B_ref != src.B_ref) err = true;
@@ -236,7 +248,7 @@ bool data_array::check_ids( const data_array & src){
 
 /********Indexers, getters and setters ****/
 
-size_t data_array::get_total_axis_elements(){
+size_t data_array::get_total_axis_elements()const{
 /** \brief Return total axes length
 *
 *Sums number of total elements in all axes

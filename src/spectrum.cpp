@@ -301,7 +301,7 @@ bool spectrum::make_angle_distrib(){
   
     for(size_t i=0; i<len; ++i) set_g_element(i,0.0);
     val = 1.0/(get_ang_axis_element(1)-get_ang_axis_element(0));
-    int zero = where(g_angle_array.get_axis(1, len), len, 0.0);
+    int zero = where(get_angle_axis(len), len, 0.0);
     //Set_element checks bnds automagically
     set_g_element(zero, val);
 
@@ -347,8 +347,7 @@ void spectrum::make_test_spectrum(int angle_type, bool two_sided, my_type om_ce)
   
   //Setup axes and required angular distrib
   size_t len0;
-  my_type * ax_ptr;
-  ax_ptr = B_omega_array.get_axis(0, len0);
+  my_type * ax_ptr = get_omega_axis(len0);
   //res to cover range from either 0 or -max to max in len0 steps
   my_type res = om_ce*(1.0+(my_type)two_sided)/(my_type)len0;
   //Generate axes for one or two-sided
@@ -723,7 +722,7 @@ bool spectrum::normaliseg(my_type omega){
   
   size_t lena = get_B_dims(0);
   if(!angle_is_function){
-    om_ind = where(B_omega_array.get_axis(0, lena), lena, omega);
+    om_ind = where(get_omega_axis(lena), lena, omega);
   }
   if(om_ind<0) return 1;
   //break if Omega is out of range
@@ -808,7 +807,7 @@ bool spectrum::truncate_x(my_type x_min, my_type x_max){
   size_t len = get_g_dims(1), om_len = get_g_dims(0);
 
   if(x_min > ANG_MIN){
-    index = where(g_angle_array.get_axis(1, len), len, x_min);
+    index = where(get_angle_axis(len), len, x_min);
     if(index != -1){
       for(size_t i=0; i< (size_t)index; i++){
         for(size_t j=0; j< om_len; j++){
@@ -819,7 +818,7 @@ bool spectrum::truncate_x(my_type x_min, my_type x_max){
   
   }
   if(x_max < ANG_MAX){
-    index = where(g_angle_array.get_axis(0, len), len, x_max);
+    index = where(get_angle_axis(len), len, x_max);
     if(index != -1){
       for(size_t i=index; i< len; i++){
         for(size_t j=0; j< om_len; j++){
@@ -901,7 +900,7 @@ bool spectrum::write_to_file(std::fstream &file){
 * Spectra are written by writing out the B array, the g array, and then writing a single closing footer containing the id values again. \todo Do these match expectation? Should write time, space etc too?
 */
 
-  if(!file.is_open() || (!this->B_omega_array.is_good())|| (!this->g_angle_array.is_good())) return 1;
+  if(!file.is_open() || !this->is_good()) return 1;
 
   //Write B and g without closing files.
   bool err, write_err=0;
@@ -993,7 +992,7 @@ calc_type spectrum::get_G1(calc_type omega){
   size_t len, offset;
   my_type data_bit[2];
   my_type ax_val;
-  my_type * axis = B_omega_array.get_axis(0, len);
+  my_type * axis = get_omega_axis(len);
 
   //If we have B(k) we need to change to B(w)
   my_type change_of_vars = 1.0;
@@ -1005,7 +1004,7 @@ calc_type spectrum::get_G1(calc_type omega){
   if(offset > 0 && offset < len){
     data_bit[0] = get_B_element(offset-1);
     data_bit[1] = get_B_element(offset);
-    tmpB2 = interpolate(B_omega_array.get_axis(0, len) + offset-1, data_bit, ax_val, 2);
+    tmpB2 = interpolate(get_omega_axis(len) + offset-1, data_bit, ax_val, 2);
     //tmpB2 = data_bit[0];
   }else if(offset == 0){
     //we're right at end, can't meaningfully interpolate, use raw
@@ -1038,7 +1037,7 @@ calc_type spectrum::get_G2(calc_type omega, calc_type x){
   len = get_B_dims(0);
 
   if(!angle_is_function){
-    om_ind = where(B_omega_array.get_axis(0, len), len, omega);
+    om_ind = where(get_omega_axis(len), len, omega);
   }
   else om_ind = 0;
   
@@ -1048,7 +1047,7 @@ calc_type spectrum::get_G2(calc_type omega, calc_type x){
  // std::cout<< normg[0]<<" "<<std::endl;
   
   //Bump up to miss B row
-  my_type * axis = g_angle_array.get_axis(1, len);
+  my_type * axis = get_angle_axis(len);
   offset = where(axis, len, x);
   
   //Interpolate if possible, else use the end

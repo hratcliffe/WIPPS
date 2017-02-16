@@ -14,44 +14,41 @@
 extern deck_constants my_const;
 extern const mpi_info_struc mpi_info;
 
+/********Basic setup and allocation functions ****/
 plasma::plasma(std::string file_prefix, my_type Bx_local){
 /** \brief Set up plasma
 *
-*Sets up components from file_prefix+plasma.conf. If a Bx_local is given, store and calc local cyclotron frequency from this. Else use the cyclotron frequency from deck constants.
+*Sets up components from <file_prefix>plasma.conf. If a Bx_local is given, store and calc local cyclotron frequency from this. Else use the cyclotron frequency from deck constants. \todo What is is_setup actually doing?
 */
-  configure_from_file(file_prefix);//Sets up plasma components
+
+  //Set up plasma components
+  configure_from_file(file_prefix);
   
+  //Set B0 and om_ce values
   if(Bx_local == -1){
-  //Use reference B0
+    //Use reference B0
     B0 = my_const.omega_ce * me/std::abs(q0);
   }else{
     B0 = Bx_local;
   }
-  
   this->om_ce_ref = my_const.omega_ce;
   this->om_ce_local = std::abs(q0) * B0 / me;
 
   is_setup = true;
 }
 
-plasma::~plasma(){
-
-
-}
-
 bool plasma::configure_from_file(std::string file_prefix){
 /** \brief Setup plasma from file
 *
-*Reads file_prefix/plasma.conf and parses component mass, charge and density
+*Reads <file_prefix>plasma.conf and parses component mass, charge and density
 *Sample block looks like
 * electron:
 *mass = 1.0*me
 *charge = -1.0
 *dens = 1.0
-
+*Masses can be given relative to me or mp by ending the line with *mX. Charges are assumed relative to q0 and densities to the reference_density given by omega_pe in deck constants
 On error we continue using defaults set below
 */
-
 
   calc_type ref_dens = my_const.omega_pe * my_const.omega_pe * eps0 * me / q0/q0;
 
@@ -74,15 +71,15 @@ On error we continue using defaults set below
 
 //End default values -----------------------------------------
 
-
   std::ifstream infile;
   infile.open(file_prefix+"plasma.conf");
   std::string line, name, val, head, tail;
   int block_num = -1;
   bool parse_err;
   size_t pos;
-  //very naive parsing. We spin through until we find a ":" and read the next lines until we find another
-  //if we don't find n_comps such blocks, we report and continue
+
+  //Very naive parsing. We spin through until we find a ":" and read the next lines until we find another
+  //If we don't find n_comps such blocks, we report and continue
   
   while(getline(infile, line)){
     
@@ -90,16 +87,16 @@ On error we continue using defaults set below
       block_num ++;
       if(block_num >= ncomps) break;
       continue;
-      // is next block, skip this header line
+      //Found next block, so skip this header line
     }
     if(block_num >= 0){
-      //this line is a valid input one, probably!
+      //This line might be a valid input one
       parse_err = parse_name_val(line, name, val);
       if(!parse_err){
         if(name == "mass" && val.find('*') == std::string::npos){
           pmass[block_num] = atof(val.c_str());
         }else if(name == "mass"){
-          //find which mass is relative to
+          //Find which mass is relative to
           pos = val.find('*');
           tail = val.substr(pos+1, val.size());
           head = val.substr(0, pos);
@@ -129,18 +126,45 @@ On error we continue using defaults set below
 
 }
 
-void plasma::set_B0(my_type B0){
+/********Get/set functions ****/
+calc_type plasma::get_omega_ref(std::string code)const{
+/** \brief Reference plasma and cyclotron frequencies
+*
+*Takes a two char code string and returns the specified frequency at local position. ce is actual Cyclotron freq. c0 is a reference value
+*/
 
+#ifdef DEBUG_ALL
+  std::string codes = "c0 pe ce";
+  //Argument preconditions. Check only in debug mode for speed
+  if(codes.find(code) == std::string::npos) my_error_print("!!!!!!!!Error in get_omega_ref, unknown code (code="+code+")!!!!!!", 0);
+#endif
+
+  if(code == "c0") return this->om_ce_ref;
+  if(code == "pe") return my_const.omega_pe;
+  if(code == "ce") return this->om_ce_local;
+  else return 0.0;
+
+}
+
+void plasma::set_B0(my_type B0){
+/** \brief Set B0
+*
+*Sets the local reference B field value and thus om_ce_local value.
+*/
   this->B0 = B0;
   this->om_ce_local = std::abs(q0) * B0 / me;
 }
 
+/********Dispersion solvers ****/
 mu plasma::get_root(calc_type th, calc_type w, calc_type psi, bool Righthand){
-/** Duplicated from mufunctions by CEJ Watt
+/** \brief Solve plasma dispersion 
+*
+*Solves Appleton-Hartree plasma dispersion and returns struct containing mu, its derivatives and error code. See \ref str
+*Duplicated from mufunctions by CEJ Watt
 *
 *@param th Polar coordinate, or latitude @param w Wave frequency @param psi Wave pitch angle k to B0 \todo Check constant types OK \todo Better root selection
 *
-*On notation: within this routine and plasma::get_phi we use notation as from mufunctions3.f90. In the return values as defined in support.h we match with Lyons and Albert. Thus in my_mu, we have lat, r, theta, omega for polar coordinate, r, wave normal angle and wave frequency
+*On notation: within this routine and plasma::get_phi_mu_om() we use notation as from mufunctions3.f90. In the return values as defined in support.h we match with Lyons and Albert. Thus in my_mu, we have lat, r, theta, omega for polar coordinate, r, wave normal angle and wave frequency
 */
   mu mu_ret;
   calc_type dndr[ncomps], dndth[ncomps];
@@ -278,7 +302,7 @@ mu plasma::get_root(calc_type th, calc_type w, calc_type psi, bool Righthand){
     dmudw = 0.0;
     
     mu_ret.dmudlat = mu_ret.dmudtheta*dpsidth;
-    //even if this one can be folded into above, keep it out as not vectorisable
+    //Even if this one can be folded into above, keep it out as not vectorisable
     for(int i=0; i<ncomps; i++){
        mu_ret.dmudr = mu_ret.dmudr + dmudX[i]*dXdr[i] + dmudY[i]*dYdr[i];
        mu_ret.dmudlat = mu_ret.dmudlat + dmudX[i]*dXdth[i] + dmudY[i]*dYdth[i];
@@ -292,19 +316,16 @@ mu plasma::get_root(calc_type th, calc_type w, calc_type psi, bool Righthand){
   
   }
 
-//  this->my_mu = mu_ret;
-//  mu_set = true;
-//store away mu for furture use, along with key params used. 
-/*  last_mu = mu_ret;
-  last_th = th;
-  last_w = w;
-  last_psi = psi;*/
-  /**< \todo is storing these helpful?*/
   return mu_ret;
 }
 
 mu_dmudom plasma::get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int n, calc_type omega_n, bool Righthand)const{
-/**Get's the Phi defined by Lyons 1974, and mu, dmu/dom i.e. the set needed for D.
+/** \brief Solve plasma dispersion and extensions
+*
+*Solves Appleton-Hartree plasma dispersion and returns struct containing mu, its derivatives and error code. Also returns the Phi defined by Lyons 1974. I.e. the set of values needed to calculate D See \ref str
+*Duplicated from mufunctions by CEJ Watt
+*
+*On notation: within this routine and plasma::get_root we use notation as from mufunctions3.f90. In the return values as defined in support.h we match with Lyons and Albert. Thus in my_mu, we have lat, r, theta, omega for polar coordinate, r, wave normal angle and wave frequency
 *Also needs particle pitch angle alpha \todo Fix relativistic gamma... WATCH for Clares version which uses a different alpha entirely... \todo Why do we pass omega_n??
 
  */
@@ -488,9 +509,12 @@ mu_dmudom plasma::get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int
 }
 
 mu_dmudom plasma::get_high_dens_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int n, calc_type omega_n, bool Righthand)const{
-  calc_type term1, term2, term3, denom, tmp_bes, tmp_besp, tmp_besm, bessel_arg, D_mu2S, gamma, w2, w3;
-/**Gets the Phi defined by Lyons 1974, and mu, dmu/dom i.e. the set needed for D, using high-density approx to the dispersion relation to match resonant frequency cubic solver. We change as little as possible from get_phi_mu_omega, simply reduce the expressions for the original Stix params
+  /** \brief Solve plasma dispersion and extensions
+*
+*Duplicates plasma::get_phi_mu_omega() but using reduced form of Stix parameters corresponding to a high-density assumption. This is mainly for comparison with the exact solution to validate this assumption.
 *Also needs particle pitch angle alpha \todo Fix relativistic gamma... \todo Multispecies???? */
+
+  calc_type term1, term2, term3, denom, tmp_bes, tmp_besp, tmp_besm, bessel_arg, D_mu2S, gamma, w2, w3;
 
   mu_dmudom my_mu;
 
@@ -670,11 +694,10 @@ mu_dmudom plasma::get_high_dens_phi_mu_om(calc_type w, calc_type psi, calc_type 
 }
 
 std::vector<calc_type> plasma::get_resonant_omega(calc_type x, calc_type v_par, calc_type n)const{
-/**Get resonant frequency for particular x (tan theta), v_parallel, n
+/** \brief Solve plasma dispersion and doppler resonance simultaneously
 *
-*Solve high density approx to get omega. for pure electron proton plasma....
-* Calls cubic_solve Note for slowly changing v_par, suggests Newtons method might be more efficient. Although much of this could be precomputed for given grids.
-Return empty vector if no valid solutions \todo Extend to general case?
+*Obtains solutions of the Doppler resonance condition omega - k_par v_par = -n Omega_ce and a high-density approximation to the Whistler mode dispersion relation simultaneously. Assumes pure electron-proton plasma and uses cubic_solve. If solutions are found, they're returned in vector, otherwise empty vector is returned. @param x Wave normal angle @param v_par Particle velocity to solve with @param n Resonance number.
+  \todo Extend to general case?
 */
 
 #ifdef DEBUG_ALL
@@ -683,13 +706,12 @@ Return empty vector if no valid solutions \todo Extend to general case?
 #endif
 
   std::vector<calc_type> ret_vec;
-//  ret_vec.resize(0);
-  calc_type wc = this->get_omega_ref("ce");
-  calc_type omega_pe_loc = this->get_omega_ref("pe");
-  calc_type om_ref_ce = my_const.omega_ce;
+  calc_type om_ce = this->get_omega_ref("ce");
+  calc_type om_pe_loc = this->get_omega_ref("pe");
+  calc_type om_ce_ref = this->get_omega_ref("c0");
 
   if(std::abs(v_par) < tiny_calc_type){
-    if( std::abs(n)-1.0 < tiny_calc_type && std::abs(n) == 1.0) ret_vec.push_back(wc*n);
+    if( std::abs(n)-1.0 < tiny_calc_type && std::abs(n) == 1.0) ret_vec.push_back(om_ce*n);
     return ret_vec;
   }
   else if(std::abs(n) < tiny_calc_type){
@@ -702,69 +724,52 @@ Return empty vector if no valid solutions \todo Extend to general case?
   
   }
 
+  //Equation to solve is cubic of the form
+  //a x^3 + b x^2 + c x + d = 0
+  //or equivalently
+  //x^3 + an x^2 + bn x + cn = 0
+
   calc_type a, b, c, d;
   calc_type an, bn, cn;
   calc_type cos_th = std::cos(std::atan(x));
   calc_type vel = v_par / v0;
-  calc_type vel_cos = std::pow(vel * cos_th, 2) ;
+  //For clarity
+  calc_type vel_cos = std::pow(vel * cos_th, 2);
 
-  calc_type gamma, gamma2;
-  gamma2 = 1.0/( 1.0 - std::pow(vel, 2));
-  gamma = std::sqrt(gamma2);
+  calc_type gamma, gamma_sq;
+  gamma_sq = 1.0/( 1.0 - std::pow(vel, 2));
+  gamma = std::sqrt(gamma_sq);
 
-
-  a = (vel_cos - 1.0) * gamma2;
-  b = (vel_cos*cos_th*gamma2 + 2.0*gamma*n - gamma2*cos_th)*wc/om_ref_ce;
-  c = ((2.0*gamma*n*cos_th - n*n)* std::pow(wc/om_ref_ce, 2) - std::pow(omega_pe_loc/om_ref_ce, 2)*vel_cos*gamma2);
-  d = -n*n*std::pow(wc/om_ref_ce, 3)*cos_th;
-  
-  //To maintain best precision we solve for omega/ reference omega_ce
-    
+  //Calculate coefficients
+  //To maintain best precision we solve for x = omega/omega_ce_ref so x ~ 1
+  a = (vel_cos - 1.0) * gamma_sq;
+  b = (vel_cos*cos_th*gamma_sq + 2.0*gamma*n - gamma_sq*cos_th)*om_ce/om_ce_ref;
+  c = ((2.0*gamma*n*cos_th - n*n)* std::pow(om_ce/om_ce_ref, 2) - std::pow(om_pe_loc/om_ce_ref, 2)*vel_cos*gamma_sq);
+  d = -n*n*std::pow(om_ce/om_ce_ref, 3)*cos_th;
   an = b/a;
   bn = c/a;
   cn = d/a;
   
   ret_vec = cubic_solve(an, bn, cn);
 
-  for(size_t i=0; i<ret_vec.size(); ++i) ret_vec[i] *= om_ref_ce;
-  //restore factor
+  //Restore om_ce_re factor and delete any entries > om_ce as these aren't whistler modes
+  for(size_t i=0; i<ret_vec.size(); ++i) ret_vec[i] *= om_ce_ref;
   for(size_t i=0; i<ret_vec.size(); ++i){
   /** \todo Rather than remove, don't ever add*/
-    if(std::abs(ret_vec[i]) > std::abs(wc)){
+    if(std::abs(ret_vec[i]) > std::abs(om_ce)){
       ret_vec.erase(ret_vec.begin() + i);
       --i;
     }
   }
-  //Discard any larger than omega_ce because they can't be whistlers
+
   return ret_vec;
-
-}
-
-calc_type plasma::get_omega_ref(std::string code)const{
-/** \brief Reference plasma and cyclotron frequencies
-*
-*Takes a two char code string and returns the specified frequency at local position. ce is actual Cyclotron freq. c0 is a reference value
-*/
-
-#ifdef DEBUG_ALL
-  std::string codes = "c0 pe ce";
-  //Argument preconditions. Check only in debug mode for speed
-  if(codes.find(code) == std::string::npos) my_error_print("!!!!!!!!Error in get_omega_ref, unknown code (code="+code+")!!!!!!", 0);
-#endif
-
-
-  if(code == "c0") return this->om_ce_ref;
-  if(code == "pe") return my_const.omega_pe;
-  if(code == "ce") return this->om_ce_local;
-  else return 0.0;
-
 
 }
 
 calc_type plasma::get_dispersion(my_type in, int wave_type, bool reverse, bool deriv, my_type theta)const{
 /** \brief Solve analytic dispersion (approx)
 *
-* By default returns omega for a given k (see reverse and deriv params param). Uses local reference cyclotron and plasma frequencies and works with UNNORMALISED quantitites. NB: parameters out of range will silently return 0. NB: For Whistler modes this is an approximation and intended to be perfectly reversible. @param k Wavenumber @param wave_type wave species (see support.h) @param reverse Return k for input omega @param deriv Whether to instead return anayltic v_g */
+* By default returns omega for a given k (see reverse and deriv params param). Uses local reference cyclotron and plasma frequencies and works with UNNORMALISED quantitites. NB: parameters out of range will silently return 0. NB: For Whistler modes this is an approximation and intended to be perfectly reversible. @param k Wavenumber @param wave_type wave species (see support.h) @param reverse Return k for input omega @param deriv Whether to instead return anayltic v_g  \todo Any other modes?*/
 
 #ifdef DEBUG_ALL
   //Argument preconditions. Check only in debug mode for speed
@@ -778,7 +783,7 @@ calc_type plasma::get_dispersion(my_type in, int wave_type, bool reverse, bool d
   calc_type om_ce_loc, om_pe_loc;
   calc_type cos_th;
   if(theta != 0.0){
-  //Expect theta=0 to be common case so shortcut then
+  //Expect theta=0 to be common case so shortcut it
   //Else we step by step get theta into 0-pi/2 range
     if(theta < 0) theta = -theta;
     if(theta > 2.0*pi) theta = theta - 2.0*pi*(int)(theta/(2.0*pi));
@@ -832,5 +837,4 @@ calc_type plasma::get_dispersion(my_type in, int wave_type, bool reverse, bool d
   return ret;
 
 }
-
 

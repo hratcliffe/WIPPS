@@ -33,10 +33,11 @@ private:
   int n_thetas; /**< Number of wave normal angles to consider */
   int n_n; /**< Max number of resonances to consider */
   controller * my_controller;/**< Owning controller which gives access to plasma and spectrum*/
-  friend bool controller::add_d(int nx, int n_angs);
+/*  friend bool controller::add_d(int nx, int n_angs);
   friend void controller::add_d_special(int nx, int n_angs);
   friend controller::~controller();
-  friend void controller::handle_d_mpi();
+  friend void controller::handle_d_mpi();*/
+  friend class controller;
   diffusion_coeff(int nx, int n_ang);
   virtual ~diffusion_coeff();
 

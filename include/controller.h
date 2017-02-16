@@ -48,7 +48,7 @@ public:
   bool add_spectrum(int nx, int n_ang,bool separable);
   bool add_d(int nx, int n_angs);
   void add_d_special(int nx, int n_angs);
-  
+  void delete_current_spectrum();
 /********Plasma, spectrum, D getters ****/
   spectrum * get_current_spectrum();
   diffusion_coeff * get_current_d();

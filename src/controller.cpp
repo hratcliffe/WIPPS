@@ -122,6 +122,14 @@ void controller::add_d_special(int nx, int n_angs){
   current_special_d = d_specials_list.size()-1;
 }
 
+void controller::delete_current_spectrum(){
+
+  if(spect_D_list[current_pair].first) delete spect_D_list[current_pair].first;
+  if(spect_D_list[current_pair].second) delete spect_D_list[current_pair].second;
+  spect_D_list.resize(spect_D_list.size() -1);
+
+}
+
 /********Plasma, spectrum, D getters ****/
 void controller::get_D_size(int dims[2]){
 /** \brief Get the dimensions of D

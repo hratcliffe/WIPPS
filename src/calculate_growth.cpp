@@ -21,6 +21,7 @@
 #include "my_array.h"
 #include "spectrum.h"
 #include "non_thermal.h"
+#include "controller.h"
 
 
 /** \defgroup utils Utility programs
@@ -82,8 +83,9 @@ int main(int argc, char *argv[]){
   if(!file.is_open()) return 1;
 
   //Setup other things we need
-  plasma * my_plas = new plasma(cmd_line_args.file_prefix);
-
+//  plasma * my_plas = new plasma(cmd_line_args.file_prefix);
+  controller * contr = new controller(cmd_line_args.file_prefix);
+  plasma my_plas = contr->get_plasma();
   data_array numeric_data, analytic_data;
 
   if(extra_args.real){
@@ -92,8 +94,9 @@ int main(int argc, char *argv[]){
     std::vector<std::string> filelist;
     filelist = read_filelist(cmd_line_args.file_prefix+extra_args.spect_file);
     if(filelist.size() >= 1){
-
-      spectrum * my_spect = new spectrum(cmd_line_args.file_prefix+ filelist[0]);
+      contr->add_spectrum(cmd_line_args.file_prefix+ filelist[0]);
+      spectrum * my_spect = contr->get_current_spectrum();
+      //new spectrum(cmd_line_args.file_prefix+ filelist[0]);
       if(my_spect->get_B_dims() < 1){
       //Wrap in quotes so we highlight stray trailing whitespace etc
         my_error_print("Invalid or missing spectrum file '"+cmd_line_args.file_prefix+filelist[0]+"'");
@@ -109,8 +112,12 @@ int main(int argc, char *argv[]){
       for(size_t i=0; i<filelist.size(); i++){
         if(i > 0) my_print("Differencing "+filelist[i-1]+" and "+filelist[i]);
         else my_print("Differencing noise estimate and "+filelist[i]);
-        delete my_spect;
-        my_spect = new spectrum(cmd_line_args.file_prefix+filelist[i]);
+        contr->delete_current_spectrum();
+
+        //delete my_spect;
+        contr->add_spectrum(cmd_line_args.file_prefix+ filelist[i]);
+
+//        my_spect = new spectrum(cmd_line_args.file_prefix+filelist[i]);
         if(my_spect->get_B_dims() < 1){
           my_error_print("Invalid or missing spectrum file '"+cmd_line_args.file_prefix+filelist[i]+"'");
           continue;
@@ -146,7 +153,8 @@ int main(int argc, char *argv[]){
 
         F_prev = F_curr;
       }
-      delete my_spect;
+//      delete my_spect;
+        contr->delete_current_spectrum();
     }else{
       my_error_print("Empty or missing spectrum file '"+cmd_line_args.file_prefix+extra_args.spect_file+"'", mpi_info.rank);
     }
@@ -174,12 +182,12 @@ int main(int argc, char *argv[]){
   //Setup an array with desired omega axis
   if(!extra_args.real){
     //Log axis over 3 orders of magnitude
-    calc_type d_om = std::abs(my_plas->get_omega_ref("ce")) / (float) (n_trials-1);
+    calc_type d_om = std::abs(my_plas.get_omega_ref("ce")) / (float) (n_trials-1);
     omega = 0.0;
     int om_orders = 3;
     calc_type d_i = (calc_type) (n_trials -1)/(calc_type) om_orders;
     //Orders of magnitude to cover
-    d_om = std::abs(my_plas->get_omega_ref("ce"))/ std::pow(10, om_orders);
+    d_om = std::abs(my_plas.get_omega_ref("ce"))/ std::pow(10, om_orders);
     analytic_data = data_array(n_trials);
     for(int i=0; i<n_trials; ++i){
       omega = std::pow(10, (calc_type) i /d_i)*d_om;
@@ -196,7 +204,7 @@ int main(int argc, char *argv[]){
 
   for(size_t i=0; i<analytic_data.get_dims(0); ++i){
     omega = analytic_data.get_axis_element(0, i);
-    growth_rate = get_growth_rate(my_plas, my_elec, n_momenta, p_axis, omega);
+    growth_rate = get_growth_rate(&my_plas, my_elec, n_momenta, p_axis, omega);
     analytic_data.set_element(i, growth_rate);
   }
 

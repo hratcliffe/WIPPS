@@ -190,6 +190,10 @@ data_array::data_array(const data_array &src) : my_array(src){
 }
 
 bool data_array::operator==(const data_array &rhs)const{
+/** \brief Equality operator
+*
+* Check this is equal to rhs. Since copies are always deep, we check values, not data pointers
+*/
 
   if(!my_array::operator==(rhs)) return false;
 

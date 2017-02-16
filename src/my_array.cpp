@@ -181,7 +181,10 @@ my_array::my_array(const my_array &src){
 }
 
 bool my_array::operator==(const my_array &rhs)const{
-
+/** \brief Equality operator
+*
+* Check this is equal to rhs. Since copies are always deep, we check values, not data pointers
+*/
   if(this->get_dims() != rhs.get_dims()) return false;
   for(size_t i=0; i< this->get_dims(); i++) if(this->get_dims(i) != rhs.get_dims(i)) return false;
   //Check each element in 1-D array

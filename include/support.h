@@ -17,9 +17,14 @@
 #include <vector>
 #include <cmath>
 
+/** \defgroup tech Technical stuff
+*\brief Types, constants, data structs etc
+*@{*/
 
-/** \defgroup type TypeDefs
-*@{ */
+/** \defgroup type Type selection
+*@{ 
+* \brief Handles type selection to match data
+*/
 //-----------TYPE HANDLING----------------------------
 #ifdef _USE_FLOAT
 
@@ -52,7 +57,9 @@ const my_type tiny_my_type=1d-60; /**< Value below which we assume 0*/
 //----------- END TYPE HANDLING----------------------------
 
 /** \defgroup const Constants
-*@{ */
+*@{ 
+\brief Code and physical constants
+*/
 //----------- CONSTANTS ---------------------------------
 const size_t MAX_SIZE = 100000;/**< Maximum per-dim array size allowed (per processor if MPI in use) */
 const size_t MAX_SIZE_TOT = MAX_SIZE*MAX_SIZE;/**< Maximum overall array size allowed (per processor if MPI in use) */
@@ -120,6 +127,7 @@ const my_type SPECTRUM_THRESHOLD = 1e-3;/**< Fraction of peak power considered t
 //----------- END CONSTANTS ---------------------------------
 
 /** \defgroup str Data Structures
+\brief Data structures for constants etc
 *@{ */
 //----------- STRUCTURES ---------------------------------
 
@@ -208,27 +216,57 @@ struct d_report{
 };
 /** @} */
 //-----------END STRUCTURES ---------------------------------
+/** @} */
 
-/** \defgroup help Global Helper and Maths Functions
-*@{ */
-//----------- HELPER TYPE FUNCTION DECLARATIONS -------------
+//----------- SPECIFIC HELPER FUNCTIONS -------------
+/** \defgroup halp Helper functions
+*\brief Assorted general functions
+*@{*/
+
+/** \defgroup main Main Helper Functions
+*@{ 
+* \brief Helpers for main code
+*
+*Contains MPI helpers, argument processing, and some general data handling functions
+*/
 
 /********MPI and code helpers ****/
 int local_MPI_setup(int argc, char *argv[]);
-void share_consts();
 void safe_exit();
+void share_consts();
 
 /********IO helpers ****/
 void get_deck_constants(std::string file_prefix);
 setup_args process_command_line(int argc, char *argv[]);
-std::vector<std::string> process_filelist(int argc, char *argv[]);
 void print_help(char code=0);
+void log_code_constants(std::string file_prefix);
+std::vector<std::string> process_filelist(int argc, char *argv[]);
 
+/********Data helpers ****/
+void divide_domain(std::vector<size_t>, size_t space[2], int per_proc, int block_num);
+my_type get_ref_Bx(std::string file_prefix, size_t space_in[2], size_t time_0, bool is_acc=false);
+bool flatten_fortran_slice(my_type * src_ptr, my_type* dest_ptr, size_t n_dims_in, size_t * sizes_in, size_t flatten_on_dim,size_t flat_start=0, size_t flat_stop=-1);//I know -1 will overflow, that is what I want
+
+int where(my_type * ax_ptr, int len, my_type target);
+
+inline calc_type gamma_rel(calc_type v){
+  return sqrt(1.0 - v*v/v0/v0);
+}
+
+/** @} */
+
+//----------- HELPER TYPE FUNCTIONS -------------
+
+/** \defgroup help Global Helper and Maths Functions
+*@{ 
+*\brief String handling, IO and maths helpers
+*/
+
+/********IO helpers ****/
 void my_print(std::string text, int rank=0, int rank_to_write=0, bool noreturn=false);
 void my_print(std::fstream * handle, std::string text, int rank=0, int rank_to_write=0, bool noreturn=false);
 void my_error_print(std::string text, int rank=0, int rank_to_write=0, bool noreturn=false);
 void my_error_print(std::fstream * handle, std::string text, int rank=0, int rank_to_write=0, bool noreturn=false);
-void log_code_constants(std::string file_prefix);
 
 /********String handling helpers ****/
 std::string mk_str(int i);/**<Converts int to string*/
@@ -244,23 +282,11 @@ std::string append_into_string(const std::string &in, const std::string &infix);
 bool parse_name_val(std::string in, std::string &name, std::string &val);
 
 /********Maths helpers ****/
-template<typename T> T interpolate(T* axis, T* vals, T target, int pts);
 template<typename T> T integrator(T * start, int len, T * increment);
 template<typename T> void inplace_boxcar_smooth(T * start, int len, int width, bool periodic = 0);
 calc_type square_integrator(calc_type * start, int len, calc_type * increment);
-
 std::vector<calc_type> cubic_solve(calc_type a, calc_type b, calc_type c);
-
-/********Data helpers ****/
-void divide_domain(std::vector<size_t>, size_t space[2], int per_proc, int block_num);
-my_type get_ref_Bx(std::string file_prefix, size_t space_in[2], size_t time_0, bool is_acc=false);
-bool flatten_fortran_slice(my_type * src_ptr, my_type* dest_ptr, size_t n_dims_in, size_t * sizes_in, size_t flatten_on_dim,size_t flat_start=0, size_t flat_stop=-1);//I know -1 will overflow, that is what I want
-
-int where(my_type * ax_ptr, int len, my_type target);
-
-inline calc_type gamma_rel(calc_type v){
-  return sqrt(1.0 - v*v/v0/v0);
-}
+template<typename T> T interpolate(T* axis, T* vals, T target, int pts);
 
 /** @} */
 //----------- END HELPER TYPE FUNCTION DECLARATIONS -----------

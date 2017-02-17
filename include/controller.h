@@ -22,7 +22,7 @@ typedef std::pair<spectrum*, diffusion_coeff*> spect_D_pair;/**< Link spectrum a
 *
 *This is the public facing class controlling plasma, spectrum and d_coeff objects. It makes sure there is a plasma to provide needed functions for the latters and keeps each D_coeff attached to the spectrum used to generate it. Should also be responsible for supplying D's in order to whatever does the bounce-averaging.
 *Because a spectrum is meaningless without a plasma, and  a diffusion coefficient meaningless without both a plasma and a spectrum, the controller class is the only thing allowed to create or destroy spectra and diffusion coefficients. Plasma's have other purposes so are not restricted in this way. When a new spectrum is created, the get_current_spectrum is set to refer to it. Any subsequent add_d operation will update the D linked to this spectrum.
-* @author Heather Ratcliffe @date 19/11/2015.
+* @author Heather Ratcliffe @date 19/11/2015 \ingroup cls
 */
 class controller{
   plasma my_plas; /**< Plasma object*/

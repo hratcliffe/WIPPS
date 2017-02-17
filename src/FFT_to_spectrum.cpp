@@ -25,7 +25,10 @@ deck_constants my_const;/**< Physical constants*/
 *@{ */
 
 /** \defgroup spect_util Spectrum generation utility
-*@{ */
+*@{ 
+*\brief Utility to generate a spectrum from Fourier transformed data
+*
+*/
 
 struct FFT_spect_args{
   std::string file_prefix;

@@ -44,7 +44,10 @@ gen_cmd_line special_command_line(int argc, char *argv[]);
 *@{ */
 
 /** \defgroup fft_util FFT generator utility
-*@{ */
+*@{ 
+*\brief Utility to read files and perform FFT
+*
+*/
 
 int main(int argc, char *argv[]){
 

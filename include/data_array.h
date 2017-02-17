@@ -20,7 +20,7 @@
 *
 *Extends the my_array class to add axes and some data tags describing the data set derived from.
 
-*Move from file my_array by \author Heather Ratcliffe \date 3/08/2016
+*Move from file my_array by \author Heather Ratcliffe \date 3/08/2016 \ingroup cls
 */
 class data_array : public my_array{
 

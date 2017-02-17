@@ -84,5 +84,12 @@ Some of the core code uses these, none of the stuff in use should.
 *\subsection colon The double colons ::
 * The :: appears either with something like std:: or boost::math:: or with a class name, and means that this refers to the function X in that library, class etc. So there might be a function abs() in the standard std library and in a math library and one must distinguish between them. Or both my_array and data_array have a function called is_good() and the definitions must state which they refer to.
 
+\defgroup cls Main Classes
+*@{
+\brief Major classes
+*
+*The major classes we use, dealing with data, physics etc
+@}
+
 */
 

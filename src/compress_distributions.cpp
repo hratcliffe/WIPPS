@@ -28,7 +28,11 @@ dist_cmd_line special_command_line(int argc, char *argv[]);
 *@{ */
 
 /** \defgroup dist_util Distribution extraction utility
-*@{ */
+*@{ 
+*\brief Utility to extract distribution functions from data
+*
+*Extracts distributions from SDF files and optionally compresses their spatial dimension
+*/
 
 int main(int argc, char *argv[]){
 

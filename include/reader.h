@@ -20,7 +20,7 @@ class data_array;
 
 *
 *Takes file prefixes, block id (see SDF documentation) and time and space ranges and a data_array to fill and does so.
-* @author Heather Ratcliffe @date 02/10/2015
+* @author Heather Ratcliffe @date 02/10/2015 \ingroup cls
 */
 class reader{
 

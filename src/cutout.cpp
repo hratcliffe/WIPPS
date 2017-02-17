@@ -37,7 +37,9 @@ cutout_args cutout_process_command_line(int argc, char *argv[]);
 *@{ */
 
 /** \defgroup cutout_util FFT cutout utility
-*@{ */
+*@{ *\brief Utility to trim FFTd data to specified axis limits
+*
+*/
 
 int main(int argc, char *argv[]){
 

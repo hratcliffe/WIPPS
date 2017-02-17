@@ -23,9 +23,9 @@ mpi_info_struc mpi_info = mpi_info_null;/**< MPI data Not const as defined from 
 
 extern deck_constants my_const;
 
-/** \defgroup main Main Helper Functions
-*@{ */
+//----------- SPECIFIC HELPER FUNCTIONS -------------
 
+/********MPI and code helpers ****/
 int local_MPI_setup(int argc, char *argv[]){
 /** \brief Do the MPI init
 *
@@ -86,41 +86,81 @@ void share_consts(){
 
 }
 
-std::vector<std::string> process_filelist(int argc, char *argv[]){
-/** \brief Extracts files from list
+/********IO helpers ****/
+void get_deck_constants(std::string file_prefix){
+/** \brief Setup run specific constants
 *
-*  Returns vector of filename strings. Assumed to be in form [stuff]_space0_space1.dat and will be ordered on space0
+*Reads deck.status and parses values for user defined constants etc. It will rely on using the specific deck, because it has to look for names. Any changes to deck may need updating here. Tag names are set as const strings in support.h. IMPORTANT: If we find additional density tags we fold those into om_pe. To prevent this, either remove from deck.status, or prefix their printed names with something so they do not match the strings in support.h
 */
 
-  std::vector<std::string> names;
-  for(int i=0; i< argc; i++){
-    if(((strcmp(argv[i], "-Finput")==0)||(strcmp(argv[i], "-Sinput")==0)) && i < argc-1){
-      while(i<argc-1 && argv[i+1][0]!= '-'){
-        //Checks if next argument is a new flag
-        names.push_back(argv[i+1]);
-        i++;
-      }
+
+//open file deck.status from whatever path
+//Find the line " Constant block values after"
+//Read into vector up to "Deck state" or eof
+//parse out the values we want given by name in support.h
+
+  std::ifstream infile;
+  infile.open(file_prefix+"deck.status");
+  std::string line;
+  std::vector<std::string> lines;
+  bool found=false;
+  
+  my_const.omega_ce = 0.0;
+  my_const.omega_pe = 0.0;
+  my_const.dens_factor = 0.0;
+  my_const.omega_ci = 0.0;
+  my_const.v_t = 0.0;
+  my_const.ppc = 0;
+  
+  if(!infile.is_open()){
+    my_error_print("No deck.status file found, aborting", mpi_info.rank);
+    return;
+  }
+  while(infile){
+    getline(infile, line);
+    if(!(strcmp(line.substr(0, CONSTANTS.size()).c_str(), CONSTANTS.c_str()))){
+      found = true;
+      break;
     }
   }
+  if(!found){
+    my_error_print("No constants dump found in deck.status, aborting", mpi_info.rank);
+    return;
+  }
 
-  //Now we have vector of names. Extract space0 from them and plop into a map
-  std::map<int, std::string> name_map;
-  int num;
-  size_t posa, posb;
-  for(size_t i = 0; i< names.size(); i++){
-    posb = names[i].find_last_of('_');
-    posa = (names[i].substr(0, posb)).find_last_of('_');
-    num = atoi((names[i].substr(posa+1, posb-posa-1)).c_str());
-    name_map[num] = names[i];
+  while(infile){
+    getline(infile, line);
+    if(!(strcmp(line.substr(0, CONSTANTS_END.size()).c_str(), CONSTANTS_END.c_str()))) break;
+    lines.push_back(line);
   }
-  names.clear();
-  //Now we plop the map back into the vector
-  for(auto it=name_map.begin(); it!=name_map.end(); it++){
-    names.push_back(it->second);
-  }
-  //This ends up with sorting without having to write custom comparator. Replace when have time
   
-  return names;
+  std::string name, val;
+  bool parse_err;
+  float val_f;
+  
+  float tmp_rat=0.0, tmp_rath=0.0;
+  
+  for(size_t i=0; i< lines.size(); i++){
+
+    parse_err = parse_name_val(lines[i], name, val);
+    if(parse_err) continue;
+    val_f = atof(val.c_str());
+  
+    if(name == OMEGA_CE) my_const.omega_ce = val_f;
+    else if(name == OMEGA_PE) my_const.omega_pe = val_f;
+    else if(name == DENS_RAT) tmp_rat = val_f;
+    else if(name == DENS_RATH) tmp_rath = val_f;
+  }
+
+  if(tmp_rat != 0.0 || tmp_rath !=0.0){
+    my_print("Modifying density to " + mk_str(1.0+tmp_rat+tmp_rath, true));
+    my_const.omega_pe *= std::sqrt(1.0+tmp_rat+tmp_rath);
+    my_const.dens_factor = 1.0+ tmp_rat+tmp_rath;
+    
+  }
+  my_const.omega_ci = my_const.omega_ce * me/mp;
+  //assumes same charge magnitude, I.e. H plasma
+
 }
 
 setup_args process_command_line(int argc, char *argv[]){
@@ -280,6 +320,72 @@ void print_help(char code){
   }
 }
 
+void log_code_constants(std::string file_prefix){
+/** \brief Log internal constants
+*
+*Records ID codes etc as name value pairs \todo Updates?
+*/
+  std::ofstream file;
+  std::string filename = file_prefix +"constants.dump";
+  file.open(filename.c_str());
+  if(file.is_open()){
+  
+    file<<"WAVE_WHISTLER "<<WAVE_WHISTLER<<'\n';
+    file<<"WAVE_PLASMA "<<WAVE_PLASMA<<'\n';
+    file<<"WAVE_O "<<WAVE_O<<'\n';
+    file<<"FUNCTION_NULL "<<FUNCTION_NULL<<'\n';
+    file<<"FUNCTION_DELTA "<<FUNCTION_DELTA<<'\n';
+    file<<"FUNCTION_GAUSS "<<FUNCTION_GAUSS<<'\n';
+    file<<"FUNCTION_ISO "<<FUNCTION_ISO<<'\n';
+    file<<"V_MIN "<<V_MIN<<'\n';
+    file<<"V_MAX "<<V_MAX<<'\n';
+    file<<"ANG_MIN "<<ANG_MIN<<'\n';
+    file<<"ANG_MAX "<<ANG_MAX<<'\n';
+    file<<"SPECTRUM_ANG_STDDEV "<<SPECTRUM_ANG_STDDEV<<'\n';
+    file<<"SPECTRUM_THRESHOLD "<<SPECTRUM_THRESHOLD<<'\n';
+
+  }
+  file.close();
+}
+
+std::vector<std::string> process_filelist(int argc, char *argv[]){
+/** \brief Extracts files from list
+*
+*  Returns vector of filename strings. Assumed to be in form [stuff]_space0_space1.dat and will be ordered on space0
+*/
+
+  std::vector<std::string> names;
+  for(int i=0; i< argc; i++){
+    if(((strcmp(argv[i], "-Finput")==0)||(strcmp(argv[i], "-Sinput")==0)) && i < argc-1){
+      while(i<argc-1 && argv[i+1][0]!= '-'){
+        //Checks if next argument is a new flag
+        names.push_back(argv[i+1]);
+        i++;
+      }
+    }
+  }
+
+  //Now we have vector of names. Extract space0 from them and plop into a map
+  std::map<int, std::string> name_map;
+  int num;
+  size_t posa, posb;
+  for(size_t i = 0; i< names.size(); i++){
+    posb = names[i].find_last_of('_');
+    posa = (names[i].substr(0, posb)).find_last_of('_');
+    num = atoi((names[i].substr(posa+1, posb-posa-1)).c_str());
+    name_map[num] = names[i];
+  }
+  names.clear();
+  //Now we plop the map back into the vector
+  for(auto it=name_map.begin(); it!=name_map.end(); it++){
+    names.push_back(it->second);
+  }
+  //This ends up with sorting without having to write custom comparator. Replace when have time
+  
+  return names;
+}
+
+/********Data helpers ****/
 void divide_domain(std::vector<size_t> dims, size_t space[2], int per_proc, int block_num){
 /** \brief Divide dims evenly between procs
 *
@@ -297,6 +403,83 @@ void divide_domain(std::vector<size_t> dims, size_t space[2], int per_proc, int 
     space[0] = block_start + (block_num) * block_len / per_proc;
     space[1] = space[0] + block_len / per_proc;
 
+}
+
+my_type get_ref_Bx(std::string file_prefix, size_t space_in[2], size_t time_0, bool is_acc){
+/** Read reference B_x from the specfied file prefix as given, dump number time_0*/
+  my_print("Getting ref B");
+  char block_id[ID_SIZE];
+  if(!is_acc) strcpy(block_id, "bx");
+  else strcpy(block_id, "abx");
+  
+  reader bx_reader = reader(file_prefix, block_id);
+  //We use this to get the local average B field
+  size_t bx_times[3] = {time_0, time_0+1, 1};
+  //use specified file and read one row
+  bx_reader.update_ref_filenum(time_0);
+
+  size_t n_dims;
+  std::vector<size_t> dims;
+  int err = bx_reader.read_dims(n_dims, dims);
+  if(err) return 0.0;
+
+  size_t space_dim = space_in[1]-space_in[0];
+  data_array bx = data_array(space_dim, 1);
+  if(!bx.is_good()) return 0.0;
+  
+  if(n_dims == 1){
+    err = bx_reader.read_data(bx, bx_times, space_in);
+  }else if(n_dims == 2){
+    err = bx_reader.read_data(bx, bx_times, space_in, 1);
+  }else{
+    my_error_print("3-D space not added...", mpi_info.rank);
+  }
+  
+  if(err == 0 || err ==2 ) return bx.avval();
+  //2 is a non-fatal read error
+  else return 0.0;
+}
+
+bool flatten_fortran_slice(my_type * src_ptr, my_type* dest_ptr, size_t n_dims_in, size_t * dims_in, size_t flatten_on_dim, size_t flat_start, size_t flat_stop){
+/** \brief Flatten a Fortran-style array on the specified dimension
+*
+* The result is a Fortran-style array of rank n_dims_in - 1, containing the total along each value of the flattening dim. dest_ptr is assumed to point to an allocated block sufficient to hold the result. NB this produces a total not an average. NB flat_start and flat_stop must be valid indices into the dim to be flattened. They CANNOT be checked
+*/
+/*
+* A 2-d array 5x3 is
+|ooooo||ooooo||ooooo|
+<-row->
+
+A 3-d 5x3x2 is
+[|ooooo||ooooo||ooooo|][|ooooo||ooooo||ooooo|]
+<--------'slice'------>
+
+We'll borrow the resizer code to get the new array by resizing the required dim to size 1 in a copy, and then we'll add the rest on
+Think of the array as being 3-D. The dim we;re flattening is dim-1. All the less-significant dims are smushed together into dim-0, and all the higher into dim-2
+*/
+
+  if(flatten_on_dim > n_dims_in) return 1;
+  if(flat_start >= dims_in[flatten_on_dim]) return 1;
+  if(flat_stop >= dims_in[flatten_on_dim]) flat_stop = dims_in[flatten_on_dim];
+  
+  size_t els_to_copy = 1, n_segments = 1, sz = 1;
+
+  for(size_t i=0; i<flatten_on_dim; ++i) els_to_copy*= dims_in[i];
+  for(size_t i=flatten_on_dim+1; i< n_dims_in; ++i) n_segments *= dims_in[i];
+
+  size_t chunk_sz = els_to_copy;
+  for(size_t i=0; i< n_segments; ++i) std::copy(src_ptr + i*chunk_sz*dims_in[flatten_on_dim] +els_to_copy*flat_start, src_ptr + i*chunk_sz*dims_in[flatten_on_dim]+ els_to_copy+ els_to_copy*flat_start, dest_ptr + i*chunk_sz*sz);
+  
+  //Now we should have the 0th row in place
+  //Add each successive row onto it
+  
+  for(size_t j = flat_start+1; j<flat_stop; j++){
+    
+    for(size_t i=0; i< n_segments; ++i) std::transform(src_ptr + i*chunk_sz*dims_in[flatten_on_dim] + els_to_copy*j, src_ptr + i*chunk_sz*dims_in[flatten_on_dim]+ els_to_copy + els_to_copy*j, dest_ptr + i*chunk_sz*sz,dest_ptr + i*chunk_sz*sz, std::plus<my_type>());
+  }
+
+  return 0;
+  
 }
 
 int where(my_type * ax_ptr, int len, my_type target){
@@ -344,153 +527,9 @@ int whereb(my_type * ax_ptr, int len, my_type target,int &cut, int sign){
   //Shouldn't ever reach this case, but.
 }
 
-void get_deck_constants(std::string file_prefix){
-/** \brief Setup run specific constants
-*
-*Reads deck.status and parses values for user defined constants etc. It will rely on using the specific deck, because it has to look for names. Any changes to deck may need updating here. Tag names are set as const strings in support.h. IMPORTANT: If we find additional density tags we fold those into om_pe. To prevent this, either remove from deck.status, or prefix their printed names with something so they do not match the strings in support.h
-*/
+//----------- HELPER TYPE FUNCTION DECLARATIONS -------------
 
-
-//open file deck.status from whatever path
-//Find the line " Constant block values after"
-//Read into vector up to "Deck state" or eof
-//parse out the values we want given by name in support.h
-
-  std::ifstream infile;
-  infile.open(file_prefix+"deck.status");
-  std::string line;
-  std::vector<std::string> lines;
-  bool found=false;
-  
-  my_const.omega_ce = 0.0;
-  my_const.omega_pe = 0.0;
-  my_const.dens_factor = 0.0;
-  my_const.omega_ci = 0.0;
-  my_const.v_t = 0.0;
-  my_const.ppc = 0;
-  
-  if(!infile.is_open()){
-    my_error_print("No deck.status file found, aborting", mpi_info.rank);
-    return;
-  }
-  while(infile){
-    getline(infile, line);
-    if(!(strcmp(line.substr(0, CONSTANTS.size()).c_str(), CONSTANTS.c_str()))){
-      found = true;
-      break;
-    }
-  }
-  if(!found){
-    my_error_print("No constants dump found in deck.status, aborting", mpi_info.rank);
-    return;
-  }
-
-  while(infile){
-    getline(infile, line);
-    if(!(strcmp(line.substr(0, CONSTANTS_END.size()).c_str(), CONSTANTS_END.c_str()))) break;
-    lines.push_back(line);
-  }
-  
-  std::string name, val;
-  bool parse_err;
-  float val_f;
-  
-  float tmp_rat=0.0, tmp_rath=0.0;
-  
-  for(size_t i=0; i< lines.size(); i++){
-
-    parse_err = parse_name_val(lines[i], name, val);
-    if(parse_err) continue;
-    val_f = atof(val.c_str());
-  
-    if(name == OMEGA_CE) my_const.omega_ce = val_f;
-    else if(name == OMEGA_PE) my_const.omega_pe = val_f;
-    else if(name == DENS_RAT) tmp_rat = val_f;
-    else if(name == DENS_RATH) tmp_rath = val_f;
-  }
-
-  if(tmp_rat != 0.0 || tmp_rath !=0.0){
-    my_print("Modifying density to " + mk_str(1.0+tmp_rat+tmp_rath, true));
-    my_const.omega_pe *= std::sqrt(1.0+tmp_rat+tmp_rath);
-    my_const.dens_factor = 1.0+ tmp_rat+tmp_rath;
-    
-  }
-  my_const.omega_ci = my_const.omega_ce * me/mp;
-  //assumes same charge magnitude, I.e. H plasma
-
-}
-
-/** @} */
-
-void log_code_constants(std::string file_prefix){
-/** \brief Log internal constants
-*
-*Records ID codes etc as name value pairs \todo Updates?
-*/
-  std::ofstream file;
-  std::string filename = file_prefix +"constants.dump";
-  file.open(filename.c_str());
-  if(file.is_open()){
-  
-    file<<"WAVE_WHISTLER "<<WAVE_WHISTLER<<'\n';
-    file<<"WAVE_PLASMA "<<WAVE_PLASMA<<'\n';
-    file<<"WAVE_O "<<WAVE_O<<'\n';
-    file<<"FUNCTION_NULL "<<FUNCTION_NULL<<'\n';
-    file<<"FUNCTION_DELTA "<<FUNCTION_DELTA<<'\n';
-    file<<"FUNCTION_GAUSS "<<FUNCTION_GAUSS<<'\n';
-    file<<"FUNCTION_ISO "<<FUNCTION_ISO<<'\n';
-    file<<"V_MIN "<<V_MIN<<'\n';
-    file<<"V_MAX "<<V_MAX<<'\n';
-    file<<"ANG_MIN "<<ANG_MIN<<'\n';
-    file<<"ANG_MAX "<<ANG_MAX<<'\n';
-    file<<"SPECTRUM_ANG_STDDEV "<<SPECTRUM_ANG_STDDEV<<'\n';
-    file<<"SPECTRUM_THRESHOLD "<<SPECTRUM_THRESHOLD<<'\n';
-
-  }
-  file.close();
-}
-
-bool parse_name_val(std::string in, std::string &name, std::string &val){
-/** \brief Parse x=y strings
-*
-* Basic line parser. Takes a string and if it contains an '=' splits into the left and right segments, stripping leading and trailing spaces. Returns 0 if success, 1 if no equals sign. Standard comment character is # as first non-whitespace
-*/
-  if(in.find_first_not_of(" \t\n") == std::string::npos) return 1;
-  if(in[in.find_first_not_of(" \t\n")] == '#') return 1;
-  size_t pos = in.find("=");
-  if(pos == std::string::npos){
-    //is not a x = y line
-    name = "";
-    val="";
-    return 1;
-
-  }else{
-    name = in.substr(0, pos);
-    trim_string(name);
-    val = in.substr(pos+1, in.size());
-    trim_string(val);
-    return 0;
-  }
-}
-
-void trim_string(std::string &str, char ch){
-  std::string tmp;
-  if(str.find_first_not_of(ch) !=std::string::npos) tmp = str.substr(str.find_first_not_of(ch), str.size());
-  str=tmp;
-  if(str.find_first_not_of(ch) !=std::string::npos) tmp = str.substr(0, str.find_last_not_of(ch)+1);
-  str=tmp;
-
-}
-
-std::string replace_char(std::string str_in, char ch, char repl){
-  std::string str = str_in;
-  size_t pos =str.find_first_of(ch);
-  while(pos != std::string::npos){
-    str[pos] = repl;
-    pos =str.find_first_of(ch);
-  }
-  return str;
-}
+/********IO helpers ****/
 void my_print(std::string text, int rank, int rank_to_write, bool noreturn){
 /** \brief Write output
 *
@@ -547,7 +586,59 @@ void my_error_print(std::fstream * handle, std::string text, int rank, int rank_
 
 }
 
+/********String handling helpers ****/
+std::string mk_str(int i){
 
+  char buffer[25];
+  std::sprintf(buffer, "%i", i);
+  std::string ret = buffer;
+  return ret;
+  
+}
+std::string mk_str(size_t i){
+
+  char buffer[25];
+  std::sprintf(buffer, "%lu", i);
+  std::string ret = buffer;
+  return ret;
+  
+}
+std::string mk_str(double i, bool noexp){
+
+  char buffer[25];
+  if(noexp) std::snprintf(buffer, 25, "%f", i);
+  else std::snprintf(buffer, 25, "%e", i);
+  std::string ret = buffer;
+  return ret;
+  
+}
+std::string mk_str(bool b){
+
+  if(b) return "1";
+  else return "0";
+
+}
+std::string mk_str(long double i, bool noexp){return mk_str((double) i, noexp);}
+std::string mk_str(float i, bool noexp){return mk_str((double) i, noexp);}
+
+void trim_string(std::string &str, char ch){
+  std::string tmp;
+  if(str.find_first_not_of(ch) !=std::string::npos) tmp = str.substr(str.find_first_not_of(ch), str.size());
+  str=tmp;
+  if(str.find_first_not_of(ch) !=std::string::npos) tmp = str.substr(0, str.find_last_not_of(ch)+1);
+  str=tmp;
+
+}
+
+std::string replace_char(std::string str_in, char ch, char repl){
+  std::string str = str_in;
+  size_t pos =str.find_first_of(ch);
+  while(pos != std::string::npos){
+    str[pos] = repl;
+    pos =str.find_first_of(ch);
+  }
+  return str;
+}
 
 std::string append_into_string(const std::string &in, const std::string &infix){
 /** \brief Insert infix in string
@@ -564,44 +655,30 @@ std::string append_into_string(const std::string &in, const std::string &infix){
   }
 }
 
-std::string mk_str(int i){
+bool parse_name_val(std::string in, std::string &name, std::string &val){
+/** \brief Parse x=y strings
+*
+* Basic line parser. Takes a string and if it contains an '=' splits into the left and right segments, stripping leading and trailing spaces. Returns 0 if success, 1 if no equals sign. Standard comment character is # as first non-whitespace
+*/
+  if(in.find_first_not_of(" \t\n") == std::string::npos) return 1;
+  if(in[in.find_first_not_of(" \t\n")] == '#') return 1;
+  size_t pos = in.find("=");
+  if(pos == std::string::npos){
+    //is not a x = y line
+    name = "";
+    val="";
+    return 1;
 
-  char buffer[25];
-  std::sprintf(buffer, "%i", i);
-  std::string ret = buffer;
-  return ret;
-  
+  }else{
+    name = in.substr(0, pos);
+    trim_string(name);
+    val = in.substr(pos+1, in.size());
+    trim_string(val);
+    return 0;
+  }
 }
 
-std::string mk_str(size_t i){
-
-  char buffer[25];
-  std::sprintf(buffer, "%lu", i);
-  std::string ret = buffer;
-  return ret;
-  
-}
-
-std::string mk_str(double i, bool noexp){
-
-  char buffer[25];
-  if(noexp) std::snprintf(buffer, 25, "%f", i);
-  else std::snprintf(buffer, 25, "%e", i);
-  std::string ret = buffer;
-  return ret;
-  
-}
-
-std::string mk_str(bool b){
-
-  if(b) return "1";
-  else return "0";
-
-}
-
-std::string mk_str(long double i, bool noexp){return mk_str((double) i, noexp);}
-std::string mk_str(float i, bool noexp){return mk_str((double) i, noexp);}
-
+/********Maths helpers ****/
 template<typename T> T integrator(T * start, int len, T * increment){
 /** \brief Basic numerical integrator
 *
@@ -766,80 +843,4 @@ template<typename T> T interpolate(T* axis, T* vals, T target, int pts){
 }
 template float interpolate(float*, float*, float, int);
 template double interpolate(double*, double*, double, int);
-
-my_type get_ref_Bx(std::string file_prefix, size_t space_in[2], size_t time_0, bool is_acc){
-/** Read reference B_x from the specfied file prefix as given, dump number time_0*/
-  my_print("Getting ref B");
-  char block_id[ID_SIZE];
-  if(!is_acc) strcpy(block_id, "bx");
-  else strcpy(block_id, "abx");
-  
-  reader bx_reader = reader(file_prefix, block_id);
-  //We use this to get the local average B field
-  size_t bx_times[3] = {time_0, time_0+1, 1};
-  //use specified file and read one row
-  bx_reader.update_ref_filenum(time_0);
-
-  size_t n_dims;
-  std::vector<size_t> dims;
-  int err = bx_reader.read_dims(n_dims, dims);
-  if(err) return 0.0;
-
-  size_t space_dim = space_in[1]-space_in[0];
-  data_array bx = data_array(space_dim, 1);
-  if(!bx.is_good()) return 0.0;
-  
-  if(n_dims == 1){
-    err = bx_reader.read_data(bx, bx_times, space_in);
-  }else if(n_dims == 2){
-    err = bx_reader.read_data(bx, bx_times, space_in, 1);
-  }else{
-    my_error_print("3-D space not added...", mpi_info.rank);
-  }
-  
-  if(err == 0 || err ==2 ) return bx.avval();
-  //2 is a non-fatal read error
-  else return 0.0;
-}
-
-bool flatten_fortran_slice(my_type * src_ptr, my_type* dest_ptr, size_t n_dims_in, size_t * dims_in, size_t flatten_on_dim, size_t flat_start, size_t flat_stop){
-/** \brief Flatten a Fortran-style array on the specified dimension
-*
-* The result is a Fortran-style array of rank n_dims_in - 1, containing the total along each value of the flattening dim. dest_ptr is assumed to point to an allocated block sufficient to hold the result. NB this produces a total not an average. NB flat_start and flat_stop must be valid indices into the dim to be flattened. They CANNOT be checked
-*/
-/*
-* A 2-d array 5x3 is
-|ooooo||ooooo||ooooo|
-<-row->
-
-A 3-d 5x3x2 is
-[|ooooo||ooooo||ooooo|][|ooooo||ooooo||ooooo|]
-<--------'slice'------>
-
-We'll borrow the resizer code to get the new array by resizing the required dim to size 1 in a copy, and then we'll add the rest on
-Think of the array as being 3-D. The dim we;re flattening is dim-1. All the less-significant dims are smushed together into dim-0, and all the higher into dim-2
-*/
-
-  if(flatten_on_dim > n_dims_in) return 1;
-  if(flat_start >= dims_in[flatten_on_dim]) return 1;
-  if(flat_stop >= dims_in[flatten_on_dim]) flat_stop = dims_in[flatten_on_dim];
-  
-  size_t els_to_copy = 1, n_segments = 1, sz = 1;
-
-  for(size_t i=0; i<flatten_on_dim; ++i) els_to_copy*= dims_in[i];
-  for(size_t i=flatten_on_dim+1; i< n_dims_in; ++i) n_segments *= dims_in[i];
-
-  size_t chunk_sz = els_to_copy;
-  for(size_t i=0; i< n_segments; ++i) std::copy(src_ptr + i*chunk_sz*dims_in[flatten_on_dim] +els_to_copy*flat_start, src_ptr + i*chunk_sz*dims_in[flatten_on_dim]+ els_to_copy+ els_to_copy*flat_start, dest_ptr + i*chunk_sz*sz);
-  
-  //Now we should have the 0th row in place
-  //Add each successive row onto it
-  
-  for(size_t j = flat_start+1; j<flat_stop; j++){
-    
-    for(size_t i=0; i< n_segments; ++i) std::transform(src_ptr + i*chunk_sz*dims_in[flatten_on_dim] + els_to_copy*j, src_ptr + i*chunk_sz*dims_in[flatten_on_dim]+ els_to_copy + els_to_copy*j, dest_ptr + i*chunk_sz*sz,dest_ptr + i*chunk_sz*sz, std::plus<my_type>());
-  }
-
-  return 0;
-  
-}
+//Again we need both float and double versions

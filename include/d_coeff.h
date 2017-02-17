@@ -24,7 +24,7 @@ class controller;
 /** \brief Diffusion coefficient object
 *
 * Specialised data_array containing the calculated coefficient plus relevant ids. Can be made/destroyed only by controller object. 
-@author Heather Ratcliffe @date 23/09/2015.
+@author Heather Ratcliffe @date 23/09/2015 \ingroup cls
 */
 class diffusion_coeff: public data_array{
 

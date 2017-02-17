@@ -24,7 +24,7 @@ class controller;
 /** \brief A spectrum in omega and angle
 *
 *Holds data on the omega and angle distributions. The latter can depend on omega! Can be created/destroyed only by controllers, so has not public constructor/destructors. IMPORTANT: because we are working with FFT data, we assume the angle/frequency axis either covers some small cutout in +ve domain, or is symmetrical in positive and negative values. A few of the specific routines here use this to simplify things. The sign of omega is simply copied from the sign of k. The "angle" axis is stored as tan(theta) for theta the wave normal angle. Access to elements should use the wrappers at the bottom of spectrum.h, described in \ref spectAcc because internal layout could change in future
-  \author Heather Ratcliffe \date 24/09/2015
+  \author Heather Ratcliffe \date 24/09/2015 \ingroup cls
 */
 class spectrum{
   friend class controller;/**<Controllers can create/destroy spectra and access their internals*/
@@ -120,6 +120,8 @@ public:
   
 /********Access wrappers ****/
 /** \defgroup spectAcc Spectrum access wrappers
+*\brief Accessors for the two parts of spectrum, B and g
+*
 *Spectrum does not guarantee the internal representation of the B and g parts, so these should be used to get/set the data and axes for B and g parts
 *@{ */
 

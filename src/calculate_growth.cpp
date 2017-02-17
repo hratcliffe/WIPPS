@@ -24,10 +24,18 @@
 
 
 /** \defgroup utils Utility programs
-*@{ */
+*@{ 
+*\brief Assorted stand alone utilities
+*
+*Contains programs to perform FFTs, create spectra, calculate growth etc. Build with make utils Command line argument help is available using ./<util_name> -h
+*/
 
 /** \defgroup growth_util Growth rate calculation utility
-*@{ */
+*@{ 
+*\brief Utility to calculate growth rates
+*
+* Calculates analytical growth rate using electron distribution specified in <path>nonthermal.conf and if requested also calculates linear growth from a series of spectrum files
+*/
 
 const int n_trials = 2000;/**< Number of data points for analytic (if no real data)*/
 

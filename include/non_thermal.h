@@ -29,6 +29,8 @@ end:
 \endverbatim where the file my_data contains a data_array. For example, the output of compress_distributions utility can be used, or the IDL routines in refit_distribs.
 *
 *To add new functional forms, create a function such as bimax, below, and create the binding in non_thermal::configure_from_file under "Binding function free parameters to create f_p"
+
+*\ingroup cls
 */
 
 class non_thermal{

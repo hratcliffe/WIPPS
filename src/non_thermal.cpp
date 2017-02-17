@@ -465,12 +465,7 @@ std::function<calc_type(calc_type p_par, calc_type p_perp)> configure_lookup(std
 
     //Bind the lookup function
     bound_lookup = std::bind(lookup, std::placeholders::_1, std::placeholders::_2, my_nonth->lookup_data, par_sz, perp_sz, dp_par_ax, p_par_ax_min, dp_perp_ax, p_perp_ax_min);
-
-
   }
-  //Store lookup dims for later
-  my_nonth->dims[0] = par_sz;
-  my_nonth->dims[1] = perp_sz;
   return bound_lookup;
 }
 

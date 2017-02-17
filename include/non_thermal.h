@@ -45,8 +45,7 @@ private:
 
 public:
 
-  my_type * lookup_data;/** Data pointer for use with a lookup type function backend. Note type matched to MY EPOCH data*/
-  size_t dims[2];
+  my_type * lookup_data;/**< Data pointer for use with a lookup type function backend. Note type matched to MY EPOCH data*/
 
 /********Basic setup and allocation functions ****/
   non_thermal(std::string file_prefix);

@@ -70,14 +70,14 @@ ifndef NO_FFT
 endif
 #All of these are included in tarball. The former is built as default target. The latter are _ALL_ built under utils target. E.g. cutout.cpp -> cutout utility
 
-SOURCE = my_array.cpp data_array.cpp d_coeff.cpp spectrum.cpp plasma.cpp tests.cpp reader.cpp controller.cpp non_thermal.cpp main_support.cpp
+SOURCE = my_array.cpp data_array.cpp d_coeff.cpp spectrum.cpp plasma.cpp tests.cpp reader.cpp controller.cpp non_thermal.cpp support.cpp
 #list of all other cpp files. These are assumed to have both a cpp and h pairing
 
 INCLS := $(SOURCE:.cpp=.h)
 OBJS := $(SOURCE:.cpp=.o)
 #make lists of include and object files from SOURCE list
 
-INCLS += support.h
+#INCLS += support.h
 #Add files which are header only (no .cpp)
 #SOURCE += blank.cpp
 #Uncomment to add a source-only (no .h) file

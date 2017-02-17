@@ -213,13 +213,24 @@ struct d_report{
 *@{ */
 //----------- HELPER TYPE FUNCTION DECLARATIONS -------------
 
+/********MPI and code helpers ****/
+int local_MPI_setup(int argc, char *argv[]);
+void share_consts();
 void safe_exit();
+
+/********IO helpers ****/
+void get_deck_constants(std::string file_prefix);
+setup_args process_command_line(int argc, char *argv[]);
+std::vector<std::string> process_filelist(int argc, char *argv[]);
+void print_help(char code=0);
 
 void my_print(std::string text, int rank=0, int rank_to_write=0, bool noreturn=false);
 void my_print(std::fstream * handle, std::string text, int rank=0, int rank_to_write=0, bool noreturn=false);
 void my_error_print(std::string text, int rank=0, int rank_to_write=0, bool noreturn=false);
 void my_error_print(std::fstream * handle, std::string text, int rank=0, int rank_to_write=0, bool noreturn=false);
+void log_code_constants(std::string file_prefix);
 
+/********String handling helpers ****/
 std::string mk_str(int i);/**<Converts int to string*/
 std::string mk_str(size_t i); /**< Long int to string*/
 std::string mk_str(bool b);/**<Converts bool to string*/
@@ -228,29 +239,28 @@ std::string mk_str(double i, bool noexp=0);/**<Converts double to string*/
 std::string mk_str(float i, bool noexp=0);/**<Converts float to string*/
 std::string mk_str(long double i, bool noexp=0);/**<Converts long double to string*/
 void trim_string(std::string &str, char ch=' '); /**< Trim all leading/trailing ch's from str*/
-
 std::string replace_char(std::string str, char ch, char repl);/**<Replace all occurences of character ch in string*/
-
 std::string append_into_string(const std::string &in, const std::string &infix);
-
 bool parse_name_val(std::string in, std::string &name, std::string &val);
 
-int where(my_type * ax_ptr, int len, my_type target);
-
-
+/********Maths helpers ****/
 template<typename T> T interpolate(T* axis, T* vals, T target, int pts);
 template<typename T> T integrator(T * start, int len, T * increment);
 template<typename T> void inplace_boxcar_smooth(T * start, int len, int width, bool periodic = 0);
-//void inplace_boxcar_smooth(calc_type * start, int len, int width, bool periodic = 0);
 calc_type square_integrator(calc_type * start, int len, calc_type * increment);
 
 std::vector<calc_type> cubic_solve(calc_type a, calc_type b, calc_type c);
 
+/********Data helpers ****/
+void divide_domain(std::vector<size_t>, size_t space[2], int per_proc, int block_num);
+my_type get_ref_Bx(std::string file_prefix, size_t space_in[2], size_t time_0, bool is_acc=false);
+bool flatten_fortran_slice(my_type * src_ptr, my_type* dest_ptr, size_t n_dims_in, size_t * sizes_in, size_t flatten_on_dim,size_t flat_start=0, size_t flat_stop=-1);//I know -1 will overflow, that is what I want
+
+int where(my_type * ax_ptr, int len, my_type target);
+
 inline calc_type gamma_rel(calc_type v){
   return sqrt(1.0 - v*v/v0/v0);
 }
-
-void log_code_constants(std::string file_prefix);
 
 /** @} */
 //----------- END HELPER TYPE FUNCTION DECLARATIONS -----------

@@ -23,11 +23,11 @@ class controller;
 
 /** \brief A spectrum in omega and angle
 *
-*Holds data on the omega and angle distributions. The latter can depend on omega! Can be created/destroyed only by controllers, so has not public constructor/destructors. IMPORTANT: because we are working with FFT data, we assume the angle/frequency axis either covers some small cutout in +ve domain, or is symmetrical in positive and negative values. A few of the specific routines here use this to simplify things. The sign of omega is simply copied from the sign of k. The "angle" axis is stored as tan(theta) for theta the wave normal angle. Access to elements should use the wrappers at the bottom of the file as internal layout may change
+*Holds data on the omega and angle distributions. The latter can depend on omega! Can be created/destroyed only by controllers, so has not public constructor/destructors. IMPORTANT: because we are working with FFT data, we assume the angle/frequency axis either covers some small cutout in +ve domain, or is symmetrical in positive and negative values. A few of the specific routines here use this to simplify things. The sign of omega is simply copied from the sign of k. The "angle" axis is stored as tan(theta) for theta the wave normal angle. Access to elements should use the wrappers at the bottom of spectrum.h, described in \ref spectAcc because internal layout could change in future
   \author Heather Ratcliffe \date 24/09/2015
 */
 class spectrum{
-  friend class controller;
+  friend class controller;/**<Controllers can create/destroy spectra and access their internals*/
   controller * my_controller;/**< Links this to a plasma object*/
 
 /******** The data ****/
@@ -53,9 +53,9 @@ class spectrum{
 /********Technical stuff making my_array a proper "object" ****/
   spectrum & operator=(const spectrum& src);
   spectrum(const spectrum &src);
-  spectrum(spectrum && src) = default;
+  spectrum(spectrum && src) = default;/**<Move a spectrum object*/
   bool operator==(const spectrum &rhs)const;
-  bool operator!=(const spectrum &rhs)const{return !(*this == rhs);}
+  bool operator!=(const spectrum &rhs)const{return !(*this == rhs);}/**< See spectrum::operator==()*/
 
 /********Setup helper functions ****/
   void make_angle_axis();
@@ -69,7 +69,8 @@ class spectrum{
   bool normaliseg(my_type omega);
 
 /********Access wrappers ****/
-/** \ingroup spectAcc *@{ */
+/** \ingroup spectAcc 
+*@{ */
   my_type * get_omega_axis(size_t &len){return B_omega_array.get_axis(0, len);}
   my_type * get_angle_axis(size_t &len){return g_angle_array.get_axis(1, len);}
 /** @} */
@@ -82,7 +83,7 @@ public:
   int wave_id; /**< ID for which wave mode cutout we're going for. See support.h*/
 
 /********Setup helper functions ****/
-  inline bool is_good()const{return (B_omega_array.is_good() && g_angle_array.is_good() && normg);}
+  inline bool is_good()const{return (B_omega_array.is_good() && g_angle_array.is_good() && normg);}/**<Check if a spectrum is complete and useable*/
 #ifdef RUN_TESTS_AND_EXIT
   void make_test_spectrum(int angle_type=FUNCTION_DELTA, bool two_sided=false, my_type om_ce=17000.0);
 #endif

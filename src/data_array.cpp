@@ -39,7 +39,7 @@ void data_array::construct(){
 }
 
 void data_array::alloc_ax(const size_t els){
-/* \brief Allocate axis memory
+/** \brief Allocate axis memory
 *
 * Alocate memory for axes
 */
@@ -289,7 +289,7 @@ float data_array::get_res(size_t i)const{
 }
 
 std::vector<size_t> data_array::get_bounds(std::vector<my_type> limits){
-/* \brief Convert axis values to indices
+/** \brief Convert axis values to indices
 *
 * For a vector of bounds, 2 per dimension, convert the required axis bounds into index bounds
 */

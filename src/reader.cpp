@@ -293,7 +293,7 @@ int reader::read_acc_time(data_array & data_in, sdf_file_t * handle, size_t star
 }
 
 bool reader::read_dims(size_t &n_dims, std::vector<size_t> &dims){
-/* \brief Read dimensions of current block (this->block_id)
+/** \brief Read dimensions of current block (this->block_id). See reader::read_dims(size_t &n_dims, std::vector<size_t> &dims, std::string b_id)
 */
   return read_dims(n_dims, dims, std::string(this->block_id));
 }

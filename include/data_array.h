@@ -18,7 +18,9 @@
 
 /** \brief Extended my_array class including axes
 *
-*Contains also data axes and various id's describing the data set from which data came. Also has ability to fft itself into a new instance. Move from file my_array by \author Heather Ratcliffe \date 3/08/2016
+*Extends the my_array class to add axes and some data tags describing the data set derived from.
+
+*Move from file my_array by \author Heather Ratcliffe \date 3/08/2016
 */
 class data_array : public my_array{
 
@@ -58,7 +60,7 @@ public:
   data_array(data_array && src);
   data_array & operator=(const data_array& src);
   bool operator==(const data_array &rhs)const;
-  bool operator!=(const data_array &rhs)const{return !(*this == rhs);}
+  bool operator!=(const data_array &rhs)const{return !(*this == rhs);}/**< See data_array::operator==()*/
 
 /********Helpers for working with data_array ****/
   my_type * disown_axes();

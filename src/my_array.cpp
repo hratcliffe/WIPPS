@@ -431,7 +431,7 @@ my_type my_array::get_element(size_t n_dims, size_t* dims)const{
   }
 }
 my_type my_array::get_element_from_index(size_t ind)const{
-/* \brief Get element by 1-d offset
+/** \brief Get element by 1-d offset
 *
 *Returns the element at index in the 1-D backing array. Ind should be found using one of the get_index options
 */

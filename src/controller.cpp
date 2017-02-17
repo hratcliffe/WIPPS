@@ -123,7 +123,10 @@ void controller::add_d_special(int nx, int n_angs){
 }
 
 void controller::delete_current_spectrum(){
-
+/** \brief Delete the current spectrum object
+*
+*Deletes the current (last added) spectrum and any attached D_coeff
+*/
   if(spect_D_list[current_pair].first) delete spect_D_list[current_pair].first;
   if(spect_D_list[current_pair].second) delete spect_D_list[current_pair].second;
   spect_D_list.resize(spect_D_list.size() -1);

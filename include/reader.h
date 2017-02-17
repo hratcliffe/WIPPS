@@ -24,7 +24,7 @@ class data_array;
 */
 class reader{
 
-  int n_z; /*<*Number of characters in filename's dump number*/
+  int n_z; /**<Number of characters in filename's dump number*/
   int ref_file_num;/**< Number of a file which exists to test dimensions, get reference B value etc*/
 
 /********Filename and file manipulators ****/
@@ -49,7 +49,6 @@ public:
 /********Basic setup and allocation functions ****/
   reader();
   reader(std::string file_prefix_in,  char * block_id_in, int first=0);
-  ~reader(){;}
   
 /********Filename and file manipulators ****/
   void update_ref_filenum(int num);

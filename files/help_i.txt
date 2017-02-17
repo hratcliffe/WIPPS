@@ -1,0 +1,21 @@
+Command line options:
+-h Show help
+-f <string> Prefix for all input files, including directory
+
+-start <int> Starting dump number
+-end <int> Ending dump number
+-rows <int> For accumulated blocks, read no more than this many rows To get an exact number of rows set -end larger than required and set this. No effect for plain blocks
+-block <string> Block id string
+-n <int> Number of space blocks to divide into. This should be divisible by the number of processors used or it will be reduced to be so. If the total number of space points do not divide perfectly, blocks will overlap
+-space <int int> Process one space block between int and int (use with single core only)
+
+-d <int int> Dimension of D to generate (if applicable)
+
+-Finput <string ...> Start from list of FFT files. Names must end in space0_space1.dat and will be sorted by space0
+-Sinput <string ...> Start from list of spectrum files, see -Finput
+
+Sample usage:
+make TYPE=double
+mpiexec -n 4 ./main `<test_pars`
+or:
+./main -f ./Run1/ -start 0 -end 100 -block bz -n 5 -d 100 100

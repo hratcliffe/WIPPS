@@ -64,7 +64,7 @@ LFLAGS = -g
 #The main program
 MAINSOURCE := main.cpp
 #Alternative main's for utility programs
-UTILSSOURCE := cutout.cpp FFT_to_spectrum.cpp compress_distributions.cpp calculate_growth.cpp
+UTILSSOURCE := cutout.cpp FFT_to_spectrum.cpp compress_distributions.cpp calculate_growth.cpp calculate_diffusion.cpp
 ifndef NO_FFT
  UTILSSOURCE += generate_ffts.cpp
 endif

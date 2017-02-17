@@ -50,7 +50,7 @@ public:
 
 /********Basic setup and allocation functions ****/
   non_thermal(std::string file_prefix);
-  ~non_thermal(){if(lookup_data) free(lookup_data);};
+  ~non_thermal();/**<Clean up. Calls clean_lookup() which can be used to do anything needed to cleanup after a lookup function*/
 
 /********Primary interface functions ****/
   calc_type f_p(calc_type p_par, calc_type p_perp);
@@ -84,7 +84,6 @@ calc_type seperable_lookup(calc_type p_par, calc_type p_perp, my_type * data, si
 /* *******Helpers for component functions ****/
 
 std::function<calc_type(calc_type p_par, calc_type p_perp)> configure_lookup(std::string file_prefix,std::string file, non_thermal * my_nonth);
-
-
+void clean_lookup(non_thermal & my_nonth);
 
 #endif

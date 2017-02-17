@@ -214,6 +214,17 @@ non_thermal::non_thermal(std::string file_prefix){
 
 }
 
+non_thermal::~non_thermal(){
+/** \brief Clean up. 
+*
+*
+Calls clean_lookup() which can be used to do anything needed to cleanup after a lookup function
+*/
+
+  clean_lookup(*this);
+
+}
+
 /********Primary interface functions ****/
 calc_type non_thermal::d_f_p(calc_type p_par, calc_type p_perp, bool parallel){
 /** Simple Numerical derivative*/
@@ -461,5 +472,14 @@ std::function<calc_type(calc_type p_par, calc_type p_perp)> configure_lookup(std
   my_nonth->dims[0] = par_sz;
   my_nonth->dims[1] = perp_sz;
   return bound_lookup;
+}
+
+void clean_lookup(non_thermal & my_nonth){
+/** \brief Cleanup lookup configuration
+*
+*Any cleanup from configure_lookup should go here. Currently we free the lookup data pointer in the non_thermal class itself. If configure lookup does anything which allocates memory etc, AND the only references to that memory are in the bound function, then we need to keep some other reference and free it here, or we'll leak.
+*/
+  if(my_nonth.lookup_data) free(my_nonth.lookup_data);
+  
 }
 

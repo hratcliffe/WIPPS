@@ -18,7 +18,6 @@ Call example:
 #include "data_array.h"
 #include "d_coeff.h"
 #include "spectrum.h"
-#include "main_support.h"
 
 deck_constants my_const;/**< Physical constants*/
 extern const mpi_info_struc mpi_info;/**< Link to mpi_info as const*/

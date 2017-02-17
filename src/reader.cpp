@@ -12,7 +12,6 @@
 #include <vector>
 #include <algorithm>
 #include "support.h"
-#include "main_support.h"
 #include "reader.h"
 #include "data_array.h"
 #include "sdf.h"

@@ -14,7 +14,6 @@
 #include <mpi.h>
 #include "tests.h"
 #include "reader.h"
-#include "main_support.h"
 #include "plasma.h"
 #include "controller.h"
 #include "data_array.h"

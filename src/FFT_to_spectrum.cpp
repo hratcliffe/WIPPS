@@ -14,7 +14,6 @@
 #include <stdio.h>
 #include <cstring>
 #include "support.h"
-#include "main_support.h"
 #include "data_array.h"
 #include "controller.h"
 #include "spectrum.h"

@@ -13,8 +13,6 @@
 #include "support.h"
 #include "reader.h"
 #include "data_array.h"
-#include "main_support.h"
-
 
 struct dist_cmd_line{
   bool list;

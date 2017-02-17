@@ -8,8 +8,7 @@ include/my_array.h\
 obj/data_array.o:\
 src/data_array.cpp\
 include/support.h\
-include/main_support.h\
-  include/my_array.h\
+include/my_array.h\
   include/data_array.h\
 
 obj/d_coeff.o:\
@@ -21,6 +20,8 @@ src/d_coeff.cpp\
   include/spectrum.h\
   include/my_array.h\
   include/data_array.h\
+  include/tests.h\
+  include/reader.h\
 
 obj/spectrum.o:\
 src/spectrum.cpp\
@@ -30,6 +31,8 @@ include/support.h\
   include/controller.h\
   include/my_array.h\
   include/data_array.h\
+  include/tests.h\
+  include/reader.h\
 
 obj/plasma.o:\
 src/plasma.cpp\
@@ -43,7 +46,6 @@ src/tests.cpp\
   include/data_array.h\
   include/my_array.h\
   include/reader.h\
-  include/main_support.h\
   include/plasma.h\
   include/controller.h\
   include/spectrum.h\
@@ -53,8 +55,7 @@ src/tests.cpp\
 obj/reader.o:\
 src/reader.cpp\
 include/support.h\
-include/main_support.h\
-  include/reader.h\
+include/reader.h\
   include/data_array.h\
   include/my_array.h\
 
@@ -67,6 +68,8 @@ src/controller.cpp\
   include/d_coeff.h\
   include/spectrum.h\
   include/data_array.h\
+  include/tests.h\
+  include/reader.h\
 
 obj/non_thermal.o:\
 src/non_thermal.cpp\
@@ -75,10 +78,9 @@ src/non_thermal.cpp\
   include/data_array.h\
   include/my_array.h\
 
-obj/main_support.o:\
-src/main_support.cpp\
+obj/support.o:\
+src/support.cpp\
   include/support.h\
-  include/main_support.h\
   include/data_array.h\
   include/my_array.h\
   include/reader.h\
@@ -95,7 +97,6 @@ src/main.cpp\
   include/spectrum.h\
   include/data_array.h\
   include/tests.h\
-  include/main_support.h\
 
 obj/cutout.o:\
 src/cutout.cpp\
@@ -108,17 +109,18 @@ src/cutout.cpp\
   include/controller.h\
   include/plasma.h\
   include/spectrum.h\
-  include/main_support.h\
+  include/tests.h\
 
 obj/FFT_to_spectrum.o:\
 src/FFT_to_spectrum.cpp\
 include/support.h\
-  include/main_support.h\
   include/data_array.h\
   include/my_array.h\
   include/controller.h\
   include/plasma.h\
   include/spectrum.h\
+  include/tests.h\
+  include/reader.h\
 
 obj/compress_distributions.o:\
 src/compress_distributions.cpp\
@@ -127,17 +129,17 @@ include/main.h\
   include/reader.h\
   include/data_array.h\
   include/my_array.h\
-  include/main_support.h\
 
 obj/calculate_growth.o:\
 src/calculate_growth.cpp\
   include/support.h\
-  include/main_support.h\
   include/plasma.h\
   include/my_array.h\
   include/spectrum.h\
   include/controller.h\
   include/data_array.h\
+  include/tests.h\
+  include/reader.h\
   include/non_thermal.h\
 
 obj/generate_ffts.o:\
@@ -151,4 +153,4 @@ src/generate_ffts.cpp\
   include/my_array.h\
   include/d_coeff.h\
   include/spectrum.h\
-  include/main_support.h\
+  include/tests.h\

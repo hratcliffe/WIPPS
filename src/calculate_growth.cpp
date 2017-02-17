@@ -16,7 +16,6 @@
 #include <complex.h>
 
 #include "support.h"
-#include "main_support.h"
 #include "plasma.h"
 #include "my_array.h"
 #include "spectrum.h"

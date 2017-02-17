@@ -15,7 +15,6 @@
 #include <cstdlib>
 
 #include "support.h"
-#include "main_support.h"
 #include "data_array.h"
 #include "reader.h"
 

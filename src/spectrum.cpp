@@ -15,9 +15,6 @@
 #include "plasma.h"
 #include "spectrum.h"
 
-extern deck_constants my_const;
-extern const mpi_info_struc mpi_info;
-
 /********Basic setup and allocation functions ****/
 void spectrum::construct(){
 /** \brief Generic spectrum contruction actions

@@ -28,9 +28,6 @@
 #include "d_coeff.h"
 #include "spectrum.h"
 
-deck_constants my_const;/**< Physical constants*/
-extern const mpi_info_struc mpi_info;/**< Link to mpi_info as const*/
-
 struct gen_cmd_line{
   int flat_dim;
   bool flat_fft;

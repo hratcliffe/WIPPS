@@ -34,8 +34,17 @@
 #include "spectrum.h"
 #include "tests.h"
 
-deck_constants my_const;/**< Physical constants*/
-extern const mpi_info_struc mpi_info;/**< Link to mpi_info as const*/
+/** \defgroup utils Utility programs
+*@{ */
+
+/** \defgroup diff_util Diffusion calculation utility
+*@{
+*\brief Utility to calculate a particle diffusion coefficient
+*
+*Calculates a particle diffusion coefficient from given data, in the form of sdf files, ffts or spectrum files. The latter can be created by the generate_ffts and FFT_to_spectrum utils. The resulting particle diffusion coefficient are calculated using Lyons 1974 a, b, Albert 2005 and such. Note that this makes no sense for E fields!
+* Depends on the SDF file libraries, the FFTW library, and boost's math for special functions. A set of test arguments is supplied. Call using ./calculate_diffusion `<test_pars` to use these. Or try ./calculate_diffusion -h for argument help
+  \author Heather Ratcliffe \date 17/02/2017
+*/
 
 int main(int argc, char *argv[]){
 

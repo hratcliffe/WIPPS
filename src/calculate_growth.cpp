@@ -35,9 +35,6 @@
 
 const int n_trials = 2000;/**< Number of data points for analytic growth (if no real data supplied)*/
 
-deck_constants my_const;/**< Physical constants*/
-extern const mpi_info_struc mpi_info;
-
 struct g_args{
 
   bool real;/**<Whether to derive real growth from spectra list too*/

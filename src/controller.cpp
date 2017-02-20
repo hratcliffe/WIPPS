@@ -16,10 +16,6 @@
 #include "spectrum.h"
 #include "my_array.h"
 
-
-extern deck_constants my_const;
-extern const mpi_info_struc mpi_info;
-
 /********Basic setup functions ****/
 controller::controller(std::string file_prefix){
 /** \brief Setup

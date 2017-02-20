@@ -20,8 +20,6 @@
 #include "my_array.h"
 #include "data_array.h"
 
-extern const mpi_info_struc mpi_info;
-
 /********Basic setup and allocation functions ****/
 
 my_array::my_array(){

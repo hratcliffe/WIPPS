@@ -18,10 +18,9 @@
 #include "data_array.h"
 #include "reader.h"
 
-mpi_info_struc mpi_info = mpi_info_null;/**< MPI data Not const as defined from output of MPI_Init. Use "extern const mpi_info_struc mpi_info;
-" to access elsewhere. This may be terrible, but this doesn't warrant a class, really, come on.*/
+mpi_info_struc mpi_info = mpi_info_null;/**< Global mpi_info structure*/
 
-extern deck_constants my_const;
+deck_constants my_const;/**< Global deck_constants*/
 
 //----------- SPECIFIC HELPER FUNCTIONS -------------
 

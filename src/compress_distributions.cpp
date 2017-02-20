@@ -20,7 +20,6 @@ struct dist_cmd_line{
   int dump;
   int blocks;
 };
-deck_constants my_const;/**< Physical constants*/
 
 dist_cmd_line special_command_line(int argc, char *argv[]);
 

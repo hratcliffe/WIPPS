@@ -19,9 +19,6 @@ Call example:
 #include "d_coeff.h"
 #include "spectrum.h"
 
-deck_constants my_const;/**< Physical constants*/
-extern const mpi_info_struc mpi_info;/**< Link to mpi_info as const*/
-
 struct cutout_args{
 
   std::string file_in;

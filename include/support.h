@@ -144,6 +144,7 @@ struct deck_constants{
   float dens_factor;
   
 };
+extern deck_constants my_const;
 
 /** \brief MPI information
 *
@@ -156,6 +157,8 @@ struct mpi_info_struc{
 };
 
 const struct mpi_info_struc mpi_info_null = {0, -1};/**< Null MPI struct for single threaded jobs, without having to compile the SDF libraries seperately*/
+
+extern mpi_info_struc mpi_info;
 
 /** \brief Full refractive index
 *

@@ -17,9 +17,6 @@
 #include "sdf.h"
 #include <mpi.h>
 
-
-extern const mpi_info_struc mpi_info;
-
 /********Basic setup and allocation functions ****/
 
 reader::reader(){

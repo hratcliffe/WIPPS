@@ -9,10 +9,6 @@
 #include "support.h"
 #include "d_coeff.h"
 
-extern const mpi_info_struc mpi_info;
-
-extern deck_constants my_const;
-
 diffusion_coeff::diffusion_coeff(int nx, int n_angs):data_array(nx, n_angs){
 /** \brief Create coefficient
 *

@@ -11,9 +11,6 @@
 #include <boost/math/special_functions/sign.hpp>
 #include "plasma.h"
 
-extern deck_constants my_const;
-extern const mpi_info_struc mpi_info;
-
 /********Basic setup and allocation functions ****/
 plasma::plasma(std::string file_prefix, my_type Bx_local){
 /** \brief Set up plasma

@@ -13,9 +13,6 @@
 #include "non_thermal.h"
 #include "data_array.h"
 
-extern deck_constants my_const;
-extern const mpi_info_struc mpi_info;
-
 /********Basic setup and allocation functions ****/
 bool non_thermal::configure_from_file(std::string file_prefix){
 /** \brief Setup non-thermal distribution from file

@@ -18,9 +18,6 @@
 #include "controller.h"
 #include "spectrum.h"
 
-extern const mpi_info_struc mpi_info;/**< Link to mpi_info as const*/
-deck_constants my_const;/**< Physical constants*/
-
 /** \defgroup utils Utility programs
 *@{ */
 

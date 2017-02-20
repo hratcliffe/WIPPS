@@ -1,9 +1,3 @@
-/** \file calculate_growth.cpp \brief Helper program to get expected and/or actual growth rates of waves
-*
-* Can take derived spectrum files, extract the approximate wave growth rates (peak or integrated) (assumes spectra are in time-order and all have the same axes) and output these, plus a theoretical rate, OR just the theoretical rate. In former case we use the last files axes, in latter we use a wide coverage log axis with n_trials elements. Parameters are obtained as in Main, so requires a plasma.conf file and deck.status file. Output uses same format as our arrays etc A set of test arguments is supplied. Supply a file containing paths to spectra to use, in order. Paths should be relative to given -f parameter Call using ./calculate_growth `<growth_test_pars` to use these. Or try ./calculate_growth -h 
-  \author Heather Ratcliffe \date 11/02/2016.
-*/
-
 
 #include <math.h>
 #include <cmath>
@@ -34,13 +28,15 @@
 *@{ 
 *\brief Utility to calculate growth rates
 *
-* Calculates analytical growth rate using electron distribution specified in <path>nonthermal.conf and if requested also calculates linear growth from a series of spectrum files
+* Calculates analytical growth rate using electron distribution specified in <path>nonthermal.conf and if requested also calculates linear growth from a series of spectrum files. These must be in time-order and all have the same axes. The analytics growth rates use the axes as in spectrum files, if supplied, or a wide coverage log axis with n_trials elements otherwise. We use plasma.conf and deck.status files for configuration, and a nonthermal.conf file to create the non-thermal electron distribution. See non_thermal. A set of test arguments is supplied. Call using \code ./calculate_growth `<growth_test_pars` \endcode to use these. Or try \code ./calculate_growth -h \endcode
+  \author Heather Ratcliffe \date 11/02/2016.
+
 */
 
-const int n_trials = 2000;/**< Number of data points for analytic (if no real data)*/
+const int n_trials = 2000;/**< Number of data points for analytic growth (if no real data supplied)*/
 
 deck_constants my_const;/**< Physical constants*/
-extern const mpi_info_struc mpi_info;/**< Link to mpi_info as const*/
+extern const mpi_info_struc mpi_info;
 
 struct g_args{
 
@@ -79,9 +75,9 @@ int main(int argc, char *argv[]){
   g_args extra_args = g_command_line(argc, argv);
   setup_args cmd_line_args = process_command_line(argc, argv);
 
+  //Get constants from deck and share to other procs*/
   if(mpi_info.rank == 0) get_deck_constants(cmd_line_args.file_prefix);
   share_consts();
-  /** Get constants from deck and share to other procs*/
 
   // Setup output file
   std::string filename = cmd_line_args.file_prefix + extra_args.outfile;
@@ -90,7 +86,6 @@ int main(int argc, char *argv[]){
   if(!file.is_open()) return 1;
 
   //Setup other things we need
-//  plasma * my_plas = new plasma(cmd_line_args.file_prefix);
   controller * contr = new controller(cmd_line_args.file_prefix);
   plasma my_plas = contr->get_plasma();
   data_array numeric_data, analytic_data;
@@ -103,12 +98,11 @@ int main(int argc, char *argv[]){
     if(filelist.size() >= 1){
       contr->add_spectrum(cmd_line_args.file_prefix+ filelist[0]);
       spectrum * my_spect = contr->get_current_spectrum();
-      //new spectrum(cmd_line_args.file_prefix+ filelist[0]);
       if(my_spect->get_B_dims() < 1){
       //Wrap in quotes so we highlight stray trailing whitespace etc
         my_error_print("Invalid or missing spectrum file '"+cmd_line_args.file_prefix+filelist[0]+"'");
       }
-      //We read spetra which may be either E or B, so call it F
+      //We read spectra which may be either E or B, so call it F
       data_array F_prev, F_curr;
       //Read and ln F for 0th step
       std::function<calc_type(calc_type)> log_function = [](calc_type el) -> calc_type { return log(el); } ;
@@ -120,11 +114,7 @@ int main(int argc, char *argv[]){
         if(i > 0) my_print("Differencing "+filelist[i-1]+" and "+filelist[i]);
         else my_print("Differencing noise estimate and "+filelist[i]);
         contr->delete_current_spectrum();
-
-        //delete my_spect;
         contr->add_spectrum(cmd_line_args.file_prefix+ filelist[i]);
-
-//        my_spect = new spectrum(cmd_line_args.file_prefix+filelist[i]);
         if(my_spect->get_B_dims() < 1){
           my_error_print("Invalid or missing spectrum file '"+cmd_line_args.file_prefix+filelist[i]+"'");
           continue;
@@ -145,7 +135,6 @@ int main(int argc, char *argv[]){
 
         }else{
         //We need some sort of estimate of the spectrum "noise" to eliminate this in the first file. Then we assume F(t_0) = ref_val. Perhaps should average raw not logged, but this will do.
-//          calc_type ref_val = (F_prev.get_element(6) + F_prev.get_element(7))/2.0;
           calc_type ref_val = estimate_spectrum_noise(*my_spect);
           ref_val = log_function(ref_val);
           my_print("Noise estimate: "+mk_str(ref_val));
@@ -160,7 +149,6 @@ int main(int argc, char *argv[]){
 
         F_prev = F_curr;
       }
-//      delete my_spect;
         contr->delete_current_spectrum();
     }else{
       my_error_print("Empty or missing spectrum file '"+cmd_line_args.file_prefix+extra_args.spect_file+"'", mpi_info.rank);
@@ -174,6 +162,7 @@ int main(int argc, char *argv[]){
   non_thermal * my_elec = new non_thermal(cmd_line_args.file_prefix);
   if(my_elec->get_norely()) my_print("Selected non relativistic calculation", mpi_info.rank);
 
+  //Number of momenta for integrals
   const size_t n_momenta = 10000;
   calc_type * p_axis;
   calc_type min_v = 0.0, max_v = 0.99;
@@ -229,16 +218,18 @@ int main(int argc, char *argv[]){
 }
 
 calc_type get_growth_rate(plasma * my_plas, non_thermal * my_elec, int n_momenta, calc_type * p_axis, calc_type omega_in){
+/** \brief Calculate growth rate
+*
+*Calculates the analytical growth rate at omega_in by integrating on p_axis, using supplied plasma and non_thermal distributions.
+*/
 
   omega_in = std::abs(omega_in);
   calc_type k = my_plas->get_dispersion(omega_in, WAVE_WHISTLER, 1);
 
   calc_type ck_om = v0*k/omega_in, om_ce = std::abs(my_plas->get_omega_ref("ce")), om_pe = std::abs(my_plas->get_omega_ref("pe")), om_diff = omega_in - om_ce;
-  //This corrects omega_pe to match the fast electrons we're using, which may not match the deck exactly
+  //This corrects omega_pe to match the fast electrons we're using, which may contain extra components
   om_pe = om_pe*std::sqrt(my_elec->get_total_dens()/my_const.dens_factor);
   
-  //Calculate k using Eq 9 of Xiao  k_paper = std::sqrt( (std::pow(omega_in, 2) - std::pow(om_pe, 2)*omega_in/om_diff)/std::pow(v0, 2));
-
   calc_type S_tot=0.0, S_full_tot=0.0, A_crit, A_rel, eta_rel;
   calc_type  *S, *S_full, * dp_ax;
   calc_type gamma, p_res, Delta_res, v_res;
@@ -249,9 +240,6 @@ calc_type get_growth_rate(plasma * my_plas, non_thermal * my_elec, int n_momenta
   dp_ax = (calc_type *)malloc(n_momenta*sizeof(calc_type));
 
   v_res = om_diff/k;
-  
-  //Get RMS momenta from velocities...
-  // a_x = RMS p_x (Note factor of 2 in perp, not in par...)
   
   for(int j=0; j< n_momenta; ++j){
   
@@ -313,28 +301,33 @@ calc_type get_growth_rate(plasma * my_plas, non_thermal * my_elec, int n_momenta
 
 
 calc_type * make_momentum_axis(int n_mom, calc_type v_max){
+/** \brief Create a momentum axis
+*
+* Creates linear axis from 0 to v_max*v0 with n_mom elements
+*/
 
-  //Max velocity to consider norm'd to c
-  calc_type dp = v_max * v0/ (calc_type) (n_mom - 1)/std::sqrt(1.0- v_max*v_max);
   //Momentum step size, including gamma
+  calc_type dp = v_max * v0/ (calc_type) (n_mom - 1)/std::sqrt(1.0- v_max*v_max);
 
+  //Allocate memory
   calc_type * p_axis;
   p_axis = (calc_type*) malloc(n_mom*sizeof(calc_type));
   if(!p_axis) return nullptr;
 
   p_axis[0] = 0.0;
+  //Set momenta from 0 to v_max.
   for(int i=1; i< n_mom; ++i) p_axis[i] = p_axis[i-1] + dp;
-  //Set momenta from 0 to v_max. Do this once.
-  if( std::abs(p_axis[n_mom-1] -  (v_max * v0/ std::sqrt(1.0- v_max*v_max)))> 1e-3) my_error_print("Momentum axis error of "+mk_str(std::abs(p_axis[n_mom-1] -  (v_max * v0/ std::sqrt(1.0- v_max*v_max)))), mpi_info.rank);
+  //Check for clipping errors in dp
+  if(std::abs(p_axis[n_mom-1] -  (v_max * v0/ std::sqrt(1.0 - v_max*v_max)))> 1e-3) my_error_print("Momentum axis error of "+mk_str(std::abs(p_axis[n_mom-1] -  (v_max * v0/ std::sqrt(1.0- v_max*v_max)))), mpi_info.rank);
   
   return p_axis;
 
 }
 
 std::vector<std::string> read_filelist(std::string infile){
-/** Read file
+/** Read list from file
 *
-*Reads a list of strings from given infile
+*Reads a list of strings from given infile, omitting blanks
 */
   std::cout<<infile<<'\n';
   std::ifstream file;
@@ -353,8 +346,9 @@ std::vector<std::string> read_filelist(std::string infile){
 }
 
 g_args g_command_line(int argc, char * argv[]){
-/** Check whether to handle real spectra. If -s we use the spectra (plural) listed in that file, if not we output analytic only*/
-/** \todo -spec is not an error??? Nor is -in*/
+/** \brief Process the extra command line args for calculate_growth
+*
+*Check whether to handle real spectra. If -s we use the spectra (plural) listed in that file, if not we output analytic growth only. -out specifies the output file name. Use in conjunction with process_command_line for the rest */
   g_args extra_cmd_line;
 
   extra_cmd_line.real = false;
@@ -386,7 +380,10 @@ g_args g_command_line(int argc, char * argv[]){
 }
 
 bool write_growth_closer(std::string in_file, size_t n_momenta, calc_type min_v, calc_type max_v, std::fstream &file){
-  /** Write the general parameters as a file footer with offsets*/
+/** \brief Close growth rate file
+*
+* Write the general parameters to specified file, including the file-location markers.
+*/
   
   
   size_t ftr_start = file.tellg();
@@ -412,9 +409,12 @@ bool write_growth_closer(std::string in_file, size_t n_momenta, calc_type min_v,
 }
 
 void dump_distrib(non_thermal * my_elec, std::string filename){
-  //Write out a table of the current non_thermal distribution
+/** \brief Write out non_thermal distribution
+*
+* Write out a table of the current non_thermal distribution. Writes fixed number of elements between fixed bounds. Used for testing
+*/
   
-  size_t x_len = 500, y_len=500;
+  size_t x_len = 500, y_len = 500;
   my_type x_ax_max = 0.99*v0, y_ax_max = 0.99*v0;
   std::string block_id = "nonth";
 
@@ -426,7 +426,6 @@ void dump_distrib(non_thermal * my_elec, std::string filename){
   
   for(size_t i=0; i< x_len; i++){
     for(size_t j=0; j< y_len; j++){
-   // std::cout<<i<<' '<<j<<' '<<created_array.get_axis_element(0, i)<<' '<< created_array.get_axis_element(1, j)<<'\n';
       created_array.set_element(i, j, my_elec->f_p(created_array.get_axis_element(0, i), created_array.get_axis_element(1, j)));
     }
   }
@@ -436,7 +435,7 @@ void dump_distrib(non_thermal * my_elec, std::string filename){
 }
 
 calc_type estimate_spectrum_noise(spectrum & spec_in){
-/** Estimates the "noise" in a given spectrum. 
+/** \brief Estimates the "noise" in a given spectrum.
 *
 * There are many ways we might do this, using varying amounts of additional information about the "spectrum". Averaging the end values works poorly. Averaging the largest two values that are greater than something? Fit a straight line to the 0.8 to 1 region?
 */

@@ -177,6 +177,7 @@ FFT_spect_args FFT_spect_process_command_line(int argc, char *argv[]){
     }
   }
   if(values.file_out == "" && values.file_in != "") values.file_out = append_into_string(values.file_in, "_spectrum");
+  //catch accidental overwriting request
   if(values.file_out == values.file_in) values.file_out = append_into_string(values.file_in, "_spectrum");
   if(values.smth < 0) values.smth = 0;
   return values;

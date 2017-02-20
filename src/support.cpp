@@ -263,7 +263,7 @@ setup_args process_command_line(int argc, char *argv[]){
       while(i<argc-1 && argv[i+1][0]!= '-') i++;
       if(tmp -i >= 1 ) i--;
     }
-    else if(!(strlen(argv[i]) > 0) && argv[i][0] ==HANDLED_ARG[0]) std::cout<<"UNKNOWN OPTION " <<argv[i]<<'\n';
+    else if(!((strlen(argv[i]) > 0) && argv[i][0] == HANDLED_ARG[0])) std::cout<<"UNKNOWN OPTION " <<argv[i]<<'\n';
 
   }
 
@@ -645,7 +645,9 @@ std::string append_into_string(const std::string &in, const std::string &infix){
 *
 *Inserts the infix string into in BEFORE the last file extension. If no '.' is found in string, append to end. First char being . is not an extension.
 */
-  size_t start = in.substr(1, in.size()).find_last_of('.') +1;
+  size_t start = 0;
+  if(in.size() > 0) start = in.substr(1, in.size()).find_last_of('.') +1;
+
   std::string in_copy = in;
   if(start !=std::string::npos){
     in_copy.insert(start, infix);

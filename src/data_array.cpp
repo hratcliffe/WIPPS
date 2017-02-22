@@ -717,7 +717,7 @@ data_array data_array::total(size_t dim){
   if(dim >= this->n_dims) return data_array();
 
   //Uses total with ranging, passing end values to capture entire range
-  return this->total(dim, (size_t) 0, this->get_dims(dim)-1);
+  return this->total(dim, (size_t) 0, this->get_dims(dim));
 
 }
 
@@ -734,7 +734,7 @@ data_array data_array::total(size_t dim, my_type min, my_type max){
   my_type * ax_start = get_axis(dim, len);
   if(ax_start){
     //Start with indices set to ends of axis
-    size_t min_ind = 0, max_ind = this->get_dims(dim)-1;
+    size_t min_ind = 0, max_ind = this->get_dims(dim);
     //Lookup provided range and update indices if within axis range
     int where_val = -1;
     where_val = where(ax_start, len, min);
@@ -753,7 +753,7 @@ data_array data_array::total(size_t dim, size_t min_ind, size_t max_ind){
 
 /** \brief Total along dim dim
 *
-*Returns a new array of rank this->n_dims -1, containing data summed between index values of min_ind and max_ind on dimension dim. If dim is out of range, empty array is returned
+*Returns a new array of rank this->n_dims -1, containing data summed between index values of min_ind and max_ind on dimension dim. If dim is out of range, empty array is returned. Totalling a 1-d array gives a 1-element array
 */
 
   //No dimension to total, return empty array
@@ -762,7 +762,7 @@ data_array data_array::total(size_t dim, size_t min_ind, size_t max_ind){
   //Adjust indices to be within range
   //If min is big we've probably got an overflow...
   if(min_ind >= get_dims(dim)) min_ind = 0;
-  if(max_ind >= get_dims(dim)) max_ind = get_dims(dim)-1;
+  if(max_ind >= get_dims(dim)) max_ind = get_dims(dim);
   
   //Create array of the sizes after totalling
   size_t * new_dims;
@@ -776,18 +776,31 @@ data_array data_array::total(size_t dim, size_t min_ind, size_t max_ind){
   }
 
   //Create the new, smaller, array
-  data_array new_array = data_array(this->n_dims-1, new_dims);
-
+  size_t new_n_dims = 0;
+  data_array new_array;
+  if(this->n_dims > 1){
+    new_n_dims = this->n_dims - 1;
+    new_array = data_array(new_n_dims, new_dims);
+  }
+  else{
+    //Return 1-element array rather than actual scalar
+    new_dims = (size_t *) malloc(sizeof(size_t));
+    new_dims[0] = 1;
+    new_n_dims = 1;
+    new_array = data_array(new_n_dims, new_dims);
+  }
   //Flatten the actual data
   flatten_fortran_slice(this->data, new_array.data, this->n_dims, this->dims, dim, min_ind, max_ind);
-  
   //Copy axes and ids
   my_type * ax_new;
   size_t len2, len;
-  for(size_t i=0, i2=0; i2< n_dims -1; i++, i2++ ){
-    if(i == dim) i++;
-    ax_new = new_array.get_axis(i2, len);
-    std::copy(this->get_axis(i, len2),this->get_axis(i, len2)+len, ax_new);
+  //One element array has no axes
+  if(this->n_dims > 1){
+    for(size_t i=0, i2=0; i2< new_n_dims; i++, i2++ ){
+      if(i == dim) i++;
+      ax_new = new_array.get_axis(i2, len);
+      std::copy(this->get_axis(i, len2),this->get_axis(i, len2)+len, ax_new);
+    }
   }
   new_array.copy_ids(*this);
 

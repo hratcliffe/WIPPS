@@ -204,6 +204,7 @@ class test_entity_spectrum : public test_entity{
     int basic_tests1();
     int basic_tests2();
     int albertGs_tests();
+    int technical_tests();
 
   public:
     test_entity_spectrum();
@@ -256,6 +257,7 @@ class test_entity_bounce: public test_entity{
     virtual int run();
 };
 
+/** Test non-thermal electron specification*/
 class test_entity_nonthermal: public test_entity{
   private:
     int test_lookup();

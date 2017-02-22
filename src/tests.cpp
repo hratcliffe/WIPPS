@@ -12,6 +12,7 @@
 #include <math.h>
 #include <cmath>
 #include <mpi.h>
+#include <functional>
 #include "tests.h"
 #include "reader.h"
 #include "plasma.h"
@@ -265,7 +266,9 @@ bool tests::run_tests(){
 
   int total_errs = 0;
   for(current_test_id=0; current_test_id< (int)test_list.size(); current_test_id++){
-    total_errs += (bool) test_list[current_test_id]->run();
+    int err = test_list[current_test_id]->run();
+    report_err(err);
+    total_errs += (bool) err;
     //Add one if is any error returned
   }
   this->set_colour('*');
@@ -283,9 +286,7 @@ test_entity_reader::test_entity_reader(){
   char block_id[ID_SIZE]= "run_info";
   test_rdr = new reader("./files/test", block_id);
   char block_id2[ID_SIZE] = "ax";
-
   accum_reader = new reader("./files/accum", block_id2);
-  
 }
 test_entity_reader::~test_entity_reader(){
 
@@ -302,65 +303,44 @@ int test_entity_reader::run(){
   
   int sz = test_rdr->get_file_size();
   if(sz != size) err |= TEST_WRONG_RESULT;
-  int rd_err;
   size_t n_dims;
   std::vector<size_t> dims;
-  rd_err = accum_reader->read_dims(n_dims, dims);
-  size_t time[3]={0,10, 40};
-  size_t space[2]={0, dims[0]};
 
-  if(!rd_err){
-    
-    data_array dat = data_array(dims[0], 40);
-    //We know there are at most ten rows per accumulate in our test file and 4 files
-    rd_err = accum_reader->read_data(dat, time, space);
-    size_t a, b;
-    if(rd_err!=1){
-       //Test data should have row 0 =0, row 1=2 (generation procedure does this, row 3=1, 4=2 through to 9, then begin again at 1 through 10, 1 through 10.
-       //Check some selection of elements and sum errs. Note all test entries are whole ints
-       int tot_errs=0;
+  int rd_err = accum_reader->read_dims(n_dims, dims);
+  if(rd_err){
+    //Nothing else to do now
+    err |=TEST_NULL_RESULT;
+    test_bed->report_info("Error reading test files", 1);
+    return err;
+  }
+  rd_err = 0;
 
-       //Check a few selected rows are right...
-       a=0;
-       b=0;
-       tot_errs += !(dat.get_element(a,b) == 0.0);
-       b=1;
-       tot_errs += !(dat.get_element(a,b) == 2.0);
-       b=2;
-       tot_errs += !(dat.get_element(a,b) == 1.0);
-       b=10;
-       tot_errs += !(dat.get_element(a,b) == 9.0);
-       b=11;
-       tot_errs += !(dat.get_element(a,b) == 1.0);
-      
-       //Check both ends of a few rows for off by ones etc
-       int rows[3] = {1,10,11};
-       for(int i = 0; i<3; i++ ){
-         tot_errs += !(dat.get_element(0,rows[i]) == dat.get_element(1,rows[i]));
-         tot_errs += !(dat.get_element(0,rows[i]) == dat.get_element(399,rows[i]));
-         tot_errs += !(dat.get_element(0,rows[i]) == dat.get_element(200,rows[i]));
+  //Read some accumulated data and check it matches known values
+  size_t time[3] = {0,10, 22};
+  size_t space[2] = {0, dims[0]};
+  data_array dat = data_array(dims[0], 40);
 
-       }
-       
-       if(tot_errs != 0){
-         err |=TEST_WRONG_RESULT;
-         test_bed->report_info("Error reading accumulated data", 1);
-       }
-
-    }else{
-      err |=TEST_NULL_RESULT;
-      test_bed->report_info("Error reading test files", 1);
+  rd_err = accum_reader->read_data(dat, time, space);
+  test_bed->report_info("Reader returned "+mk_str(rd_err), 2);
+  //rd_err of 2 means early stop but that is not a problem here
+  if(rd_err!=1){
+    //Test data should have row0=0, row1=2 (generation procedure does this, row3=1, 4=2 through to 9, then begin again at 1 through 10, 1 through 10.
+    int row_vals[22] = {0, 2, 1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 1};
+    int tot_errs = 0;
+    for(size_t j = 0; j< dat.get_dims(1); j++){
+      for(size_t i = 0; i< dat.get_dims(0); i++){
+        tot_errs += (dat.get_element(i, j) != row_vals[j]);
+      }
     }
-    
+    if(tot_errs != 0){
+      err |=TEST_WRONG_RESULT;
+      test_bed->report_info("Error reading accumulated data", 1);
+    }
   }else{
     err |=TEST_NULL_RESULT;
     test_bed->report_info("Error reading test files", 1);
-
   }
-
-  test_bed->report_err(err);
   return err;
-
 }
 
 //----------------------------------------------------------------
@@ -435,7 +415,6 @@ int test_entity_data_array::run(){
   err |= three_d_and_shift();
   if(test_bed->check_for_abort(err)) return err;
   err |= io_tests();
-  test_bed->report_err(err);
   return err;
 }
 
@@ -569,34 +548,11 @@ int test_entity_data_array::basic_tests(){
   
   test_array = data_array(10, 10);
   set_vals();
-  
-  //Test subtraction
-  //Difference identical arrays and compare to 0-array. Also tests zero_data function
-  test_array2 = test_array;
-  data_array empty_array = test_array2;
-  empty_array.zero_data();
-  test_array2.subtract(test_array);
-  
-  if(test_array2 != empty_array){
-    err |= TEST_WRONG_RESULT;
-    test_bed->report_info("Subtractor error on first test", 1);
-  }
-  //Inverse check, this should fail to match, else our subtraction is nullifying stuff
-  test_array2 = test_array;
-  test_array2.set_element(test_array2.get_dims(0)/2, (size_t)0, -23.0);
-  test_array2.subtract(test_array);
-  
-  if(test_array2 == empty_array){
-    err |= TEST_WRONG_RESULT;
-    test_bed->report_info("Subtractor error on second test", 1);
-  }
-  
-  //Test apply with simple +1 and log of constant values
+
+  //Test element-wise apply with simple +1 and log of constant values
   std::function<calc_type(calc_type)> plus1_function = [](calc_type el) -> calc_type { return el+1.0; } ;
 
-  test_array.resize(1, 1, true);
   av = test_array.avval();
-
   test_array.apply(plus1_function);
   expected_av = av + 1.0;
   av = test_array.avval();
@@ -618,6 +574,40 @@ int test_entity_data_array::basic_tests(){
     err |= TEST_WRONG_RESULT;
     test_bed->report_info("Apply function error", 1);
   }
+  //Test apply from one array to another
+  test_array2.clone_empty(test_array);
+  expected_av = test_array.avval() + 1.0;
+  test_array2.apply(plus1_function, test_array);
+  av = test_array2.avval();
+  if(av != expected_av){
+    err |= TEST_WRONG_RESULT;
+    test_bed->report_info("Apply with array error", 1);
+  }
+  
+  test_array = data_array(10, 10);
+  set_vals();
+  
+  //Test apply cross array using subtracting
+  //Difference identical arrays and compare to 0-array. Also tests zero_data function
+  test_array2 = test_array;
+  data_array empty_array = test_array2;
+  empty_array.zero_data();
+  test_array2.apply(subtract, test_array);
+  
+  if(test_array2 != empty_array){
+    err |= TEST_WRONG_RESULT;
+    test_bed->report_info("Subtractor error on first test", 1);
+  }
+  //Inverse check, this should fail to match, else our subtraction is nullifying stuff
+  test_array2 = test_array;
+  test_array2.set_element(test_array2.get_dims(0)/2, (size_t)0, -23.0);
+  test_array2.apply(subtract, test_array);
+  
+  if(test_array2 == empty_array){
+    err |= TEST_WRONG_RESULT;
+    test_bed->report_info("Subtractor error on second test", 1);
+  }
+  
   if(err == TEST_PASSED) test_bed->report_info("Basic tests OK");
   return err;
 }
@@ -790,9 +780,7 @@ int test_entity_get_and_fft::run(){
   test_rdr = new reader("./files/sinAcc", block_id);
   err|= two_d();
 
-  test_bed->report_err(err);
   return err;
-
 }
 
 int test_entity_get_and_fft::one_d(){
@@ -928,8 +916,6 @@ int test_entity_get_and_fft::two_d(){
   if(n_dims !=1){
     err |= TEST_WRONG_RESULT;
     test_bed->report_info("Array dims wrong", 1);
-    test_bed->report_err(err);
-
     return err;
     //nothing more worth doing right now...
   }
@@ -1227,8 +1213,6 @@ int test_entity_basic_maths::run(){
 }
   
   if(err == TEST_PASSED) test_bed->report_info("Flattener OK", 1);
-
-  test_bed->report_err(err);
   return err;
 
 }
@@ -1290,10 +1274,7 @@ int test_entity_extern_maths::run(){
   if(std::abs(bess - 0.7651976865579665514497) >PRECISION) err|= TEST_WRONG_RESULT;
   if(err == TEST_PASSED) test_bed->report_info("Bessel functions OK", 1);
 
-  test_bed->report_err(err);
-
   return err;
-
 }
 //----------------------------------------------------------------
 
@@ -1321,9 +1302,7 @@ int test_entity_plasma::run(){
   err |= other_modes();
   err |= phi_dom();
 
-  test_bed->report_err(err);
   return err;
-
 }
 
 int test_entity_plasma::analytic_dispersion(){
@@ -1778,8 +1757,6 @@ int test_entity_spectrum::run(){
   if(!test_bed->check_for_abort(err)) err|= basic_tests2();
   if(!test_bed->check_for_abort(err)) err|= albertGs_tests();
   
-  test_bed->report_err(err);
-
   my_const = const_tmp;
   share_consts();
 
@@ -1817,6 +1794,9 @@ int test_entity_spectrum::basic_tests1(){
   my_type total_error =0.0;
   my_type * d_angle, * angle_data;
 
+  test_contr->add_spectrum(test_dat_fft.get_dims(0), DEFAULT_N_ANG, true);
+  //Delete and re-add to test that
+  test_contr->delete_current_spectrum();
   test_contr->add_spectrum(test_dat_fft.get_dims(0), DEFAULT_N_ANG, true);
 
   /** Check this test spectrum makes sense \todo HOW????*/
@@ -1917,7 +1897,7 @@ int test_entity_spectrum::basic_tests2(){
   if(err2) err |= TEST_ASSERT_FAIL;
   else{
     data_array new_B = test_contr->get_current_spectrum()->copy_out_B();
-    if(!old_B.is_good() || !new_B.is_good() || compare_2d(old_B, new_B)){
+    if(!old_B.is_good() || !new_B.is_good() || (old_B != new_B)){
       test_bed->report_info("Error or Mismatch in read", 0);
       err|= TEST_WRONG_RESULT;
     }
@@ -1925,7 +1905,9 @@ int test_entity_spectrum::basic_tests2(){
   return err;
 
 }
+int test_entity_spectrum::technical_tests(){
 
+}
 int test_entity_spectrum::albertGs_tests(){
 /** \brief Tests of the Albert G functions in spectrum. Also tests the normalisations on the way. NOTE: since we're comparing the values of an analytic function with a numerical integral, we can get mismatches at the cutoffs. More points should help this. If that doesn't there may be something wrong.
 *
@@ -2067,10 +2049,7 @@ int test_entity_levelone::run(){
 
   }
   
-  test_bed->report_err(err);
-
   return err;
-
 }
 
 int test_entity_levelone::setup(){
@@ -2396,10 +2375,7 @@ int test_entity_d::run(){
   my_const = const_tmp;
   share_consts();
 
-  test_bed->report_err(err);
-
   return err;
-  
 }
 
 //----------------------------------------------------------------
@@ -2484,9 +2460,7 @@ int test_entity_nonthermal::run(){
   if(err == TEST_PASSED) test_bed->report_info("Nonthermal values OK",1);
   
   err |= test_lookup();
-  test_bed->report_err(err);
   return err;
-
 }
 
 int test_entity_nonthermal::test_lookup(){

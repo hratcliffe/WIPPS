@@ -854,7 +854,6 @@ data_array data_array::average(size_t dim, size_t min_ind, size_t max_ind){
   if(max_ind >= this->get_dims(dim)) max_ind = this->get_dims(dim)-1;
 
   data_array new_arr = total(dim, min_ind, max_ind);
-  /** \todo Is this correct? Or is -1?*/
   if(max_ind != min_ind) new_arr.divide(max_ind - min_ind);
   return new_arr;
 }

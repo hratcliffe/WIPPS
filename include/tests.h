@@ -116,11 +116,13 @@ bool compare_3d(data_array &lhs, data_array &rhs, bool no_dims_match=false);
 class test_entity_data_array : public test_entity{
   private:
     data_array test_array;
+    my_type total_all;
     int technical_tests();
     int basic_tests();
     int assign();
     int three_d_and_shift();
     int io_tests();
+    int set_vals();
   public:
     test_entity_data_array();
     virtual ~test_entity_data_array();

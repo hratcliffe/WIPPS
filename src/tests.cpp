@@ -375,7 +375,7 @@ test_entity_data_array::~test_entity_data_array(){
 }
 
 bool compare_2d(data_array &lhs, data_array &rhs, bool no_dims_match){
-/**Helper to compare two arrays in 2-d. Will early quit on first difference. If no_dims_match is set, it will compare only the overlap @return 0 for match, 1 for error*/
+/**Helper to compare two arrays in 2-d. Will early quit on first difference. If no_dims_match is set, it will compare only the overlap @return 0 for match, 1 for error. NOTE the == op on arrays will only work for same dimensions*/
   if(!no_dims_match){
     if(lhs.get_dims() != rhs.get_dims()) return 1;
     for(size_t i=0; i< lhs.get_dims(); i++) if(lhs.get_dims(i) != rhs.get_dims(i)) return 1;
@@ -428,9 +428,9 @@ int test_entity_data_array::run(){
 
   err|=assign();
   if(test_bed->check_for_abort(err)) return err;
-  err |=basic_tests();
-  if(test_bed->check_for_abort(err)) return err;
   err |= technical_tests();
+  if(test_bed->check_for_abort(err)) return err;
+  err |=basic_tests();
   if(test_bed->check_for_abort(err)) return err;
   err |= three_d_and_shift();
   if(test_bed->check_for_abort(err)) return err;
@@ -439,17 +439,18 @@ int test_entity_data_array::run(){
   return err;
 }
 
-int test_entity_data_array::assign(){
-/** Set values and check basic assignment worked*/
+int test_entity_data_array::set_vals(){
+/**Assign each element and axis element to varying values.*/
+
   int err = TEST_PASSED;
   bool tmp_err;
-  my_type val;
-  //assign each element to unique val and axes to position
 
+  total_all = 0.0; //Preserve total of all vals
   for(size_t i=0; i<test_array.get_dims(0); i++){
     for(size_t j =0; j<test_array.get_dims(1); j++){
       tmp_err=test_array.set_element(i, j, (i+1)*(2*j+1));
       if(tmp_err) err |= TEST_ASSERT_FAIL;
+      total_all += (i+1)*(2*j+1);
     }
   }
   for(size_t i=0; i<test_array.get_dims(); i++){
@@ -458,9 +459,16 @@ int test_entity_data_array::assign(){
       if(tmp_err) err |= TEST_ASSERT_FAIL;
     }
   }
+  return err;
+}
+
+int test_entity_data_array::assign(){
+/** Set values and check basic assignment worked*/
+  int err = TEST_PASSED;
+  my_type val;
+  err |= this->set_vals();
 
   //test assignments worked
-
   for(size_t i=0; i<test_array.get_dims(0); i++){
     for(size_t j =0; j<test_array.get_dims(1); j++){
       val = test_array.get_element(i,j);
@@ -473,12 +481,12 @@ int test_entity_data_array::assign(){
       if(val != (i+1)*j) err |=TEST_WRONG_RESULT;
     }
   }
-
+  if(err == TEST_PASSED) test_bed->report_info("Assignment OK", 2);
   return err;
 }
 
 int test_entity_data_array::basic_tests(){
-/** Test maxval, resizer, maths*/
+/** Test maxval, total etc etc, resizer, maths*/
 
   int err = TEST_PASSED;
   if(!test_array.is_good()) return TEST_ASSERT_FAIL;
@@ -494,7 +502,6 @@ int test_entity_data_array::basic_tests(){
   }
 
   //test resizer
-
   size_t new2=6, new1=7;
   data_array old_array = test_array;
 
@@ -533,28 +540,62 @@ int test_entity_data_array::basic_tests(){
     test_bed->report_info("Averager error", 1);
   }
   
+  //Test total and averagers
+  //Resize up and refill
+  test_array = data_array(10, 10);
+  set_vals();
+  //Total up in both dimensions and compare to stored total
+  data_array test_array2 = test_array.total(1);
+  test_array2 = test_array2.total(0);
+  my_type tot = test_array2.get_element((size_t)0);
+  if(this->total_all != tot){
+    err |= TEST_WRONG_RESULT;
+    test_bed->report_info("Totaler error", 1);
+  }else{
+    test_bed->report_info("Totaler OK", 2);
+  }
+  
+  test_array = data_array(10, 10);
+  set_vals();
+  test_array2 = test_array.average(1);
+  test_array2 = test_array2.average(0);
+  tot = test_array2.get_element((size_t)0);
+  if(this->total_all/100.0 != tot){
+    err |= TEST_WRONG_RESULT;
+    test_bed->report_info("Averager error", 1);
+  }else{
+    test_bed->report_info("Averager OK", 2);
+  }
+  
+  test_array = data_array(10, 10);
+  set_vals();
+  
   //Test subtraction
   //Difference identical arrays and compare to 0-array. Also tests zero_data function
-  data_array test_array2 = test_array, empty_array=test_array2;
+  test_array2 = test_array;
+  data_array empty_array = test_array2;
   empty_array.zero_data();
   test_array2.subtract(test_array);
   
-  if(compare_2d(test_array2, empty_array)){
+  if(test_array2 != empty_array){
     err |= TEST_WRONG_RESULT;
-    test_bed->report_info("Subtractor error", 1);
+    test_bed->report_info("Subtractor error on first test", 1);
   }
   //Inverse check, this should fail to match, else our subtraction is nullifying stuff
   test_array2 = test_array;
   test_array2.set_element(test_array2.get_dims(0)/2, (size_t)0, -23.0);
   test_array2.subtract(test_array);
   
-  if(!compare_2d(test_array2, empty_array)){
+  if(test_array2 == empty_array){
     err |= TEST_WRONG_RESULT;
-    test_bed->report_info("Subtractor error", 1);
+    test_bed->report_info("Subtractor error on second test", 1);
   }
   
   //Test apply with simple +1 and log of constant values
   std::function<calc_type(calc_type)> plus1_function = [](calc_type el) -> calc_type { return el+1.0; } ;
+
+  test_array.resize(1, 1, true);
+  av = test_array.avval();
 
   test_array.apply(plus1_function);
   expected_av = av + 1.0;
@@ -572,7 +613,7 @@ int test_entity_data_array::basic_tests(){
     }
   }
   test_array.apply(log_function);
-  if(compare_2d(test_array, test_array_hand_logged)){
+  if(test_array != test_array_hand_logged){
   
     err |= TEST_WRONG_RESULT;
     test_bed->report_info("Apply function error", 1);
@@ -661,27 +702,30 @@ int test_entity_data_array::technical_tests(){
 * Expects a 2-d array and wont be any use if els and axes not set
 */
 
-  test_bed->report_info("Checking technical aspects ", 2);
+  test_bed->report_info("Checking technical aspects", 2);
 
-  test_array = data_array(10, 10);
+  data_array test_array2 = data_array(10, 10);
 
   int err = TEST_PASSED;
-  data_array dat = test_array;
-  err |= compare_2d(test_array, dat);
-  
+  data_array dat = test_array2;
+  if(test_array2 != dat){
+    err |= TEST_WRONG_RESULT;
+    test_bed->report_info("Copy or equality problem", 1);
+  }
   try{
     std::vector<data_array> my_vec;
-    my_vec.push_back(test_array);
-    my_vec.push_back(test_array);
+    my_vec.push_back(test_array2);
+    my_vec.push_back(test_array2);
     my_vec.resize(100);
     my_vec.resize(10);
-    err|= compare_2d(my_vec[0], test_array);
+    if(my_vec[0] != test_array2) err|= TEST_WRONG_RESULT;
   }catch(const std::exception& e){
     //Swallow and continue if possible,
     std::string message = e.what();
     test_bed->report_info("Exception message " +message, 1);
     err |= TEST_ASSERT_FAIL;
   }
+  if(err == TEST_PASSED) test_bed->report_info("Technical aspects OK", 1);
   return err;
 }
 
@@ -689,7 +733,7 @@ int test_entity_data_array::io_tests(){
 
   test_bed->report_info("Checking file io", 1);
   int err = TEST_PASSED;
-  bool err2=false;
+  bool err2 = false;
   std::string filename = "./files/test_file.dat";
   std::fstream file;
   file.open(filename.c_str(),std::ios::out|std::ios::binary);

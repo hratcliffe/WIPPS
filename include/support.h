@@ -291,6 +291,15 @@ calc_type square_integrator(calc_type * start, int len, calc_type * increment);
 std::vector<calc_type> cubic_solve(calc_type a, calc_type b, calc_type c);
 template<typename T> T interpolate(T* axis, T* vals, T target, int pts);
 
+/********Arithmetic operations ****/
+//These can be used with the various array apply functions to do arithmetic on arrays
+inline my_type subtract(my_type lhs, my_type rhs){return lhs - rhs;};
+inline my_type add(my_type lhs, my_type rhs){return lhs + rhs;};
+inline my_type divide(my_type lhs, my_type rhs){return lhs/rhs;};
+inline my_type multiply(my_type lhs, my_type rhs){return lhs*rhs;};
+
+
+
 /** @} */
 //----------- END HELPER TYPE FUNCTION DECLARATIONS -----------
 

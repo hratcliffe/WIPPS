@@ -140,7 +140,7 @@ int main(int argc, char *argv[]){
           delta_t =(numeric_data.time[1] + numeric_data.time[0])/2.0;
         }
         //Since we're working with F^2 we also divide by 2
-        numeric_data.divide(delta_t*2.0);
+        numeric_data.apply(divide, delta_t*2.0);
         
         if(numeric_data.get_dims() > 0) err |= numeric_data.write_to_file(file, false);
 

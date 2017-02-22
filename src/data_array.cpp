@@ -816,7 +816,7 @@ data_array data_array::average(size_t dim){
   size_t old_dim = this->get_dims(dim);
   data_array new_arr = this->total(dim);
   //If dim doesn't exist we match total's behaviour, but don't want a divide by 0 error
-  if(old_dim > 0) new_arr.divide(old_dim);
+  if(old_dim > 0) new_arr.apply(divide, old_dim);
   return new_arr;
 }
 
@@ -854,7 +854,7 @@ data_array data_array::average(size_t dim, size_t min_ind, size_t max_ind){
   if(max_ind >= this->get_dims(dim)) max_ind = this->get_dims(dim)-1;
 
   data_array new_arr = total(dim, min_ind, max_ind);
-  if(max_ind != min_ind) new_arr.divide(max_ind - min_ind);
+  if(max_ind != min_ind) new_arr.apply(divide, max_ind - min_ind);
   return new_arr;
 }
 

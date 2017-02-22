@@ -488,7 +488,7 @@ int reader::read_data(data_array &my_data_in, size_t time_range[3], size_t space
 
   //If we did flattening, what we actually want is the average not the total
   if(flatten_on >= 0){
-    my_data_in.divide(source_sizes[flatten_on]);
+    my_data_in.apply(divide, source_sizes[flatten_on]);
   }
 
   if(source_sizes) free(source_sizes);

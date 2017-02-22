@@ -108,17 +108,25 @@ public:
   my_type avval();
   my_type partial_maxval(std::vector<std::pair<size_t, size_t> > ranges,std::vector<size_t> &ind);
   void smooth_1d(int n_pts);
-  
-  template<typename T> void divide( T val){
-    /** Templated function to divide each element of array by val. Val can be any type were my_type.val is defined*/
-    for(size_t i=0; i< this->get_total_elements(); i++) *(this->data+i) /= val;
-  }
-  template<typename T> void apply( std::function<T(T arg)> func){
-    /** Templated function to apply a function to each element of array. func must take and return a my_type */
+
+  void apply(std::function<my_type(my_type arg)> func){
+    /** Apply a function to each element of array. func must take and return a my_type or type convertible to this */
     for(size_t i=0; i< this->get_total_elements(); i++) *(this->data+i) = func(*(this->data+i));
   }
-
-
+  void apply(std::function<my_type(my_type arg, my_type arg2)> func, my_type arg){
+    /** Apply a function to each element of array. func must take two my_type and return one my_type or type convertible to this*/
+    for(size_t i=0; i< this->get_total_elements(); i++) *(this->data+i) = func(*(this->data+i), arg);
+  }
+  void apply(std::function<my_type(my_type arg)> func, const my_array & rhs){
+    /** Fill one array from another. func must take and return a my_type or type convertible to this. Each element of the rhs is tranformed with func and placed into this array */
+    if(this->n_dims != rhs.get_dims() || this->get_total_elements() != rhs.get_total_elements()) return;
+    for(size_t i=0; i< this->get_total_elements(); i++) *(this->data+i) = func(*(rhs.data+i));
+  }
+  void apply(std::function<my_type(my_type, my_type) > func, const my_array & rhs){
+    /** Fill one array from another. func must take a pair of my_type and return a my_type or types convertible to this. Each element of the rhs is tranformed with func and placed into this array */
+    if(this->n_dims != rhs.get_dims() || this->get_total_elements() != rhs.get_total_elements()) return;
+    for(size_t i=0; i< this->get_total_elements(); i++) *(this->data+i) = func(*(this->data+i), *(rhs.data+i));
+  }
 
 friend bool populate_mirror_fastest(data_array &data_out,my_type * result_in, size_t total_els);
 

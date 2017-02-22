@@ -47,8 +47,8 @@ public:
   char block_id[ID_SIZE];/**< Name of block to extract*/
 
 /********Basic setup and allocation functions ****/
-  reader();
-  reader(std::string file_prefix_in,  char * block_id_in, int first=0);
+  explicit reader();
+  explicit reader(std::string file_prefix_in,  char * block_id_in, int first=0);
   
 /********Filename and file manipulators ****/
   void update_ref_filenum(int num);

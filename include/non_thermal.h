@@ -50,7 +50,7 @@ public:
   my_type * lookup_data;/**< Data pointer for use with a lookup type function backend. Note type matched to MY EPOCH data*/
 
 /********Basic setup and allocation functions ****/
-  non_thermal(std::string file_prefix);
+  explicit non_thermal(std::string file_prefix);
   ~non_thermal();/**<Clean up. Calls clean_lookup() which can be used to do anything needed to cleanup after a lookup function*/
 
 /********Primary interface functions ****/

@@ -45,9 +45,9 @@ class spectrum{
 /********Basic setup and allocation functions ****/
   void construct();
   void init();
-  spectrum();
-  spectrum(int nx, int n_ang, bool separable);
-  spectrum(std::string filename);
+  explicit spectrum();
+  explicit spectrum(int nx, int n_ang, bool separable);
+  explicit spectrum(std::string filename);
   ~spectrum();
 
 /********Technical stuff making my_array a proper "object" ****/

@@ -38,7 +38,7 @@ private:
   friend controller::~controller();
   friend void controller::handle_d_mpi();*/
   friend class controller;
-  diffusion_coeff(int nx, int n_ang);
+  explicit diffusion_coeff(int nx, int n_ang);
   virtual ~diffusion_coeff();
 
 

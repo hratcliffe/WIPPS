@@ -43,8 +43,8 @@ private:
 public:
 
 /********Basic setup and allocation functions ****/
-  plasma(){is_setup = false;}/**<Default constructor, create useless plasma object*/
-  plasma(std::string file_prefix, my_type Bx_local=-1);
+  explicit plasma(){is_setup = false;}/**<Default constructor, create useless plasma object*/
+  explicit plasma(std::string file_prefix, my_type Bx_local=-1);
 
 /********Get/set functions ****/
   bool is_good(){return is_setup;}/**<Whether everything is setup*/

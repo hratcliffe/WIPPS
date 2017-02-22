@@ -37,7 +37,7 @@ class controller{
 public:
 
 /********Basic setup functions ****/
-  controller(std::string file_prefix);
+  explicit controller(std::string file_prefix);
   ~controller();
   bool is_good(){return my_plas.is_good();}/**< Whether controller is fully setup*/
 

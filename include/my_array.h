@@ -42,9 +42,10 @@ protected:
 
 public:
 /********Basic setup and allocation functions ****/
-  my_array();
-  my_array(size_t nx, size_t ny=0, size_t nz=0, size_t nt=0);
-  my_array(size_t n_dims, size_t * dims);
+  //Explicit constructors, can only be called directly, not used in conversions etc
+  explicit my_array();
+  explicit my_array(size_t nx, size_t ny=0, size_t nz=0, size_t nt=0);
+  explicit my_array(size_t n_dims, size_t * dims);
   virtual ~my_array();
   virtual bool is_good()const {return (data && dims);}/**< Check memory allocation etc worked*/
 

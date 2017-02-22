@@ -44,13 +44,13 @@ public:
   my_type B_ref;/**< Reference average B field by location*/
 
 /********Basic setup and allocation functions ****/
-  data_array();
-  data_array(size_t nx, size_t ny=0, size_t nz=0, size_t nt=0);
-  data_array(size_t n_dims, size_t * dims);
+  explicit data_array();
+  explicit data_array(size_t nx, size_t ny=0, size_t nz=0, size_t nt=0);
+  explicit data_array(size_t n_dims, size_t * dims);
 #ifdef DEFAULT_NOVERS
-  data_array(std::string filename, bool no_version_check = true);
+  explicit data_array(std::string filename, bool no_version_check = true);
 #else
-  data_array(std::string filename, bool no_version_check = false);
+  explicit data_array(std::string filename, bool no_version_check = false);
 #endif
   virtual ~data_array();
   virtual bool is_good()const{return my_array::is_good() && axes;}

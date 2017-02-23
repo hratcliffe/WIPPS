@@ -1119,14 +1119,6 @@ my_type my_array::partial_maxval(std::vector<std::pair<size_t, size_t> > ranges,
   return val;
 
 }
-my_type my_array::avval(){
-/** Find average value of data array*/
-  my_type av = 0.0;
-  size_t total_size=get_total_elements();
-
-  av=std::accumulate(data, data+total_size, 0.0);
-  return av/total_size;
-}
 
 void my_array::smooth_1d(int n_pts){
 /** \brief Smooth a 1-d data_array

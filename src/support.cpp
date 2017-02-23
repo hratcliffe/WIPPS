@@ -434,7 +434,7 @@ my_type get_ref_Bx(std::string file_prefix, size_t space_in[2], size_t time_0, b
     my_error_print("3-D space not added...", mpi_info.rank);
   }
   
-  if(err == 0 || err ==2 ) return bx.avval();
+  if(err == 0 || err == 2) return avval(bx);
   //2 is a non-fatal read error
   else return 0.0;
 }

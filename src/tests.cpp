@@ -510,13 +510,15 @@ int test_entity_data_array::basic_tests(){
   
   //resize to 7x1 and test average fn
   test_array.resize(1, 1, true);
-  my_type av = test_array.avval();
+  my_type av = avval(test_array);
   my_type expected_av = ((new1-1)/2.0 + 1);
   //Average of (i+1) for i=0 to new1
-
+std::cout<<av<<' '<<expected_av<<'\n';
   if(av != expected_av){
     err |= TEST_WRONG_RESULT;
     test_bed->report_info("Averager error", 1);
+  }else{
+    test_bed->report_info("Averager OK", 1);
   }
   
   //Test total and averagers
@@ -552,10 +554,10 @@ int test_entity_data_array::basic_tests(){
   //Test element-wise apply with simple +1 and log of constant values
   std::function<calc_type(calc_type)> plus1_function = [](calc_type el) -> calc_type { return el+1.0; } ;
 
-  av = test_array.avval();
+  av = avval(test_array);
   test_array.apply(plus1_function);
   expected_av = av + 1.0;
-  av = test_array.avval();
+  av = avval(test_array);
   if(av != expected_av){
     err |= TEST_WRONG_RESULT;
     test_bed->report_info("Apply function error", 1);
@@ -576,9 +578,9 @@ int test_entity_data_array::basic_tests(){
   }
   //Test apply from one array to another
   test_array2.clone_empty(test_array);
-  expected_av = test_array.avval() + 1.0;
+  expected_av = avval(test_array) + 1.0;
   test_array2.apply(plus1_function, test_array);
-  av = test_array2.avval();
+  av = avval(test_array2);
   if(av != expected_av){
     err |= TEST_WRONG_RESULT;
     test_bed->report_info("Apply with array error", 1);

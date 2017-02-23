@@ -858,22 +858,7 @@ data_array data_array::average(size_t dim, size_t min_ind, size_t max_ind){
   return new_arr;
 }
 
-bool data_array::subtract(const data_array& rhs){
-/** \brief Subtract given array from this one
-*
-*If rank and dims of input array matches this, do element-wise subtraction, else do nothing. If axes are different this generally makes no sense, but this is NOT checked for, as it is not an error. \todo Consider replacing this with variant of apply
-*/
-  
-  if(this->get_dims() != rhs.get_dims()) return 1;
-  for(size_t i=0; i< this->get_dims(); i++) if(this->get_dims(i) != rhs.get_dims(i)) return 1;
-
-  size_t els = get_total_elements();
-  std::transform(rhs.data, rhs.data+els, this->data, this->data, std::minus<my_type>());
-  return 0;
-}
-
 /********FFT functions and helpers ****/
-
 bool fft_array(const data_array &data_in, data_array & data_out){
 #ifndef NO_FFT
 /** \brief FFT data_array
@@ -1035,4 +1020,20 @@ bool populate_mirror_fastest(data_array &data_out,my_type * result_in, size_t to
   
   return 0;
 }
+
+/********Other non-member helpers ****/
+my_type avval(const data_array & array_in){
+/** Find average value of array data*/
+  size_t n_dims = array_in.get_dims();
+  data_array new_array = array_in;
+  for(size_t i = n_dims; i!=0; i--){
+    new_array = new_array.average(i-1);
+  }
+  //Averaged on all dims so is now 1-d, but check to be sure
+  if(new_array.get_dims() != 1){
+    my_error_print("Error calculating average value", mpi_info.rank);
+  }
+  return new_array.get_element((size_t) 0);
+}
+
 

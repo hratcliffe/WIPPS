@@ -97,14 +97,14 @@ public:
   data_array average(size_t dim, my_type min, my_type max);
   data_array average(size_t dim);
   data_array average(size_t dim, size_t min, size_t max);
-  bool subtract(const data_array& rhs);
-
 };
 
 /********FFT functions and helpers ****/
 bool fft_array(const data_array &data_in, data_array &data_out);
 bool populate_mirror_fastest(data_array &data_out, my_type * result_in, size_t total_els);
 
+/********Other non-member helpers ****/
+my_type avval(const data_array & array_in);
 
 
 #endif

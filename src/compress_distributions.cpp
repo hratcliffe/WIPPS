@@ -1,11 +1,6 @@
 //
 //  compress_distributions.cpp
 //  
-//
-//  Created by Heather Ratcliffe on 09/09/2016.
-//
-//
-//Tiny halper function to total the x_px distributions in x either overall or into n blocks
 
 #include <stdio.h>
 #include <math.h>
@@ -30,7 +25,9 @@ dist_cmd_line special_command_line(int argc, char *argv[]);
 *@{ 
 *\brief Utility to extract distribution functions from data
 *
-*Extracts distributions from SDF files and optionally compresses their spatial dimension
+*Extracts distributions from SDF files and optionally compresses their spatial dimension. 
+\verbinclude help_d.txt
+\author Heather Ratcliffe \date 09/09/2016
 */
 
 int main(int argc, char *argv[]){
@@ -121,9 +118,14 @@ int main(int argc, char *argv[]){
 }
 
 dist_cmd_line special_command_line(int argc, char *argv[]){
-//Do special command line processing here
+/** \brief Process commandline arguments
+*
+* Expects full list and no more.
+*/
+
 
   dist_cmd_line values;
+  //Default values
   values.list=0;
   values.file_prefix = "./files/";
   values.dump = 0;

@@ -7,4 +7,4 @@ Command line options:
 
 Sample usage:
 make utils TYPE=float
-./cutout -f ./Run1/ -in FFT_dat -out FFT_trim -lims -0.01 0.01 -2 2
+./cutout_fft -f ./Run1/ -in FFT_dat -out FFT_trim -lims -0.01 0.01 -2 2

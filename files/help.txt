@@ -3,8 +3,8 @@ This code is intended to process Whistler-mode wave-particle interaction data fr
 
 Available programs:
 generate_ffts    	Fourier transform E or B field data
-cutout           	Cutout a section of a Fourier transformed data file
-FFT_to_spectrum  	Create a wave spectrum from a Fourier transformed data file
+cutout_fft       	Cutout a section of a Fourier transformed data file
+fft_to_spectrum  	Create a wave spectrum from a Fourier transformed data file
 compress_distributions	Extract distribution functions from SDF files, and compress in space if needed
 calculate_growth	Calculate analytic and data growth rates
 calculate_diffusion	Calculate the particle diffusion coefficient from wave data

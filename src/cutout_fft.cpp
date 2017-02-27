@@ -1,11 +1,3 @@
-/** \file cutout.cpp \brief Helper program to make a cutout of an array
-*
-*
-* Reads array from given file, cuts out to supplied limits and saves to given output file. deck.status file is read from file_prefix+deck.status and allows to specify frequency cuts in w_ce and space in ... If no output file is given, output will be in [inputfile]_trim
-Call example:
-
-\author Heather Ratcliffe \date 11/08/2016.
-*/
 
 #include <fstream>
 #include <iostream>
@@ -36,6 +28,11 @@ cutout_args cutout_process_command_line(int argc, char *argv[]);
 /** \defgroup cutout_util FFT cutout utility
 *@{ *\brief Utility to trim FFTd data to specified axis limits
 *
+*Reads array from given file, cuts out to supplied limits and saves to given output file. deck.status file is read from file_prefix+deck.status and allows to specify frequency cuts in w_ce and space in ... If no output file is given, output will be in [inputfile]_trim
+Call example: \todo Add call examples
+
+\author Heather Ratcliffe \date 11/08/2016.
+
 */
 
 int main(int argc, char *argv[]){

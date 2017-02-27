@@ -1,1 +1,12 @@
-This is the main description file to be filled in...
+Welcome to WIPPS, the Whistler-mode Interaction Post Processing Suite
+This code is intended to process Whistler-mode wave-particle interaction data from the EPOCH particle-in-cell code. Inputs are SDF files, input.deck files and custom config files. Outputs are FFTS, spectra, distribution functions, growth rates and particle diffusion coeffficients in a custom format readable with the C++ or included IDL routines.
+
+Available programs:
+generate_ffts    	Fourier transform E or B field data
+cutout           	Cutout a section of a Fourier transformed data file
+FFT_to_spectrum  	Create a wave spectrum from a Fourier transformed data file
+compress_distributions	Extract distribution functions from SDF files, and compress in space if needed
+calculate_growth	Calculate analytic and data growth rates
+calculate_diffusion	Calculate the particle diffusion coefficient from wave data
+
+For more information and call examples, call any of these with the -h flag

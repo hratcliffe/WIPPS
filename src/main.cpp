@@ -64,9 +64,7 @@ int main(int argc, char *argv[]){
   exit(err);
 
 #else
-  //Explain the code....
-  
-  my_print("Welcome to ...", mpi_info.rank);
+  //Print general code help
   print_help();
   
 #endif

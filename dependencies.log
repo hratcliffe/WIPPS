@@ -21,7 +21,6 @@ src/d_coeff.cpp\
   include/my_array.h\
   include/data_array.h\
   include/tests.h\
-  include/reader.h\
 
 obj/spectrum.o:\
 src/spectrum.cpp\
@@ -32,25 +31,11 @@ include/support.h\
   include/my_array.h\
   include/data_array.h\
   include/tests.h\
-  include/reader.h\
 
 obj/plasma.o:\
 src/plasma.cpp\
   include/plasma.h\
   include/support.h\
-
-obj/tests.o:\
-src/tests.cpp\
-  include/tests.h\
-  include/support.h\
-  include/data_array.h\
-  include/my_array.h\
-  include/reader.h\
-  include/plasma.h\
-  include/controller.h\
-  include/spectrum.h\
-  include/d_coeff.h\
-  include/non_thermal.h\
 
 obj/reader.o:\
 src/reader.cpp\
@@ -69,7 +54,6 @@ src/controller.cpp\
   include/spectrum.h\
   include/data_array.h\
   include/tests.h\
-  include/reader.h\
 
 obj/non_thermal.o:\
 src/non_thermal.cpp\
@@ -84,6 +68,39 @@ src/support.cpp\
   include/data_array.h\
   include/my_array.h\
   include/reader.h\
+
+obj/tests.o:\
+src/tests.cpp\
+  include/tests.h\
+  include/support.h\
+  include/tests_basic_and_code.h\
+  include/data_array.h\
+  include/my_array.h\
+  include/reader.h\
+  include/tests_data_and_calc.h\
+
+obj/tests_basic_and_code.o:\
+src/tests_basic_and_code.cpp\
+  include/tests.h\
+  include/support.h\
+  include/tests_basic_and_code.h\
+  include/data_array.h\
+  include/my_array.h\
+  include/reader.h\
+
+obj/tests_data_and_calc.o:\
+src/tests_data_and_calc.cpp\
+  include/tests_data_and_calc.h\
+  include/tests.h\
+  include/support.h\
+  include/data_array.h\
+  include/my_array.h\
+  include/reader.h\
+  include/plasma.h\
+  include/controller.h\
+  include/spectrum.h\
+  include/d_coeff.h\
+  include/non_thermal.h\
 
 obj/main.o:\
 src/main.cpp\
@@ -120,7 +137,6 @@ include/support.h\
   include/plasma.h\
   include/spectrum.h\
   include/tests.h\
-  include/reader.h\
 
 obj/compress_distributions.o:\
 src/compress_distributions.cpp\
@@ -139,8 +155,19 @@ src/calculate_growth.cpp\
   include/controller.h\
   include/data_array.h\
   include/tests.h\
-  include/reader.h\
   include/non_thermal.h\
+
+obj/calculate_diffusion.o:\
+src/calculate_diffusion.cpp\
+  include/support.h\
+  include/reader.h\
+  include/controller.h\
+  include/plasma.h\
+  include/my_array.h\
+  include/d_coeff.h\
+  include/spectrum.h\
+  include/data_array.h\
+  include/tests.h\
 
 obj/generate_ffts.o:\
 src/generate_ffts.cpp\

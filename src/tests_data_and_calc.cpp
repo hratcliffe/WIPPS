@@ -13,7 +13,6 @@
 #include <cmath>
 #include <mpi.h>
 #include <functional>
-#include "tests.h"
 #include "tests_data_and_calc.h"
 #include "reader.h"
 #include "plasma.h"

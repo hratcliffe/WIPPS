@@ -16,12 +16,7 @@
 #include "tests.h"
 #include "tests_basic_and_code.h"
 #include "reader.h"
-#include "plasma.h"
-#include "controller.h"
 #include "data_array.h"
-#include "spectrum.h"
-#include "d_coeff.h"
-#include "non_thermal.h"
 
 #include <math.h>
 #include <boost/math/special_functions.hpp>
@@ -1017,7 +1012,6 @@ int test_entity_extern_maths::run(){
   bess = boost::math::cyl_bessel_j(index-1, arg);
   bess1 = boost::math::cyl_bessel_j(index+1, arg);
   bess2 = boost::math::cyl_bessel_j(index, arg);
-  //test_bed->report_info(mk_str(std::abs(bess + bess1 - 2.0*(double)index*bess2/arg)), 1);
   if(std::abs(bess + bess1- 2.0*(double)index*bess2/arg) >PRECISION) err|= TEST_WRONG_RESULT;
 
   index=7;
@@ -1025,7 +1019,6 @@ int test_entity_extern_maths::run(){
   bess = boost::math::cyl_bessel_j(index-1, arg);
   bess1 = boost::math::cyl_bessel_j(index+1, arg);
   bess2 = boost::math::cyl_bessel_j(index, arg);
-  //test_bed->report_info(mk_str(std::abs(bess + bess1 - 2.0*(double)index*bess2/arg)), 1);
   if(std::abs(bess + bess1- 2.0*(double)index*bess2/arg) >PRECISION) err|= TEST_WRONG_RESULT;
 
 

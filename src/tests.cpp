@@ -32,10 +32,12 @@ tests::~tests(){
   cleanup_tests();
 }
 
-void tests::set_verbosity(int verb){
-/** Set the verbosity of testing output, from 0 (minimal) to max_verbos.*/
-  if((verb > 0)) this->verbosity = std::max(verb, max_verbos);
-
+void tests::set_verbosity(size_t verb){
+/** \brief Set verbosity
+*
+*Set the verbosity of testing output, from 0 (minimal) to max_verbos cap
+*/
+  this->verbosity = std::min((int)verb, max_verbos);
 }
 
 void tests::setup_tests(){

@@ -36,11 +36,8 @@ const int err_tot = 9;
 const calc_type PRECISION = 1e-10;/**< Constant for equality at normal precision i.e. from rounding errors etc*/
 const calc_type NUM_PRECISION = 1e-6;/**< Constant for equality at good numerical precision, e.g. from numerical integration over 100-1000 pts*/
 const calc_type LOW_PRECISION = 5e-3;/**< Constant for equality at low precision, i.e. different approximations to an expression*/
-const int max_verbos = 4;
+const int max_verbos = 4;/**<Verbosity range for messages*/
 const std::string filename = "tests.log";/**<Test log file*/
-
-class tests;
-extern tests * test_bed; /**< Global testbed, defined in tests.cpp*/
 
 /**\brief Testing instance
 *
@@ -69,28 +66,28 @@ class test_entity{
 
 class tests{
   private:
-
-    std::string get_printable_error(int err, int test_id);
     std::fstream * outfile; /**< Output file handle*/
     int current_test_id;/**< Number in list of test being run*/
     std::vector<test_entity*> test_list;/**< List of tests to run*/
     int verbosity;/**< Verbosity level of output*/
+    std::string get_printable_error(int err, int test_id);
     std::string get_color_escape(char col);
+    bool is_fatal(int err);
+    void setup_tests();
+    void cleanup_tests();
   public:
     void report_err(int err, int test_id=-1);
     void report_info(std::string info, int verb_to_print = 1, int test_id=-1);
     tests();
     ~tests();
-    void setup_tests();
     void add_test(test_entity* test);
-    void cleanup_tests();
     bool run_tests();
-    void set_verbosity(int verb);
+    void set_verbosity(size_t verb);
     void set_colour(char col=0);
-    bool is_fatal(int err);
     bool check_for_abort(int err);
-  
 };
+
+extern tests * test_bed; /**< Global testbed, defined in tests.cpp*/
 
 #endif
 #endif

@@ -190,7 +190,6 @@ bool data_array::operator==(const data_array &rhs)const{
 *
 * Check this is equal to rhs. Since copies are always deep, we check values, not data pointers
 */
-
   if(!my_array::operator==(rhs)) return false;
 
   //Check axes elementwise
@@ -198,6 +197,45 @@ bool data_array::operator==(const data_array &rhs)const{
   if(this->check_ids(rhs)) return false;
 
   return true;
+}
+
+data_array & data_array::operator=(const my_array& src){
+/** \brief Conversion equality operator
+*
+*Convert a my_array into a data array. Data is deep copied, and axes are added
+*/
+std::cout<<"Convert assigning\n";
+
+  //Trap self-assigning or bad copy before destructing
+  if(&src == this || !src.is_good()) return *this;
+  //Clear any existing axes and reset sizes etc
+  if(this->axes) free(axes);
+  this->construct();
+
+  //Call the equivalent constructor for base class my_array
+  my_array::operator=(src);
+
+  if(this->dims){
+    //Allocate axis memory
+    size_t els= this->get_total_axis_elements();
+    alloc_ax(els);
+    //Axes and ids are present but empty because of construct and alloc_ax calls
+  }
+  return *this;
+
+}
+
+data_array::data_array(const my_array & src) : my_array(src){
+/** \brief Conversion operator
+*
+*Convert a my_array into a data array. Data is deep copied, and axes are added
+*/
+std::cout<<"Converting\n";
+  construct();
+  //Basic construction of additionals, already called base class copy constructor
+  //Allocate axes, copy data and ids
+  size_t els= this->get_total_axis_elements();
+  alloc_ax(els);
 }
 
 /********Helpers for working with data_array ****/

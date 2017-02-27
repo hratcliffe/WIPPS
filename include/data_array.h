@@ -61,6 +61,10 @@ public:
   data_array & operator=(const data_array& src);
   bool operator==(const data_array &rhs)const;
   bool operator!=(const data_array &rhs)const{return !(*this == rhs);}/**< See data_array::operator==()*/
+  data_array(const my_array &src);
+  data_array & operator=(const my_array & src);
+  bool operator==(const my_array &rhs)const{return my_array::operator==(rhs);}
+  bool operator!=(const my_array &rhs)const{return !(*this == rhs);}/**< See data_array::operator==()*/
 
 /********Helpers for working with data_array ****/
   my_type * disown_axes();
@@ -105,6 +109,5 @@ bool populate_mirror_fastest(data_array &data_out, my_type * result_in, size_t t
 
 /********Other non-member helpers ****/
 my_type avval(const data_array & array_in);
-
 
 #endif

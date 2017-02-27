@@ -1,9 +1,3 @@
-/** \file generate_ffts.cpp \brief Helper program to extract FFTS
-*
-*
-* Opens files, extracts specified fields, does FFTS, trims to specified boundaries and writes to file
-  \author Heather Ratcliffe \date 04/07/2016.
-*/
 
 #include <math.h>
 #include <cmath>
@@ -40,10 +34,14 @@ gen_cmd_line special_command_line(int argc, char *argv[]);
 /** \defgroup utils Utility programs
 *@{ */
 
-/** \defgroup fft_util FFT generator utility
+/** \defgroup fft_util fft generator utility
 *@{ 
-*\brief Utility to read files and perform FFT
+*\brief Utility to read files and perform Fourier transforms
 *
+*Opens files, extracts specified fields, does fft, trims to specified boundaries and writes to file. Can optionally flatten the raw data before ft-ing or the ft-d data before output. This routine can use multiple cores to process seperate spatial blocks.
+\verbinclude help_g.txt
+  \author Heather Ratcliffe \date 04/07/2016
+
 */
 
 int main(int argc, char *argv[]){
@@ -61,12 +59,13 @@ int main(int argc, char *argv[]){
   
   MPI_Barrier(MPI_COMM_WORLD);
 
+  //Get the special args and then the rest
   gen_cmd_line extra_args = special_command_line(argc, argv);
   setup_args cmd_line_args = process_command_line(argc, argv);
 
   if(mpi_info.rank == 0) get_deck_constants(cmd_line_args.file_prefix);
   share_consts();
-  /** Get constants from deck and share to other procs*/
+  /* Get constants from deck and share to other procs*/
 
   my_print("Processing "+mk_str(cmd_line_args.per_proc)+" blocks per core", mpi_info.rank);
   my_print("Input "+cmd_line_args.file_prefix, mpi_info.rank);
@@ -77,6 +76,7 @@ int main(int argc, char *argv[]){
   reader * my_reader = new reader(cmd_line_args.file_prefix, block_id,cmd_line_args.time[0]);
   if(my_reader->current_block_is_accum()) cmd_line_args.use_row_time = true;
 
+  //Get all dimensions
   int n_tims;
   if(!cmd_line_args.use_row_time){
     n_tims = std::max((int)(cmd_line_args.time[1]-cmd_line_args.time[0]), 1);
@@ -99,6 +99,7 @@ int main(int argc, char *argv[]){
   controller * contr;
   contr = new controller(cmd_line_args.file_prefix);
 
+  //Open output logfile
   std::fstream logfile;
   std::string logfilename;
   logfilename = cmd_line_args.file_prefix + "generate_ffts.log";
@@ -131,7 +132,6 @@ int main(int argc, char *argv[]){
     }
 
     err = my_reader->read_data(dat, cmd_line_args.time, my_space);
-    /** \todo Have this attempt the next file before failing*/
     //IMPORTANT: we use the same array for each space block. So if we had insufficient files etc this will truncate the array ONLY ONCE
     
     if(err == 1){
@@ -142,7 +142,7 @@ int main(int argc, char *argv[]){
     //Check if we had to truncate data array...
 
     dat.B_ref = get_ref_Bx(cmd_line_args.file_prefix, my_space, cmd_line_args.time[0] == 0 ? 1:cmd_line_args.time[0], my_reader->current_block_is_accum());
-    //Get ref B using specfied file but skip 0th ones as they seem broken
+    //Get ref B using specified file but skip 0th dumps as they seem broken
 
     //Checks limits and denormalise freq. if applicable
     std::vector<my_type> lims;
@@ -158,14 +158,13 @@ int main(int argc, char *argv[]){
         }
       }
     }
-
-    if(extra_args.flat_dim>=0 && dat.get_dims()>1 && !extra_args.flat_fft){
+    //Flatten data pre-fft if requested
+    if(extra_args.flat_dim >= 0 && dat.get_dims() > 1 && !extra_args.flat_fft){
       dat = dat.average(extra_args.flat_dim);
     }
-
+    //Setup the fft output array
     data_array dat_fft;
     dat_fft.clone_empty(dat);
-
     if(!dat_fft.is_good()){
       my_error_print("Data array allocation failed. Aborting.", mpi_info.rank);
       return 0;
@@ -180,7 +179,7 @@ int main(int argc, char *argv[]){
     
     
     if(extra_args.flat_fft && extra_args.flat_dim >=0){
-      //Flatten between limits
+      //Flatten fft between limits if requested
       dat_fft = dat_fft.total(extra_args.flat_dim, extra_args.flat_fft_min, extra_args.flat_fft_max);
     
     }
@@ -210,28 +209,26 @@ int main(int argc, char *argv[]){
   //-----------------end of per_proc loop---- Now controller holds one spectrum and d per block
   MPI_Barrier(MPI_COMM_WORLD);
   
-  //contr->save_spectra(cmd_line_args.file_prefix);
-
   logfile.close();
   //Cleanup objects etc
   delete my_reader;
   delete contr;
 
-  std::cout<<"Grep for FAKENUMBERS !!!!"<<std::endl;
-
   ADD_FFTW(cleanup());
   MPI_Finalize();
   //call these last...
-
 
   exit(0);
 }
 
 gen_cmd_line special_command_line(int argc, char *argv[]){
-//Do special command line processing here
-//We next pass on to normal command line, so we should delete the options we have handled. We'll do this by setting first chars to HANDLED_ARG constant for the flag and any values it consumes
+/** \brief Process special arguments to generate_ffts
+*
+*Part of argument handling is shared with calculate_diffusion so we handle only the extras here and must pass the rest on. So we nullify those we handle here to enable warning for unknown arguments by setting the first character of them all to HANDLED_ARG
+*/
 
   gen_cmd_line values;
+  //Default values
   values.flat_dim = -1;
   values.flat_fft = false;
   values.flat_fft_min = 0.0;
@@ -239,7 +236,6 @@ gen_cmd_line special_command_line(int argc, char *argv[]){
   
   for(int i=1; i< argc; i++){
     if(strcmp(argv[i], "-h")==0){
-      print_help();
       print_help('g');
       exit(0);
     }

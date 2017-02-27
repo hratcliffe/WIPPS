@@ -1,5 +1,20 @@
-Additional parameters for generate_ffts utility
+Command line options:
+-h Show help
+-f <string> Prefix for all input files, including directory
+
+-start <int> Starting dump number
+-end <int> Ending dump number
+-rows <int> For accumulated blocks, read no more than this many rows To get an exact number of rows set -end larger than required and set this. No effect for plain blocks
+-block <string> Block id string
+-n <int> Number of space blocks to divide into. This should be divisible by the number of processors used or it will be reduced to be so. If the total number of space points do not divide perfectly, blocks will overlap
+-space <int int> Process one space block between int and int (use with single core only)
 
 -flat_dat <int>  Flatten the raw data on specified dimension before processing (0 to n_dims-1)
 -flat_fft <int float float> Flatten the FFT on specified dimension between these axis ranges (normalised to om_ce for frequency axis)
--lims <float float ...> Cutout to these limits. Should be one pair per dimension (after flattening if applicable). Pairs except the last are assumed to be wavenumber and normed to ..., the last pair are normed to omega_ce. Normalising constants are taken from [filepath]deck.status>
+-lims <float float ...> Cutout to these limits. Should be one pair per dimension (after flattening if applicable). Pairs except the last are assumed to be wavenumber and normed to ..., the last pair are normed to omega_ce. Normalising constants are taken from [filepath]deck.status
+
+Sample usage:
+make TYPE=double
+./generate_ffts -f ./Run1/ -start 0 -end 100 -block bz -n 8 -lims -0.001 0.001 -2 2
+or:
+mpiexec -n 4 ./generate_ffts -f ./Run1/ -start 0 -end 100 -block bz -n 8 -lims -0.001 0.001 -2 2

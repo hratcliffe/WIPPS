@@ -347,14 +347,9 @@ int test_entity_reader::run(){
 test_entity_data_array::test_entity_data_array(){
   name = "data array class";
   test_array = data_array(10, 10);
-  
-}
-test_entity_data_array::~test_entity_data_array(){
-
-//  delete test_array;
 }
 
-bool compare_2d(data_array &lhs, data_array &rhs, bool no_dims_match){
+bool compare_2d(data_array const &lhs, data_array const &rhs, bool no_dims_match){
 /**Helper to compare two arrays in 2-d. Will early quit on first difference. If no_dims_match is set, it will compare only the overlap @return 0 for match, 1 for error. NOTE the == op on arrays will only work for same dimensions*/
   if(!no_dims_match){
     if(lhs.get_dims() != rhs.get_dims()) return 1;
@@ -406,6 +401,7 @@ int test_entity_data_array::run(){
 */
   int err = TEST_PASSED;
 
+  //Try tests in sections, aborting if we get a fatal error since this will only confuse the report
   err|=assign();
   if(test_bed->check_for_abort(err)) return err;
   err |= technical_tests();
@@ -418,7 +414,7 @@ int test_entity_data_array::run(){
   return err;
 }
 
-int test_entity_data_array::set_vals(){
+int test_entity_data_array::set_vals_2d(){
 /**Assign each element and axis element to varying values.*/
 
   int err = TEST_PASSED;
@@ -441,11 +437,34 @@ int test_entity_data_array::set_vals(){
   return err;
 }
 
+int test_entity_data_array::set_vals_3d(){
+/**Assign each element and axis element to varying values.*/
+
+  int err = TEST_PASSED;
+  bool tmp_err;
+
+  for(size_t i=0; i<test_array.get_dims(0); i++){
+    for(size_t j =0; j<test_array.get_dims(1); j++){
+      for(size_t k =0; k<test_array.get_dims(2); k++){
+        tmp_err=test_array.set_element(i, j, k, (i+1)*(2*j+1)*(4*k+1));
+        if(tmp_err) err |= TEST_ASSERT_FAIL;
+      }
+    }
+  }
+  for(size_t i=0; i<test_array.get_dims(); i++){
+    for(size_t j =0; j<test_array.get_dims(i); j++){
+      tmp_err=test_array.set_axis_element(i, j, j*(i+1));
+      if(tmp_err) err |= TEST_ASSERT_FAIL;
+    }
+  }
+  return err;
+}
+
 int test_entity_data_array::assign(){
 /** Set values and check basic assignment worked*/
   int err = TEST_PASSED;
   my_type val;
-  err |= this->set_vals();
+  err |= this->set_vals_2d();
 
   //test assignments worked
   for(size_t i=0; i<test_array.get_dims(0); i++){
@@ -471,17 +490,18 @@ int test_entity_data_array::basic_tests(){
   if(!test_array.is_good()) return TEST_ASSERT_FAIL;
 
   //test maxval function
-  size_t i0=test_array.get_dims(0)/2, i1=test_array.get_dims(1)/3;
+  //Select a point withing the domain and bump it to max + 10 then check the new max is upped by 10 and is in the right place
+  size_t i0 = test_array.get_dims(0)/2, i1 = test_array.get_dims(1)/3;
   my_type current_max = test_array.maxval();
-  test_array.set_element(i0, i1, current_max+10);
+  test_array.set_element(i0, i1, current_max + 10);
   std::vector<size_t> pos;
-  current_max -= test_array.maxval(pos);
-  if(current_max != -10 || pos.size()!=2||pos[0]!=i0||pos[1]!=i1){
+  my_type new_max = test_array.maxval(pos);
+  if(new_max != current_max + 10 || pos.size()!=2||pos[0]!=i0||pos[1]!=i1){
     err |= TEST_WRONG_RESULT;
   }
 
   //test resizer
-  size_t new2=6, new1=7;
+  size_t new2 = 6, new1 = 7;
   data_array old_array = test_array;
 
   test_bed->set_colour('*');
@@ -501,30 +521,16 @@ int test_entity_data_array::basic_tests(){
     err |=TEST_WRONG_RESULT;
     test_bed->report_info("First dim size is "+mk_str(test_array.get_dims(0))+" not "+mk_str(new1), 1);
   }
-  
   //Compare old and new and report
   if(compare_2d(old_array, test_array, true)){
     err |= TEST_WRONG_RESULT;
     test_bed->report_info("Resizer error, wrong values read", 1);
   }
   
-  //resize to 7x1 and test average fn
-  test_array.resize(1, 1, true);
-  my_type av = avval(test_array);
-  my_type expected_av = ((new1-1)/2.0 + 1);
-  //Average of (i+1) for i=0 to new1
-std::cout<<av<<' '<<expected_av<<'\n';
-  if(av != expected_av){
-    err |= TEST_WRONG_RESULT;
-    test_bed->report_info("Averager error", 1);
-  }else{
-    test_bed->report_info("Averager OK", 1);
-  }
-  
   //Test total and averagers
   //Resize up and refill
   test_array = data_array(10, 10);
-  set_vals();
+  set_vals_2d();
   //Total up in both dimensions and compare to stored total
   data_array test_array2 = test_array.total(1);
   test_array2 = test_array2.total(0);
@@ -537,7 +543,7 @@ std::cout<<av<<' '<<expected_av<<'\n';
   }
   
   test_array = data_array(10, 10);
-  set_vals();
+  set_vals_2d();
   test_array2 = test_array.average(1);
   test_array2 = test_array2.average(0);
   tot = test_array2.get_element((size_t)0);
@@ -548,8 +554,20 @@ std::cout<<av<<' '<<expected_av<<'\n';
     test_bed->report_info("Averager OK", 2);
   }
   
+  //resize to 1-d and test averaging fn
+  test_array.resize(1, 1, true);
+  my_type av = avval(test_array);
+  my_type expected_av = ((10-1)/2.0 + 1);
+  //Average of (i+1) for i=0 to 10
+  if(av != expected_av){
+    err |= TEST_WRONG_RESULT;
+    test_bed->report_info("Averager error in avval", 1);
+  }else{
+    test_bed->report_info("Averager OK", 1);
+  }
+
   test_array = data_array(10, 10);
-  set_vals();
+  set_vals_2d();
 
   //Test element-wise apply with simple +1 and log of constant values
   std::function<calc_type(calc_type)> plus1_function = [](calc_type el) -> calc_type { return el+1.0; } ;
@@ -587,7 +605,7 @@ std::cout<<av<<' '<<expected_av<<'\n';
   }
   
   test_array = data_array(10, 10);
-  set_vals();
+  set_vals_2d();
   
   //Test apply cross array using subtracting
   //Difference identical arrays and compare to 0-array. Also tests zero_data function
@@ -617,18 +635,10 @@ std::cout<<av<<' '<<expected_av<<'\n';
 int test_entity_data_array::three_d_and_shift(){
 /** Test 3-d resizer and shift*/
 
-  int err= TEST_PASSED;
-  int tmp_err;
+  int err = TEST_PASSED;
   //And now a 3-d version
   test_array = data_array(10, 10, 10);
-  for(size_t i=0; i<test_array.get_dims(0); i++){
-    for(size_t j =0; j<test_array.get_dims(1); j++){
-      for(size_t k =0; k<test_array.get_dims(2); k++){
-        tmp_err=test_array.set_element(i, j, k, (i+1)*(2*j+1)*(4*k+1));
-        if(tmp_err) err |= TEST_ASSERT_FAIL;
-      }
-    }
-  }
+  err |= set_vals_3d();
   size_t new3 = 5;
   size_t new2 = 6;
 
@@ -652,12 +662,13 @@ int test_entity_data_array::three_d_and_shift(){
     test_bed->report_info("Resizer error, wrong values read", 1);
   }
 
-  //Now test the shift function
-
+  //Now test the shift function by shifting, shifting back and then comparing
+  //Try on all 3 dims
+  old_array = test_array;
   test_array.shift(1, 3);
   test_array.shift(1, -3);
 
-  if(compare_3d(old_array, test_array, true)){
+  if(old_array != test_array){
     err |= TEST_WRONG_RESULT;
     test_bed->report_info("Shift error, wrong values read", 1);
   }
@@ -665,14 +676,14 @@ int test_entity_data_array::three_d_and_shift(){
   test_array.shift(2, 3);
   test_array.shift(2, -3);
 
-  if(compare_3d(old_array, test_array, true)){
+  if(old_array != test_array){
     err |= TEST_WRONG_RESULT;
     test_bed->report_info("Shift error, wrong values read", 1);
   }
 
   test_array.shift(0, 2);
 
-  if(!compare_3d(old_array, test_array, true)){
+  if(old_array == test_array){
   //If they still compare equal we has problem
     err |= TEST_WRONG_RESULT;
     test_bed->report_info("Shift error, no shift applied", 1);
@@ -680,7 +691,7 @@ int test_entity_data_array::three_d_and_shift(){
 
   test_array.shift(0, -2);
   
-  if(compare_3d(old_array, test_array, true)){
+  if(old_array != test_array){
     err |= TEST_WRONG_RESULT;
     test_bed->report_info("Shift error, wrong values read", 1);
   }
@@ -690,8 +701,6 @@ int test_entity_data_array::three_d_and_shift(){
 
 int test_entity_data_array::technical_tests(){
 /** Check things like copy constructors
-*
-* Expects a 2-d array and wont be any use if els and axes not set
 */
 
   test_bed->report_info("Checking technical aspects", 2);
@@ -717,32 +726,54 @@ int test_entity_data_array::technical_tests(){
     test_bed->report_info("Exception message " +message, 1);
     err |= TEST_ASSERT_FAIL;
   }
+  
+  //Check the downcasting conversions
+  my_array source_array = my_array(10, 10);
+  source_array.set_element((size_t)0, (size_t)0, 3.0);
+  dat = source_array;
+  my_type tmp = avval(source_array), tmp2 = avval(dat);
+
+  if(dat != source_array || tmp != tmp2){
+    test_bed->report_info("Error in conversion", 2);
+    err |= TEST_ASSERT_FAIL;
+  }else{
+    test_bed->report_info("Conversion OK", 2);
+  }
+
   if(err == TEST_PASSED) test_bed->report_info("Technical aspects OK", 1);
   return err;
 }
 
 int test_entity_data_array::io_tests(){
+/** Check data_array write to file and then read*/
 
   test_bed->report_info("Checking file io", 1);
   int err = TEST_PASSED;
   bool err2 = false;
+
+  test_array = data_array(10, 10);
+  set_vals_2d();
+
   std::string filename = "./files/test_file.dat";
   std::fstream file;
   file.open(filename.c_str(),std::ios::out|std::ios::binary);
   if(file.is_open()){
-    err2=test_array.write_to_file(file);
+    err2 = test_array.write_to_file(file);
+    file.close();
   }
-  file.close();
   if(err2) test_bed->report_info("Error writing testfile", 1);
   
+  //Setup the size etc
   data_array new_array = test_array;
+  //Change some element to prove reading is doing something
+  new_array.set_element(5, 5, -20.0);
   file.open(filename.c_str(),std::ios::in|std::ios::binary);
-  err2=new_array.read_from_file(file);
+  err2 = new_array.read_from_file(file);
   if(err2) test_bed->report_info("Error reading testfile", 1);
   file.close();
   
   if(err2) err|=TEST_ASSERT_FAIL;
-  if(compare_3d(test_array, new_array)) err |= TEST_WRONG_RESULT;
+  if(test_array != new_array) err |= TEST_WRONG_RESULT;
 
   return err;
 }
@@ -770,17 +801,12 @@ int test_entity_get_and_fft::run(){
   
   char block_id[ID_SIZE]= "ex";
   test_rdr = new reader("./files/sin", block_id);
-
-  test_dat = data_array(10, 10);
-
-  err |=one_d();
-
-  //strcpy(block_id, "ay");
-  strcpy(block_id, "ax");
+  err |= one_d();
 
   if(test_rdr) delete test_rdr;
+  strcpy(block_id, "ax");
   test_rdr = new reader("./files/sinAcc", block_id);
-  err|= two_d();
+  err |= two_d();
 
   return err;
 }
@@ -788,133 +814,113 @@ int test_entity_get_and_fft::run(){
 int test_entity_get_and_fft::one_d(){
   int err = TEST_PASSED;
 
-  size_t tim_in[3];
-  size_t space_in[2];
-  tim_in[0]=0;
-  tim_in[1]=1;
-  tim_in[2]=0;
-  space_in[0]=0;
-
+  size_t tim_in[3] = {0, 1, 0};
+  size_t space_in[2] = {0, 0};
   int n_tims = std::max((int) (tim_in[1]-tim_in[0]), 1);
 
+  //Get the dimensions from file
   size_t n_dims;
   std::vector<size_t> dims;
   test_rdr->read_dims(n_dims, dims);
 
-  space_in[1]=dims[0];
+  space_in[1] = dims[0];
 
-  if(n_dims !=1){
+  if(n_dims != 1){
     err |= TEST_WRONG_RESULT;
-    test_bed->report_info("Array dims wrong", 1);
+    test_bed->report_info("Wrong array dims read", 1);
     return err;
   }
 
-  test_dat = data_array(dims[0], n_tims);
-  test_dat_fft = data_array(dims[0], n_tims);
+  //Assign data arrays
+  data_array test_dat = data_array(dims[0], n_tims);
+  data_array test_dat_fft = data_array(dims[0], n_tims);
   if(!test_dat.is_good()||!test_dat_fft.is_good()){
-    err|=TEST_ASSERT_FAIL;
+    err |= TEST_ASSERT_FAIL;
     return err;
   }
   
+  //Read the data and check frequencies
   test_rdr->read_data(test_dat, tim_in, space_in);
 
-  {
-    bool tmp_err = fft_array(test_dat,test_dat_fft);
-    if(tmp_err) err|=TEST_ASSERT_FAIL;
-    if(test_dat_fft.check_ids(test_dat)) err |= TEST_WRONG_RESULT;
-    if(err == TEST_PASSED) test_bed->report_info("1D read and FFT reports no error", 1);
+  my_type expected_max = 1.2566371e-4;//Expected frequency of max from test data
 
-    //Get primary frequency
-    int max_index = 0;
-    my_type max_val = 0;
-    std::vector<size_t> max_pos;
-    my_type expected_max = 1.2566371e-4;
-    bool both_freqs_correct = true;
-
-    max_val = test_dat_fft.maxval(max_pos);
-    if(max_pos.size() <1) err |=TEST_WRONG_RESULT;
-    max_index = max_pos[0];
-    if(std::abs(std::abs(test_dat_fft.get_axis_element(0,max_index)) - expected_max) > PRECISION){
-      err|= TEST_WRONG_RESULT;
-      test_bed->report_info("Max freq is "+mk_str(test_dat_fft.get_axis_element(0,max_index))+" ("+mk_str(max_index)+")", 1);
-      both_freqs_correct = false;
-    }
-
-    max_val = test_dat_fft.maxval(max_pos, max_index+1);
-    if(max_pos.size() <1) err |=TEST_WRONG_RESULT;
-    max_index = max_pos[0];
-    if(std::abs(std::abs(test_dat_fft.get_axis_element(0,max_index)) - expected_max) > PRECISION){
-      err|= TEST_WRONG_RESULT;
-      test_bed->report_info("Max freq is "+mk_str(test_dat_fft.get_axis_element(0,max_index))+" ("+mk_str(max_index)+")", 1);
-      both_freqs_correct = false;
-    }
-    
-    if(both_freqs_correct) test_bed->report_info("FFT Frequency correct!", 1);
-  }
-  //Now size down by 1 element and redo. This checks odd and even total sizes
-  {
-
-    test_dat.resize(0, dims[0]-1, true);
-    test_dat_fft.resize(0, dims[0]-1, true);
-    bool tmp_err = fft_array(test_dat,test_dat_fft);
-
-    if(tmp_err) err|=TEST_ASSERT_FAIL;
-    if(test_dat_fft.check_ids(test_dat)) err |= TEST_WRONG_RESULT;
-    if(err == TEST_PASSED) test_bed->report_info("1D read and FFT reports no error", 1);
-
-    //Get primary frequency
-    int max_index = 0;
-    my_type max_val = 0;
-    std::vector<size_t> max_pos;
-    my_type expected_max = 1.2566371e-4;
-    bool both_freqs_correct = true;
-
-    max_val = test_dat_fft.maxval(max_pos);
-    if(max_pos.size() <1) err |=TEST_WRONG_RESULT;
-    max_index = max_pos[0];
-    int sgn = test_dat_fft.get_axis_element(0,max_index)/std::abs(test_dat_fft.get_axis_element(0,max_index));
-    if( !((test_dat_fft.get_axis_element(0,max_index+1) > sgn*expected_max) && (test_dat_fft.get_axis_element(0,max_index-1) < sgn*expected_max))){
-      err|= TEST_WRONG_RESULT;
-      test_bed->report_info("Max freq is "+mk_str(test_dat_fft.get_axis_element(0,max_index))+" ("+mk_str(max_index)+")", 1);
-      both_freqs_correct = false;
-    }
+  //Check with raw data. This we know is exactly symmetric
+  err |= fft_and_check_1d(test_dat, test_dat_fft, expected_max);
   
-    max_val = test_dat_fft.maxval(max_pos, max_index+1);
-    if(max_pos.size() <1) err |=TEST_WRONG_RESULT;
-    max_index = max_pos[0];
-    sgn = test_dat_fft.get_axis_element(0,max_index)/std::abs(test_dat_fft.get_axis_element(0,max_index));
-    if(!( (test_dat_fft.get_axis_element(0,max_index+1) > sgn*expected_max) && (test_dat_fft.get_axis_element(0,max_index-1) < sgn*expected_max))){
-      err|= TEST_WRONG_RESULT;
-      test_bed->report_info("Max freq is "+mk_str(test_dat_fft.get_axis_element(0,max_index))+" ("+mk_str(max_index)+")", 1);
-      both_freqs_correct = false;
-    }
-    
-    if(both_freqs_correct) test_bed->report_info("FFT Frequency correct!", 1);
-  }
+  //Now size down by 1 element and redo. This checks odd and even total sizes in the FFT
+  test_dat.resize(0, dims[0]-1, true);
+  test_dat_fft.resize(0, dims[0]-1, true);
+  err |= fft_and_check_1d(test_dat, test_dat_fft, expected_max);
   
   return err;
 
 }
 
+int test_entity_get_and_fft::fft_and_check_1d(data_array & dat_in, data_array & dat_fft, my_type expected_max, bool single_max){
+/**  \brief Check 1-d FFT frequencies
+*
+* FFTS data_in into data_fft and then hunts for 1 or two maxima, depending on n_maxima, and checks they're at axis values of ± expected_max
+*/
+  int err = TEST_PASSED;
+  bool tmp_err = fft_array(dat_in, dat_fft);
+  if(tmp_err) err |= TEST_ASSERT_FAIL;
+  if(dat_fft.check_ids(dat_in)) err |= TEST_WRONG_RESULT;
+  if(err == TEST_PASSED) test_bed->report_info("1D FFT performed without error", 1);
+
+  //Get the two maxes (-ve and +ve frequency) and check position is correct
+  int max_index = 0;
+  my_type max_val = 0;
+  std::vector<size_t> max_pos;
+  bool both_freqs_correct = true;
+  int sgn = 1;
+
+  //Cheating repeat of checker code either once if single_max or twice otherwise for +ve and -ve frequencies
+  for(size_t i=0; i< 2-single_max; i++){
+    if(i==0) max_val = dat_fft.maxval(max_pos);
+    //Find max above previous max_index
+    else max_val = dat_fft.maxval(max_pos, max_index+1);
+
+    if(max_pos.size() < 1) err |= TEST_WRONG_RESULT;
+    //Since we know we're 1-d we consider only 0 axis
+    max_index = max_pos[0];
+    sgn = dat_fft.get_axis_element(0,max_index)/std::abs(dat_fft.get_axis_element(0,max_index));
+    //Allow either exact match or boxed match in general. First implies second
+    //Exact match to within PRECISION
+    bool exact_match = !(std::abs(std::abs(dat_fft.get_axis_element(0, max_index)) - expected_max) > PRECISION);
+    //Boxed match, found axis elements box the expected value
+    bool boxed_match = ((dat_fft.get_axis_element(0, max_index+1) >= sgn*expected_max) && (dat_fft.get_axis_element(0, max_index) <= sgn*expected_max)) || ((dat_fft.get_axis_element(0, max_index) >= sgn*expected_max) && (dat_fft.get_axis_element(0, max_index - 1) <= sgn*expected_max));
+    if(!exact_match && !boxed_match){
+      err |= TEST_WRONG_RESULT;
+      test_bed->report_info("Max freq is "+mk_str(dat_fft.get_axis_element(0,max_index))+" ("+mk_str(max_index)+")", 1);
+      both_freqs_correct = false;
+    }
+  }
+  
+  if(both_freqs_correct){
+    test_bed->report_info("1D FFT Frequency correct!", 1);
+  }else{
+    err |= TEST_WRONG_RESULT;
+    test_bed->report_info("Error wrong 1D FFT Frequency", 1);
+  }
+
+  return err;
+}
+
 int test_entity_get_and_fft::two_d(){
   int err = TEST_PASSED;
 
-  size_t tim_in[3];
-  size_t space_in[2];
-  tim_in[0]=0;
-  tim_in[1]=3;
-  tim_in[2]=100;
-  space_in[0]=0;
+  size_t tim_in[3] = {0, 3, 100};
+  size_t space_in[2] = {0, 0};
 
-  int n_tims = tim_in[2];//std::max(tim_in[1]-tim_in[0], 1);
+  int n_tims = tim_in[2];
 
-  int space_size;
   size_t n_dims;
   std::vector<size_t> dims;
   test_rdr->read_dims(n_dims, dims);
 
-  space_in[1]=dims[0];
-  space_size = space_in[1]-space_in[0];
+  space_in[1] = dims[0];
+  int space_size = space_in[1]-space_in[0];
+  //This is accumulated data and time dim is omitted by get_dims
   if(n_dims !=1){
     err |= TEST_WRONG_RESULT;
     test_bed->report_info("Array dims wrong", 1);
@@ -922,8 +928,8 @@ int test_entity_get_and_fft::two_d(){
     //nothing more worth doing right now...
   }
 
-  test_dat = data_array(space_size, n_tims);
-  test_dat_fft = data_array(space_size, n_tims);
+  data_array test_dat = data_array(space_size, n_tims);
+  data_array test_dat_fft = data_array(space_size, n_tims);
   if(!test_dat.is_good()||!test_dat_fft.is_good()){
     err|=TEST_ASSERT_FAIL;
     return err;
@@ -944,9 +950,8 @@ int test_entity_get_and_fft::two_d(){
 
   max_val = test_dat_fft.maxval(max_pos);
 
-  if(max_pos.size() <2) err |=TEST_WRONG_RESULT;
+  if(max_pos.size() < 2) err |= TEST_WRONG_RESULT;
   max_index = max_pos[0];
-//  for(int i=0; i<max_pos.size(); i++) std::cout<<max_pos[i]<<" ";
   
   if(std::abs(std::abs(test_dat_fft.get_axis_element(0,max_index)) - expected_max) > PRECISION){
     err|= TEST_WRONG_RESULT;
@@ -1002,9 +1007,15 @@ int test_entity_get_and_fft::two_d(){
 //----------------------------------------------------------------
 
 test_entity_basic_maths::test_entity_basic_maths(){
-/** \todo Add setup and teardown so these are alloced before run but not on construction*/
   name = "basic maths helpers";
-  size = 256;
+
+}
+test_entity_basic_maths::~test_entity_basic_maths(){
+  teardown_arrays();
+}
+
+void test_entity_basic_maths::setup_arrays(){
+//Allocate and fill arrays
   data_square=(calc_type*)calloc(size,sizeof(calc_type));
   data_positive=(calc_type*)calloc(size,sizeof(calc_type));
   data_tmp=(calc_type*)calloc(size,sizeof(calc_type));
@@ -1028,9 +1039,9 @@ test_entity_basic_maths::test_entity_basic_maths(){
     axisf[i] = axisf[i-1] + 1.0;
 
   }
-}
-test_entity_basic_maths::~test_entity_basic_maths(){
 
+}
+void test_entity_basic_maths::teardown_arrays(){
   free(data_square);
   free(data_positive);
   free(data_tmp);
@@ -1044,7 +1055,7 @@ int test_entity_basic_maths::run(){
 
   my_type target;
   int whe;
-
+  //Test where location
   target = 13.5;
   whe = where(axisf, size, target);
   if(whe > 0){
@@ -1064,10 +1075,10 @@ int test_entity_basic_maths::run(){
   whe = where(axisf, size, target);
   if(whe > 0){
     if(!(axisf[whe] >= target && axisf[whe-1] <= target)) err|=TEST_WRONG_RESULT;
-    //test_bed->report_info(mk_str(target)+" "+mk_str(axisf[whe]), 2);
   }
   if(err == TEST_PASSED) test_bed->report_info("Where OK", 1);
 
+  //Test integration
   calc_type res = integrator(data_square, size, d_axis);
   if(res!= 0.0) err |= TEST_WRONG_RESULT;
   res = integrator(data_positive, size, d_axis);
@@ -1075,6 +1086,7 @@ int test_entity_basic_maths::run(){
   //test it's correct to within some finite precision, defined in header
   if(err == TEST_PASSED) test_bed->report_info("Integrator OK", 1);
 
+  //Test in-place smoothing
   memcpy((void*)data_tmp, (void*)data_square, sizeof(calc_type)*size);
 
   inplace_boxcar_smooth(data_tmp, size, 2, 1);
@@ -1101,7 +1113,7 @@ int test_entity_basic_maths::run(){
   if(std::abs(total) > PRECISION) err |=TEST_WRONG_RESULT;
   if(err == TEST_PASSED) test_bed->report_info("Boxcar smooth OK", 1);
 
-
+  //Test interpolation on tiny arrays with known values
   {
     calc_type axis[4]={0.0,1.0,2.0,3.0}, vals[4]={0.0,1.0,0.0,1.0}, target, interp;
 

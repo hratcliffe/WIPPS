@@ -98,9 +98,9 @@ endif
 #---------------------------------------------------------------------
 #The below sets the correct type for the FFTW etc libraries
 #and also deals with make options, MODE, TEST and DOCS
-
+#Note the spaces in search strings. DO NOT REMOVE
 SED_STR = sed -i.bak 's/ _USE_FLOAT/ _NO_USE_FLOAT/' Doxyfile
-SED_STR_Test = sed -i.bak 's/RUN_TESTS_AND_EXIT/NO_RUN_TESTS_AND_EXIT/' Doxyfile
+SED_STR_Test = sed -i.bak 's/ _RUN_TESTS_AND_EXIT/_NO_RUN_TESTS_AND_EXIT/' Doxyfile
 #Sed strings to put the options chosen here into our Doxyfile so we document the right version
 
 ifeq ($(strip $(TYPE)),float)
@@ -135,7 +135,7 @@ else ifeq ($(strip $(MODE)),test)
   CFLAGS += -DRUN_TESTS_AND_EXIT
   #CFLAGS += $(PROFILE)
   CFLAGS += $(DEBUG)
-  SED_STR_Test = sed -i.bak 's/NO_RUN_TESTS_AND_EXIT/RUN_TESTS_AND_EXIT/' Doxyfile
+  SED_STR_Test = sed -i.bak 's/_NO_RUN_TESTS_AND_EXIT/_RUN_TESTS_AND_EXIT/' Doxyfile
 else ifeq ($(strip $(MODE)),profile)
   CFLAGS += $(PROFILE)
   CFLAGS += $(OPTIMISE)
@@ -287,5 +287,5 @@ veryclean:
 
 docs:
 	@echo Running Doxygen...
-	@if ! [[ `which Doxygen` ]]; then echo "Doxygen not found"; else printf "Options:\nType: ";egrep '_USE_FLOAT' ./Doxyfile >>/dev/null && echo "Float" || echo "Double";printf "Mode: ";egrep '[ \t]+RUN_TESTS_AND_EXIT' ./Doxyfile >>/dev/null && echo "Test"; echo; doxygen Doxyfile &> Doxy.log; echo Processing Doxygen output...; ./redox.sh; echo Running pdftex...; cd latex ; pdflatex --file-line-error --synctex=1 -interaction nonstopmode ./refman.tex &> ../docs.log; cd ..; echo "Docs built. See Doxy.log and docs.log for details"; fi
+	@if ! [[ `which Doxygen` ]]; then echo "Doxygen not found"; else printf "Options:\nType: ";egrep '_USE_FLOAT' ./Doxyfile >>/dev/null && echo "Float" || echo "Double";printf "Mode: ";egrep '[ \t]+_RUN_TESTS_AND_EXIT' ./Doxyfile >>/dev/null && echo "Test"; echo; doxygen Doxyfile &> Doxy.log; echo Processing Doxygen output...; ./redox.sh; echo Running pdftex...; cd latex ; pdflatex --file-line-error --synctex=1 -interaction nonstopmode ./refman.tex &> ../docs.log; cd ..; echo "Docs built. See Doxy.log and docs.log for details"; fi
 

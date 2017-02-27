@@ -474,7 +474,7 @@ bool spectrum::generate_spectrum(data_array &parent, int om_fuzz, int angle_type
     make_angle_axis();
     
     my_type k, tantheta, tmp, tmp_sum, max_power=0.0, theta, om_disp;
-    int kx_high, ky_low, ky_high, i_sgn=1, om_ind, om_low, om_high;
+    int kx_high, ky_low, ky_high, i_sgn=1, om_low, om_high;
 
     //Now we do a double loop over k_x and angle
     for(size_t i = 0; i< len_x; i++){
@@ -486,8 +486,6 @@ bool spectrum::generate_spectrum(data_array &parent, int om_fuzz, int angle_type
       set_om_axis_element(i, om_disp*i_sgn);
 
       //We can assume either +ve and -ve k (include i_sgn in kx_high, or omega (include in om_low and high)
-      //Omega in parent data matching current value
-      om_ind = where(om_ax, len_om, om_disp);
       
       tmp_sum = 0.0;
       for(size_t j = 0; j< get_g_dims(1); j++){

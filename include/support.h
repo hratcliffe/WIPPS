@@ -293,10 +293,10 @@ template<typename T> T interpolate(T* axis, T* vals, T target, int pts);
 
 /********Arithmetic operations ****/
 //These can be used with the various array apply functions to do arithmetic on arrays
-inline my_type subtract(my_type lhs, my_type rhs){return lhs - rhs;};
-inline my_type add(my_type lhs, my_type rhs){return lhs + rhs;};
-inline my_type divide(my_type lhs, my_type rhs){return lhs/rhs;};
-inline my_type multiply(my_type lhs, my_type rhs){return lhs*rhs;};
+inline my_type subtract(my_type lhs, my_type rhs){return lhs - rhs;}
+inline my_type add(my_type lhs, my_type rhs){return lhs + rhs;}
+inline my_type divide(my_type lhs, my_type rhs){return lhs/rhs;}
+inline my_type multiply(my_type lhs, my_type rhs){return lhs*rhs;}
 
 
 

@@ -137,12 +137,14 @@ std::string tests::get_printable_error(int err, int test_id){
 * Converts error code to printable string, adds code for reference and adds test name. Note code is bitmask and additional errors are appended together
 */
   std::string err_string="";
-  if(err!=TEST_PASSED){
+  int err_remaining = err;
+  if(err_remaining != TEST_PASSED){
     for(int i=err_tot-1; i>0; --i){
       //Run most to least significant
-      if((err & err_codes[i]) == err_codes[i]){
+      if((err_remaining & err_codes[i]) == err_codes[i]){
         err_string +=err_names[i];
-        if(i >1) err_string +=" &";
+        err_remaining -= err_codes[i];
+        if(err_remaining != TEST_PASSED) err_string +=" &";
         err_string += " ";
       }
     }
@@ -272,6 +274,25 @@ bool tests::run_tests(){
   this->set_colour();
   return total_errs > 0;
 
+}
+
+bool tests::set_userdef_error(int err_code, std::string message){
+/** \brief Set a user-defined error string
+*
+*Sets message associated with err_code to message string. NOTE this affects code associated with past and future use of the err_code string. @return 0 success, 1 for invalid change (trying to change a non-user error)
+*/
+
+  //We assume ordering of the USERDEF errors, but nothing more
+  //Check for out-of-range
+  if(err_code < TEST_USERDEF_ERR1 || err_code > TEST_USERDEF_ERR4) return 1;
+  //Find index and update message
+  for(size_t i = 0; i<= err_tot; i++){
+    if(err_codes[i] == err_code){
+      err_names[i] = message;
+      return 0;
+    }
+  }
+  return 1;//Was invalid code
 }
 
 #endif

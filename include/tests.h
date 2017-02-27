@@ -85,6 +85,7 @@ class tests{
     void set_verbosity(size_t verb);
     void set_colour(char col=0);
     bool check_for_abort(int err);
+    bool set_userdef_error(int err_code, std::string message);
 };
 
 extern tests * test_bed; /**< Global testbed, defined in tests.cpp*/

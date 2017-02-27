@@ -31,12 +31,6 @@
 #include "my_array.h"
 #include "d_coeff.h"
 #include "spectrum.h"
-#include "tests.h"
-
-#ifdef RUN_TESTS_AND_EXIT
-tests* test_bed;/**<Test bed for testing */
-#endif
-//We wrap in ifdef for nice Doxygen docs
 
 int main(int argc, char *argv[]){
 /**

@@ -19,6 +19,8 @@
 
 /** \todo Deliberately failing tests to check not doing nothing \todo Add scripts directory for level1 \todo Add tests directory for easy cleanup*/
 
+tests * test_bed;
+
 const int err_codes[err_tot] ={TEST_PASSED, TEST_WRONG_RESULT, TEST_NULL_RESULT, TEST_ASSERT_FAIL, TEST_USERDEF_ERR1, TEST_USERDEF_ERR2, TEST_USERDEF_ERR3, TEST_USERDEF_ERR4, TEST_FATAL_ERR};/**< List of error codes available*/
 
 std::string err_names[err_tot]={"None", "Wrong result", "Invalid Null result", "Assignment or assertion failed", "{Message 1 here}", "{Message 2 here}", "{Message 3 here}", "{Message 4 here}", "Fatal error"};/**< Names corresponding to error codes, which are reported in log files*/

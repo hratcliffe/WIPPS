@@ -40,7 +40,7 @@ const int max_verbos = 4;
 const std::string filename = "tests.log";/**<Test log file*/
 
 class tests;
-extern tests * test_bed; /**< Global testbed, define somewhere in your code*/
+extern tests * test_bed; /**< Global testbed, defined in tests.cpp*/
 
 /**\brief Testing instance
 *

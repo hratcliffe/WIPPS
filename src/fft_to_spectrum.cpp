@@ -22,6 +22,7 @@
 *
 *Requires an input directory and an input fft'd data file. The output is either specified, or is the input file with _spectrum appended before the extension. The "wave" option specifies the wave mode by single-character key (w, p, o) and defaults to Whistler. A "fuzz" parameter controlling how tight a band around the dispersion curve can be supplied as a percentage, default is 10%. Spectra contain both frequency and angle data, the n_ang, ang and extra flags control this. 
 \verbinclude help_f.txt
+\author Heather Ratcliffe \date 12/08/2016
 */
 
 struct fft_spect_args{

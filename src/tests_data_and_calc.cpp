@@ -778,9 +778,15 @@ int test_entity_levelone::run(){
 
   err|= setup();
   if(!test_bed->check_for_abort(err)) err|= basic_tests();
-  if(my_reader) delete my_reader;
-  if(test_contr) delete test_contr;
-    
+  if(my_reader){
+    delete my_reader;
+    my_reader = nullptr;
+  }
+  if(test_contr){
+    delete test_contr;
+    test_contr = nullptr;
+  }
+
   if(!test_bed->check_for_abort(err)){
     file_prefix = "./files/2dtest/";
     strcpy(block_id, "ey");

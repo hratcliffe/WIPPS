@@ -773,8 +773,8 @@ template<typename T> void inplace_boxcar_smooth(T * start, int len, int width, b
   free(hold);
 
 }
-template void inplace_boxcar_smooth(calc_type *, int, int, bool);
-template void inplace_boxcar_smooth(my_type *, int, int, bool);
+template void inplace_boxcar_smooth(float *, int, int, bool);
+template void inplace_boxcar_smooth(double *, int, int, bool);
 
 std::vector<calc_type> cubic_solve(calc_type an, calc_type bn, calc_type cn){
 /** \brief Finds roots of cubic x^3 + an x^2 + bn x + cn = 0

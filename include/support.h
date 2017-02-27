@@ -44,7 +44,7 @@ const my_type tiny_my_type=1e-30; /**< Value below which we assume 0*/
 #define other_type float/**< The other of double and float*/
 #define my_sdf_type SDF_DATATYPE_REAL8 /**< SDF type matching \ref my_type*/
 #define MPI_MYTYPE MPI_DOUBLE /**< MPI type matching \ref my_type*/
-const my_type tiny_my_type=1d-60; /**< Value below which we assume 0*/
+const my_type tiny_my_type=1e-60; /**< Value below which we assume 0*/
 
 #endif
 

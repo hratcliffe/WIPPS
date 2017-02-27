@@ -128,7 +128,7 @@ int main(int argc, char *argv[]){
         if(i > 0){
           //Average prev and current time vals to get mid-point and then take difference
           delta_t = (numeric_data.time[1] + numeric_data.time[0] -F_prev.time[1] - F_prev.time[0])/2.0;
-          numeric_data.subtract(F_prev);
+          numeric_data.apply(subtract, F_prev);
 
         }else{
         //We need some sort of estimate of the spectrum "noise" to eliminate this in the first file. Then we assume F(t_0) = ref_val. Perhaps should average raw not logged, but this will do.

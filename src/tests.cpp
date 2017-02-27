@@ -19,18 +19,11 @@
 
 /** \todo Deliberately failing tests to check not doing nothing \todo Add scripts directory for level1 \todo Add tests directory for easy cleanup*/
 
-tests * test_bed;
+tests * test_bed;/**<Global testbed controlling tests*/
 
 const int err_codes[err_tot] ={TEST_PASSED, TEST_WRONG_RESULT, TEST_NULL_RESULT, TEST_ASSERT_FAIL, TEST_USERDEF_ERR1, TEST_USERDEF_ERR2, TEST_USERDEF_ERR3, TEST_USERDEF_ERR4, TEST_FATAL_ERR};/**< List of error codes available*/
 
 std::string err_names[err_tot]={"None", "Wrong result", "Invalid Null result", "Assignment or assertion failed", "{Message 1 here}", "{Message 2 here}", "{Message 3 here}", "{Message 4 here}", "Fatal error"};/**< Names corresponding to error codes, which are reported in log files*/
-
-tests::tests(){
-  setup_tests();
-}
-tests::~tests(){
-  cleanup_tests();
-}
 
 void tests::set_verbosity(size_t verb){
 /** \brief Set verbosity
@@ -117,12 +110,11 @@ void tests::report_err(int err, int test_id){
 
 }
 
-void tests::report_info(std::string info, int verb_to_print, int test_id){
+void tests::report_info(std::string info, int verb_to_print){
 /** \brief Other test info
 *
 *Records string info to the tests.log file and to screen, according to requested verbosity.
 */
-  if(test_id == -1) test_id = current_test_id;
   if(verb_to_print <= this->verbosity){
     my_print(outfile, info, mpi_info.rank);
     my_print(nullptr, info, mpi_info.rank);
@@ -173,7 +165,9 @@ void tests::set_colour(char col){
 
 inline std::string tests::get_color_escape(char col){
 /** \brief
-*\copydoc dummy_colour This returns the terminal escape string to set given colour.
+*This returns the terminal escape string to set given colour.
+*
+\copydoc dummy_colour
 */
   if(col >='A' and col <='Z') col += 32;
   //ASCII upper to lower
@@ -181,7 +175,7 @@ inline std::string tests::get_color_escape(char col){
     case 0:
     case '0':
       return "\033[0m";
-      break;//Redundant but clearer
+      break;//"break" is Redundant but clearer
     case 'r':
       return "\033[31m";
       break;
@@ -230,9 +224,9 @@ inline std::string tests::get_color_escape(char col){
 }
 
 void tests::cleanup_tests(){
-/** \brief Delete test objects
+/** \brief Clean up after testing
 *
-*
+*Deletes test objects, and closes logfile
 */
   if(outfile->is_open()){
     this->report_info("Testing complete and logged in " +filename, 0);
@@ -242,22 +236,16 @@ void tests::cleanup_tests(){
 
   }
   delete outfile;
-//  test_obj * obj;
   for(current_test_id=0; current_test_id< (int)test_list.size(); current_test_id++){
-  //  obj = test_list[current_test_id];
-   // test_list.erase(current_test_id);
     delete test_list[current_test_id];
     test_list[current_test_id] = nullptr;
-  
   }
-
-  
 }
 
 bool tests::run_tests(){
 /** \brief Run scheduled tests
 *
-*Runs each test in list and reports total errors found
+*Runs each test in list and reports total errors found. @return 0 for no errors, 1 else
 */
 
   int total_errs = 0;
@@ -265,7 +253,7 @@ bool tests::run_tests(){
     int err = test_list[current_test_id]->run();
     report_err(err);
     total_errs += (bool) err;
-    //Add one if is any error returned
+    //Add one if any error was returned
   }
   this->set_colour('*');
   if(total_errs > 0) this->set_colour('r');

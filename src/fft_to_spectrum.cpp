@@ -5,11 +5,6 @@
 //  Created by Heather Ratcliffe on 12/08/2016.
 //
 //
-/** \file FFT_to_spectrum.cpp \brief Utility to convert an FFT to a spectrum
-*
-* Reads supplied FFT file and cuts out spectrum. Assumes Whistler mode
-*/
-
 
 #include <stdio.h>
 #include <cstring>
@@ -25,9 +20,11 @@
 *@{ 
 *\brief Utility to generate a spectrum from Fourier transformed data
 *
+*Requires an input directory and an input fft'd data file. The output is either specified, or is the input file with _spectrum appended before the extension. The "wave" option specifies the wave mode by single-character key (w, p, o) and defaults to Whistler. A "fuzz" parameter controlling how tight a band around the dispersion curve can be supplied as a percentage, default is 10%. Spectra contain both frequency and angle data, the n_ang, ang and extra flags control this. 
+\verbinclude help_f.txt
 */
 
-struct FFT_spect_args{
+struct fft_spect_args{
   std::string file_prefix;
   std::string file_in;
   std::string file_out;
@@ -39,7 +36,7 @@ struct FFT_spect_args{
   bool mask;
 };
 
-FFT_spect_args FFT_spect_process_command_line(int argc, char *argv[]);
+fft_spect_args fft_spect_process_command_line(int argc, char *argv[]);
 
 int main(int argc, char *argv[]){
 /** \todo FFT normalisation*/
@@ -47,7 +44,7 @@ int main(int argc, char *argv[]){
 
   my_print(std::string("Code Version: ")+ VERSION, mpi_info.rank);
   
-  FFT_spect_args my_args = FFT_spect_process_command_line(argc, argv);
+  fft_spect_args my_args = fft_spect_process_command_line(argc, argv);
   
   get_deck_constants(my_args.file_prefix);
 
@@ -81,18 +78,22 @@ int main(int argc, char *argv[]){
   data_array * mask;
 
   if(my_args.mask){
+    //Mask requested, create array for it and call
     mask = new data_array();
     mask->clone_empty(data_in);
     contr.get_current_spectrum()->generate_spectrum(data_in, my_args.fuzz, my_args.ang, mask);
   }else{
     contr.get_current_spectrum()->generate_spectrum(data_in, my_args.fuzz, my_args.ang);
   }
+  //Do smoothing
   if(my_args.smth >1) contr.get_current_spectrum()->smooth_B(my_args.smth);
+  //Write output
   std::fstream outfile;
   outfile.open(my_args.file_prefix+my_args.file_out, std::ios::binary|std::ios::out);
   contr.get_current_spectrum()->write_to_file(outfile);
   outfile.close();
 
+  //Write mask output if required
   if(my_args.mask){
     std::string filename =my_args.file_prefix+my_args.file_out;
     filename = append_into_string(filename, "_mask");
@@ -106,9 +107,14 @@ int main(int argc, char *argv[]){
 }
 
 
-FFT_spect_args FFT_spect_process_command_line(int argc, char *argv[]){
+fft_spect_args fft_spect_process_command_line(int argc, char *argv[]){
+/** \brief Process special command line args
+*
+*Process the fft utility arguments. Expects full list and no more.
+*/
 
-  FFT_spect_args values;
+  fft_spect_args values;
+  //Default values if nothing supplied
   values.file_prefix = "./files/";
   values.file_in = "";
   values.file_out = "";

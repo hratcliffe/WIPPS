@@ -28,10 +28,9 @@ cutout_args cutout_process_command_line(int argc, char *argv[]);
 /** \defgroup cutout_util FFT cutout utility
 *@{ *\brief Utility to trim FFTd data to specified axis limits
 *
-*Reads array from given file, cuts out to supplied limits and saves to given output file. deck.status file is read from file_prefix+deck.status and allows to specify frequency cuts in w_ce and space in ... If no output file is given, output will be in [inputfile]_trim
-Call example: \todo Add call examples
-
-\author Heather Ratcliffe \date 11/08/2016.
+*Reads array from given file, cuts out to supplied limits and saves to given output file. deck.status file is read from file_prefix+deck.status and allows to specify frequency cuts in w_ce. Wavenumber cuts are in m^-1. If no output file is given, output will be in [inputfile]_trim
+\verbinclude help_c.txt
+\author Heather Ratcliffe \date 11/08/2016
 
 */
 
@@ -82,18 +81,17 @@ int main(int argc, char *argv[]){
     my_print( "FFT section output in "+(my_args.file_prefix + my_args.file_out), mpi_info.rank);
   }
 
-  MPI_Barrier(MPI_COMM_WORLD);
-#ifndef NO_FFT
-  ADD_FFTW(cleanup());
-#endif
   MPI_Finalize();
   //call these last...
-
-
+  
   exit(0);
 }
 
 cutout_args cutout_process_command_line(int argc, char *argv[]){
+/** \brief Process commandline arguments
+*
+* Expects full list and no more.
+*/
 
   cutout_args values;
   values.file_prefix = "./files/";

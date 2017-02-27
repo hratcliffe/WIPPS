@@ -15,8 +15,6 @@
 #include <iostream>
 #include <vector>
 #include "support.h"
-#include "data_array.h"
-#include "reader.h"
 /*
 check 2011 paper for whistler mode tests
 Bortnik, 
@@ -41,8 +39,8 @@ const calc_type LOW_PRECISION = 5e-3;/**< Constant for equality at low precision
 const int max_verbos = 4;
 const std::string filename = "tests.log";/**<Test log file*/
 
-class plasma;
-class controller;
+class tests;
+extern tests * test_bed; /**< Global testbed, define somewhere in your code*/
 
 /**\brief Testing instance
 *
@@ -93,183 +91,6 @@ class tests{
     bool check_for_abort(int err);
   
 };
-
-/** Test for reader class */
-class test_entity_reader : public test_entity{
-  private:
-    reader * test_rdr;
-    reader * accum_reader;
-    const static int size = 49367784;
-    //Size of my test file...
-
-  public:
-    test_entity_reader();
-    virtual ~test_entity_reader();
-    virtual int run();
-
-};
-
-bool compare_2d(data_array const &lhs, data_array const &rhs, bool no_dims_match=false);
-bool compare_3d(data_array &lhs, data_array &rhs, bool no_dims_match=false);
-
-/** Test for data array class, assigns values to entry and reads back*/
-class test_entity_data_array : public test_entity{
-  private:
-    data_array test_array;
-    my_type total_all;
-    int technical_tests();
-    int basic_tests();
-    int assign();
-    int three_d_and_shift();
-    int io_tests();
-    int set_vals_2d();
-    int set_vals_3d();
-  public:
-    test_entity_data_array();
-    virtual ~test_entity_data_array(){;}
-    virtual int run();
-
-};
-
-/** Combined test: reads test sdf file, stores into data array and runs fft. Test data should be a sine curve with one major frequency which is then checked
-*/
-class test_entity_get_and_fft : public test_entity{
-  private:
-    reader * test_rdr;
-    int one_d();
-    int two_d();
-    int fft_and_check_1d(data_array & dat_in, data_array & dat_fft, my_type expected_max, bool single_max = false);
-  public:
-    test_entity_get_and_fft();
-    virtual ~test_entity_get_and_fft();
-    virtual int run();
-
-};
-
-/** Test basic maths routines, including where, integrator, boxcar smoothing, interpolation and cubic solver. Runs predefined test problems and tests results.
-*/
-class test_entity_basic_maths : public test_entity{
-  private:
-    calc_type * data_square;
-    calc_type * data_positive;
-    calc_type * data_tmp;
-    calc_type * axis;
-    my_type * axisf;
-    calc_type * d_axis;
-    const int size = 256;//Size of arrays to use for maths checks
-    void setup_arrays();
-    void teardown_arrays();
-  public:
-    test_entity_basic_maths();
-    virtual ~test_entity_basic_maths();
-    virtual int run();
-
-};
-
-/** Test external maths routines use and interpretation etc. Currently Bessel functions from boost
-*/
-class test_entity_extern_maths : public test_entity{
-  private:
-
-  public:
-    test_entity_extern_maths();
-    virtual ~test_entity_extern_maths();
-    virtual int run();
-
-};
-
-/**Check plasma functions, get_omega and dispersion relation
-*/
-class test_entity_plasma : public test_entity{
-  private:
-    plasma * plas;
-    int resonant_freq();
-    int high_density();
-    int other_modes();
-    int phi_dom();
-    int analytic_dispersion();
-  public:
-    test_entity_plasma();
-    virtual ~test_entity_plasma();
-    virtual int run();
-
-};
-
-/** Check spectrum calculations, such as test spectrum derivation etc */
-class test_entity_spectrum : public test_entity{
-  private:
-    data_array test_dat_fft;
-    data_array test_spect;
-    controller * test_contr;
-    std::string file_prefix;
-    int setup();
-    int basic_tests1();
-    int basic_tests2();
-    int albertGs_tests();
-    int technical_tests();
-
-  public:
-    test_entity_spectrum();
-    virtual ~test_entity_spectrum();
-    virtual int run();
-};
-
-/** Full check of deriving a "level one" FFT and spectrum from the various input data formats */
-class test_entity_levelone: public test_entity{
-  private:
-    data_array dat_fft;
-    data_array dat;
-    controller * test_contr;
-    reader * my_reader;
-    std::string file_prefix;
-    size_t time_in[3];
-    size_t space_in[2];
-    char block_id[ID_SIZE];
-    int n_tims;
-    int setup();
-    int basic_tests();
-    int twod_tests();
-    int twod_space_tests();
-  public:
-    test_entity_levelone();
-    virtual ~test_entity_levelone();
-    virtual int run();
-};
-
-
-/** Spectrum to D test. Setup sample data in a spectrum with analytic solvable form. Calculate resulting D. Cross check*/
-class test_entity_d : public test_entity{
-  private:
-    controller * test_contr;
-    std::string file_prefix;
-
-  public:
-    test_entity_d();
-    virtual ~test_entity_d();
-    virtual int run();
-};
-
-/** Test bounce averaging. Setup dummy D data across multiple blocks and average. Cross check with analytic results*/
-class test_entity_bounce: public test_entity{
-  private:
-
-  public:
-    test_entity_bounce();
-    virtual ~test_entity_bounce();
-    virtual int run();
-};
-
-/** Test non-thermal electron specification*/
-class test_entity_nonthermal: public test_entity{
-  private:
-    int test_lookup();
-  public:
-    test_entity_nonthermal();
-    virtual ~test_entity_nonthermal();
-    virtual int run();
-
-};
-
 
 #endif
 #endif

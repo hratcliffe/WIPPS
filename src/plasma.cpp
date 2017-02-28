@@ -323,11 +323,10 @@ mu_dmudom plasma::get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int
 *Duplicated from mufunctions by CEJ Watt
 *
 *On notation: within this routine and plasma::get_root we use notation as from mufunctions3.f90. In the return values as defined in support.h we match with Lyons and Albert. Thus in my_mu, we have lat, r, theta, omega for polar coordinate, r, wave normal angle and wave frequency
-*Also needs particle pitch angle alpha \todo Fix relativistic gamma... WATCH for Clares version which uses a different alpha entirely... \todo Why do we pass omega_n??
-
+*Also needs particle pitch angle alpha WATCH for Clares version which uses a different alpha entirely...
  */
  
-  calc_type term1, term2, term3, denom, tmp_bes, tmp_besp, tmp_besm, bessel_arg, D_mu2S, gamma, w2, w3;
+  calc_type term1, term2, term3, denom, tmp_bes, tmp_besp, tmp_besm, bessel_arg, D_mu2S, w2, w3;
 
   mu_dmudom my_mu;
 
@@ -338,6 +337,8 @@ mu_dmudom plasma::get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int
   //Argument preconditions. Check only in debug mode for speed
   if(psi < 0 || psi >= pi) my_error_print("!!!!!!!!Error in get_phi_mu_om, pitch angle (psi="+mk_str(psi)+") out of range!!!!!!", 0);
   if(alpha < 0 || alpha >= pi) my_error_print("!!!!!!!!Error in get_phi_mu_om, particle pitch angle (alpha="+mk_str(alpha)+") out of range!!!!!!", 0);
+  if(gamma_particle < 1) my_error_print("!!!!!!!!Error in get_phi_mu_om, particle gamma (gamma_particle="+mk_str(gamma_particle)+") out of range!!!!!!", 0);
+
   //I don't think there's an upper or lower bound on w we need to enforce
   //Nor any actual bounds on n
 #endif
@@ -474,9 +475,8 @@ mu_dmudom plasma::get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int
     my_mu.dmudom = dmudw;
   
     D_mu2S = D / (mu2 - S);
-    gamma = 1;// FAKENUMBERS
     calc_type calc_n = (calc_type) n;
-    omega_n = -1.0 * calc_n * my_const.omega_ce/gamma;
+    omega_n = -1.0 * calc_n * my_const.omega_ce/gamma_particle;
     //temporaries for simplicity
 
     term1 = (mu2* s2psi - P)/(mu2);
@@ -509,9 +509,9 @@ mu_dmudom plasma::get_high_dens_phi_mu_om(calc_type w, calc_type psi, calc_type 
   /** \brief Solve plasma dispersion and extensions
 *
 *Duplicates plasma::get_phi_mu_omega() but using reduced form of Stix parameters corresponding to a high-density assumption. This is mainly for comparison with the exact solution to validate this assumption.
-*Also needs particle pitch angle alpha \todo Fix relativistic gamma... \todo Multispecies???? */
+*Also needs particle pitch angle alpha \todo Multispecies???? */
 
-  calc_type term1, term2, term3, denom, tmp_bes, tmp_besp, tmp_besm, bessel_arg, D_mu2S, gamma, w2, w3;
+  calc_type term1, term2, term3, denom, tmp_bes, tmp_besp, tmp_besm, bessel_arg, D_mu2S, w2, w3;
 
   mu_dmudom my_mu;
 
@@ -522,6 +522,7 @@ mu_dmudom plasma::get_high_dens_phi_mu_om(calc_type w, calc_type psi, calc_type 
   //Argument preconditions. Check only in debug mode for speed
   if(psi < 0 || psi >= pi) my_error_print("!!!!!!!!Error in get_high_dens_phi_mu_om, pitch angle (psi="+mk_str(psi)+") out of range!!!!!!", 0);
   if(alpha < 0 || alpha >= pi) my_error_print("!!!!!!!!Error in get_high_dens_phi_mu_om, particle pitch angle (alpha="+mk_str(alpha)+") out of range!!!!!!", 0);
+  if(gamma_particle < 1) my_error_print("!!!!!!!!Error in get_high_dens_phi_mu_om, particle gamma (gamma_particle="+mk_str(gamma_particle)+") out of range!!!!!!", 0);
   //I don't think there's an upper or lower bound on w we need to enforce
   //Nor any bounds on n
 #endif
@@ -659,7 +660,6 @@ mu_dmudom plasma::get_high_dens_phi_mu_om(calc_type w, calc_type psi, calc_type 
     my_mu.dmudom = dmudw;
   
     D_mu2S = D / (mu2 - S);
-//    gamma = 1;// FAKENUMBERS /** \todo FIX!!!! */
     calc_type calc_n = (calc_type) n;
     omega_n = -1.0 * calc_n * my_const.omega_ce/gamma_particle;
     //temporaries for simplicity

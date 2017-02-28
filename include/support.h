@@ -254,7 +254,7 @@ bool flatten_fortran_slice(my_type * src_ptr, my_type* dest_ptr, size_t n_dims_i
 int where(my_type * ax_ptr, int len, my_type target);
 
 inline calc_type gamma_rel(calc_type v){
-  return sqrt(1.0 - v*v/v0/v0);
+  return 1.0/std::sqrt(1.0 - v*v/v0/v0);
 }
 
 /** @} */

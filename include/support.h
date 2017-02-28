@@ -240,7 +240,7 @@ void share_consts();
 
 /********IO helpers ****/
 void get_deck_constants(std::string file_prefix);
-setup_args process_command_line(int argc, char *argv[]);
+setup_args process_command_line(int argc, char *argv[], char help_id = ' ');
 void print_help(char code=0);
 void log_code_constants(std::string file_prefix);
 std::vector<std::string> process_filelist(int argc, char *argv[]);

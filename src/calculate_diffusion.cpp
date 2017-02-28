@@ -1,13 +1,4 @@
 
-
-/** \file calculate_diffusion.cpp \brief Calculate a particle diffusion cofficient from a given wave spectrum
-*
-* Calculates a diffusion coefficient from data. Data can be either a range of SDF files or a list of FFT or spectrum files, from e.g. supplied generate_ffts utility. The resulting particle diffusion coefficient are calculated using Lyons 1974 a, b, Albert 2005 and such. Note that this makes no sense for E fields!
-* Depends on the SDF file libraries, the FFTW library, and boost's math for special functions. A set of test arguments is supplied. Call using ./main `<test_pars` to use these. Or try ./main -h for argument help
-* Moved from main.cpp by 
-  \author Heather Ratcliffe \date 17/02/2017
-*/
-
 #include <math.h>
 #include <cmath>
 #include <boost/math/special_functions.hpp>
@@ -43,6 +34,7 @@
 *
 *Calculates a particle diffusion coefficient from given data, in the form of sdf files, ffts or spectrum files. The latter can be created by the generate_ffts and FFT_to_spectrum utils. The resulting particle diffusion coefficient are calculated using Lyons 1974 a, b, Albert 2005 and such. Note that this makes no sense for E fields!
 * Depends on the SDF file libraries, the FFTW library, and boost's math for special functions. A set of test arguments is supplied. Call using ./calculate_diffusion `<test_pars` to use these. Or try ./calculate_diffusion -h for argument help
+\verbinclude help_i.txt
   \author Heather Ratcliffe \date 17/02/2017
 */
 
@@ -61,7 +53,7 @@ int main(int argc, char *argv[]){
   
   MPI_Barrier(MPI_COMM_WORLD);
 
-  setup_args cmd_line_args = process_command_line(argc, argv);
+  setup_args cmd_line_args = process_command_line(argc, argv, 'i');
   std::vector<std::string> file_list;
   if(cmd_line_args.is_list){
     file_list = process_filelist(argc, argv);
@@ -70,7 +62,7 @@ int main(int argc, char *argv[]){
   
   if(mpi_info.rank == 0) get_deck_constants(cmd_line_args.file_prefix);
   share_consts();
-  /** Get constants from deck and share to other procs*/
+  /* Get constants from deck and share to other procs*/
 
   log_code_constants(cmd_line_args.file_prefix);
 
@@ -80,7 +72,7 @@ int main(int argc, char *argv[]){
   strcpy(block_id, cmd_line_args.block.c_str());
 
   reader my_reader = reader(cmd_line_args.file_prefix, block_id);
-  if(my_reader.current_block_is_accum()) cmd_line_args.use_row_time = true; /** \todo Remove this and use is_accum() directly?*/
+  if(my_reader.current_block_is_accum()) cmd_line_args.use_row_time = true;
   int n_tims;
   if(!cmd_line_args.use_row_time){
     n_tims = std::max((int) (cmd_line_args.time[1]-cmd_line_args.time[0]), 1);
@@ -93,8 +85,6 @@ int main(int argc, char *argv[]){
   }
   my_reader.update_ref_filenum(cmd_line_args.time[0]);
   size_t my_space[2]={0, 0};
-  //my_space[0] = cmd_line_args.space[0];
-  //my_space[1] = cmd_line_args.space[1];
 
   size_t n_dims;
   std::vector<size_t> dims;

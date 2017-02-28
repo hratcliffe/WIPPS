@@ -162,7 +162,7 @@ void get_deck_constants(std::string file_prefix){
 
 }
 
-setup_args process_command_line(int argc, char *argv[]){
+setup_args process_command_line(int argc, char *argv[], char help_id){
 /** \brief Set basic parameters
 *
 *Sets defaults or those given via command line (see help.txt). Forces an constant integer number of space blocks on each core.
@@ -186,7 +186,7 @@ setup_args process_command_line(int argc, char *argv[]){
 
   for(int i=1; i< argc; i++){
     if(strcmp(argv[i], "-h")==0){
-      print_help();
+      print_help(help_id);
       exit(0);
     }
     else if(strcmp(argv[i], "-f")==0 && i < argc-1){
@@ -306,7 +306,7 @@ void print_help(char code){
   std::ifstream halp;
   
   std::string file = halp_file;
-  if(code !=0) file = append_into_string(file, "_"+std::string(1, code));
+  if(code !=0 && code !=' ') file = append_into_string(file, "_"+std::string(1, code));
   halp.open(file);
   if(!halp){
     //File not found!

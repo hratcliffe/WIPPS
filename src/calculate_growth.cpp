@@ -28,8 +28,9 @@
 *@{ 
 *\brief Utility to calculate growth rates
 *
-* Calculates analytical growth rate using electron distribution specified in <path>nonthermal.conf and if requested also calculates linear growth from a series of spectrum files. These must be in time-order and all have the same axes. The analytics growth rates use the axes as in spectrum files, if supplied, or a wide coverage log axis with n_trials elements otherwise. We use plasma.conf and deck.status files for configuration, and a nonthermal.conf file to create the non-thermal electron distribution. See non_thermal. A set of test arguments is supplied. Call using \code ./calculate_growth `<growth_test_pars` \endcode to use these. Or try \code ./calculate_growth -h \endcode
-  \author Heather Ratcliffe \date 11/02/2016.
+* Calculates analytical growth rate using electron distribution specified in <path>nonthermal.conf and if requested also calculates linear growth from a series of spectrum files. These must be in time-order and all have the same axes. The analytics growth rates use the axes as in spectrum files, if supplied, or a wide coverage log axis with n_trials elements otherwise. We use plasma.conf and deck.status files for configuration, and a nonthermal.conf file to create the non-thermal electron distribution. See non_thermal for details. A set of test arguments is supplied as growth_test_pars
+\verbinclude help_w.txt
+  \author Heather Ratcliffe \date 11/02/2016
 
 */
 

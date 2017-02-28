@@ -177,7 +177,7 @@ int test_entity_plasma::resonant_freq(){
   om_pe_local = plas->get_omega_ref("pe");
 
 
-  calc_type cos_theta, mu_tmp1, mu_tmp2, tmp_omega_n=0;
+  calc_type cos_theta, mu_tmp1, mu_tmp2;
   calc_type gamma, gamma2;
 
   test_bed->report_info("Testing resonant frequency solver", 1);
@@ -211,7 +211,7 @@ int test_entity_plasma::resonant_freq(){
           }
         
           //Also check there is a valid full mu solution
-          my_mu = plas->get_high_dens_phi_mu_om(results[i], std::atan(x), 0.0, 0.0, tmp_omega_n);
+          my_mu = plas->get_high_dens_phi_mu_om(results[i], std::atan(x), 0.0, 0, gamma);
           if(my_mu.err){
             err|=TEST_WRONG_RESULT;
             test_bed->report_info("No full mu solution for resonant frequency", 2);
@@ -251,7 +251,7 @@ int test_entity_plasma::high_density(){
   for(size_t i =0; i<n_tests; i++){
     tmp_omega += std::abs(om_ce_local)/(calc_type)(n_tests + 1);
     my_mu = plas->get_phi_mu_om(tmp_omega, tmp_theta, 0.0, 0, gamma_particle);
-    my_mu_dens = plas->get_high_dens_phi_mu_om(tmp_omega, tmp_theta, 0.0, 0.0, gamma_particle);
+    my_mu_dens = plas->get_high_dens_phi_mu_om(tmp_omega, tmp_theta, 0.0, 0, gamma_particle);
     my_mu_all = plas->get_root(0.0, tmp_omega, tmp_theta);
 
     /** my_mu.mu should roughly equal Stix 2.45*/

@@ -166,8 +166,8 @@ Get mu, dmu/domega which are used to:
   this->copy_ids(spect);
   //copy block id, ranges etc from spect.
   calc_type theta, omega_n=0.0, D_tmp, k_thresh;
-  calc_type alpha, v_par, c2th, s2alpha; /* temporaries for clarity*/
-  calc_type Eq6, mu_dom_mu, Eq7, dmudx, numerator;
+  calc_type alpha, v_par, c2th, s2alpha, tan_alpha; /* temporaries for clarity*/
+  calc_type Eq6, mu_dom_mu, Eq7, dmudx, numerator, gamma_particle;
   int n_min, n_max;
   std::vector<calc_type> omega_calc;
   mu_dmudom my_mu;
@@ -231,8 +231,10 @@ Get mu, dmu/domega which are used to:
 //    for(int k =0; k< ((1 <dims[1]) ? 1: dims[1]); k++){
     for(size_t k =0; k< dims[1]; k++){
       //particle pitch angle
-      alpha = atan(get_axis_element(1, k));
+      tan_alpha = get_axis_element(1, k);
+      alpha = atan(tan_alpha);
       s2alpha = std::pow(std::sin(alpha), 2);
+      gamma_particle = gamma_rel(v_par* std::sqrt(1.0 + tan_alpha*tan_alpha));
 
       for(int j=0;j<n_thetas; ++j){
       //theta loop for wave angle or x=tan theta
@@ -251,7 +253,7 @@ Get mu, dmu/domega which are used to:
             //each solution
               //std::cout<<"Freq is "<<omega_calc[ii]/my_const.omega_ce<<std::endl;
 
-              my_mu = plas.get_high_dens_phi_mu_om(omega_calc[ii], theta, alpha, n);
+              my_mu = plas.get_high_dens_phi_mu_om(omega_calc[ii], theta, alpha, n, gamma_particle);
               if(my_mu.err){
                 //Once angle is included we have no solution
                 non_counter++;

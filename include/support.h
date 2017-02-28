@@ -26,7 +26,7 @@
 * \brief Handles type selection to match data
 */
 //-----------TYPE HANDLING----------------------------
-#ifdef _USE_FLOAT
+#ifdef USE_FLOAT
 
 #define ADD_FFTW(x) fftwf_ ## x /**< Add the correct FFTW library prefix to function/variable names */
 #define cplx_type ADD_FFTW(complex) /**< Suitable complex type for FFTW work*/

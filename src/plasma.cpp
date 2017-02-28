@@ -15,7 +15,7 @@
 plasma::plasma(std::string file_prefix, my_type Bx_local){
 /** \brief Set up plasma
 *
-*Sets up components from <file_prefix>plasma.conf. If a Bx_local is given, store and calc local cyclotron frequency from this. Else use the cyclotron frequency from deck constants. \todo What is is_setup actually doing?
+*Sets up components from {file_prefix}plasma.conf. If a Bx_local is given, store and calc local cyclotron frequency from this. Else use the cyclotron frequency from deck constants. \todo What is is_setup actually doing?
 */
 
   //Set up plasma components
@@ -37,7 +37,7 @@ plasma::plasma(std::string file_prefix, my_type Bx_local){
 bool plasma::configure_from_file(std::string file_prefix){
 /** \brief Setup plasma from file
 *
-*Reads <file_prefix>plasma.conf and parses component mass, charge and density
+*Reads {file_prefix}plasma.conf and parses component mass, charge and density
 *Sample block looks like
 * electron:
 *mass = 1.0*me
@@ -159,7 +159,7 @@ mu plasma::get_root(calc_type th, calc_type w, calc_type psi, bool Righthand){
 *Solves Appleton-Hartree plasma dispersion and returns struct containing mu, its derivatives and error code. See \ref str
 *Duplicated from mufunctions by CEJ Watt
 *
-*@param th Polar coordinate, or latitude @param w Wave frequency @param psi Wave pitch angle k to B0 \todo Check constant types OK \todo Better root selection
+*@param th Polar coordinate, or latitude @param w Wave frequency @param psi Wave pitch angle k to B0 @param Righthand Mode handedness \todo Check constant types OK \todo Better root selection
 *
 *On notation: within this routine and plasma::get_phi_mu_om() we use notation as from mufunctions3.f90. In the return values as defined in support.h we match with Lyons and Albert. Thus in my_mu, we have lat, r, theta, omega for polar coordinate, r, wave normal angle and wave frequency
 */
@@ -176,7 +176,7 @@ mu plasma::get_root(calc_type th, calc_type w, calc_type psi, bool Righthand){
 #endif
 
   
-  /** \todo get or calc these...*/
+  /** \todo get or calc dndr and dndth*/
   // FAKENUMBERS
   for(int i=0;i<ncomps; i++){
     dndr[i] = 0.0;
@@ -766,7 +766,7 @@ std::vector<calc_type> plasma::get_resonant_omega(calc_type x, calc_type v_par, 
 calc_type plasma::get_dispersion(my_type in, int wave_type, bool reverse, bool deriv, my_type theta)const{
 /** \brief Solve analytic dispersion (approx)
 *
-* By default returns omega for a given k (see reverse and deriv params param). Uses local reference cyclotron and plasma frequencies and works with UNNORMALISED quantitites. NB: parameters out of range will silently return 0. NB: For Whistler modes this is an approximation and intended to be perfectly reversible. @param k Wavenumber @param wave_type wave species (see support.h) @param reverse Return k for input omega @param deriv Whether to instead return anayltic v_g  \todo Any other modes?*/
+* By default returns omega for a given k (see reverse and deriv params param). Uses local reference cyclotron and plasma frequencies and works with UNNORMALISED quantitites. NB: parameters out of range will silently return 0. NB: For Whistler modes this is an approximation and intended to be perfectly reversible. @param k Wavenumber @param wave_type wave species (see support.h) @param reverse Return k for input omega @param deriv Whether to instead return anayltic v_g @param theta Wavenormal angle, default 0.0  \todo Any other modes?*/
 
 #ifdef DEBUG_ALL
   //Argument preconditions. Check only in debug mode for speed

@@ -9,7 +9,7 @@
 #include "support.h"
 /** \brief Nonthermal electron description
 *
-*Small class to hold a non-thermal electron distribution we can operate on and with. Distribution is defined by reading a <filepath>nonthermal.conf file. This either specifies a functional form and corresponding constants as references into the deck.status file, or a lookup file containing a data_array. The interface remains the same, accessing either f_p(p_par, p_perp) or df/dp.
+*Small class to hold a non-thermal electron distribution we can operate on and with. Distribution is defined by reading a {filepath}nonthermal.conf file. This either specifies a functional form and corresponding constants as references into the deck.status file, or a lookup file containing a data_array. The interface remains the same, accessing either f_p(p_par, p_perp) or df/dp.
 *
 *An example conf file is \verbatim
 ncomps = 1

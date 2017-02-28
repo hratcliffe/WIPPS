@@ -36,9 +36,9 @@ class reader{
   bool is_accum(std::string block_id);
 
 /********File read routines ****/
-  int pre_read(data_array& my_data_in, int ref_time, bool accum, int flatten_on, size_t &n_dims, size_t * &source_sizes);
-  int read_acc_time(data_array & my_data_in, sdf_file_t * handle, size_t total_reads, size_t rows);
-  int read_plain_time(data_array& my_data_in, sdf_file_t * handle, size_t pos);
+  int pre_read(data_array& data_in, int ref_time, bool accumulated, int flatten_on, size_t &n_dims, size_t * &source_sizes);
+  int read_acc_time(data_array & data_in, sdf_file_t * handle, size_t total_reads, size_t rows);
+  int read_plain_time(data_array& data_in, sdf_file_t * handle, size_t pos);
 public:
 
   std::string file_prefix;/**< Prefix of files before dump number*/

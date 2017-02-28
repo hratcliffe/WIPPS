@@ -32,15 +32,15 @@
 #include "d_coeff.h"
 #include "spectrum.h"
 
+#ifndef RUN_TESTS_AND_EXIT
 const char PER_UTIL_HELP_ID = ' ';
+#endif
 
 int main(int argc, char *argv[]){
 /**
 *In theory, these classes and functions should be named well enough that the function here is largely clear. Remains to be seen, eh?
 *
 */
-
-  int err;
   
   int ierr = local_MPI_setup(argc, argv);
   if(ierr){
@@ -61,7 +61,7 @@ int main(int argc, char *argv[]){
 
   test_bed = new tests();
   test_bed->set_verbosity(2);
-  err = test_bed->run_tests();
+  int err = test_bed->run_tests();
   delete test_bed;
   exit(err);
 

@@ -302,6 +302,7 @@ inline my_type multiply(my_type lhs, my_type rhs){return lhs*rhs;}
 
 
 /** @} */
+/** @} */
 //----------- END HELPER TYPE FUNCTION DECLARATIONS -----------
 
 #endif

@@ -21,14 +21,14 @@
 *@{ 
 *\brief Assorted stand alone utilities
 *
-*Contains programs to perform FFTs, create spectra, calculate growth etc. Build with make utils Command line argument help is available using ./<util_name> -h
+*Contains programs to perform FFTs, create spectra, calculate growth etc. Build with make utils Command line argument help is available using ./{util_name} -h
 */
 
 /** \defgroup growth_util Growth rate calculation utility
 *@{ 
 *\brief Utility to calculate growth rates
 *
-* Calculates analytical growth rate using electron distribution specified in <path>nonthermal.conf and if requested also calculates linear growth from a series of spectrum files. These must be in time-order and all have the same axes. The analytics growth rates use the axes as in spectrum files, if supplied, or a wide coverage log axis with n_trials elements otherwise. We use plasma.conf and deck.status files for configuration, and a nonthermal.conf file to create the non-thermal electron distribution. See non_thermal for details. A set of test arguments is supplied as growth_test_pars
+* Calculates analytical growth rate using electron distribution specified in {path}nonthermal.conf and if requested also calculates linear growth from a series of spectrum files. These must be in time-order and all have the same axes. The analytics growth rates use the axes as in spectrum files, if supplied, or a wide coverage log axis with n_trials elements otherwise. We use plasma.conf and deck.status files for configuration, and a nonthermal.conf file to create the non-thermal electron distribution. See non_thermal for details. A set of test arguments is supplied as growth_test_pars
 \verbinclude help_w.txt
   \author Heather Ratcliffe \date 11/02/2016
 

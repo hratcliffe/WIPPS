@@ -708,7 +708,7 @@ bool data_array::resize(size_t dim, size_t sz, bool verbose){
 bool data_array::shift(size_t dim, long n_els, bool axis){
 /** Shift array on dim dim by n_els
 *
-*Shift is cyclical @param axis Whether to shift the corresponding axis \todo Catch std::copy errors in all places they may arise
+*Shift is cyclical @param dim Dimension to shift on @param n_els Number of elements to shift by @param axis Whether to shift the corresponding axis \todo Catch std::copy errors in all places they may arise
 */
   if(dim >= n_dims) return 0;
 

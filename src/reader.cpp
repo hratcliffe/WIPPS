@@ -201,7 +201,7 @@ int reader::pre_read(data_array& data_in, int ref_time, bool accumulated, int fl
 /** \brief Read grids and source sizes
 *
 * For filenumber ref_time, reads grids blocks into supplied array and also returns the source sizes for reference. The data can be flattened on one dimension before populating array, which can be useful for large data sets as only one copy of the full data will be in use.
-  @param my_data_in Data array to fill @param ref_time Filenumber to read @param accumulated Whether block to read is accumulated @param flatten_on Dimension to flatten data on upon reading @n_dims Returns the rank of array read @param source_sizes Returns the dimensions of the data source
+  @param data_in Data array to fill @param ref_time Filenumber to read @param accumulated Whether block to read is accumulated @param flatten_on Dimension to flatten data on upon reading @param n_dims Returns the rank of array read @param source_sizes Returns the dimensions of the data source
 */
 
   sdf_file_t * handle;

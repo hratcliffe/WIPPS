@@ -331,7 +331,7 @@ bool spectrum::make_angle_distrib(){
 void spectrum::make_test_spectrum(int angle_type, bool two_sided, my_type om_ce){
 /** \brief Generate dummy spectrum
 *
-*Makes a basic spectrum object with suitable number of points, and Gaussian(s) centred at fixed k/freq and x value @param time Time range (number of points) @param space Space range (number of points) @param angle_type Function to use for angular distrib @param two_sided Whether to generate symmetric spectrum or one-sided \todo Change tests and remove this
+*Makes a basic spectrum object with suitable number of points, and Gaussian(s) centred at fixed k/freq and x value @param angle_type Function to use for angular distrib @param two_sided Whether to generate symmetric spectrum or one-sided @param om_ce Plasma frequency to use \todo Change tests and remove this
 */
 
   if(!this->is_good()){
@@ -669,7 +669,7 @@ my_type spectrum::get_omega(my_type k, int wave_type, bool deriv, my_type theta)
 my_type spectrum::get_k(my_type omega, int wave_type, bool deriv, my_type theta) {
 /** \brief Gets omega for given k
 *
-* Uses dispersion relation for given wave_type to convert omega to k. Calls to plasma because approximations for density etc etc should be made there. @param k Wavenumber @param wave_type Wave species @param deriv Return v_g instead @param theta Wave normal angle
+* Uses dispersion relation for given wave_type to convert omega to k. Calls to plasma because approximations for density etc etc should be made there. @param omega Frequency @param wave_type Wave species @param deriv Return v_g instead @param theta Wave normal angle
 */
   if(my_controller && my_controller->is_good()) return (my_type) my_controller->get_plasma().get_dispersion(omega, wave_type, 1, deriv, theta);
   else return 0.0;

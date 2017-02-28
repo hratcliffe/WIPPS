@@ -32,6 +32,8 @@
 #include "d_coeff.h"
 #include "spectrum.h"
 
+const char PER_UTIL_HELP_ID = ' ';
+
 int main(int argc, char *argv[]){
 /**
 *In theory, these classes and functions should be named well enough that the function here is largely clear. Remains to be seen, eh?
@@ -65,7 +67,7 @@ int main(int argc, char *argv[]){
 
 #else
   //Print general code help
-  print_help();
+  print_help(PER_UTIL_HELP_ID);
   
 #endif
 

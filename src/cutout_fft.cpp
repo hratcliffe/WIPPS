@@ -11,17 +11,6 @@
 #include "d_coeff.h"
 #include "spectrum.h"
 
-struct cutout_args{
-
-  std::string file_in;
-  std::string file_out;
-  std::string file_prefix;
-  std::vector<my_type> limits;
-
-};
-
-cutout_args cutout_process_command_line(int argc, char *argv[]);
-
 /** \defgroup utils Utility programs
 *@{ */
 
@@ -33,6 +22,19 @@ cutout_args cutout_process_command_line(int argc, char *argv[]);
 \author Heather Ratcliffe \date 11/08/2016
 
 */
+
+const char PER_UTIL_HELP_ID = 'c';
+
+struct cutout_args{
+
+  std::string file_in;
+  std::string file_out;
+  std::string file_prefix;
+  std::vector<my_type> limits;
+
+};
+
+cutout_args cutout_process_command_line(int argc, char *argv[]);
 
 int main(int argc, char *argv[]){
 
@@ -48,6 +50,7 @@ int main(int argc, char *argv[]){
     my_print("Utility uses one core only!", mpi_info.rank);
   }
   
+  process_command_line_help_arg(argc, argv, PER_UTIL_HELP_ID);
   cutout_args my_args = cutout_process_command_line(argc, argv);
 
   if(mpi_info.rank == 0){
@@ -99,11 +102,7 @@ cutout_args cutout_process_command_line(int argc, char *argv[]){
   values.file_out = "";
 
   for(int i=1; i< argc; i++){
-    if(strcmp(argv[i], "-h")==0){
-      print_help('c');
-      exit(0);
-    }
-    else if(strcmp(argv[i], "-f")==0 && i < argc-1){
+    if(strcmp(argv[i], "-f")==0 && i < argc-1){
       values.file_prefix = argv[i+1];
       i++;
     }

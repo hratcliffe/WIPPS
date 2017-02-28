@@ -25,6 +25,8 @@
 \author Heather Ratcliffe \date 12/08/2016
 */
 
+const char PER_UTIL_HELP_ID = 'f';
+
 struct fft_spect_args{
   std::string file_prefix;
   std::string file_in;
@@ -44,7 +46,8 @@ int main(int argc, char *argv[]){
 //We don't need MPI here but SDF does
 
   my_print(std::string("Code Version: ")+ VERSION, mpi_info.rank);
-  
+
+  process_command_line_help_arg(argc, argv, PER_UTIL_HELP_ID);
   fft_spect_args my_args = fft_spect_process_command_line(argc, argv);
   
   get_deck_constants(my_args.file_prefix);
@@ -129,10 +132,6 @@ fft_spect_args fft_spect_process_command_line(int argc, char *argv[]){
   bool extr = false;
   
   for(int i=1; i< argc; i++){
-    if(strcmp(argv[i], "-h")==0){
-      print_help('f');
-      exit(0);
-    }
     if(strcmp(argv[i], "-f")==0 && i < argc-1){
       values.file_prefix = argv[i+1];
       i++;

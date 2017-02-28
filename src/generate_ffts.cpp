@@ -22,15 +22,6 @@
 #include "d_coeff.h"
 #include "spectrum.h"
 
-struct gen_cmd_line{
-  int flat_dim;
-  bool flat_fft;
-  my_type flat_fft_min;
-  my_type flat_fft_max;
-  std::vector<my_type> limits;
-};
-
-gen_cmd_line special_command_line(int argc, char *argv[]);
 /** \defgroup utils Utility programs
 *@{ */
 
@@ -43,6 +34,18 @@ gen_cmd_line special_command_line(int argc, char *argv[]);
   \author Heather Ratcliffe \date 04/07/2016
 
 */
+
+const char PER_UTIL_HELP_ID = 'g';
+
+struct gen_cmd_line{
+  int flat_dim;
+  bool flat_fft;
+  my_type flat_fft_min;
+  my_type flat_fft_max;
+  std::vector<my_type> limits;
+};
+
+gen_cmd_line special_command_line(int argc, char *argv[]);
 
 int main(int argc, char *argv[]){
 
@@ -60,6 +63,7 @@ int main(int argc, char *argv[]){
   MPI_Barrier(MPI_COMM_WORLD);
 
   //Get the special args and then the rest
+  process_command_line_help_arg(argc, argv, PER_UTIL_HELP_ID);
   gen_cmd_line extra_args = special_command_line(argc, argv);
   setup_args cmd_line_args = process_command_line(argc, argv);
 
@@ -235,11 +239,7 @@ gen_cmd_line special_command_line(int argc, char *argv[]){
   values.flat_fft_max = 0.0;
   
   for(int i=1; i< argc; i++){
-    if(strcmp(argv[i], "-h")==0){
-      print_help('g');
-      exit(0);
-    }
-    else if(strcmp(argv[i], "-flat_dat")==0 && i < argc-1){
+    if(strcmp(argv[i], "-flat_dat")==0 && i < argc-1){
       values.flat_dim = atoi(argv[i+1]);
       strcpy(argv[i], HANDLED_ARG);
       strcpy(argv[i+1], HANDLED_ARG);

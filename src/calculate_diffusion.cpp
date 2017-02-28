@@ -38,6 +38,8 @@
   \author Heather Ratcliffe \date 17/02/2017
 */
 
+const char PER_UTIL_HELP_ID = 'i';
+
 int main(int argc, char *argv[]){
 
   int err;
@@ -53,7 +55,9 @@ int main(int argc, char *argv[]){
   
   MPI_Barrier(MPI_COMM_WORLD);
 
-  setup_args cmd_line_args = process_command_line(argc, argv, 'i');
+  process_command_line_help_arg(argc, argv, PER_UTIL_HELP_ID);
+  setup_args cmd_line_args = process_command_line(argc, argv);
+
   std::vector<std::string> file_list;
   if(cmd_line_args.is_list){
     file_list = process_filelist(argc, argv);

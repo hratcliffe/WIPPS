@@ -7,3 +7,5 @@ Command line options:
 Sample usage:
 make utils TYPE=float
 ./calculate_growth -f ./Run1/ -out growth.dat
+or:
+./calculate_growth `<growth_test_pars`

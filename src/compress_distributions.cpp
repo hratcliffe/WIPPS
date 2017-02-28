@@ -9,15 +9,6 @@
 #include "reader.h"
 #include "data_array.h"
 
-struct dist_cmd_line{
-  bool list;
-  std::string file_prefix;
-  int dump;
-  int blocks;
-};
-
-dist_cmd_line special_command_line(int argc, char *argv[]);
-
 /** \defgroup utils Utility programs
 *@{ */
 
@@ -30,6 +21,17 @@ dist_cmd_line special_command_line(int argc, char *argv[]);
 \author Heather Ratcliffe \date 09/09/2016
 */
 
+const char PER_UTIL_HELP_ID = 'd';
+
+struct dist_cmd_line{
+  bool list;
+  std::string file_prefix;
+  int dump;
+  int blocks;
+};
+
+dist_cmd_line special_command_line(int argc, char *argv[]);
+
 int main(int argc, char *argv[]){
 
   int err;
@@ -39,6 +41,8 @@ int main(int argc, char *argv[]){
     std::cout<< "Error initialising MPI. ABORTING!";
     return 1;
   }
+  
+  process_command_line_help_arg(argc, argv, PER_UTIL_HELP_ID);
   dist_cmd_line my_args = special_command_line(argc, argv);
 
   char id[ID_SIZE] = "Distrib";
@@ -132,11 +136,7 @@ dist_cmd_line special_command_line(int argc, char *argv[]){
   values.blocks = -1;
 
   for(int i=1; i< argc; i++){
-    if(strcmp(argv[i], "-h")==0){
-      print_help('d');
-      exit(0);
-    }
-    else if(strcmp(argv[i], "-f")==0 && i < argc-1){
+    if(strcmp(argv[i], "-f")==0 && i < argc-1){
       values.file_prefix = argv[i+1];
       i++;
     }

@@ -33,6 +33,7 @@
   \author Heather Ratcliffe \date 11/02/2016
 
 */
+const char PER_UTIL_HELP_ID = 'w';
 
 const int n_trials = 2000;/**< Number of data points for analytic growth (if no real data supplied)*/
 
@@ -70,6 +71,7 @@ int main(int argc, char *argv[]){
   my_print(std::string("Code Version: ")+ VERSION, mpi_info.rank);
   my_print("Code is running on "+mk_str(mpi_info.n_procs)+" processing elements.", mpi_info.rank);
 
+  process_command_line_help_arg(argc, argv, PER_UTIL_HELP_ID);
   g_args extra_args = g_command_line(argc, argv);
   setup_args cmd_line_args = process_command_line(argc, argv);
 
@@ -366,11 +368,6 @@ g_args g_command_line(int argc, char * argv[]){
       strcpy(argv[i], HANDLED_ARG);
       strcpy(argv[i+1], HANDLED_ARG);
       i++;
-    }
-    else if(strcmp(argv[i], "-h")==0){
-      strcpy(argv[i], HANDLED_ARG);
-      print_help('w');
-      exit(0);
     }
   }
   return extra_cmd_line;

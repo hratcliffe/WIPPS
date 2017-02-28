@@ -10,12 +10,15 @@ Command line options:
 -space <int int> Process one space block between int and int (use with single core only)
 
 -d <int int> Dimension of D to generate (if applicable)
-
 -Finput <string ...> Start from list of FFT files. Names must end in space0_space1.dat and will be sorted by space0
 -Sinput <string ...> Start from list of spectrum files, see -Finput
 
 Sample usage:
 make TYPE=double
-mpiexec -n 4 ./main `<test_pars`
+mpiexec -n 4 ./calculate_diffusion `<test_pars`
 or:
-./main -f ./Run1/ -start 0 -end 100 -block bz -n 5 -d 100 100
+./calculate_diffusion -f ./Run1/ -start 0 -end 100 -block bz -n 5 -d 100 100
+
+WARNING WARNING WARNING
+
+This program is incomplete. It does not yet function fully. See "FAKENUMBERS" tagged lines

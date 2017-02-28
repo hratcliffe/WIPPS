@@ -316,7 +316,7 @@ mu plasma::get_root(calc_type th, calc_type w, calc_type psi, bool Righthand){
   return mu_ret;
 }
 
-mu_dmudom plasma::get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int n, calc_type omega_n, bool Righthand)const{
+mu_dmudom plasma::get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int n, bool Righthand)const{
 /** \brief Solve plasma dispersion and extensions
 *
 *Solves Appleton-Hartree plasma dispersion and returns struct containing mu, its derivatives and error code. Also returns the Phi defined by Lyons 1974. I.e. the set of values needed to calculate D See \ref str
@@ -332,7 +332,7 @@ mu_dmudom plasma::get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int
   mu_dmudom my_mu;
 
   calc_type dndr[ncomps], dndth[ncomps];
-  calc_type dB0dr, dB0dth;
+  calc_type dB0dr, dB0dth, omega_n;
 
 #ifdef DEBUG_ALL
   //Argument preconditions. Check only in debug mode for speed
@@ -345,7 +345,7 @@ mu_dmudom plasma::get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int
   w2 = w*w;
   w3 = w2*w;
   
-  /** \todo get or calc these...*/
+  /** \todo get or calc dndr and dndth */
   // FAKENUMBERS
   for(int i=0;i<ncomps; i++){
     dndr[i] = 0.0;
@@ -474,7 +474,7 @@ mu_dmudom plasma::get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int
     my_mu.dmudom = dmudw;
   
     D_mu2S = D / (mu2 - S);
-    gamma = 1;// FAKENUMBERS /** \todo FIX!!!! */
+    gamma = 1;// FAKENUMBERS
     calc_type calc_n = (calc_type) n;
     omega_n = -1.0 * calc_n * my_const.omega_ce/gamma;
     //temporaries for simplicity
@@ -505,7 +505,7 @@ mu_dmudom plasma::get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int
   return my_mu;
 }
 
-mu_dmudom plasma::get_high_dens_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int n, calc_type omega_n, bool Righthand)const{
+mu_dmudom plasma::get_high_dens_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int n, bool Righthand)const{
   /** \brief Solve plasma dispersion and extensions
 *
 *Duplicates plasma::get_phi_mu_omega() but using reduced form of Stix parameters corresponding to a high-density assumption. This is mainly for comparison with the exact solution to validate this assumption.
@@ -516,7 +516,7 @@ mu_dmudom plasma::get_high_dens_phi_mu_om(calc_type w, calc_type psi, calc_type 
   mu_dmudom my_mu;
 
   calc_type dndr[ncomps], dndth[ncomps];
-  calc_type dB0dr, dB0dth;
+  calc_type dB0dr, dB0dth, omega_n;
   
 #ifdef DEBUG_ALL
   //Argument preconditions. Check only in debug mode for speed

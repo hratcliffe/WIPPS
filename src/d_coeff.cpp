@@ -166,7 +166,7 @@ Get mu, dmu/domega which are used to:
   this->copy_ids(spect);
   //copy block id, ranges etc from spect.
   calc_type theta, omega_n=0.0, D_tmp, k_thresh;
-  calc_type alpha, v_par, c2th, s2alpha; /** temporaries for clarity*/
+  calc_type alpha, v_par, c2th, s2alpha; /* temporaries for clarity*/
   calc_type Eq6, mu_dom_mu, Eq7, dmudx, numerator;
   int n_min, n_max;
   std::vector<calc_type> omega_calc;
@@ -180,7 +180,7 @@ Get mu, dmu/domega which are used to:
   calc_type *D_theta = (calc_type *) calloc(n_thetas, sizeof(calc_type));
   calc_type *x = (calc_type *) calloc(n_thetas, sizeof(calc_type));
  
-  /** Why are we using different angles for D and for waves?*/
+  /** \todo Why are we using different angles for D and for waves?*/
 
   for(int i=0; i<n_thetas; ++i){
     x[i] = i* 4.0/n_thetas;
@@ -243,6 +243,7 @@ Get mu, dmu/domega which are used to:
         for(int n=n_min; n<n_max; ++n){
           // n is resonant number
           omega_calc = plas.get_resonant_omega(x[j], v_par, (calc_type) n);
+          omega_n = (calc_type) n * om_ce_ref;
           n_omega = omega_calc.size();
           if(n_omega > 0){
           //With loop if is redundant but we might want to log the failure
@@ -250,7 +251,7 @@ Get mu, dmu/domega which are used to:
             //each solution
               //std::cout<<"Freq is "<<omega_calc[ii]/my_const.omega_ce<<std::endl;
 
-              my_mu = plas.get_high_dens_phi_mu_om(omega_calc[ii], theta, alpha, n, omega_n);
+              my_mu = plas.get_high_dens_phi_mu_om(omega_calc[ii], theta, alpha, n);
               if(my_mu.err){
                 //Once angle is included we have no solution
                 non_counter++;

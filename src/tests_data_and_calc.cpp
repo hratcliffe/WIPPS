@@ -241,7 +241,7 @@ int test_entity_plasma::high_density(){
   om_pe_local = plas->get_omega_ref("pe");
 
   size_t n_tests = 10;
-  calc_type tmp_omega=0.0, tmp_theta=pi/(calc_type)(n_tests+1), tmp_omega_n=0.0;
+  calc_type tmp_omega=0.0, tmp_theta=pi/(calc_type)(n_tests+1);
   mu_dmudom my_mu;
   mu my_mu_all;
   mu_dmudom my_mu_dens;
@@ -250,8 +250,8 @@ int test_entity_plasma::high_density(){
 
   for(size_t i =0; i<n_tests; i++){
     tmp_omega += std::abs(om_ce_local)/(calc_type)(n_tests + 1);
-    my_mu = plas->get_phi_mu_om(tmp_omega, tmp_theta, 0.0, 0.0, tmp_omega_n);
-    my_mu_dens = plas->get_high_dens_phi_mu_om(tmp_omega, tmp_theta, 0.0, 0.0, tmp_omega_n);
+    my_mu = plas->get_phi_mu_om(tmp_omega, tmp_theta, 0.0, 0.0);
+    my_mu_dens = plas->get_high_dens_phi_mu_om(tmp_omega, tmp_theta, 0.0, 0.0);
     my_mu_all = plas->get_root(0.0, tmp_omega, tmp_theta);
 
     /** my_mu.mu should roughly equal Stix 2.45*/
@@ -282,7 +282,7 @@ int test_entity_plasma::high_density(){
   tmp_omega = 0.6*std::abs(om_ce_local);
   for(size_t i =0; i<n_tests; i++){
     tmp_theta += pi/(calc_type)(n_tests+1);
-    my_mu = plas->get_phi_mu_om(tmp_omega, tmp_theta, 0.0, 0.0, tmp_omega_n);
+    my_mu = plas->get_phi_mu_om(tmp_omega, tmp_theta, 0.0, 0.0);
     my_mu_all = plas->get_root(0.0, tmp_omega, tmp_theta);
 
     /* my_mu.mu should roughly equal Stix 2.45*/
@@ -328,12 +328,12 @@ int test_entity_plasma::other_modes(){
   mu my_mu_all;
 
   /**Try plasma wave modes in solvers, perpendicular propagation*/
-  calc_type tmp_omega = om_pe_local, tmp_omega_n=0;
+  calc_type tmp_omega = om_pe_local;
   calc_type tmp_theta = pi/2.0;
   for(size_t i =0; i<n_tests; i++){
     tmp_omega += std::abs(om_pe_local)/(calc_type)(n_tests + 1);
     my_mu_all = plas->get_root(0.0, tmp_omega, tmp_theta);
-    my_mu = plas->get_phi_mu_om(tmp_omega, tmp_theta, 0.0, 0.0, tmp_omega_n);
+    my_mu = plas->get_phi_mu_om(tmp_omega, tmp_theta, 0.0, 0.0);
 
     mu_tmp2 = std::sqrt(std::pow(tmp_omega, 2) - std::pow(om_pe_local, 2))/tmp_omega;
     
@@ -357,7 +357,7 @@ int test_entity_plasma::other_modes(){
   for(size_t i =0; i<n_tests; i++){
     tmp_omega += std::abs(om_pe_local)/(calc_type)(n_tests + 1);
     my_mu_all = plas->get_root(0.0, tmp_omega, tmp_theta, false);
-    my_mu = plas->get_phi_mu_om(tmp_omega, tmp_theta, 0.0, 0.0, tmp_omega_n, false);
+    my_mu = plas->get_phi_mu_om(tmp_omega, tmp_theta, 0.0, 0.0, false);
     
     mu_tmp2 = std::sqrt(1.0 - std::pow(om_pe_local/tmp_omega, 2)*(std::pow(tmp_omega, 2) - std::pow(om_pe_local, 2))/(std::pow(tmp_omega, 2) - std::pow(omega_UH, 2)));
     if(std::abs(my_mu_all.mu-mu_tmp2)/my_mu_all.mu > LOW_PRECISION){
@@ -398,15 +398,15 @@ int test_entity_plasma::phi_dom(){
   mu_dmudom my_mu, my_mu_p;
   mu my_mu_all, my_mu_all_p;
 
-  calc_type tmp_omega = 0.0, tmp_theta=pi/(calc_type)(n_tests), tmp_omega_n=0.0;
+  calc_type tmp_omega = 0.0, tmp_theta=pi/(calc_type)(n_tests);
 
   test_bed->report_info("Testing dmu/domega", 1);
 
   for(size_t i =0; i<n_tests; i++){
     tmp_omega += std::abs(om_ce_local)/(calc_type)(n_tests + 1);
-    my_mu = plas->get_phi_mu_om(tmp_omega, tmp_theta, 0.0, 0.0, tmp_omega_n);
+    my_mu = plas->get_phi_mu_om(tmp_omega, tmp_theta, 0.0, 0.0);
     my_mu_all = plas->get_root(0.0, tmp_omega, tmp_theta);
-    my_mu_p = plas->get_phi_mu_om(tmp_omega+d_omega, tmp_theta, 0.0, 0.0, tmp_omega_n);
+    my_mu_p = plas->get_phi_mu_om(tmp_omega+d_omega, tmp_theta, 0.0, 0.0);
     my_mu_all_p = plas->get_root(0.0, tmp_omega+d_omega, tmp_theta);
 
     /** Approx numerical derivative*/
@@ -434,9 +434,9 @@ int test_entity_plasma::phi_dom(){
   tmp_omega = 0.7*std::abs(om_ce_local);
   for(size_t i =0; i<n_tests; i++){
     tmp_theta += pi/(calc_type)(n_tests+1);
-    my_mu = plas->get_phi_mu_om(tmp_omega, tmp_theta, 0.0, 0.0, tmp_omega_n);
+    my_mu = plas->get_phi_mu_om(tmp_omega, tmp_theta, 0.0, 0.0);
     my_mu_all = plas->get_root(0.0, tmp_omega, tmp_theta);
-    my_mu_p = plas->get_phi_mu_om(tmp_omega, tmp_theta+d_theta, 0.0, 0.0, tmp_omega_n);
+    my_mu_p = plas->get_phi_mu_om(tmp_omega, tmp_theta+d_theta, 0.0, 0.0);
     my_mu_all_p = plas->get_root(0.0, tmp_omega, tmp_theta+d_theta);
 
     /** Approx numerical derivative. Manually fix signs*/

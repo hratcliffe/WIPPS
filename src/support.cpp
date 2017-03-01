@@ -40,9 +40,6 @@ int local_MPI_setup(int argc, char *argv[]){
   mpi_info.rank = rank;
   mpi_info.n_procs = n_procs;
   
-  //if(rank ==0) std::cout<< &mpi_info<<std::endl;
-
-  
   return ierr;
 }
 
@@ -258,8 +255,9 @@ setup_args process_command_line(int argc, char *argv[]){
       while(i<argc-1 && argv[i+1][0]!= '-') i++;
       if(tmp -i >= 1 ) i--;
     }
-    else if(!((strlen(argv[i]) > 0) && argv[i][0] == HANDLED_ARG[0])) std::cout<<"UNKNOWN OPTION " <<argv[i]<<'\n';
-
+    else if(!((strlen(argv[i]) > 0) && argv[i][0] == HANDLED_ARG[0])){
+      my_print("UNKNOWN OPTION "+mk_str(argv[i]), 0);
+    }
   }
 
   if(values.space[0] == -1 && values.space[1] == -1 && values.n_space == -1){
@@ -320,7 +318,7 @@ void print_help(char code){
   halp.open(file);
   if(!halp){
     //File not found!
-    std::cout<<"Help file "<<file<<" not found\n";
+    my_print("Help file "+file+" not found", 0);
     return;
   }
   if(mpi_info.rank == 0 && halp){

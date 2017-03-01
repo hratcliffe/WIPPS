@@ -251,7 +251,7 @@ calc_type get_growth_rate(plasma * my_plas, non_thermal * my_elec, int n_momenta
     //Resonant momentum
     Delta_res = 1.0 - (omega_in*p_res / (v0*v0*k*gamma));
     //Xiao 15, no meaning given. Always +ve
-    if(Delta_res < GEN_PRECISION) std::cout<<"ERROR!!"<<std::endl;
+    if(Delta_res < GEN_PRECISION) my_print("ERROR!! Delta is 0 or negative", mpi_info.rank);
     
     //Now p_par = p_res and p_perp is p_axis[j]
     if(!norely){
@@ -329,7 +329,7 @@ std::vector<std::string> read_filelist(std::string infile){
 *
 *Reads a list of strings from given infile, omitting blanks
 */
-  std::cout<<infile<<'\n';
+  my_print("Reading "+infile, mpi_info.rank);
   std::ifstream file;
   file.open(infile);
   std::vector<std::string> names;

@@ -744,7 +744,6 @@ int test_entity_spectrum::albertGs_tests(){
     
     G2 = test_contr->get_current_spectrum()->get_G2(tmp_omega, tmp_x);
     
-  //  std::cout<<"  G2 "<<G2<<std::endl;
     G2_analytic = std::pow((( mass_ratio / (1.0 + mass_ratio))*om_ce_local*om_ce_local/om_pe_local/om_pe_local), 1.5);
     G2_analytic *= exp(- (tmp_x*tmp_x)/std::pow(SPECTRUM_ANG_STDDEV, 2));
     

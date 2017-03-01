@@ -849,7 +849,6 @@ int test_entity_basic_maths::run(){
   inplace_boxcar_smooth(data_tmp, size, 3, 0);
   total=0;
   for(int i=4;i<size-4; ++i){
-    //std::cout<<data_positive[i]<<" "<<data_tmp[i]<<'\n';
     total += std::abs(data_positive[i] - data_tmp[i]);
   }
   //Smooth on straight line with odd width should do nothing except at ends...

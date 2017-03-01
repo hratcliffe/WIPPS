@@ -690,16 +690,16 @@ mu_dmudom plasma::get_high_dens_phi_mu_om(calc_type w, calc_type psi, calc_type 
   return my_mu;
 }
 
-std::vector<calc_type> plasma::get_resonant_omega(calc_type x, calc_type v_par, calc_type n)const{
+std::vector<calc_type> plasma::get_resonant_omega(calc_type x, calc_type v_par, int n)const{
 /** \brief Solve plasma dispersion and doppler resonance simultaneously
 *
-*Obtains solutions of the Doppler resonance condition omega - k_par v_par = -n Omega_ce and a high-density approximation to the Whistler mode dispersion relation simultaneously. Assumes pure electron-proton plasma and uses cubic_solve. If solutions are found, they're returned in vector, otherwise empty vector is returned. @param x Wave normal angle @param v_par Particle velocity to solve with @param n Resonance number.
-  \todo Extend to general case?
+*Obtains solutions of the Doppler resonance condition omega - k_par v_par = -n Omega_ce and a high-density approximation to the Whistler mode dispersion relation simultaneously. Assumes pure electron-proton plasma and uses cubic_solve. ONLY solutions between -om_ce_local and om_ce_local, excluding omega = 0, are considered. "Zero" solutions are those less than the GEN_PRECISION constant in support.h. If solutions are found, they're returned in vector, otherwise empty vector is returned. @param x Wave normal angle @param v_par Particle velocity to solve with @param n Resonance number.
+  \todo Extend to general case? \todo Do we need to keep a sign for omega?
 */
 
 #ifdef DEBUG_ALL
   //Argument preconditions. Check only in debug mode for speed
-  if(v_par >= v0) my_error_print("!!!!!!!!Error in get_resonant_omega, velocity (v_par="+mk_str(v_par)+") out of range!!!!!!", 0);
+  if(std::abs(v_par) >= v0) my_error_print("!!!!!!!!Error in get_resonant_omega, velocity (v_par="+mk_str(v_par)+") out of range!!!!!!", 0);
 #endif
 
   std::vector<calc_type> ret_vec;
@@ -707,19 +707,12 @@ std::vector<calc_type> plasma::get_resonant_omega(calc_type x, calc_type v_par, 
   calc_type om_pe_loc = this->get_omega_ref("pe");
   calc_type om_ce_ref = this->get_omega_ref("c0");
 
+  //Special case when v=0 and we can save time
   if(std::abs(v_par) < tiny_calc_type){
-    if( std::abs(n)-1.0 < tiny_calc_type && std::abs(n) == 1.0) ret_vec.push_back(om_ce*n);
+    if( n == 1 || n == -1 ) ret_vec.push_back(om_ce*n);
     return ret_vec;
   }
-  else if(std::abs(n) < tiny_calc_type){
-  //also special...
-  //coeff d in cubic is 0 and we reduce to quadratic assuming omega != 0
-    
-    return ret_vec;
-    //if omega_pe > omega_ce no solution...???
-  /** \todo add case */
-  
-  }
+  //We let n=0 fall through even though we can handle it quicker because it's simpler code. We do exclude omega "=" zero solutions below though.
 
   //Equation to solve is cubic of the form
   //a x^3 + b x^2 + c x + d = 0
@@ -743,17 +736,19 @@ std::vector<calc_type> plasma::get_resonant_omega(calc_type x, calc_type v_par, 
   b = (vel_cos*cos_th*gamma_sq + 2.0*gamma*n - gamma_sq*cos_th)*om_ce/om_ce_ref;
   c = ((2.0*gamma*n*cos_th - n*n)* std::pow(om_ce/om_ce_ref, 2) - std::pow(om_pe_loc/om_ce_ref, 2)*vel_cos*gamma_sq);
   d = -n*n*std::pow(om_ce/om_ce_ref, 3)*cos_th;
+  //Note: for n=0, d is 0. We covered v_par being zero above, so either omega = 0 and k_par = 0 or we have a normal solution, but with redundancy. We assume omega = 0 is an unhelpful solution to return. And for simplicity we don't do a special quadratic solution but just continue anyway
+
+  
   an = b/a;
   bn = c/a;
   cn = d/a;
   
   ret_vec = cubic_solve(an, bn, cn);
 
-  //Restore om_ce_re factor and delete any entries > om_ce as these aren't whistler modes
+  //Restore om_ce_ref factor and delete any entries > om_ce as these aren't whistler modes. Also delete answers which are "zero"
   for(size_t i=0; i<ret_vec.size(); ++i) ret_vec[i] *= om_ce_ref;
   for(size_t i=0; i<ret_vec.size(); ++i){
-  /** \todo Rather than remove, don't ever add*/
-    if(std::abs(ret_vec[i]) > std::abs(om_ce)){
+    if(std::abs(ret_vec[i]) > std::abs(om_ce) || std::abs(ret_vec[i]) < GEN_PRECISION){
       ret_vec.erase(ret_vec.begin() + i);
       --i;
     }

@@ -30,17 +30,19 @@ class diffusion_coeff: public data_array{
 
 private:
 
-  int n_thetas; /**< Number of wave normal angles to consider */
+  int n_thetas; /**< Number of wave normal angles to consider for integrals*/
   int n_n; /**< Max number of resonances to consider */
   controller * my_controller;/**< Owning controller which gives access to plasma and spectrum*/
-/*  friend bool controller::add_d(int nx, int n_angs);
-  friend void controller::add_d_special(int nx, int n_angs);
-  friend controller::~controller();
-  friend void controller::handle_d_mpi();*/
   friend class controller;
   explicit diffusion_coeff(int nx, int n_ang);
-  virtual ~diffusion_coeff();
+  virtual ~diffusion_coeff(){;};
 
+  int get_min_n(calc_type v_par, my_type k_thresh, calc_type om_ce);
+  int get_max_n(calc_type v_par, my_type k_thresh, calc_type om_ce);
+
+  void make_velocity_axis();
+  void make_pitch_axis();
+  void copy_ids(spectrum * spect);
 
 public:
 
@@ -52,13 +54,6 @@ public:
   bool write_to_file(std::fstream &file);
 
   d_report calculate(bool quiet=0);
-  void make_velocity_axis();
-  void make_pitch_axis();
-
-  int get_min_n(calc_type v_par, my_type k_thresh, calc_type om_ce);
-  int get_max_n(calc_type v_par, my_type k_thresh, calc_type om_ce);
-  
-  void copy_ids(spectrum * spect);
 };
 
 

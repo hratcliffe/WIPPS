@@ -39,8 +39,8 @@ class spectrum{
   bool angle_is_function;/**< Whether we have g(omega, x) (false) or just g(x) (true) */
   int function_type;/**< Type code for angular function. See support.h */
   size_t smooth;/**<Smoothing applied to B_omega, if any*/
-  my_type normB;/**< Norm of B(w)*/
-  my_type * normg;/**< Norms of g_w(x) for each w*/
+  my_type norm_B;/**< Norm of B(w)*/
+  my_type * norm_g;/**< Norms of g_w(x) for each w*/
 
 /********Basic setup and allocation functions ****/
   void construct();
@@ -65,8 +65,8 @@ class spectrum{
   int where_omega(my_type value);
 
 /********Spectrum operation helpers ****/
-  bool normaliseB();
-  bool normaliseg(my_type omega);
+  bool calc_norm_B();
+  bool calc_norm_g(my_type omega);
 
 /********Access wrappers ****/
 /** \ingroup spectAcc 
@@ -83,7 +83,7 @@ public:
   int wave_id; /**< ID for which wave mode cutout we're going for. See support.h*/
 
 /********Setup helper functions ****/
-  inline bool is_good()const{return (B_omega_array.is_good() && g_angle_array.is_good() && normg);}/**<Check if a spectrum is complete and useable*/
+  inline bool is_good()const{return (B_omega_array.is_good() && g_angle_array.is_good() && norm_g);}/**<Check if a spectrum is complete and useable*/
 #ifdef RUN_TESTS_AND_EXIT
   void make_test_spectrum(int angle_type=FUNCTION_DELTA, bool two_sided=false, my_type om_ce=17000.0);
 #endif

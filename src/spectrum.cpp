@@ -24,8 +24,8 @@ void spectrum::construct(){
   function_type = 0;
   wave_id = 0;
   my_controller = nullptr;
-  normB = 0;
-  normg = nullptr;
+  norm_B = 0;
+  norm_g = nullptr;
   max_power=0.0;
   memset((void *) block_id, 0, ID_SIZE*sizeof(char));
   smooth=0;
@@ -37,12 +37,12 @@ void spectrum::init(){
 *Fill cached values for max power, norms etc*/
 
   max_power = B_omega_array.maxval();
-  normaliseB();
+  calc_norm_B();
   size_t n = get_B_dims();
   my_type omega;
   for(size_t i=0; i< n; i++){
     omega = get_om_axis_element(i);
-    normaliseg(omega);
+    calc_norm_g(omega);
   }
 }
 
@@ -69,11 +69,11 @@ spectrum::spectrum(int n_om, int n_ang, bool separable){
     this->g_angle_array = data_array(1, n_ang);
     angle_is_function = true;
     function_type = FUNCTION_DELTA;
-    normg = (my_type *) calloc(1, sizeof(my_type));
+    norm_g = (my_type *) calloc(1, sizeof(my_type));
   }else{
     this->g_angle_array = data_array(n_om, n_ang);
     angle_is_function = false;
-    normg = (my_type *) calloc(n_ang, sizeof(my_type));
+    norm_g = (my_type *) calloc(n_ang, sizeof(my_type));
   }
   //Cache the norms and maxes
   this->init();
@@ -149,12 +149,12 @@ spectrum::spectrum(std::string filename){
       this->g_angle_array = data_array(1, dims[1]);
       angle_is_function = true;
       function_type = FUNCTION_DELTA;
-      normg = (my_type *) calloc(1, sizeof(my_type));
+      norm_g = (my_type *) calloc(1, sizeof(my_type));
       //Single row so only one norm
     }else{
       this->g_angle_array = data_array(dims[0], dims[1]);
       angle_is_function = false;
-      normg = (my_type *) calloc(dims[1], sizeof(my_type));
+      norm_g = (my_type *) calloc(dims[1], sizeof(my_type));
       //Norm each row
     }
   
@@ -199,7 +199,7 @@ spectrum::~spectrum(){
 *
 *Free any allocated memory
 */
-  if(normg) free(normg);
+  if(norm_g) free(norm_g);
 }
 
 /********Technical stuff making my_array a proper "object" ****/
@@ -211,13 +211,16 @@ spectrum & spectrum::operator=(const spectrum& src){
   
   //Trap self-assign or bad copy before destructing
   if(&src == this || !src.is_good()) return *this;
-  if(this->normg) free(normg);
+  if(this->norm_g){
+    free(norm_g);
+    norm_g =nullptr;
+  }
   construct();
 
   //(Deep) copy all fields
   size_t g_sz = src.get_g_dims(0);
-  normg = (my_type *) calloc(g_sz, sizeof(my_type));
-  std::copy(src.normg, src.normg + g_sz, this->normg);
+  norm_g = (my_type *) calloc(g_sz, sizeof(my_type));
+  std::copy(src.norm_g, src.norm_g + g_sz, this->norm_g);
   this->g_angle_array = src.g_angle_array;
   this->B_omega_array = src.B_omega_array;
   this->copy_ids(src.B_omega_array);
@@ -240,8 +243,8 @@ spectrum::spectrum(const spectrum &src){
 
   //Copy all fields
   size_t g_sz = src.get_g_dims(0);
-  normg = (my_type *) calloc(g_sz, sizeof(my_type));
-  std::copy(src.normg, src.normg + g_sz, this->normg);
+  norm_g = (my_type *) calloc(g_sz, sizeof(my_type));
+  std::copy(src.norm_g, src.norm_g + g_sz, this->norm_g);
   this->g_angle_array = src.g_angle_array;
   this->B_omega_array = src.B_omega_array;
   this->copy_ids(src.B_omega_array);
@@ -676,26 +679,27 @@ my_type spectrum::get_k(my_type omega, int wave_type, bool deriv, my_type theta)
 }
 
 /********Spectrum operation helpers ****/
-bool spectrum::normaliseB(){
-/** \brief Normalise B(w)
+bool spectrum::calc_norm_B(){
+/** \brief Calculate norming of B(w)
 *
-* Calculate the total square integral of values over range \todo Is this data bare or squared?
+* Calculate the total square integral of values over range \todo Is this data bare or squared? Which do we want?
 */
 
   int len = get_B_dims(0);
   my_type * d_axis = (my_type *) calloc(len, sizeof(my_type));
   my_type * data = (my_type *) malloc(len*sizeof(my_type));
 
+  //Assemble d_om and data in contiguous memory
   for(int i=0; i<len-1; i++) d_axis[i] = get_om_axis_element(i+1) - get_om_axis_element(i);
   for(int i=0; i<len; i++) data[i] = get_B_element(i);
   
-  normB = integrator(data, len, d_axis);
+  norm_B = integrator(data, len, d_axis);
   free(d_axis);
   free(data);
   return 0;
 }
 
-bool spectrum::normaliseg(my_type omega){
+bool spectrum::calc_norm_g(my_type omega){
 /** \brief Normalise g_w(x)
 *
 *Calculate the norm of g used in e.g. denom of Albert eq 3 or calc'd in derivations.tex. We assume omega, x are off the axes already so no interpolation.  \todo Catch zero norms \todo test \todo Taking omega wont work how we want
@@ -736,9 +740,9 @@ bool spectrum::normaliseg(my_type omega){
   }
   
   //integrate
-  my_type normg_tmp = integrator(integrand, len, d_axis);
+  my_type norm_g_tmp = integrator(integrand, len, d_axis);
 
-  normg[om_ind] = normg_tmp;
+  norm_g[om_ind] = norm_g_tmp;
   
   //clean up
   free(d_axis);
@@ -782,7 +786,7 @@ bool spectrum::truncate_om(my_type om_min, my_type om_max){
     //Zero after om_max
   }
 
-  normaliseB();
+  calc_norm_B();
   //Re-do normalisation
   return 0;
 }
@@ -977,13 +981,13 @@ bool spectrum::read_from_file(std::fstream &file){
 calc_type spectrum::get_G1(calc_type omega){
 /** \brief G1 from Albert 2005.
 *
-*Gets the value of B(w) (interpolated if necessary) and the normalising constant from normB
+*Gets the value of B(w) (interpolated if necessary) and the normalising constant from norm_B
 \todo Does it matter that our k is limited? Do waves really go to low intensity in bit we see \todo Do we need the vg conversion factor? \todo CHECK and FIXXXX and test
 */
 
   calc_type B2;
   my_type tmpB2;
-  if(normB ==0.0) normaliseB();
+  if(norm_B ==0.0) calc_norm_B();
   size_t len, offset;
   my_type data_bit[2];
   my_type ax_val;
@@ -1013,14 +1017,14 @@ calc_type spectrum::get_G1(calc_type omega){
   B2 = (calc_type) tmpB2 * change_of_vars;
 
   //Add norm. constant
-  return B2/normB;
+  return B2/norm_B;
 
 }
 
 calc_type spectrum::get_G2(calc_type omega, calc_type x){
 /** \brief Get G2 from Albert 2005
 *
-* Gets the value of g(w, x) and the normalising constant from normg \todo IS THIS OMEGA OR do we calc omega according to conditions on integral??? \todo interpolate on omega? or angle or both. Or fix angle axis as matched to D. In some sense we want to minimise work here... \todo CHECK and FIXXXX and test
+* Gets the value of g(w, x) and the normalising constant from norm_g \todo IS THIS OMEGA OR do we calc omega according to conditions on integral??? \todo interpolate on omega? or angle or both. Or fix angle axis as matched to D. In some sense we want to minimise work here... \todo CHECK and FIXXXX and test
 */
 
 
@@ -1036,10 +1040,9 @@ calc_type spectrum::get_G2(calc_type omega, calc_type x){
   }
   else om_ind = 0;
   
-  if(om_ind>=0 && normg[om_ind] == 0.0){
-    normaliseg(omega);
+  if(om_ind>=0 && norm_g[om_ind] == 0.0){
+    calc_norm_g(omega);
   }
- // std::cout<< normg[0]<<" "<<std::endl;
   
   //Bump up to miss B row
   my_type * axis = get_angle_axis(len);
@@ -1061,7 +1064,7 @@ calc_type spectrum::get_G2(calc_type omega, calc_type x){
   }
 
   
-  if(offset >=0 && om_ind >=0)return tmpg/normg[om_ind];
+  if(offset >=0 && om_ind >=0)return tmpg/norm_g[om_ind];
   else return 0.0;
 
 }

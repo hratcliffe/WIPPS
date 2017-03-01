@@ -9,25 +9,19 @@
 #include "support.h"
 #include "d_coeff.h"
 
-diffusion_coeff::diffusion_coeff(int nx, int n_angs):data_array(nx, n_angs){
+diffusion_coeff::diffusion_coeff(int n_omega, int n_angs):data_array(n_omega, n_angs){
 /** \brief Create coefficient
 *
-*Creates rectangular data_array and sets additional parameters
+*Creates rectangular data_array and sets additional parameters to defaults @param nx Number of points in omega to use @param n_angs Number of angle points
 */
   my_controller = nullptr;
 
   n_thetas = 100;
   n_n = 10;
-  tag = LOCAL;
-  wave_id = 0;
+  wave_id = WAVE_WHISTLER;
   latitude = 0;
   tag="";
   // FAKENUMBERS for testing
-}
-
-diffusion_coeff::~diffusion_coeff(){
-
-
 }
 
 void diffusion_coeff::set_ids(float time1, float time2, int space1, int space2, int wave_id, char block_id[ID_SIZE]){
@@ -122,7 +116,7 @@ d_report diffusion_coeff::calculate(bool quiet){
 /** \brief Calculate D from wave spectrum and plasma
 *
 *Uses the data available via my_controller to calculate D, the raw diffusion coefficient as function of particle velocity and pitch angle.
-* \todo Can we break this down at all? \todo n ranges
+* \todo Complete and cleanup \todo n ranges \todo OPtion for alpha-alpha, alpha-v etc?
 */
 
 /*Subsections:
@@ -183,7 +177,7 @@ Get mu, dmu/domega which are used to:
   /** \todo Why are we using different angles for D and for waves?*/
 
   for(int i=0; i<n_thetas; ++i){
-    x[i] = i* 4.0/n_thetas;
+    x[i] = i* 4.0/n_thetas;/** \todo 4-> constant value*/
   }
 
   calc_type *dx = (calc_type *) calloc(n_thetas, sizeof(calc_type));

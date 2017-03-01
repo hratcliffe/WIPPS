@@ -19,7 +19,7 @@ plasma::plasma(std::string file_prefix, my_type Bx_local){
 */
 
   //Set up plasma components
-  configure_from_file(file_prefix);
+  bool err = configure_from_file(file_prefix);
   
   //Set B0 and om_ce values
   if(Bx_local == -1){
@@ -161,9 +161,10 @@ mu plasma::get_root(calc_type th, calc_type w, calc_type psi, bool Righthand){
 *Solves Appleton-Hartree plasma dispersion and returns struct containing mu, its derivatives and error code. See \ref str
 *Duplicated from mufunctions by CEJ Watt
 *
-*@param th Polar coordinate, or latitude @param w Wave frequency @param psi Wave pitch angle k to B0 @param Righthand Mode handedness \todo Check constant types OK \todo Better root selection
+*@param th Polar coordinate, or latitude @param w Wave frequency @param psi Wave pitch angle k to B0 @param Righthand Mode handedness
 *
 *On notation: within this routine and plasma::get_phi_mu_om() we use notation as from mufunctions3.f90. In the return values as defined in support.h we match with Lyons and Albert. Thus in my_mu, we have lat, r, theta, omega for polar coordinate, r, wave normal angle and wave frequency
+\todo Query how we could handle varying B in space??
 */
   mu mu_ret;
   calc_type dndr[ncomps], dndth[ncomps];
@@ -184,8 +185,8 @@ mu plasma::get_root(calc_type th, calc_type w, calc_type psi, bool Righthand){
     dndr[i] = 0.0;
     dndth[i] = 0.0;
   }
-  dB0dr = 1.0;
-  dB0dth = 1.0;
+  dB0dr = 0.0;
+  dB0dth = .0;
   
   calc_type R=1.0, L=1.0, P=1.0, S, D, A, B, C, J, s2psi, c2psi, mua2, mub2, mu2;
   calc_type F, G, smu;
@@ -532,7 +533,7 @@ mu_dmudom plasma::get_high_dens_phi_mu_om(calc_type w, calc_type psi, calc_type 
   w2 = w*w;
   w3 = w2*w;
   
-  /** \todo get or calc these...*/
+  /** \todo get or calc dndr and dndth*/
   // FAKENUMBERS
   for(int i=0;i<ncomps; i++){
     dndr[i] = 0.0;

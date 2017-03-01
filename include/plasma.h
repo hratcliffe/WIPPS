@@ -49,8 +49,8 @@ public:
 /********Get/set functions ****/
   bool is_good(){return is_setup;}/**<Whether everything is setup*/
   calc_type get_omega_ref(std::string code)const;
-  void get_density(){;}/**< Density is assumed constant*/
-  void get_B0(){;}/**<B0 can vary in space*/
+//  void get_density(){;}/**< Density is assumed constant*/
+  calc_type get_B0(){return B0;}/**<B0 can vary in space \todo How to handle varying B0*/
   void set_B0(my_type B0);
 
 /********Dispersion solvers ****/

@@ -104,6 +104,7 @@ bool non_thermal::configure_from_file(std::string file_prefix){
           if(parameters.count(dens)!=0) total_dens += parameters[dens];
         }
   //------Binding function free parameters to create f_p component ------
+        function = str_to_lower(function);
         if(function == "max"){
           //Check we have all params
           my_print("Adding component '"+block_name+"'");
@@ -154,6 +155,7 @@ bool non_thermal::configure_from_file(std::string file_prefix){
       //This might be an n_comps definition or nonrely flag!
         parse_err = parse_name_val(line, name, val);
         if(!parse_err){
+          name = str_to_lower(name);
           if(name =="ncomps") ncomps = atoi(val.c_str());
           else if(name =="nonrely"){
             if(val.size() >0 && val[0] == '1'){
@@ -170,6 +172,8 @@ bool non_thermal::configure_from_file(std::string file_prefix){
         //This line is a valid input one, probably!
         parse_err = parse_name_val(line, name, val);
         if(!parse_err){
+          //Our strings are matched without case-sensitivity, but deck keys retain casing
+          name = str_to_lower(name);
           //Grab the strings for each parameter
           if(name == "function") function = val;
           else if(name =="dens") dens = val;

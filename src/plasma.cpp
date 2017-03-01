@@ -90,6 +90,7 @@ On error we continue using defaults set below
       //This line might be a valid input one
       parse_err = parse_name_val(line, name, val);
       if(!parse_err){
+        name = str_to_lower(name);
         if(name == "mass" && val.find('*') == std::string::npos){
           pmass[block_num] = atof(val.c_str());
         }else if(name == "mass"){
@@ -98,6 +99,7 @@ On error we continue using defaults set below
           tail = val.substr(pos+1, val.size());
           head = val.substr(0, pos);
           trim_string(tail);
+          tail = str_to_lower(tail);
           trim_string(head);
           if(tail == "me") pmass[block_num] = atof(val.c_str())* me;
           else if(tail == "mp") pmass[block_num] = atof(val.c_str())* mp;
@@ -130,12 +132,12 @@ calc_type plasma::get_omega_ref(std::string code)const{
 *Takes a two char code string and returns the specified frequency at local position. ce is actual Cyclotron freq. c0 is a reference value
 */
 
+  code = str_to_lower(code);
 #ifdef DEBUG_ALL
   std::string codes = "c0 pe ce";
   //Argument preconditions. Check only in debug mode for speed
   if(codes.find(code) == std::string::npos) my_error_print("!!!!!!!!Error in get_omega_ref, unknown code (code="+code+")!!!!!!", 0);
 #endif
-
   if(code == "c0") return this->om_ce_ref;
   if(code == "pe") return my_const.omega_pe;
   if(code == "ce") return this->om_ce_local;

@@ -284,6 +284,22 @@ void trim_string(std::string &str, char ch=' '); /**< Trim all leading/trailing 
 std::string replace_char(std::string str, char ch, char repl);/**<Replace all occurences of character ch in string*/
 std::string append_into_string(const std::string &in, const std::string &infix);
 bool parse_name_val(std::string in, std::string &name, std::string &val);
+inline std::string str_to_upper(std::string str){
+/** convert string to upper case */
+
+  for(size_t i=0; i<str.size(); i++){
+    if(str[i] >='a' and str[i]<='z') str[i] -=32;
+  }
+  return str;
+}
+inline std::string str_to_lower(std::string str){
+/** convert string to lower case */
+
+  for(size_t i=0; i<str.size(); i++){
+    if(str[i] >='A' and str[i]<='Z') str[i] +=32;
+  }
+  return str;
+}
 
 /********Maths helpers ****/
 template<typename T> T integrator(T * start, int len, T * increment);

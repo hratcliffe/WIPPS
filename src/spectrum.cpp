@@ -999,7 +999,7 @@ calc_type spectrum::get_G1(calc_type omega){
   if(offset > 0 && offset < len){
     data_bit[0] = get_B_element(offset-1);
     data_bit[1] = get_B_element(offset);
-    tmpB2 = interpolate(get_omega_axis(len) + offset-1, data_bit, ax_val, 2);
+    tmpB2 = interpolate_linear(get_omega_axis(len) + offset-1, data_bit, ax_val);
     //tmpB2 = data_bit[0];
   }else if(offset == 0){
     //we're right at end, can't meaningfully interpolate, use raw
@@ -1049,7 +1049,7 @@ calc_type spectrum::get_G2(calc_type omega, calc_type x){
   if(offset > 0 && offset < (long)len){
     data_bit[0] = get_g_element(offset-1, om_ind);
     data_bit[1] = get_g_element(offset, om_ind);
-    tmpg = interpolate(axis + offset-1, data_bit, (my_type)x, 2);
+    tmpg = interpolate_linear(axis + offset-1, data_bit, (my_type)x);
 
   }else if(offset==0){
     //we're right at end, can't meaningfully interpolate, use raw

@@ -861,20 +861,20 @@ int test_entity_basic_maths::run(){
     calc_type axis[4]={0.0,1.0,2.0,3.0}, vals[4]={0.0,1.0,0.0,1.0}, target, interp;
 
     target = 0.25;
-    interp = interpolate(axis, vals, target, 1);
+    interp = interpolate_nearest(axis, vals, target);
     if(std::abs(interp - 0.0)> PRECISION) err |=TEST_WRONG_RESULT;
     target = 0.75;
-    interp = interpolate(axis, vals, target, 1);
+    interp = interpolate_nearest(axis, vals, target);
     if(std::abs(interp - 1.0)> PRECISION) err |=TEST_WRONG_RESULT;
     //Nearest value interpol
     target = 0.5;
-    interp = interpolate(axis, vals, target, 2);
+    interp = interpolate_linear(axis, vals, target);
     if(std::abs(interp - 0.5)> PRECISION) err |=TEST_WRONG_RESULT;
     target = 1.0;
-    interp = interpolate(axis, vals, target, 2);
+    interp = interpolate_linear(axis, vals, target);
     if(std::abs(interp - 1.0)> PRECISION) err |=TEST_WRONG_RESULT;
     target = 1.5;
-    interp = interpolate(axis+1, vals+1, target, 2);
+    interp = interpolate_linear(axis+1, vals+1, target);
     if(std::abs(interp - 0.5)> PRECISION) err |=TEST_WRONG_RESULT;
     //2 pt linear interpol
   }

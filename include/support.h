@@ -290,7 +290,10 @@ template<typename T> T integrator(T * start, int len, T * increment);
 template<typename T> void inplace_boxcar_smooth(T * start, int len, int width, bool periodic = 0);
 calc_type square_integrator(calc_type * start, int len, calc_type * increment);
 std::vector<calc_type> cubic_solve(calc_type a, calc_type b, calc_type c);
-template<typename T> T interpolate(T* axis, T* vals, T target, int pts);
+//template<typename T> T interpolate(T* axis, T* vals, T target, int pts);
+template<typename T> T interpolate_linear(T axis[2], T vals[2], T target);
+template<typename T> T interpolate_nearest(T axis[2], T vals[2], T target);
+
 
 /********Arithmetic operations ****/
 //These can be used with the various array apply functions to do arithmetic on arrays

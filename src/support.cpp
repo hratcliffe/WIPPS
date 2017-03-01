@@ -833,25 +833,36 @@ std::vector<calc_type> cubic_solve(calc_type an, calc_type bn, calc_type cn){
 
 }
 
-template<typename T> T interpolate(T* axis, T* vals, T target, int pts){
-/** Interpolate vals on axis to target value
+//[2] below tells compiler nothing but is helpful to remember
+template<typename T> T interpolate_linear(T axis[2], T vals[2], T target){
+/** Interpolate vals on axis to target value. 
 *
-*For pts=1 uses closest value, pts=2 uses 2 pt linear, \todo add more pts options
+*Axis and vals should contain 2 values boxing the target. We use linear interpolation to obtain the axis value corresponding to target @param axis Axis values for interpolation @param vals Values at axis values @param target Target value to interpolate to
+*/
+
+  T ret = (std::abs(target - axis[1]) * vals[0] + std::abs(target - axis[0]) * vals[1])/(std::abs(axis[1] - axis[0]));
+  return ret;
+}
+
+template float interpolate_linear(float*, float*, float);
+template double interpolate_linear(double*, double*, double);
+//Again we need both float and double versions
+
+//[2] below tells compiler nothing but is helpful to remember
+template<typename T> T interpolate_nearest(T axis[2], T vals[2], T target){
+/** Interpolate vals on axis to target value. 
+*
+*Axis and vals should contain 2 values boxing the target. We select the nearest axis value as corresponding to target @param axis Axis values for interpolation @param vals Values at axis values @param target Target value to interpolate to
 */
 
   T ret = 0.0;
-  if(pts ==1){
-    //select closer value
-    if(std::abs(target - axis[0]) <= std::abs(target - axis[1])) ret = vals[0];
-    else ret = vals[1];
-  
-  }else if(pts ==2){
-    ret = (std::abs(target - axis[1]) * vals[0] + std::abs(target - axis[0]) * vals[1])/(std::abs(axis[1] - axis[0]));
-  
-  }
 
+  //select closer value
+  if(std::abs(target - axis[0]) <= std::abs(target - axis[1])) ret = vals[0];
+  else ret = vals[1];
+ 
   return ret;
 }
-template float interpolate(float*, float*, float, int);
-template double interpolate(double*, double*, double, int);
+template float interpolate_nearest(float*, float*, float);
+template double interpolate_nearest(double*, double*, double);
 //Again we need both float and double versions

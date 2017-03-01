@@ -182,14 +182,32 @@ int test_entity_plasma::resonant_freq(){
 
   test_bed->report_info("Testing resonant frequency solver", 1);
 
-
+  //Check the n=0 and v=0 degenerate cases
+  //Zero angle, zero velocity, any n, expect empty result
+  results = plas->get_resonant_omega(0.0, 0.0, -1);
+  if(results.size() != 1 && (results[0]/om_ce_local - 1.0 > PRECISION)){
+    test_bed->report_info("Erroneous solution when v=0 in resonant frequency solver", 2);
+    err |= TEST_WRONG_RESULT;
+  }
+  
+  calc_type expected_result =  0.50, corresponding_v =  0.162251 * v0;
+  results = plas->get_resonant_omega(0.0, corresponding_v, -1);
+  //Insert a known result here from the IDL code, with one root
+  //Since we're using a sample like this, only expect a few sf of equality as the IDL uses quite different process
+  if(results.size() != 1 || std::abs(std::abs(results[0]/om_ce_local)-expected_result) > LOW_PRECISION){
+    test_bed->report_info("Erroneous solution for example case in resonant frequency solver", 2);
+    err |= TEST_WRONG_RESULT;
+  }
+  
+  //Check over the range of other cases
+  //Loop over particle velocity
   for(int ii=0; ii<n_tests; ii++){
     v_par = (0.01 + 0.5*(float)ii/ (float)(n_tests+1))* v0;
-
+    //Loop over angles
     for(int j=0; j< n_tests; j++){
       x = 4.0* (float) j / (float)(n_tests+1);
       cos_theta = std::cos(std::atan(x));
-
+      //Loop over n
       for(int k=0; k< n_tests; k++){
         n = -n_tests/2 + k*n_tests/2;
         
@@ -199,7 +217,7 @@ int test_entity_plasma::resonant_freq(){
         
         results = plas->get_resonant_omega(x, v_par, n);
         /**Now check each element of the resonant frequency solution set satisfies Stix 2.45 and the resonance condition together*/
-        for(int i=0; i<(int)results.size(); ++i){
+        for(size_t i=0; i<results.size(); ++i){
           //test_bed->report_info("Freq is "+mk_str(results[i], true)+" = "+mk_str(results[i]/my_const.omega_ce, true)+" om_ce", 2);
           
           mu_tmp1 = std::pow(v0 * (gamma*results[i] - n*om_ce_local)/(gamma*results[i] * v_par *cos_theta), 2);
@@ -1100,7 +1118,7 @@ test_entity_d::~test_entity_d(){
 }
 
 int test_entity_d::run(){
-/** \todo WRITE!*/
+/** \todo WRITE! \todo Do some checks with final report...*/
   int err = TEST_PASSED;
   
   deck_constants const_tmp = my_const;

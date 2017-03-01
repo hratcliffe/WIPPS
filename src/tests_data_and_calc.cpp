@@ -64,7 +64,7 @@ int test_entity_plasma::analytic_dispersion(){
   size_t n_tests = 5;
   //First whistlers
   //At very large k we should get om_ce and at 0, we get 0
-  k=100;
+  k = 100;
   om = plas->get_dispersion(k, WAVE_WHISTLER);
   if(std::abs(om /plas->get_omega_ref("ce") -1.0) > GEN_PRECISION) err |=TEST_WRONG_RESULT;
   k = 0;
@@ -73,9 +73,9 @@ int test_entity_plasma::analytic_dispersion(){
 
   //Symmetry
   calc_type om_2;
-  k=0.0001;
+  k = 0.0001;
   om = plas->get_dispersion(k, WAVE_WHISTLER);
-  k=-k;
+  k = -k;
   om_2 = plas->get_dispersion(k, WAVE_WHISTLER);
   
   if(std::abs(om - om_2) > GEN_PRECISION) err |=TEST_WRONG_RESULT;
@@ -111,11 +111,12 @@ int test_entity_plasma::analytic_dispersion(){
   //Finally we check how it handles out of range
   try{
     k = plas->get_dispersion(plas->get_omega_ref("ce")*1.5, WAVE_WHISTLER, true);
-  }catch(...){
+  }catch(const std::exception& e){
+    std::string message = e.what();
+    test_bed->report_info("Exception in analytic dispersion, message " +message, 1);
     err |= TEST_ASSERT_FAIL;
   }
 
-//  std::cout<<"Err: "<<err<<'\n';
   //Now EM
   //At 0, we get om_pe
   k = 0;
@@ -137,7 +138,6 @@ int test_entity_plasma::analytic_dispersion(){
   om = 100* plas->get_omega_ref("pe");
   d_k = plas->get_dispersion(om, WAVE_O, true, true);
   if(std::abs(d_k*v0 - 1.0) > LOW_PRECISION) err |=TEST_WRONG_RESULT;
-  std::cout<<"Err: "<<err<<'\n';
 
   //Finally derivs at our samples should be inverses
   for(size_t i=1; i<= n_tests; i++){
@@ -151,7 +151,10 @@ int test_entity_plasma::analytic_dispersion(){
   //Finally we check how it handles out of range
   try{
     k = plas->get_dispersion(plas->get_omega_ref("pe")*0.8, WAVE_O, true);
-  }catch(...){
+
+  }catch(const std::exception& e){
+    std::string message = e.what();
+    test_bed->report_info("Exception in analytic dispersion, message " +message, 1);
     err |= TEST_ASSERT_FAIL;
   }
 
@@ -563,8 +566,6 @@ int test_entity_spectrum::basic_tests1(){
   //Delete and re-add to test that
   test_contr->delete_current_spectrum();
   test_contr->add_spectrum(test_dat_fft.get_dims(0), DEFAULT_N_ANG, true);
-
-  /** Check this test spectrum makes sense \todo HOW????*/
 
   test_contr->get_current_spectrum()->make_test_spectrum(FUNCTION_DELTA);
   //Check angle distrib integrates to 1 for each case
@@ -1118,7 +1119,7 @@ test_entity_d::~test_entity_d(){
 }
 
 int test_entity_d::run(){
-/** \todo WRITE! \todo Do some checks with final report...*/
+/** \todo WRITE d_testing! \todo Do some checks with final report...*/
   int err = TEST_PASSED;
   
   deck_constants const_tmp = my_const;
@@ -1159,7 +1160,7 @@ test_entity_bounce::~test_entity_bounce(){
 }
 
 int test_entity_bounce::run(){
-/** \todo write!*/
+/** \todo write bounce testing!*/
   int err = TEST_PASSED;
 
   return err;

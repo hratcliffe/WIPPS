@@ -17,7 +17,7 @@
 #include "tests_basic_and_code.h"
 #include "tests_data_and_calc.h"
 
-/** \todo Deliberately failing tests to check not doing nothing \todo Add scripts directory for level1 \todo Add tests directory for easy cleanup*/
+/** \todo Deliberately failing tests to check not doing nothing \todo Add scripts directory for level1 \todo Add tests directory for easy cleanup \todo Test data for double-precision!*/
 
 tests * test_bed;/**<Global testbed controlling tests*/
 

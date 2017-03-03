@@ -909,7 +909,7 @@ calc_type spectrum::get_peak_omega(){
 bool spectrum::write_to_file(std::fstream &file){
 /** \brief Write to file
 *
-* Spectra are written by writing out the B array, the g array, and then writing a single closing footer containing the id values again. \todo Do these match expectation? Should write time, space etc too?
+* Spectra are written by writing out the B array, the g array, and then writing a single closing footer containing the id values again.
 */
 
   if(!file.is_open() || !this->is_good()) return 1;

@@ -17,7 +17,7 @@ ifeq ($(UNAME_S),Linux)
   USR = /usr
 endif
 
-GIT_VERSION := $(shell git describe --dirty --always --tags)
+GIT_VERSION := $(shell git describe --always --tags | cut -c1-14)
 # This cleverness encodes the git commit version into the source so we can write version number into our data files
 
 SRCDIR = src

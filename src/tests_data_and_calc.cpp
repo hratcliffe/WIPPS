@@ -1011,6 +1011,9 @@ int test_entity_d::run(){
     test_contr->add_d(5, 5);
     d_report report = test_contr->get_current_d()->calculate();
     err |= report.error;
+    if(report.error){
+      test_bed->report_info("Error calculating D", mpi_info.rank);
+    }
     test_bed->report_info("Writing test file", mpi_info.rank);
 
     std::fstream file;

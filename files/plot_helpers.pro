@@ -229,8 +229,8 @@ function get_p_res, om_r, om_ce=om_ce, om_pe=om_pe, n=n
   gv_old=abs(om_ce*(1.0*n + om_r)/k_tmp/v0)
   ;Calc gamma from this v and do a second iteration
   gamm_prev = 1.0
-  precision = 0.002
-  MAX_IT = 10
+  precision = 0.0001
+  MAX_IT = 20
   gamm = sqrt(1.0+gv_old^2)
   i=0
   gv_new = gv_old

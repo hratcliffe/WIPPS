@@ -71,9 +71,7 @@ class test_entity_levelone: public test_entity{
     char block_id[ID_SIZE];
     int n_tims;
     int setup();
-    int basic_tests();
-    int twod_tests();
-    int twod_space_tests();
+    int basic_tests(size_t n_dims_in, int flatten_on, bool has_freq, std::string outfile_tag = "", int total_fft = -1, my_type band_min = 0.0, my_type band_max = 0.0);
   public:
     test_entity_levelone();
     virtual ~test_entity_levelone();

@@ -785,8 +785,7 @@ int test_entity_levelone::run(){
 //  if(mpi_info.rank == 0) get_deck_constants(file_prefix);
 //  share_consts();
 
-  strcpy(block_id, "ay");
-
+  strncpy(block_id, "ay", ID_SIZE);
   file_prefix = "./files/l1/l1";
   space_in[0] = 0;
   space_in[1] = 1024;
@@ -795,7 +794,7 @@ int test_entity_levelone::run(){
   time_in[2] = 100;
 
   err|= setup();
-  if(!test_bed->check_for_abort(err)) err|= basic_tests();
+  if(!test_bed->check_for_abort(err)) err|= basic_tests(1, -1, true);
   if(my_reader){
     delete my_reader;
     my_reader = nullptr;
@@ -807,7 +806,7 @@ int test_entity_levelone::run(){
 
   if(!test_bed->check_for_abort(err)){
     file_prefix = "./files/2dtest/";
-    strcpy(block_id, "ey");
+    strncpy(block_id, "ey", ID_SIZE);
     space_in[0] = 0;
     space_in[1] = 1024;
     time_in[0] = 0;
@@ -815,29 +814,25 @@ int test_entity_levelone::run(){
     time_in[2] = 0;
 
     err|=setup();
-    if(!test_bed->check_for_abort(err)) err|= twod_tests();
-    if(!test_bed->check_for_abort(err)) err|= twod_space_tests();
-
+    if(!test_bed->check_for_abort(err)) err|= basic_tests(2, 1, true);
+    if(!test_bed->check_for_abort(err)) err|= basic_tests(2, -1, false, "_space", 2, 0.01f*my_const.omega_ce, 1.5f*my_const.omega_ce);
   }
   
   return err;
 }
 
 int test_entity_levelone::setup(){
-/** \brief Setup to "level one" extraction
+/** \brief Setup for "level one" extraction
 *
 *
 */
 
   int err = TEST_PASSED;
-  bool use_row_time=false;
   my_reader = new reader(file_prefix, block_id);
-  if(my_reader->current_block_is_accum()) use_row_time = true;
-
-  if(!use_row_time){
-    n_tims = std::max((int) (time_in[1]-time_in[0]), 1);
-  }else{
+  if(my_reader->current_block_is_accum()){
     n_tims = time_in[2];
+  }else{
+    n_tims = std::max((int) (time_in[1]-time_in[0]), 1);
   }
 
   size_t n_dims;
@@ -850,31 +845,52 @@ int test_entity_levelone::setup(){
   return err;
 }
 
-int test_entity_levelone::basic_tests(){
-/** \brief Basic tests of process to make levl-1 data
+int test_entity_levelone::basic_tests(size_t n_dims_in, int flatten_on, bool has_freq, std::string outfile_tag, int total_fft, my_type band_min, my_type band_max){
+/** \brief Basic tests of process to make level-1 data
 *
-* Reads proper data files, produces FFT, derived spectrum etc*/
+* Reads proper data files, produces FFT, and derived spectrum, writes to file. Compares to reference version for regression. @param n_dims_in is spatial dimension expected for input file @param flatten_on Flattening dimension on raw data, negative for no flattening @param has_freq Output array contains frequency as last axis @param outfile_tag Tag for output file if wanted @param total_fft Total fft on this dimension, negative for no totalling @param band_min Minimum of band to total fft on @param band_min Maximum of band to total fft on*/
   int err = TEST_PASSED;
 
+  size_t n_dims;
+  std::vector<size_t> dims;
+  int err2 = my_reader->read_dims(n_dims, dims);
+  if(err2){
+    err |= TEST_FATAL_ERR;
+    return err;
+  }
+  if(n_dims != n_dims_in){
+    test_bed->report_info("Wrong file dimension", 1);
+    return TEST_FATAL_ERR;
+  }
+
+  //Cut out section here
   int space_dim = space_in[1]-space_in[0];
 
-  dat = data_array(space_dim, n_tims);
-  strcpy(dat.block_id, block_id);
-
+  //Different size for space processing versus "normal"
+  if(total_fft >= 0){
+    dat = data_array(space_dim, dims[1], n_tims);
+  }else{
+    dat = data_array(space_dim, n_tims);
+  }
   if(!dat.is_good()){
     my_error_print("Data array allocation failed.", mpi_info.rank);
     err |= TEST_ASSERT_FAIL;
     err |= TEST_FATAL_ERR;
   }
+  if(flatten_on < 0){
+    err2 = my_reader->read_data(dat, time_in, space_in);
+  }else{
+    err2 = my_reader->read_data(dat, time_in, space_in, flatten_on);
+  }
 
-  int err2 = my_reader->read_data(dat, time_in, space_in);
   if(err2 == 1){
     return TEST_FATAL_ERR;
   }
   if(err2 == 2) n_tims = dat.get_dims(1);
   //Check if we had to truncate data array...
-  dat_fft = data_array(space_dim, n_tims);
 
+  dat_fft = data_array();
+  dat_fft.clone_empty(dat);
   if(!dat_fft.is_good()){
     return TEST_FATAL_ERR;
   }
@@ -882,13 +898,18 @@ int test_entity_levelone::basic_tests(){
   //Use first file. 0th accumulator is perhaps broken
   err2 = fft_array(dat,dat_fft);
 
+  if(total_fft >= 0){
+    dat_fft = dat_fft.total(total_fft, band_min, band_max);
+  }
+
   test_bed->report_info("FFT returned err_state " + mk_str(err2));
 
   test_contr->set_plasma_B0(dat.B_ref);
   test_contr->add_spectrum(space_dim, DEFAULT_N_ANG, true);
   test_contr->get_current_spectrum()->generate_spectrum(dat_fft);
   
-  int n_dims = dat.get_dims();
+  n_dims = dat_fft.get_dims();
+  //Set cutout limits on FFT
   std::vector<my_type> lims;
   if(n_dims >=3){
     lims.push_back(-0.002);
@@ -897,109 +918,47 @@ int test_entity_levelone::basic_tests(){
   if(n_dims >=2){
     lims.push_back(-0.002);
     lims.push_back(0.002);
-    lims.push_back(-3.0*my_const.omega_ce);
-    lims.push_back(3.0*my_const.omega_ce);
-  
+    if(has_freq){
+      lims.push_back(-3.0*my_const.omega_ce);
+      lims.push_back(3.0*my_const.omega_ce);
+    }else{
+      lims.push_back(-0.002);
+      lims.push_back(0.002);
+    }
   }
   
-//Set cutout limits on FFT
+  //Dump files and then compare to refernce files
   std::string filename, time_str;
   time_str = mk_str(dat_fft.time[0], true)+"_"+mk_str(this->n_tims);
   std::string block = block_id;
-  filename = file_prefix+"FFT_"+block +"_"+time_str+"_"+mk_str(dat_fft.space[0])+"_"+mk_str(dat_fft.space[1]) + ".dat";
+  filename = file_prefix+"tests/"+"FFT_"+block +"_"+time_str+"_"+mk_str(dat_fft.space[0])+"_"+mk_str(dat_fft.space[1]) + outfile_tag+".dat";
   std::fstream file;
   file.open(filename.c_str(),std::ios::out|std::ios::binary);
   if(file.is_open()){
-//    dat_fft.write_section_to_file(file, lims);
     dat_fft.write_section_to_file(file, lims);
-//    dat.write_to_file(file);
     if(err2){
       test_bed->report_info("File writing failed");
       err |=TEST_ASSERT_FAIL;
     }
     
   }else{
-    err |=TEST_ASSERT_FAIL;
-  
-  }
-  file.close();
-  test_bed->report_info("FFT section output in "+filename, 1);
-
-  return err;
-
-}
-
-int test_entity_levelone::twod_tests(){
-/** \brief Basic tests of process to make levl-1 data from 2-d input
-*
-* Reads proper data files, produces FFT, derived spectrum etc*/
-  int err = TEST_PASSED;
-
-  size_t n_dims_in;
-  std::vector<size_t> dims_in;
-  my_reader->read_dims(n_dims_in, dims_in);
-  if(n_dims_in != 2){
-    test_bed->report_info("Wrong file dimension", 1);
-    return TEST_FATAL_ERR;
-  }
-  int space_dim = space_in[1]-space_in[0];
-//  dat = data_array(space_dim, dims_in[1], n_tims);
-  dat = data_array(space_dim, n_tims);
-  strcpy(dat.block_id, block_id);
-
-  if(!dat.is_good()){
-    my_error_print("Data array allocation failed.", mpi_info.rank);
     err |= TEST_ASSERT_FAIL;
-    err |= TEST_FATAL_ERR;
-  }
-
-//  int err2 = my_reader->read_data(dat, time_in, space_in);
-  int err2 = my_reader->read_data(dat, time_in, space_in, 1);
-  //Note this totals on y-dim automagically
   
-  if(err2 == 1){
-    return TEST_FATAL_ERR;
   }
-  if(err2 == 2) n_tims = dat.get_dims(1);
-  //Check if we had to truncate data array and size FFT accordingly
-//  dat_fft = data_array(space_dim, dims_in[1], n_tims);
-  dat_fft = data_array();
-  dat_fft.clone_empty(dat);
-  if(!dat_fft.is_good()){
-    return TEST_FATAL_ERR;
-  }
-  dat.B_ref = -1;
-  err2 = fft_array(dat,dat_fft);
-
-  test_bed->report_info("FFT returned err_state " + mk_str(err2));
-
-  test_contr->add_spectrum(space_dim, DEFAULT_N_ANG, true);
-  test_contr->get_current_spectrum()->make_test_spectrum();
+  file.close();
+  test_bed->report_info("FFT section output in "+filename, 1);
   
-  int n_dims = dat.get_dims();
-  std::vector<my_type> lims;
-  if(n_dims >=3){
-    lims.push_back(-0.002);
-    lims.push_back(0.002);
+  data_array previous_fft(filename+".ref");
+  dat_fft = data_array(filename);
+  if(previous_fft != dat_fft){
+    test_bed->report_info("New FFT does not match reference");
+    err |= TEST_WRONG_RESULT;
   }
-  if(n_dims >=2){
-    lims.push_back(-0.002);
-    lims.push_back(0.002);
-    lims.push_back(-3.0*my_const.omega_ce);
-    lims.push_back(3.0*my_const.omega_ce);
 
-  }
-  
-//Set cutout limits on FFT
-  std::string filename, time_str;
-  time_str = mk_str(dat_fft.time[0], true)+"_"+mk_str(this->n_tims);
-  std::string block = block_id;
-  filename = file_prefix+"FFT_"+block +"_"+time_str+"_"+mk_str(dat_fft.space[0])+"_"+mk_str(dat_fft.space[1]) + ".dat";
-  std::fstream file;
+  filename = append_into_string(filename, "_spectrum");
   file.open(filename.c_str(),std::ios::out|std::ios::binary);
   if(file.is_open()){
-    dat_fft.write_section_to_file(file, lims);
-//    dat.write_to_file(file);
+    test_contr->get_current_spectrum()->write_to_file(file);
     if(err2){
       test_bed->report_info("File writing failed");
       err |=TEST_ASSERT_FAIL;
@@ -1010,95 +969,13 @@ int test_entity_levelone::twod_tests(){
   
   }
   file.close();
-  test_bed->report_info("FFT section output in "+filename, 1);
+  test_bed->report_info("Spectrum output in "+filename, 1);
 
-  return err;
-
-}
-int test_entity_levelone::twod_space_tests(){
-/** \brief Basic tests of process to make levl-1 data from 2-d input
-*
-* Reads proper data files, produces FFT, derived spectrum etc*/
-  int err = TEST_PASSED;
-
-  size_t n_dims_in;
-  std::vector<size_t> dims_in;
-  my_reader->read_dims(n_dims_in, dims_in);
-  if(n_dims_in != 2){
-    test_bed->report_info("Wrong file dimension", 1);
-    return TEST_FATAL_ERR;
+  test_contr->add_spectrum(filename+".ref");
+  if(*(test_contr->get_current_spectrum()) != *(test_contr->get_spectrum_by_num(1))){
+    test_bed->report_info("New spectrum does not match reference");
+    err |= TEST_WRONG_RESULT;
   }
-  int space_dim = space_in[1]-space_in[0];
-  dat = data_array(space_dim, dims_in[1], n_tims);
-  strcpy(dat.block_id, block_id);
-
-  if(!dat.is_good()){
-    my_error_print("Data array allocation failed.", mpi_info.rank);
-    err |= TEST_ASSERT_FAIL;
-    err |= TEST_FATAL_ERR;
-  }
-
-  int err2 = my_reader->read_data(dat, time_in, space_in);
-  if(err2 == 1){
-    return TEST_FATAL_ERR;
-  }
-  if(err2 == 2) n_tims = dat.get_dims(1);
-  //Check if we had to truncate data array and size FFT accordingly
-//  dat_fft = data_array(space_dim, dims_in[1], n_tims);
-
-  dat.B_ref = -1;
-
-//  dat = dat.total(2);
-
-  dat_fft.clone_empty(dat);
-  if(!dat_fft.is_good()){
-    return TEST_FATAL_ERR;
-  }
-
-  err2 = fft_array(dat,dat_fft);
-
-  dat_fft = dat_fft.total(2, 0.01f*my_const.omega_ce, 1.5f*my_const.omega_ce);
-
-  test_bed->report_info("FFT returned err_state " + mk_str(err2));
-
-  test_contr->add_spectrum(space_dim, DEFAULT_N_ANG, true);
-  test_contr->get_current_spectrum()->make_test_spectrum();
-  
-  size_t n_dims = dat_fft.get_dims();
-  std::vector<my_type> lims;
-  if(n_dims >=2){
-    lims.push_back(-0.002);
-    lims.push_back(0.002);
-    lims.push_back(-0.002);
-    lims.push_back(0.002);
-
-  }
-  if(n_dims >=3){
-    lims.push_back(-3.0*my_const.omega_ce);
-    lims.push_back(3.0*my_const.omega_ce);
-  }
-  
-//Set cutout limits on FFT
-  std::string filename, time_str;
-  time_str = mk_str(dat_fft.time[0], true)+"_"+mk_str(this->n_tims);
-  std::string block = block_id;
-  filename = file_prefix+"FFT_k_"+block +"_"+time_str+"_"+mk_str(dat_fft.space[0])+"_"+mk_str(dat_fft.space[1]) + ".dat";
-  std::fstream file;
-  file.open(filename.c_str(),std::ios::out|std::ios::binary);
-  if(file.is_open()){
-    dat_fft.write_section_to_file(file, lims);
-//    dat.write_to_file(file);
-    if(err2){
-      test_bed->report_info("File writing failed");
-      err |=TEST_ASSERT_FAIL;
-    }
-    
-  }else{
-    err |=TEST_ASSERT_FAIL;
-  
-  }
-  file.close();
-  test_bed->report_info("FFT section output in "+filename, 1);
 
   return err;
 

@@ -106,13 +106,38 @@ id_in = id_type
 
 readu, filenum, id_in
 spect=create_struct(spect, {block:id_in})
-smth=hdr.block_type
 POINT_LUN, -filenum, next_pos
 
-;If there is space for another int, should be smooth param
-IF next_pos LE file_end - int_sz THEN BEGIN
+;If there is space for EXACTLY ONE int, should be smooth param
+
+IF next_pos EQ file_end - int_sz THEN BEGIN
+  smth=hdr.block_type
   readu, filenum, smth
   spect=create_struct(spect, {smooth:smth})
+END
+
+;If there is more space then we expect the following
+IF next_pos LT file_end - int_sz THEN BEGIN
+  ;Read in the time and space fields and the B_ref
+  space_in = [hdr.block_type, hdr.block_type]
+  time_in = [hdr.my_type, hdr.my_type]
+  B_ref = hdr.my_type
+
+  readu, filenum, time_in
+  readu, filenum, space_in
+  spect=create_struct(spect, {time: time_in, space:space_in})
+
+  tmp_id=hdr.block_type
+  readu, filenum, tmp_id
+  spect = create_struct(spect, {wave_id:tmp_id})
+  readu, filenum, tmp_id
+  spect = create_struct(spect, {function_type:tmp_id})
+  smth=hdr.block_type
+  readu, filenum, smth
+  spect=create_struct(spect, {smooth:smth})
+
+  readu, filenum, next_block
+
 END
 spect=create_struct(spect, {filename: filename})
 

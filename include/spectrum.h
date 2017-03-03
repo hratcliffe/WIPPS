@@ -54,8 +54,6 @@ class spectrum{
   spectrum & operator=(const spectrum& src);
   spectrum(const spectrum &src);
   spectrum(spectrum && src) = default;/**<Move a spectrum object*/
-  bool operator==(const spectrum &rhs)const;
-  bool operator!=(const spectrum &rhs)const{return !(*this == rhs);}/**< See spectrum::operator==()*/
 
 /********Setup helper functions ****/
   void make_angle_axis();
@@ -81,6 +79,10 @@ public:
   my_type time[2];/**< Time range over which data are taken*/
   size_t space[2];/**< Space range over which data are taken*/
   int wave_id; /**< ID for which wave mode cutout we're going for. See support.h*/
+
+/********Technical stuff making my_array a proper "object" ****/
+  bool operator==(const spectrum &rhs)const;
+  bool operator!=(const spectrum &rhs)const{return !(*this == rhs);}/**< See spectrum::operator==()*/
 
 /********Setup helper functions ****/
   inline bool is_good()const{return (B_omega_array.is_good() && g_angle_array.is_good() && norm_g);}/**<Check if a spectrum is complete and useable*/

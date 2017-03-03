@@ -150,6 +150,18 @@ spectrum * controller::get_current_spectrum(){
 
 }
 
+spectrum * controller::get_spectrum_by_num(size_t indx){
+/** \brief Return spectrum by indx
+*
+* Return a pointer to the spectrum indx ago, or nullptr if list is empty or indx is invalid.
+*/
+  if(indx >= spect_D_list.size()) return nullptr;
+  if(!spect_D_list.empty()) return spect_D_list[current_pair - indx].first;
+  else return nullptr;
+
+}
+
+
 diffusion_coeff * controller::get_current_d(){
 /** \brief Return current D
 *

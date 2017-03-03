@@ -50,6 +50,7 @@ public:
   void delete_current_spectrum();
 /********Plasma, spectrum, D getters ****/
   spectrum * get_current_spectrum();
+  spectrum * get_spectrum_by_num(size_t indx);
   diffusion_coeff * get_current_d();
   const plasma& get_plasma(){return my_plas;};/**<Get reference to the plasma object to use*/
 

@@ -178,8 +178,22 @@ spectrum::spectrum(std::string filename){
   if(cont){
     char id_in[ID_SIZE];
     file.seekg(end_block+sizeof(size_t));
-    if(file) file.read(id_in, sizeof(char)*ID_SIZE);
-    strcpy(this->block_id, id_in);
+    if(file){
+      file.read(id_in, sizeof(char)*ID_SIZE);
+      strcpy(this->block_id, id_in);
+    }
+
+    if(file) file.read((char*)this->time, sizeof(my_type)*2);
+    if(file) file.read((char*)this->space, sizeof(size_t)*2);
+    size_t wave_id_tmp = 0;
+    if(file) file.read((char*)&wave_id_tmp, sizeof(size_t));
+    wave_id = (int) wave_id_tmp;
+    size_t function_tmp = 0;
+    if(file) file.read((char*)&function_tmp, sizeof(size_t));
+    function_type = (int) function_tmp;
+    this->angle_is_function = true;
+    if(function_type == FUNCTION_NULL) this->angle_is_function = false;
+    if(file) file.read((char*) &this->smooth, sizeof(size_t));
   }
 
   if(!cont){
@@ -187,7 +201,6 @@ spectrum::spectrum(std::string filename){
     g_angle_array = data_array();
     B_omega_array = data_array();
     //Return to size-less state
-    
   }
   this->init();
   return;
@@ -908,11 +921,19 @@ bool spectrum::write_to_file(std::fstream &file){
 
   //Grab the start position of the final "footer" block
   size_t ftr_start = (size_t) file.tellg();
-  size_t next_location = ftr_start+ sizeof(char)*ID_SIZE +sizeof(size_t)*2;
+  size_t next_location = ftr_start+ sizeof(char)*ID_SIZE +sizeof(size_t)*6 + sizeof(my_type)*2;
 
   //Write the footer
   file.write((char*) & next_location, sizeof(size_t));
   file.write(block_id, sizeof(char)*ID_SIZE);
+  file.write((char*) &time, sizeof(my_type)*2);
+  file.write((char*) &space, sizeof(size_t)*2);
+  //Convert wave id to size_t before writing
+  size_t wave_id_tmp = this->wave_id;
+  file.write((char*) &wave_id_tmp, sizeof(size_t));
+  size_t function_tmp = this->function_type;
+  file.write((char*) &function_tmp, sizeof(size_t));
+
   file.write((char*) & smooth, sizeof(size_t));
 
   //Check for errors
@@ -967,11 +988,29 @@ bool spectrum::read_from_file(std::fstream &file){
     //File is not done!
     my_error_print("Excess arrays in file", mpi_info.rank);
   }
-  //Read the footer data
+  //Read the footer data, until we run out
   char id_in[ID_SIZE];
   file.seekg(end_block+sizeof(size_t));
   if(file) file.read(id_in, sizeof(char)*ID_SIZE);
   strcpy(this->block_id, id_in);
+  if(file){
+    char id_in[ID_SIZE];
+    file.seekg(end_block+sizeof(size_t));
+    if(file) file.read(id_in, sizeof(char)*ID_SIZE);
+    strcpy(this->block_id, id_in);
+
+    if(file) file.read((char*)this->time, sizeof(my_type)*2);
+    if(file) file.read((char*)this->space, sizeof(size_t)*2);
+    size_t wave_id_tmp = 0;
+    if(file) file.read((char*) &wave_id_tmp, sizeof(size_t));
+    wave_id = (int) wave_id_tmp;
+    size_t function_tmp = 0;
+    if(file) file.read((char*) &function_tmp, sizeof(size_t));
+    function_type = (int) function_tmp;
+    this->angle_is_function = true;
+    if(function_type == FUNCTION_NULL) this->angle_is_function = false;
+    if(file) file.read((char*) &this->smooth, sizeof(size_t));
+  }
 
   return err;
 }

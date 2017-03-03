@@ -15,11 +15,11 @@
 plasma::plasma(std::string file_prefix, my_type Bx_local){
 /** \brief Set up plasma
 *
-*Sets up components from {file_prefix}plasma.conf. If a Bx_local is given, store and calc local cyclotron frequency from this. Else use the cyclotron frequency from deck constants. \todo What is is_setup actually doing?
+*Sets up components from {file_prefix}plasma.conf. If a Bx_local is given, store and calc local cyclotron frequency from this. Else use the cyclotron frequency from deck constants.
 */
 
   //Set up plasma components
-  bool err = configure_from_file(file_prefix);
+  plasma_state state = configure_from_file(file_prefix);
   
   //Set B0 and om_ce values
   if(Bx_local == -1){
@@ -31,10 +31,10 @@ plasma::plasma(std::string file_prefix, my_type Bx_local){
   this->om_ce_ref = my_const.omega_ce;
   this->om_ce_local = std::abs(q0) * B0 / me;
 
-  is_setup = true;
+  is_setup = state;
 }
 
-bool plasma::configure_from_file(std::string file_prefix){
+plasma_state plasma::configure_from_file(std::string file_prefix){
 /** \brief Setup plasma from file
 *
 *Reads {file_prefix}plasma.conf and parses component mass, charge and density
@@ -110,17 +110,20 @@ On error we continue using defaults set below
     }
   }
 
-  if(block_num >= ncomps){
+  if(block_num == -1){
+    return p_default;
+  }
+  else if(block_num >= ncomps){
     my_print("Too many blocks in plasma file, truncating!", mpi_info.rank);
-    return 1;
+    return p_overflow;
   }
   else if(block_num < ncomps-1){
     my_print(mk_str(block_num), mpi_info.rank);
   
     my_print("Insufficient blocks in config file, using defaults for others", mpi_info.rank);
-    return 1;
+    return p_underflow;
   }else{
-    return 0;
+    return p_good;
   }
 
 }

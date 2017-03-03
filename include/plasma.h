@@ -23,6 +23,9 @@ class diffusion_coeff;
 *An additional function to simultaneously solve the Doppler type resonance condition, and the approximate dispersion relation are provided.
 * @author Heather Ratcliffe  @date 07/10/2015 \ingroup cls
 */
+
+typedef enum p_state {p_none, p_good, p_default, p_overflow, p_underflow} plasma_state;
+
 class plasma{
 
 private:
@@ -36,18 +39,17 @@ private:
   calc_type pcharge[ncomps];/**<Per species charge*/
   calc_type pdens[ncomps];/**<Per species density*/
 
-  bool is_setup;/**<Check for validity*/
-  
+  plasma_state is_setup;/**<Check for validity*/
 /********Basic setup and allocation functions ****/
-  bool configure_from_file(std::string file_prefix);
+  plasma_state configure_from_file(std::string file_prefix);
 public:
 
 /********Basic setup and allocation functions ****/
-  explicit plasma(){is_setup = false;}/**<Default constructor, create useless plasma object*/
+  explicit plasma(){is_setup = p_none;}/**<Default constructor, create useless plasma object*/
   explicit plasma(std::string file_prefix, my_type Bx_local=-1);
 
 /********Get/set functions ****/
-  bool is_good(){return is_setup;}/**<Whether everything is setup*/
+  bool is_good(){return is_setup != p_none;}/**<Whether everything is setup*/
   calc_type get_omega_ref(std::string code)const;
 //  void get_density(){;}/**< Density is assumed constant*/
   calc_type get_B0(){return B0;}/**<B0 can vary in space \todo How to handle varying B0*/

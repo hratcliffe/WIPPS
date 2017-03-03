@@ -8,7 +8,7 @@
 #Build the test code and run it
 #Wipe and build with supplied build args
 
-DOCSTRING=$'Script to assist in getting the code running.\nIf FFTW is installed somewhere locally, supply the path with --fftw-path <installed path>. If not, use --install-fftw <path-to-install> (must exist!) to install locally, or install with your package manager (apt, homebrew, etc).\nTo build without FFTW (some functions unavailable!) use --no-fft.\nTo build ONLY a double or floating point version supply --double or --float (not both!) respectively.\nThe final version will be built using whatever is supplied in --build-args (use quotes to supply more than one). If --double or --float is given, TYPE will be set automatically. Otherwise float will be used, but an explicit TYPE in --build-args will override this. For example, --build-args "TYPE=float".\nUse --help to see this documentation.'
+DOCSTRING=$'Script to assist in getting the code running.\nIf FFTW is installed somewhere locally, supply the path with --fftw-path <installed path>. If not, use --install-fftw <path-to-install> (must exist!) to install locally, or install with your package manager (apt, homebrew, etc). A system-install will be found automatically.\nTo build without FFTW (some functions unavailable!) use --no-fft.\nTo build ONLY a double or floating point version supply --double or --float (not both!) respectively.\nThe final version will be built using whatever is supplied in --build-args (use quotes to supply more than one). If --double or --float is given, TYPE will be set automatically. Otherwise float will be used, but an explicit TYPE in --build-args will override this. For example, --build-args "TYPE=float".\nUse --help to see this documentation.'
 
 
 #Process args

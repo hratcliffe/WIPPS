@@ -294,7 +294,7 @@ void spectrum::make_angle_axis(){
 bool spectrum::make_angle_distrib(){
 /** \brief Generate angle axis and distribution
 *
-*Generates an angle axis linear spaced in tan theta between MIN_ANGLE and MAX_ANGLE. Then generates and fills the angular spectrum according to function specified by function_type member variable. Options are in support.h and are FUNCTION_DELTA: delta function with peak at 0 angle and integral 1. FUNCTION_GAUSS: Gaussian with std-dev SPECTRUM_ANG_STDDEV, centre at 0 angle and integral 1. FUNCTION_ISO: Isotropic distribution over range considered, with integral 1.  \todo How to handle parallel/anti. \todo Integrals sum to 1 or 0.5??? 
+*Generates an angle axis linear spaced in tan theta between MIN_ANGLE and MAX_ANGLE. Then generates and fills the angular spectrum according to function specified by function_type member variable. Options are in support.h and are FUNCTION_DELTA: delta function with peak at 0 angle. FUNCTION_GAUSS: Gaussian with std-dev SPECTRUM_ANG_STDDEV, centre at 0 angle. FUNCTION_ISO: Isotropic distribution over range considered. The integrals are either 0.5 for 0 to ANG_MAX or 1 for -ANG_MAX to ANG_MAX. Other combinations are not guaranteed
 */
 
 
@@ -327,9 +327,10 @@ bool spectrum::make_angle_distrib(){
       val = std::exp( -0.5 * std::pow(ax_el/SPECTRUM_ANG_STDDEV, 2)) * norm;
       set_g_element(i,val);
     }
-  }else if(function_type ==FUNCTION_ISO){
+  }else if(function_type == FUNCTION_ISO){
 
     val = 1.0/ (ANG_MAX - ANG_MIN)*get_g_dims(1)/(get_g_dims(1)-1);
+    if(std::abs(ANG_MIN) < GEN_PRECISION) val = val / 2.0;
     for(size_t i=0; i<len; ++i) set_g_element(i,val);
 
   }else{
@@ -434,6 +435,7 @@ bool spectrum::generate_spectrum(data_array &parent, int om_fuzz, int angle_type
     my_type total = 0.0;
 
     calc_type sgn;
+    //One sided axis (runs 0 to max) rather than -max to max. These are the only options
     bool one_sided = (std::abs(om_ax[0]) < std::abs(om_ax[len/2]));
 
     for(size_t i=0; i<get_B_dims(0); ++i){
@@ -484,6 +486,7 @@ bool spectrum::generate_spectrum(data_array &parent, int om_fuzz, int angle_type
     my_type * ky_ax = parent.get_axis(1, len_y);
     my_type * om_ax = parent.get_axis(2, len_om);
     
+    //One sided axis (runs 0 to max) rather than -max to max. These are the only options
     bool one_sided = (std::abs(om_ax[0]) < std::abs(om_ax[len_om/2]));
 
     //Create angular axis for spectrum
@@ -565,8 +568,7 @@ bool spectrum::generate_spectrum(data_array &parent, int om_fuzz, int angle_type
        }
 //------------------
         //Tmp is now the convolved B(omega)g(omega, theta). We dump it into g as is for later norming and add to the sum which will end up as B.
-        /** \todo Is this the correct norm?*/
-        if(!one_sided) tmp /= 2.0;
+        if(one_sided) tmp *= 2.0;//If one_sided axis, assume there's the same power at -ve omega too
         set_g_element(i, j, tmp);
         tmp_sum += tmp;
       }

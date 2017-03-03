@@ -21,7 +21,6 @@
 #include <math.h>
 #include <boost/math/special_functions.hpp>
 //Provides Bessel functions, erf, and many more
-/** \todo Deliberately failing tests to check not doing nothing \todo Add scripts directory for level1 \todo Add tests directory for easy cleanup*/
 
 test_entity_reader::test_entity_reader(){
   name = "reader class";

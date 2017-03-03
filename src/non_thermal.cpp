@@ -69,7 +69,6 @@ bool non_thermal::configure_from_file(std::string file_prefix){
   ...
   end:
   etc where the RHS's are the string names in the deck and the function is "max", "kappa", "lookup" etc. ALL LOWER CASE. this then defines a plasma from deck constants*/
-  /** \todo And in plasma, fix lower casing*/
   
   my_print("Reading "+file_prefix+"nonthermal.conf");
   infile.open(file_prefix+"nonthermal.conf");

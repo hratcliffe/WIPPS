@@ -32,6 +32,19 @@ class bounce_av_data{
     my_type get_Bx_at(size_t x_pos){return Bx.get_element(x_pos);}
 };
 
+my_type solve_mirror_latitude(my_type alpha_eq);
+
+inline my_type mirror_poly(my_type L, my_type s4alpha){
+  return std::pow(L, 6) +  (3.0*L - 4.0)*s4alpha;
+}
+inline my_type d_mirror_poly(my_type L, my_type s4alpha){
+  return 6.0*std::pow(L, 5) +  3.0*s4alpha;
+}
+
+inline my_type Newton_Raphson_iteration(my_type last_guess, my_type s4alpha){
+  return last_guess - mirror_poly(last_guess, s4alpha)/d_mirror_poly(last_guess, s4alpha);
+}
+
 typedef std::pair<spectrum*, diffusion_coeff*> spect_D_pair;/**< Link spectrum and D_coeff as pair*/
 
 /** \brief Controls plasma, spectrum and d_coeff objects and their connections

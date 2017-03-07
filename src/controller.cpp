@@ -198,7 +198,7 @@ void controller::bounce_average(bounce_av_data bounce_dat){
   //Tag as bounce av'd and copy block id from block used
 
   //Flatten down each d onto this one with all integrand included...
-  my_type val, current_lat = 0.0, d_lat = 0.0, D_val, lat_factor;
+  my_type val, current_lat = 0.0, d_lat = 0.0, D_val, lat_factor, mirror_lat = 0.0;
   size_t n_blocks = spect_D_list.size();
   my_type sin_theta, cos_theta_sq;
   //Latitude increment block to block
@@ -208,6 +208,9 @@ void controller::bounce_average(bounce_av_data bounce_dat){
     for(int ang_i = 0; ang_i < dims[1]; ang_i++){
       val = 0.0;
       current_lat = d_lat/2.0;
+      if(bounce_dat.type != plain || true){
+        mirror_lat = solve_mirror_latitude(spect_D_list[0].second->get_axis_element(1, ang_i));
+      }
       for(size_t block_i = 0; block_i < n_blocks; block_i++){
         sin_theta = std::sin(pi* (90.0-current_lat)/180.0);
         cos_theta_sq = 1.0 - sin_theta*sin_theta;
@@ -218,6 +221,7 @@ void controller::bounce_average(bounce_av_data bounce_dat){
             break;
           case alpha_alpha:
           /** \todo Fill other cases*/
+            lat_factor = 1.0;
             break;
           case alpha_p:
             break;
@@ -317,5 +321,31 @@ bool controller::save_D(std::string pref){
     file.close();
   }
   return 0;
+}
+
+my_type solve_mirror_latitude(my_type alpha_eq){
+/** \brief Gets the mirror latitude for equatorial pitch angle alpha_eq in RADIANs
+*
+*Solve the mirror latitude polynomial L^6 + (3 L - 4) sin^4 alpha_eq where L = cos^2 lambda_mirror
+*/
+  my_type min_alpha = 0.00001;//Minimum pitch angle to attempt solution. Below this we default to pi. Note this is a mirror latitude of over 89.2 degrees
+  if(std::abs(alpha_eq) < min_alpha) return pi;
+
+  my_type last_solution, next_solution;
+  //Initial guess is taken using approximation of L^6 = 4 s4alpha
+  last_solution = 1.26 *std::pow(sin(alpha_eq * pi/180.0), 2/3.0);
+
+  size_t max_iter = 20;//Maximum iterations to try
+  my_type precision = 1e-3*pi/100.0;//precision in solution to stop at. this is 0.1% of pi i.e. 0.2 deg
+  
+  my_type s4alpha = std::pow(sin(alpha_eq * pi/180.0), 4);
+  for(size_t iter = 0; iter < max_iter; iter++){
+    std::cout<<iter<<' '<<last_solution<<' '<<acos(std::sqrt(last_solution))*180/pi<<'\n';
+    next_solution = Newton_Raphson_iteration(last_solution, s4alpha);
+    if(std::abs(acos(std::sqrt(last_solution)) - acos(std::sqrt(next_solution))) < precision) break;
+    last_solution = next_solution;
+  }
+
+  return acos(std::sqrt(next_solution));
 }
 

@@ -94,7 +94,8 @@ class test_entity_d : public test_entity{
 /** Test bounce averaging. Setup dummy D data across multiple blocks and average. Cross check with analytic results*/
 class test_entity_bounce: public test_entity{
   private:
-
+    controller * test_contr;
+    std::string file_prefix;
   public:
     test_entity_bounce();
     virtual ~test_entity_bounce();

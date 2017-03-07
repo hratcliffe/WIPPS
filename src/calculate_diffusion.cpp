@@ -181,7 +181,17 @@ int main(int argc, char *argv[]){
   //-----------------end of per_proc loop---- Now controller holds one spectrum and d per block
   MPI_Barrier(MPI_COMM_WORLD);
   
-  contr.bounce_average();
+  bounce_av_data bounce_dat;
+  my_space[0] = 0;
+  my_space[1] = dims[0];
+
+  //Set up our bounce-averaging params and do the average
+  //Accumulated property is for every file in a directory
+  bounce_dat.Bx = get_Bx(cmd_line_args.file_prefix, my_space, cmd_line_args.time[0], my_reader.current_block_is_accum());
+  bounce_dat.len_x = my_space[1];
+  bounce_dat.max_latitude = 90.0;
+  bounce_dat.L_shell = 4.5;
+  contr.bounce_average(bounce_dat);
   
   contr.save_spectra(cmd_line_args.file_prefix);
   contr.save_D(cmd_line_args.file_prefix);

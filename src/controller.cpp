@@ -170,12 +170,20 @@ diffusion_coeff * controller::get_current_d(){
   if(!spect_D_list.empty()) return spect_D_list[current_pair].second;
   else return nullptr;
 }
+diffusion_coeff * controller::get_special_d(){
+/** \brief Return current special D
+*
+* Return a pointer to the current (i.e. the latest added) special d_coeff, or nullptr if list is empty.
+*/
+  if(!d_specials_list.empty()) return d_specials_list[current_special_d];
+  else return nullptr;
+}
 
 /********Bounce averaging specials ****/
-void controller::bounce_average(){
+void controller::bounce_average(bounce_av_data bounce_dat){
 /** \brief Bounce average D
 *
-*Assumes the list contains D in order across space and performs bounce average to create special D. \todo Finish integrand \todo test case? \todo Move these to dedicated code?
+*Assumes the list contains D in order across space and performs bounce average to create special D. We use bounce_data to inform the field shape etc etc. The end result on each processor should be something which just has to be plain-summed by the mpi part. Calls controller::handle_d_mpi() and  \todo Finish integrand \todo Move these to dedicated code?
 */
   if(spect_D_list.size() ==0) return;
   //Empty list, nothing to do.
@@ -190,16 +198,37 @@ void controller::bounce_average(){
   //Tag as bounce av'd and copy block id from block used
 
   //Flatten down each d onto this one with all integrand included...
-  my_type val;
-  for(int j=0; j< dims[0]; j++){
-    for(int k=0; k<dims[1]; k++){
-      val = 0;
-      for(size_t i=0; i<spect_D_list.size() -1; i++){
-        val += spect_D_list[i].second->get_element(j, k); //* integrand!
+  my_type val, current_lat = 0.0, d_lat = 0.0, D_val, lat_factor;
+  size_t n_blocks = spect_D_list.size();
+  my_type sin_theta, cos_theta_sq;
+  //Latitude increment block to block
+  d_lat = bounce_dat.max_latitude/(my_type) n_blocks;
+  //Initial block-centred latitude
+  for(int p_i = 0; p_i < dims[0]; p_i++){
+    for(int ang_i = 0; ang_i < dims[1]; ang_i++){
+      val = 0.0;
+      current_lat = d_lat/2.0;
+      for(size_t block_i = 0; block_i < n_blocks; block_i++){
+        sin_theta = std::sin(pi* (90.0-current_lat)/180.0);
+        cos_theta_sq = 1.0 - sin_theta*sin_theta;
+        D_val = spect_D_list[block_i].second->get_element(p_i, ang_i); //* integrand!
+        switch (bounce_dat.type) {
+          case plain:
+            lat_factor = bounce_dat.L_shell * R_E * std::sqrt(1.0+3.0*cos_theta_sq) * sin_theta * (pi*d_lat/180.0);//This is ds as in Schulz/Lanzerotti Eq 1.18.
+            break;
+          case alpha_alpha:
+          /** \todo Fill other cases*/
+            break;
+          case alpha_p:
+            break;
+          case p_p:
+            break;
+        }
+        val += D_val * lat_factor;
         //Sum up the blocks done on this processor
+        current_lat += d_lat;
       }
-      d_specials_list[current_special_d]->set_element(j, k, val);
-
+      d_specials_list[current_special_d]->set_element(p_i, ang_i, val);
     }
   }
   handle_d_mpi();

@@ -414,6 +414,13 @@ void divide_domain(std::vector<size_t> dims, size_t space[2], int per_proc, int 
 
 my_type get_ref_Bx(std::string file_prefix, size_t space_in[2], size_t time_0, bool is_acc){
 /** Read reference B_x from the specfied file prefix as given, dump number time_0*/
+  data_array bx = get_Bx(file_prefix, space_in, time_0, is_acc);
+  if(bx.is_good()) return avval(bx);
+  else return 0.0;
+}
+
+data_array get_Bx(std::string file_prefix, size_t space_in[2], size_t time_0, bool is_acc){
+/** Read reference B_x from the specfied file prefix as given, dump number time_0*/
   my_print("Getting ref B");
   char block_id[ID_SIZE];
   if(!is_acc) strcpy(block_id, "bx");
@@ -428,11 +435,11 @@ my_type get_ref_Bx(std::string file_prefix, size_t space_in[2], size_t time_0, b
   size_t n_dims;
   std::vector<size_t> dims;
   int err = bx_reader.read_dims(n_dims, dims);
-  if(err) return 0.0;
+  if(err) return data_array();
 
   size_t space_dim = space_in[1]-space_in[0];
   data_array bx = data_array(space_dim, 1);
-  if(!bx.is_good()) return 0.0;
+  if(!bx.is_good()) return data_array();
   
   if(n_dims == 1){
     err = bx_reader.read_data(bx, bx_times, space_in);
@@ -441,11 +448,11 @@ my_type get_ref_Bx(std::string file_prefix, size_t space_in[2], size_t time_0, b
   }else{
     my_error_print("3-D space not added...", mpi_info.rank);
   }
-  
-  if(err == 0 || err == 2) return avval(bx);
+  if(err == 1 || err == 2) return bx;
   //2 is a non-fatal read error
-  else return 0.0;
+  else return data_array();
 }
+
 
 bool flatten_fortran_slice(my_type * src_ptr, my_type* dest_ptr, size_t n_dims_in, size_t * dims_in, size_t flatten_on_dim, size_t flat_start, size_t flat_stop){
 /** \brief Flatten a Fortran-style array on the specified dimension

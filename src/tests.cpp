@@ -69,6 +69,8 @@ void tests::setup_tests(){
   add_test(test_obj);
   test_obj = new test_entity_nonthermal();
   add_test(test_obj);
+  test_obj = new test_entity_bounce();
+  add_test(test_obj);
 
 }
 

@@ -11,10 +11,26 @@
 
 #include "support.h"
 #include "plasma.h"
+#include "data_array.h"
 
 class spectrum;
 class diffusion_coeff;
 /*Circular dependencies, don't include headers*/
+
+typedef enum bounce_av_type_specs {plain, alpha_alpha, alpha_p,  p_p} bounce_av_type;
+//Struct holding the needed stuff for bounce-averaging
+//Controller should only access B_x via this accessor, because we might later allow 2-d B_x or such
+class bounce_av_data{
+  public:
+    bounce_av_type type {plain};
+    data_array Bx {data_array()};
+    size_t len_x {0};
+    my_type L_shell {4.0};
+    my_type max_latitude {90.0};/**< Maximum latitude of "field line"*/
+    bounce_av_data(){;}
+    //{B_x = data_array(); len_x = 0; max_latitude = 90.0;}
+    my_type get_Bx_at(size_t x_pos){return Bx.get_element(x_pos);}
+};
 
 typedef std::pair<spectrum*, diffusion_coeff*> spect_D_pair;/**< Link spectrum and D_coeff as pair*/
 
@@ -52,10 +68,12 @@ public:
   spectrum * get_current_spectrum();
   spectrum * get_spectrum_by_num(size_t indx);
   diffusion_coeff * get_current_d();
+  diffusion_coeff * get_special_d();
+  
   const plasma& get_plasma(){return my_plas;};/**<Get reference to the plasma object to use*/
 
 /********Bounce averaging specials ****/
-  void bounce_average();
+  void bounce_average(bounce_av_data bounce_dat);
   void handle_d_mpi();
 
 /********File IO functions ****/

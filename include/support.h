@@ -71,13 +71,9 @@ const calc_type v0 = 2.997924e8; /**< Speed of light in m/s^2 */
 const calc_type me = 9.10938291e-31; /**< Electron mass in kg */
 const calc_type mp = me*1836.15267; /**< Proton mass in kg */
 const calc_type q0 = 1.602176565e-19; /**< Electron charge in C*/
-const calc_type eps0 =8.85418782e-12; /**< Epsilon_0 permittivity of free space in F/m*/
-
-
+const calc_type eps0 = 8.85418782e-12; /**< Epsilon_0 permittivity of free space in F/m*/
 const calc_type kb = 1.3806488e-23; /**< Boltzman constant J/K*/
-//mu0 = 4.0d-7 * !dpi  ; N/A^2
-//epsilon0 = 8.8541878176203899d-12 ; F/m
-//h_planck = 6.62606957d-34 ; J s
+const calc_type R_E = 6.371e6; /**<Average Earth radius in m*/
 
 const calc_type GEN_PRECISION = 1e-6;/**< General precision for equality etc*/
 
@@ -246,9 +242,11 @@ void print_help(char code=0);
 void log_code_constants(std::string file_prefix);
 std::vector<std::string> process_filelist(int argc, char *argv[]);
 
+class data_array;
 /********Data helpers ****/
 void divide_domain(std::vector<size_t>, size_t space[2], int per_proc, int block_num);
 my_type get_ref_Bx(std::string file_prefix, size_t space_in[2], size_t time_0, bool is_acc=false);
+data_array get_Bx(std::string file_prefix, size_t space_in[2], size_t time_0, bool is_acc=false);
 bool flatten_fortran_slice(my_type * src_ptr, my_type* dest_ptr, size_t n_dims_in, size_t * sizes_in, size_t flatten_on_dim,size_t flat_start=0, size_t flat_stop=-1);//I know -1 will overflow, that is what I want
 
 int where(my_type * ax_ptr, int len, my_type target);

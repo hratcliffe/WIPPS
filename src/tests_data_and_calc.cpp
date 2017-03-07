@@ -1033,16 +1033,41 @@ int test_entity_d::run(){
 //----------------------------------------------------------------
 
 test_entity_bounce::test_entity_bounce(){
+  name = "bounce averaging";
+  file_prefix = "./files/";
+  test_contr = new controller(file_prefix);
 
 }
 test_entity_bounce::~test_entity_bounce(){
-
+  if(test_contr) delete test_contr;
 }
 
 int test_entity_bounce::run(){
-/** \todo write bounce testing!*/
+/** \todo write additional bounce testing!*/
   int err = TEST_PASSED;
 
+  //First we do a simple test by rigging up 16 space-blocked 1x1 D's containing value 1, This should return the length of the line which we calc using 1.01 in Schulz/Lanzerotti and compare
+
+  bounce_av_data bounce_dat;
+  bounce_dat.max_latitude = 90.0;
+  bounce_dat.L_shell = 4.5;
+
+  my_type line_length;
+  line_length = 2.7603/2.0 * bounce_dat.L_shell * R_E;
+  test_bed->report_info("Expecting line length of "+mk_str(line_length/1000.0)+" km", mpi_info.rank);
+
+  for(size_t n=0; n<32; n++){
+    test_contr->add_spectrum(1, 1, true);
+    test_contr->add_d(1, 1);
+    test_contr->get_current_d()->set_element((size_t)0,(size_t)0, 1.0);
+  }
+  test_contr->bounce_average(bounce_dat);
+  //These should match to within say 0.1% for a reasonable result
+  if(std::abs(test_contr->get_special_d()->get_element((size_t)0,(size_t)0)/line_length - 1.0) > 0.001){
+    err |= TEST_WRONG_RESULT;
+    test_bed->report_info("Line length mismatch of "+mk_str(std::abs(test_contr->get_special_d()->get_element((size_t)0,(size_t)0)/line_length - 1.0)*100.0) +" %", mpi_info.rank);
+  }
+  
   return err;
 
 }

@@ -23,7 +23,7 @@ class controller;
 
 /** \brief Diffusion coefficient object
 *
-* Specialised data_array containing the calculated coefficient plus relevant ids. Can be made/destroyed only by controller object. 
+* Specialised data_array containing the calculated coefficient plus relevant ids. Can be made/destroyed only by controller object. In general should be a 2-D array with first axis momentum, second pitch-angle
 @author Heather Ratcliffe @date 23/09/2015 \ingroup cls
 */
 class diffusion_coeff: public data_array{
@@ -34,7 +34,7 @@ private:
   int n_n; /**< Max number of resonances to consider */
   controller * my_controller;/**< Owning controller which gives access to plasma and spectrum*/
   friend class controller;
-  explicit diffusion_coeff(int nx, int n_ang);
+  explicit diffusion_coeff(int n_momenta, int n_ang);
   virtual ~diffusion_coeff(){;};
 
   int get_min_n(calc_type v_par, my_type k_thresh, calc_type om_ce);

@@ -9,10 +9,10 @@
 #include "support.h"
 #include "d_coeff.h"
 
-diffusion_coeff::diffusion_coeff(int n_omega, int n_angs):data_array(n_omega, n_angs){
+diffusion_coeff::diffusion_coeff(int n_momenta, int n_angs):data_array(n_momenta, n_angs){
 /** \brief Create coefficient
 *
-*Creates rectangular data_array and sets additional parameters to defaults @param nx Number of points in omega to use @param n_angs Number of angle points
+*Creates rectangular data_array and sets additional parameters to defaults @param nx Number of points in momentum to use @param n_angs Number of angle points
 */
   my_controller = nullptr;
 
@@ -206,7 +206,7 @@ Get mu, dmu/domega which are used to:
 
 //  for(int i =0; i< ((1< dims[0]) ? 1:dims[0]); ++i){
   for(size_t i =0; i< dims[0]; ++i){
-    //particle parallel velocity
+    //particle parallel velocity or momentum
     v_par = get_axis_element(0, i);
     //Get limits on n for each velocity
     n_min = get_min_n(v_par, k_thresh, om_ce_ref);
@@ -280,7 +280,7 @@ Get mu, dmu/domega which are used to:
       //now integrate in x = tan theta
       D_tmp = integrator(D_theta, dims[1], dx);
       //Leaves us with one D for each alpha and v.
-      //Store into data at i, k
+      //Store into data at i, k (momentum, angle)
       set_element(i, k, D_tmp*D_consts);
       //What about 1/delta omega???
     

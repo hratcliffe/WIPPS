@@ -17,33 +17,56 @@ class spectrum;
 class diffusion_coeff;
 /*Circular dependencies, don't include headers*/
 
+/** \defgroup bounce Bounce-averaging helpers
+*@{ 
+\brief Helpers for bounce-averaging process
+*/
+
 typedef enum bounce_av_type_specs {plain, alpha_alpha, alpha_p,  p_p} bounce_av_type;
 //Struct holding the needed stuff for bounce-averaging
 //Controller should only access B_x via this accessor, because we might later allow 2-d B_x or such
 class bounce_av_data{
+  private:
+    data_array Bx {data_array(1)};//MUST be 1-D, see accessor function get_Bx_at
+    size_t len_x {0};
   public:
     bounce_av_type type {plain};
-    data_array Bx {data_array()};
-    size_t len_x {0};
     my_type L_shell {4.0};
     my_type max_latitude {90.0};/**< Maximum latitude of "field line"*/
-    bounce_av_data(){;}
-    //{B_x = data_array(); len_x = 0; max_latitude = 90.0;}
+    void set_Bx_size(size_t len){this->Bx.resize(0, len);len_x = Bx.get_dims(0);}//Resize B and update length
     my_type get_Bx_at(size_t x_pos){return Bx.get_element(x_pos);}
 };
 
 my_type solve_mirror_latitude(my_type alpha_eq);
 
 inline my_type mirror_poly(my_type L, my_type s4alpha){
+/** Polynomial describing the mirror latitude*/
   return std::pow(L, 6) +  (3.0*L - 4.0)*s4alpha;
 }
 inline my_type d_mirror_poly(my_type L, my_type s4alpha){
+/** Derivative of mirror_poly*/
   return 6.0*std::pow(L, 5) +  3.0*s4alpha;
 }
 
 inline my_type Newton_Raphson_iteration(my_type last_guess, my_type s4alpha){
+/**Iterate solution of mirror polynomial using Newton-Raphson*/
   return last_guess - mirror_poly(last_guess, s4alpha)/d_mirror_poly(last_guess, s4alpha);
 }
+
+inline my_type bounce_period_approx(my_type alpha_eq){
+/**Bounce time from Summers (2007) eq 29 or Glauert/Horne 2005 eq 27*/
+  return 1.30 - 0.56 * sin(pi*alpha_eq/180.0);
+}
+
+inline my_type f_latitude(my_type lat){
+/** Calculate f as in Summers (2007) Eq 20*/
+  return std::sqrt(1.0 + 3.0*std::pow(sin(lat*pi/180.0), 2))/std::pow(cos(pi*lat/180.0), 6);
+}
+inline my_type alpha_from_alpha_eq(my_type alpha_eq, my_type lat){
+/** Calculate alpha at given latitude from alpha_eq Summers (2007) Eq 22*/
+  return asin(sin(alpha_eq*pi/180.0)*std::sqrt(f_latitude(lat)))*180.0/pi;
+}
+/**@}*/
 
 typedef std::pair<spectrum*, diffusion_coeff*> spect_D_pair;/**< Link spectrum and D_coeff as pair*/
 

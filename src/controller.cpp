@@ -183,56 +183,98 @@ diffusion_coeff * controller::get_special_d(){
 void controller::bounce_average(bounce_av_data bounce_dat){
 /** \brief Bounce average D
 *
-*Assumes the list contains D in order across space and performs bounce average to create special D. We use bounce_data to inform the field shape etc etc. The end result on each processor should be something which just has to be plain-summed by the mpi part. Calls controller::handle_d_mpi() and  \todo Finish integrand \todo Move these to dedicated code?
+*Assumes the list contains D in order across space and performs bounce average to create special D. We use bounce_data to inform the field shape etc etc. The end result on each processor should be something which just has to be plain-summed by the mpi part. Calls controller::handle_d_mpi() and  \todo Finish integrand
 */
+
   if(spect_D_list.size() ==0) return;
   //Empty list, nothing to do.
 
+  //Add new averaged D
   int dims[2];
   get_D_size(dims);
-  
-  add_d_special(dims[0], dims[1]);
-  //Add new averaged D
+  this->add_d_special(dims[0], dims[1]);
+  //Tag as bounce av'd and copy block id from block used
   d_specials_list[current_special_d]->tag = BOUNCE_AV;
   strcpy(d_specials_list[current_special_d]->block_id, spect_D_list[current_pair].second->block_id);
-  //Tag as bounce av'd and copy block id from block used
 
-  //Flatten down each d onto this one with all integrand included...
-  my_type val, current_lat = 0.0, d_lat = 0.0, D_val, lat_factor, mirror_lat = 0.0;
-  size_t n_blocks = spect_D_list.size();
-  my_type sin_theta, cos_theta_sq;
+  //Flatten down each d onto this one with all integrand included
+
+  my_type val, current_lat = 0.0, d_lat = 0.0, D_val, lat_factor, mirror_lat = 90.0, include_fraction, alpha_current;
+  size_t n_blocks = spect_D_list.size(), alpha_current_index, len_ang_d;
+  my_type sin_theta, cos_theta_sq, alpha_eq;
   //Latitude increment block to block
   d_lat = bounce_dat.max_latitude/(my_type) n_blocks;
-  //Initial block-centred latitude
-  for(int p_i = 0; p_i < dims[0]; p_i++){
-    for(int ang_i = 0; ang_i < dims[1]; ang_i++){
+  //Length of the angle axes in the contributing D's
+  len_ang_d = spect_D_list[0].second->get_dims(1);
+  //Loop over every p and alpha_eq in result D array
+  for(size_t p_i = 0; p_i < dims[0]; p_i++){
+    for(size_t ang_i = 0; ang_i < dims[1]; ang_i++){
+      alpha_eq = spect_D_list[0].second->get_axis_element(1, ang_i);
       val = 0.0;
+      //Initial block-centred latitude
       current_lat = d_lat/2.0;
-      if(bounce_dat.type != plain || true){
-        mirror_lat = solve_mirror_latitude(spect_D_list[0].second->get_axis_element(1, ang_i));
+      if(bounce_dat.type != plain){
+        //For plain we ignore mirror lat and use 90
+        //For others we integrate up to mirror_lat
+        mirror_lat = solve_mirror_latitude(alpha_eq);
       }
       for(size_t block_i = 0; block_i < n_blocks; block_i++){
+        //Don't include cells above mirror lat at all
+        if(current_lat - d_lat/2.0 >= mirror_lat) continue;
+
         sin_theta = std::sin(pi* (90.0-current_lat)/180.0);
         cos_theta_sq = 1.0 - sin_theta*sin_theta;
-        D_val = spect_D_list[block_i].second->get_element(p_i, ang_i); //* integrand!
-        switch (bounce_dat.type) {
-          case plain:
-            lat_factor = bounce_dat.L_shell * R_E * std::sqrt(1.0+3.0*cos_theta_sq) * sin_theta * (pi*d_lat/180.0);//This is ds as in Schulz/Lanzerotti Eq 1.18.
+
+        //This one is a simple case
+        if(bounce_dat.type == plain){
+          lat_factor = bounce_dat.L_shell * R_E * std::sqrt(1.0+3.0*cos_theta_sq) * sin_theta * (pi*d_lat/180.0);//This is ds as in Schulz/Lanzerotti Eq 1.18.
+          if(current_lat + d_lat/2.0 >= mirror_lat){
+            //We now know mirror is between current_lat ± d_lat/2.0
+            //Calculate how much of cell to include
+            include_fraction = -(current_lat - d_lat/2.0 - mirror_lat)/d_lat;
+          }else{
+            include_fraction = 1.0;
+          }
+          D_val = spect_D_list[block_i].second->get_element(p_i, ang_i);//Value of D
+          val += D_val * lat_factor*include_fraction;
+          //Sum up the blocks done on this processor
+          current_lat += d_lat;
+
+        }else{
+          //The other cases we need the actual alpha and the rest of the integrand
+          //Get the correct alpha to read D etc at
+          alpha_current = alpha_from_alpha_eq(alpha_eq, current_lat);
+          my_type * d_axis = spect_D_list[block_i].second->get_axis(1, len_ang_d);
+          alpha_current_index = where(d_axis, len_ang_d, alpha_current);
+
+          //Calculate the latitude part of the integrand
+          my_type c7_lat = std::pow(cos(current_lat*pi/180.0), 7);
+          switch(bounce_dat.type){
+            case plain:
+              //Already handled above
+              break;
+            case alpha_alpha:
+              lat_factor = cos(alpha_current)*c7_lat/std::pow(cos(alpha_eq), 2);
             break;
-          case alpha_alpha:
-          /** \todo Fill other cases*/
-            lat_factor = 1.0;
+            case alpha_p:
+              lat_factor = sin(alpha_current)*c7_lat/(cos(alpha_eq)*sin(alpha_eq));
             break;
-          case alpha_p:
+            case p_p:
+              lat_factor = std::pow(sin(alpha_current)/sin(alpha_eq), 2)*c7_lat/std::pow(cos(alpha_eq), 2)/cos(alpha_current);
             break;
-          case p_p:
-            break;
+          }
+          //Get D and add contribution on this block
+          D_val = spect_D_list[block_i].second->get_element(p_i, alpha_current_index);//Value of D
+          val += D_val * lat_factor;
+          current_lat += d_lat;
         }
-        val += D_val * lat_factor;
-        //Sum up the blocks done on this processor
-        current_lat += d_lat;
       }
-      d_specials_list[current_special_d]->set_element(p_i, ang_i, val);
+      //Now set the correct element
+      if(bounce_dat.type != plain){
+        d_specials_list[current_special_d]->set_element(p_i, ang_i, val/bounce_period_approx(alpha_eq));
+      }else{
+        d_specials_list[current_special_d]->set_element(p_i, ang_i, val);
+      }
     }
   }
   handle_d_mpi();

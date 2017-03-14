@@ -20,6 +20,8 @@ class diffusion_coeff;
 /** \defgroup bounce Bounce-averaging helpers
 *@{ 
 \brief Helpers for bounce-averaging process
+*
+* Functions to solve for mirror latitude, bounce period etc and various helpers for these. We assume the usual dipole mangetic field. \todo can we relax this? Should we?
 */
 
 typedef enum bounce_av_type_specs {plain, alpha_alpha, alpha_p,  p_p} bounce_av_type;
@@ -37,7 +39,7 @@ class bounce_av_data{
     my_type get_Bx_at(size_t x_pos){return Bx.get_element(x_pos);}
 };
 
-my_type solve_mirror_latitude(my_type alpha_eq);
+my_type solve_mirror_latitude(my_type alpha_eq, bool print_iters=false);
 
 inline my_type mirror_poly(my_type L, my_type s4alpha){
 /** Polynomial describing the mirror latitude*/
@@ -63,8 +65,8 @@ inline my_type f_latitude(my_type lat){
   return std::sqrt(1.0 + 3.0*std::pow(sin(lat*pi/180.0), 2))/std::pow(cos(pi*lat/180.0), 6);
 }
 inline my_type alpha_from_alpha_eq(my_type alpha_eq, my_type lat){
-/** Calculate alpha at given latitude from alpha_eq Summers (2007) Eq 22*/
-  return asin(sin(alpha_eq*pi/180.0)*std::sqrt(f_latitude(lat)))*180.0/pi;
+/** Calculate alpha at given latitude from alpha_eq Summers (2007) Eq 22. Expeects alpha_eq in RADIANs*/
+  return asin(sin(alpha_eq)*std::sqrt(f_latitude(lat)));
 }
 /**@}*/
 

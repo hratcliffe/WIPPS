@@ -209,7 +209,7 @@ void controller::bounce_average(bounce_av_data bounce_dat){
   //Loop over every p and alpha_eq in result D array
   for(size_t p_i = 0; p_i < dims[0]; p_i++){
     for(size_t ang_i = 0; ang_i < dims[1]; ang_i++){
-      alpha_eq = spect_D_list[0].second->get_axis_element(1, ang_i);
+      alpha_eq = atan(spect_D_list[0].second->get_axis_element(1, ang_i));//in RADIANS
       val = 0.0;
       //Initial block-centred latitude
       current_lat = d_lat/2.0;
@@ -217,6 +217,7 @@ void controller::bounce_average(bounce_av_data bounce_dat){
         //For plain we ignore mirror lat and use 90
         //For others we integrate up to mirror_lat
         mirror_lat = solve_mirror_latitude(alpha_eq);
+        if(p_i==0) std::cout<<mirror_lat*180/pi<<' ';
       }
       for(size_t block_i = 0; block_i < n_blocks; block_i++){
         //Don't include cells above mirror lat at all
@@ -244,6 +245,8 @@ void controller::bounce_average(bounce_av_data bounce_dat){
           //The other cases we need the actual alpha and the rest of the integrand
           //Get the correct alpha to read D etc at
           alpha_current = alpha_from_alpha_eq(alpha_eq, current_lat);
+          //std::cout<<alpha_current*180/pi<<' ';
+
           my_type * d_axis = spect_D_list[block_i].second->get_axis(1, len_ang_d);
           alpha_current_index = where(d_axis, len_ang_d, alpha_current);
 
@@ -255,13 +258,13 @@ void controller::bounce_average(bounce_av_data bounce_dat){
               break;
             case alpha_alpha:
               lat_factor = cos(alpha_current)*c7_lat/std::pow(cos(alpha_eq), 2);
-            break;
+              break;
             case alpha_p:
               lat_factor = sin(alpha_current)*c7_lat/(cos(alpha_eq)*sin(alpha_eq));
-            break;
+              break;
             case p_p:
               lat_factor = std::pow(sin(alpha_current)/sin(alpha_eq), 2)*c7_lat/std::pow(cos(alpha_eq), 2)/cos(alpha_current);
-            break;
+              break;
           }
           //Get D and add contribution on this block
           D_val = spect_D_list[block_i].second->get_element(p_i, alpha_current_index);//Value of D
@@ -365,13 +368,13 @@ bool controller::save_D(std::string pref){
   return 0;
 }
 
-my_type solve_mirror_latitude(my_type alpha_eq){
+my_type solve_mirror_latitude(my_type alpha_eq, bool print_iters){
 /** \brief Gets the mirror latitude for equatorial pitch angle alpha_eq in RADIANs
 *
 *Solve the mirror latitude polynomial L^6 + (3 L - 4) sin^4 alpha_eq where L = cos^2 lambda_mirror
 */
   my_type min_alpha = 0.00001;//Minimum pitch angle to attempt solution. Below this we default to pi. Note this is a mirror latitude of over 89.2 degrees
-  if(std::abs(alpha_eq) < min_alpha) return pi;
+  if(std::abs(alpha_eq) < min_alpha) return pi/2;
 
   my_type last_solution, next_solution;
   //Initial guess is taken using approximation of L^6 = 4 s4alpha
@@ -382,7 +385,7 @@ my_type solve_mirror_latitude(my_type alpha_eq){
   
   my_type s4alpha = std::pow(sin(alpha_eq * pi/180.0), 4);
   for(size_t iter = 0; iter < max_iter; iter++){
-    std::cout<<iter<<' '<<last_solution<<' '<<acos(std::sqrt(last_solution))*180/pi<<'\n';
+    if(print_iters) my_print(mk_str(iter)+' '+mk_str(last_solution)+' '+mk_str(acos(std::sqrt(last_solution))*180.0/pi));
     next_solution = Newton_Raphson_iteration(last_solution, s4alpha);
     if(std::abs(acos(std::sqrt(last_solution)) - acos(std::sqrt(next_solution))) < precision) break;
     last_solution = next_solution;

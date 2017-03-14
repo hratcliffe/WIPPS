@@ -212,9 +212,9 @@ void controller::bounce_average(bounce_av_data bounce_dat){
       alpha_eq = atan(spect_D_list[0].second->get_axis_element(1, ang_i));//in RADIANS
       val = 0.0;
       //Initial block-centred latitude
-      current_lat = d_lat/2.0;
+      current_lat = d_lat/2.0;//In RADIANS
       if(bounce_dat.type != plain){
-        //For plain we ignore mirror lat and use 90
+        //For plain we ignore mirror lat and use 90=pi/2
         //For others we integrate up to mirror_lat
         mirror_lat = solve_mirror_latitude(alpha_eq);
       }
@@ -243,13 +243,13 @@ void controller::bounce_average(bounce_av_data bounce_dat){
           //The other cases we need the actual alpha and the rest of the integrand
           //Get the correct alpha to read D etc at
           alpha_current = alpha_from_alpha_eq(alpha_eq, current_lat);
-          //std::cout<<alpha_current*180/pi<<' ';
+          if(p_i==0 &&block_i ==1) std::cout<<ang_i<<' '<<alpha_current*180/pi<<' ';
 
           my_type * d_axis = spect_D_list[block_i].second->get_axis(1, len_ang_d);
           alpha_current_index = where(d_axis, len_ang_d, alpha_current);
 
           //Calculate the latitude part of the integrand
-          my_type c7_lat = std::pow(cos(current_lat*pi/180.0), 7);
+          my_type c7_lat = std::pow(cos(current_lat), 7);
           switch(bounce_dat.type){
             case plain:
               //Already handled above
@@ -376,12 +376,12 @@ my_type solve_mirror_latitude(my_type alpha_eq, bool print_iters){
 
   my_type last_solution, next_solution;
   //Initial guess is taken using approximation of L^6 = 4 s4alpha
-  last_solution = 1.26 *std::pow(sin(alpha_eq * pi/180.0), 2/3.0);
+  last_solution = 1.26 *std::pow(sin(alpha_eq), 2/3.0);
 
   size_t max_iter = 20;//Maximum iterations to try
   my_type precision = 1e-3*pi/100.0;//precision in solution to stop at. this is 0.1% of pi i.e. 0.2 deg
   
-  my_type s4alpha = std::pow(sin(alpha_eq * pi/180.0), 4);
+  my_type s4alpha = std::pow(sin(alpha_eq), 4);
   for(size_t iter = 0; iter < max_iter; iter++){
     if(print_iters) my_print(mk_str(iter)+' '+mk_str(last_solution)+' '+mk_str(acos(std::sqrt(last_solution))*180.0/pi));
     next_solution = Newton_Raphson_iteration(last_solution, s4alpha);

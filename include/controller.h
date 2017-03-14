@@ -57,15 +57,15 @@ inline my_type Newton_Raphson_iteration(my_type last_guess, my_type s4alpha){
 
 inline my_type bounce_period_approx(my_type alpha_eq){
 /**Bounce time from Summers (2007) eq 29 or Glauert/Horne 2005 eq 27*/
-  return 1.30 - 0.56 * sin(pi*alpha_eq/180.0);
+  return 1.30 - 0.56 * sin(alpha_eq);
 }
 
 inline my_type f_latitude(my_type lat){
-/** Calculate f as in Summers (2007) Eq 20*/
-  return std::sqrt(1.0 + 3.0*std::pow(sin(lat*pi/180.0), 2))/std::pow(cos(pi*lat/180.0), 6);
+/** Calculate f as in Summers (2007) Eq 20. Lat in RADIANS*/
+  return std::sqrt(1.0 + 3.0*std::pow(sin(lat), 2))/std::pow(cos(lat), 6);
 }
 inline my_type alpha_from_alpha_eq(my_type alpha_eq, my_type lat){
-/** Calculate alpha at given latitude from alpha_eq Summers (2007) Eq 22. Expeects alpha_eq in RADIANs*/
+/** Calculate alpha at given latitude from alpha_eq Summers (2007) Eq 22. Expeects alpha_eq and lat in RADIANs*/
   return asin(sin(alpha_eq)*std::sqrt(f_latitude(lat)));
 }
 /**@}*/

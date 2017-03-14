@@ -34,7 +34,7 @@ class bounce_av_data{
   public:
     bounce_av_type type {plain};
     my_type L_shell {4.0};
-    my_type max_latitude {90.0};/**< Maximum latitude of "field line"*/
+    my_type max_latitude {90.0};/**< Maximum latitude of "field line" in degrees*/
     void set_Bx_size(size_t len){this->Bx.resize(0, len);len_x = Bx.get_dims(0);}//Resize B and update length
     my_type get_Bx_at(size_t x_pos){return Bx.get_element(x_pos);}
 };

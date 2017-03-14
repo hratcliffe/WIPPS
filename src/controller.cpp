@@ -186,7 +186,7 @@ void controller::bounce_average(bounce_av_data bounce_dat){
 *Assumes the list contains D in order across space and performs bounce average to create special D. We use bounce_data to inform the field shape etc etc. The end result on each processor should be something which just has to be plain-summed by the mpi part. Calls controller::handle_d_mpi() and  \todo Finish integrand
 */
 
-  if(spect_D_list.size() ==0) return;
+  if(spect_D_list.size() == 0) return;
   //Empty list, nothing to do.
 
   //Add new averaged D
@@ -199,11 +199,11 @@ void controller::bounce_average(bounce_av_data bounce_dat){
 
   //Flatten down each d onto this one with all integrand included
 
-  my_type val, current_lat = 0.0, d_lat = 0.0, D_val, lat_factor, mirror_lat = 90.0, include_fraction, alpha_current;
+  my_type val, current_lat = 0.0, d_lat = 0.0, D_val, lat_factor, mirror_lat = pi/2.0, include_fraction, alpha_current;
   size_t n_blocks = spect_D_list.size(), alpha_current_index, len_ang_d;
   my_type sin_theta, cos_theta_sq, alpha_eq;
-  //Latitude increment block to block
-  d_lat = bounce_dat.max_latitude/(my_type) n_blocks;
+  //Latitude increment block to block in RADIANS
+  d_lat = bounce_dat.max_latitude*pi/180.0/(my_type) n_blocks;
   //Length of the angle axes in the contributing D's
   len_ang_d = spect_D_list[0].second->get_dims(1);
   //Loop over every p and alpha_eq in result D array
@@ -217,18 +217,16 @@ void controller::bounce_average(bounce_av_data bounce_dat){
         //For plain we ignore mirror lat and use 90
         //For others we integrate up to mirror_lat
         mirror_lat = solve_mirror_latitude(alpha_eq);
-        if(p_i==0) std::cout<<mirror_lat*180/pi<<' ';
       }
       for(size_t block_i = 0; block_i < n_blocks; block_i++){
         //Don't include cells above mirror lat at all
         if(current_lat - d_lat/2.0 >= mirror_lat) continue;
-
-        sin_theta = std::sin(pi* (90.0-current_lat)/180.0);
+        sin_theta = std::sin(pi/2.0-current_lat);
         cos_theta_sq = 1.0 - sin_theta*sin_theta;
 
         //This one is a simple case
         if(bounce_dat.type == plain){
-          lat_factor = bounce_dat.L_shell * R_E * std::sqrt(1.0+3.0*cos_theta_sq) * sin_theta * (pi*d_lat/180.0);//This is ds as in Schulz/Lanzerotti Eq 1.18.
+          lat_factor = bounce_dat.L_shell * R_E * std::sqrt(1.0+3.0*cos_theta_sq) * sin_theta * d_lat;//This is ds as in Schulz/Lanzerotti Eq 1.18.
           if(current_lat + d_lat/2.0 >= mirror_lat){
             //We now know mirror is between current_lat ± d_lat/2.0
             //Calculate how much of cell to include

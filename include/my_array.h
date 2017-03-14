@@ -13,6 +13,11 @@
 #include <vector>
 #include <functional>
 
+//Set debug flag if we've set DEBUG_ALL
+#ifdef DEBUG_ALL
+#define DEBUG_DIMS
+#endif
+
 class data_array;
 
 /** \brief A basic array class

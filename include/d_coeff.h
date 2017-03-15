@@ -23,7 +23,7 @@ class controller;
 
 /** \brief Diffusion coefficient object
 *
-* Specialised data_array containing the calculated coefficient plus relevant ids. Can be made/destroyed only by controller object. In general should be a 2-D array with first axis momentum, second pitch-angle
+* Specialised data_array containing the calculated coefficient plus relevant ids. Can be made/destroyed only by controller object. In general should be a 2-D array with first axis momentum, second pitch-angle \todo Consider locking away the angle axis, and/or moving away from tan
 @author Heather Ratcliffe @date 23/09/2015 \ingroup cls
 */
 class diffusion_coeff: public data_array{
@@ -54,6 +54,14 @@ public:
   bool write_to_file(std::fstream &file);
 
   d_report calculate(bool quiet=0);
+
+  //--- Helpers for accessing and values. Because we might want a tan or plain angle axis and we don't want that to contaminate the rest of the code
+  my_type get_element_by_values(my_type p, my_type alpha);
+  my_type get_axis_element_ang(size_t ind);
+  inline my_type angle_to_stored_angle(my_type alpha){return(alpha);}
+  inline my_type stored_angle_to_angle(my_type alpha){return(alpha);}
+//  inline my_type angle_to_stored_angle(my_type alpha){return tan(alpha);}
+//  inline my_type stored_angle_to_angle(my_type alpha){return atan(alpha);}
 };
 
 

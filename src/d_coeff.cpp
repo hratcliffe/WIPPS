@@ -225,8 +225,8 @@ Get mu, dmu/domega which are used to:
 //    for(int k =0; k< ((1 <dims[1]) ? 1: dims[1]); k++){
     for(size_t k =0; k< dims[1]; k++){
       //particle pitch angle
-      tan_alpha = get_axis_element(1, k);
-      alpha = atan(tan_alpha);
+      alpha = get_axis_element_ang(k);
+      tan_alpha = tan(alpha);
       s2alpha = std::pow(std::sin(alpha), 2);
       gamma_particle = gamma_rel(v_par* std::sqrt(1.0 + tan_alpha*tan_alpha));
 
@@ -332,4 +332,29 @@ void diffusion_coeff::copy_ids( spectrum * src){
   for(int i=0; i < 2; ++i) this->space[i] = src->space[i];
 }
 
+my_type diffusion_coeff::get_element_by_values(my_type p, my_type alpha){
+/** Get D element by values of p and alpha. \todo Q? try interpolating? */
+  if(this->get_dims() != 2){
+#ifdef DEBUG_DIMS
+    my_error_print("Wrong dimensions, attempting 2 with "+mk_str(this->get_dims()));
+#endif
+    return 0.0;
+  }
+  size_t len = 0;
+  long alpha_ind, p_ind;
+
+  my_type * d_axis = this->get_axis(0, len);
+  p_ind = where(d_axis, len, p);
+  d_axis = this->get_axis(1, len);
+  alpha_ind = where(d_axis, len, angle_to_stored_angle(alpha));
+
+  return this->get_element(p_ind, alpha_ind);
+
+}
+
+my_type diffusion_coeff::get_axis_element_ang(size_t ind){
+/** Return ANGLE value, rather than raw axis entry*/
+  return stored_angle_to_angle(this->get_axis_element(1, ind));
+
+}
 

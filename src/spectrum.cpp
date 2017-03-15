@@ -283,10 +283,10 @@ bool spectrum::operator==(const spectrum &rhs)const{
 void spectrum::make_angle_axis(){
 /** \brief Generate angle axis
 *
-* Create uniform angle axis from ANG_MIN to ANG_MAX (see support.h). In general these are interpreted as tan(theta) values.
+* Create uniform angle axis from TAN_MIN to TAN_MAX (see support.h). In general these are interpreted as tan(theta) values.
 */
-  calc_type res = (ANG_MAX - ANG_MIN)/get_g_dims(1);
-  int offset = -ANG_MIN/res;
+  calc_type res = (TAN_MAX - TAN_MIN)/get_g_dims(1);
+  int offset = -TAN_MIN/res;
   g_angle_array.make_linear_axis(1, res, offset);
 
 }
@@ -294,7 +294,7 @@ void spectrum::make_angle_axis(){
 bool spectrum::make_angle_distrib(){
 /** \brief Generate angle axis and distribution
 *
-*Generates an angle axis linear spaced in tan theta between MIN_ANGLE and MAX_ANGLE. Then generates and fills the angular spectrum according to function specified by function_type member variable. Options are in support.h and are FUNCTION_DELTA: delta function with peak at 0 angle. FUNCTION_GAUSS: Gaussian with std-dev SPECTRUM_ANG_STDDEV, centre at 0 angle. FUNCTION_ISO: Isotropic distribution over range considered. The integrals are either 0.5 for 0 to ANG_MAX or 1 for -ANG_MAX to ANG_MAX. Other combinations are not guaranteed
+*Generates an angle axis linear spaced in tan theta between TAN_MIN and TAN_MAX. Then generates and fills the angular spectrum according to function specified by function_type member variable. Options are in support.h and are FUNCTION_DELTA: delta function with peak at 0 angle. FUNCTION_GAUSS: Gaussian with std-dev SPECTRUM_ANG_STDDEV, centre at 0 angle. FUNCTION_ISO: Isotropic distribution over range considered. The integrals are either 0.5 for 0 to TAN_MAX or 1 for -TAN_MAX to TAN_MAX. Other combinations are not guaranteed
 */
 
 
@@ -329,8 +329,8 @@ bool spectrum::make_angle_distrib(){
     }
   }else if(function_type == FUNCTION_ISO){
 
-    val = 1.0/ (ANG_MAX - ANG_MIN)*get_g_dims(1)/(get_g_dims(1)-1);
-    if(std::abs(ANG_MIN) < GEN_PRECISION) val = val / 2.0;
+    val = 1.0/ (TAN_MAX - TAN_MIN)*get_g_dims(1)/(get_g_dims(1)-1);
+    if(std::abs(TAN_MIN) < GEN_PRECISION) val = val / 2.0;
     for(size_t i=0; i<len; ++i) set_g_element(i,val);
 
   }else{
@@ -820,7 +820,7 @@ bool spectrum::truncate_x(my_type x_min, my_type x_max){
   int index = -1;
   size_t len = get_g_dims(1), om_len = get_g_dims(0);
 
-  if(x_min > ANG_MIN){
+  if(x_min > TAN_MIN){
     index = where(get_angle_axis(len), len, x_min);
     if(index != -1){
       for(size_t i=0; i< (size_t)index; i++){
@@ -831,7 +831,7 @@ bool spectrum::truncate_x(my_type x_min, my_type x_max){
     }
   
   }
-  if(x_max < ANG_MAX){
+  if(x_max < TAN_MAX){
     index = where(get_angle_axis(len), len, x_max);
     if(index != -1){
       for(size_t i=index; i< len; i++){

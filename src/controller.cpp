@@ -199,7 +199,7 @@ diffusion_coeff * controller::get_special_d(){
 void controller::bounce_average(bounce_av_data bounce_dat){
 /** \brief Bounce average D
 *
-*Assumes the list contains D in order across space and performs bounce average to create special D. We use bounce_data to inform the field shape etc etc. The end result on each processor should be something which just has to be plain-summed by the mpi part. Calls controller::handle_d_mpi() and  \todo Finish integrand
+*Assumes the list contains D in order across space and performs bounce average to create special D. We use bounce_data to inform the field shape etc etc. The end result on each processor should be something which just has to be plain-summed by the mpi part. Calls controller::handle_d_mpi() and various bounce helpers @param bounce_dat The bounce averaging info such as the type info
 */
 
   if(spect_D_list.size() == 0) return;

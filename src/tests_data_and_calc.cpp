@@ -1043,7 +1043,6 @@ test_entity_bounce::~test_entity_bounce(){
 }
 
 int test_entity_bounce::run(){
-/** \todo write additional bounce testing!*/
   int err = TEST_PASSED;
 
   //First we do a simple test by rigging up some space-blocked 1x1 D's containing value 1, This should return the length of the line which we calc using Eq 1.01 in Schulz/Lanzerotti and compare

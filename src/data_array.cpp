@@ -405,6 +405,15 @@ my_type * data_array::get_axis(size_t dim, size_t & length){
 
 }
 
+size_t get_axis_index_from_value(size_t dim, my_type value)const{
+/** Get the index on axis dim of value value*/
+  size_t len = dims[dim];
+  long where_val = where(get_axis(dim, len), len, value);
+  if(where_val >= 0) return where_val;
+  else return 0;
+
+}
+
 /********Data/axis fillers, file IO ****/
 
 bool data_array::populate_axis(size_t dim, my_type * dat_in, size_t n_tot){
@@ -458,7 +467,7 @@ void data_array::make_linear_axis(size_t dim, float res, long offset){
 
 bool data_array::write_to_file(std::fstream &file, bool close_file){
 /** \brief Write data array to file
-* \copydoc dummy_data_file_format
+* \copydoc dummy_data_file_format  \todo Test read/write with double, also IDL
 */
 
   if(!file.is_open()) return 1;

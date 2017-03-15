@@ -21,12 +21,12 @@ class diffusion_coeff;
 *@{ 
 \brief Helpers for bounce-averaging process
 *
-* Functions to solve for mirror latitude, bounce period etc and various helpers for these. We assume the usual dipole mangetic field. \todo can we relax this? Should we?
+* Functions to solve for mirror latitude, bounce period etc and various helpers for these. We assume the usual dipole mangetic field. \todo can we relax the dipole assumption? Should we?
 */
 
 typedef enum bounce_av_type_specs {plain, alpha_alpha, alpha_p, p_alpha, p_p} bounce_av_type;
 //Struct holding the needed stuff for bounce-averaging
-//Controller should only access B_x via this accessor, because we might later allow 2-d B_x or such
+//Controller should only access B_x via this accessor
 class bounce_av_data{
   private:
     data_array Bx {data_array(1)};//MUST be 1-D, see accessor function get_Bx_at
@@ -36,7 +36,7 @@ class bounce_av_data{
     my_type L_shell {4.0};
     my_type max_latitude {90.0};/**< Maximum latitude of "field line" in degrees*/
     void set_Bx_size(size_t len){this->Bx.resize(0, len);len_x = Bx.get_dims(0);}//Resize B and update length
-    my_type get_Bx_at(size_t x_pos){return Bx.get_element(x_pos);}
+    inline my_type get_Bx_at(my_type lat){return Bx.get_element(Bx.get_axis_index_from_value(0, lat));}
 };
 
 my_type solve_mirror_latitude(my_type alpha_eq, bool print_iters=false);

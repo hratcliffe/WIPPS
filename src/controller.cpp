@@ -33,12 +33,28 @@ controller::~controller(){
 *
 *Destroys all the D and spectrum objects
 */
+
+  clear_all();
+}
+
+void controller::clear_all(){
+/** \brief Clear all the derived objects
+*
+*Clears the spectrum-D list and the special D list (bounce averaged entries)
+*/
+
+  //Delete objects then clear list of pointers
   for(size_t i=0; i<spect_D_list.size(); i++){
     if(spect_D_list[i].first) delete spect_D_list[i].first;
     if(spect_D_list[i].second) delete spect_D_list[i].second;
-    spect_D_list[i].first = nullptr;
-    spect_D_list[i].second = nullptr;
   }
+  spect_D_list.clear();
+  
+  for(size_t i=0; i<d_specials_list.size(); i++){
+    if(d_specials_list[i]) delete d_specials_list[i];
+  }
+  d_specials_list.clear();
+
 }
 
 /********Plasma, spectrum, D setup functions ****/
@@ -198,9 +214,9 @@ void controller::bounce_average(bounce_av_data bounce_dat){
   strcpy(d_specials_list[current_special_d]->block_id, spect_D_list[current_pair].second->block_id);
 
   //Flatten down each d onto this one with all integrand included
-
-  my_type val, current_lat = 0.0, d_lat = 0.0, D_val, lat_factor, mirror_lat = pi/2.0, include_fraction, alpha_current;
-  size_t n_blocks = spect_D_list.size(), alpha_current_index, len_ang_d;
+  bool mirror_block = false;//Flag for the space block which contains mirror point
+  my_type val, current_lat = 0.0, d_lat = 0.0, D_val, lat_factor, mirror_lat = pi/2.0, include_fraction, alpha_current, used_lat;
+  size_t n_blocks = spect_D_list.size(), len_ang_d;
   my_type sin_theta, cos_theta_sq, alpha_eq;
   //Latitude increment block to block in RADIANS
   d_lat = bounce_dat.max_latitude*pi/180.0/(my_type) n_blocks;
@@ -209,7 +225,7 @@ void controller::bounce_average(bounce_av_data bounce_dat){
   //Loop over every p and alpha_eq in result D array
   for(size_t p_i = 0; p_i < dims[0]; p_i++){
     for(size_t ang_i = 0; ang_i < dims[1]; ang_i++){
-      alpha_eq = atan(spect_D_list[0].second->get_axis_element(1, ang_i));//in RADIANS
+      alpha_eq = spect_D_list[0].second->get_axis_element_ang(ang_i);//in RADIANS
       val = 0.0;
       //Initial block-centred latitude
       current_lat = d_lat/2.0;//In RADIANS
@@ -220,14 +236,16 @@ void controller::bounce_average(bounce_av_data bounce_dat){
       }
       for(size_t block_i = 0; block_i < n_blocks; block_i++){
         //Don't include cells above mirror lat at all
+        mirror_block = (current_lat + d_lat/2.0 >= mirror_lat);
+        //For block containing mirror lat we include only the part up to the actual inclusion
         if(current_lat - d_lat/2.0 >= mirror_lat) continue;
-        sin_theta = std::sin(pi/2.0-current_lat);
+        sin_theta = std::sin(pi/2.0 - current_lat);
         cos_theta_sq = 1.0 - sin_theta*sin_theta;
 
         //This one is a simple case
         if(bounce_dat.type == plain){
           lat_factor = bounce_dat.L_shell * R_E * std::sqrt(1.0+3.0*cos_theta_sq) * sin_theta * d_lat;//This is ds as in Schulz/Lanzerotti Eq 1.18.
-          if(current_lat + d_lat/2.0 >= mirror_lat){
+          if(mirror_block){
             //We now know mirror is between current_lat ± d_lat/2.0
             //Calculate how much of cell to include
             include_fraction = -(current_lat - d_lat/2.0 - mirror_lat)/d_lat;
@@ -242,11 +260,15 @@ void controller::bounce_average(bounce_av_data bounce_dat){
         }else{
           //The other cases we need the actual alpha and the rest of the integrand
           //Get the correct alpha to read D etc at
-          alpha_current = alpha_from_alpha_eq(alpha_eq, current_lat);
-          if(p_i==0 &&block_i ==1) std::cout<<ang_i<<' '<<alpha_current*180/pi<<' ';
-
-          my_type * d_axis = spect_D_list[block_i].second->get_axis(1, len_ang_d);
-          alpha_current_index = where(d_axis, len_ang_d, alpha_current);
+          if(mirror_block){
+            used_lat = (current_lat-d_lat/2.0 +mirror_lat)/2.0;
+            include_fraction = (mirror_lat - (current_lat-d_lat/2.0))/d_lat;
+            //Because we can't simply solve alpha at middle lat as this might already be out of range.
+          }else{
+            used_lat = current_lat;
+            include_fraction = 1.0;
+          }
+          alpha_current = alpha_from_alpha_eq(alpha_eq, used_lat);
 
           //Calculate the latitude part of the integrand
           my_type c7_lat = std::pow(cos(current_lat), 7);
@@ -258,15 +280,17 @@ void controller::bounce_average(bounce_av_data bounce_dat){
               lat_factor = cos(alpha_current)*c7_lat/std::pow(cos(alpha_eq), 2);
               break;
             case alpha_p:
+            case p_alpha:
               lat_factor = sin(alpha_current)*c7_lat/(cos(alpha_eq)*sin(alpha_eq));
               break;
             case p_p:
-              lat_factor = std::pow(sin(alpha_current)/sin(alpha_eq), 2)*c7_lat/std::pow(cos(alpha_eq), 2)/cos(alpha_current);
+              lat_factor = std::pow(sin(alpha_current)/sin(alpha_eq), 2)*c7_lat/cos(alpha_current);
               break;
           }
           //Get D and add contribution on this block
-          D_val = spect_D_list[block_i].second->get_element(p_i, alpha_current_index);//Value of D
-          val += D_val * lat_factor;
+          D_val = spect_D_list[block_i].second->get_element_by_values(spect_D_list[block_i].second->get_axis_element(0, p_i), alpha_current);
+
+          val += D_val * lat_factor*include_fraction*d_lat;
           current_lat += d_lat;
         }
       }

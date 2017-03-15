@@ -24,7 +24,7 @@ class diffusion_coeff;
 * Functions to solve for mirror latitude, bounce period etc and various helpers for these. We assume the usual dipole mangetic field. \todo can we relax this? Should we?
 */
 
-typedef enum bounce_av_type_specs {plain, alpha_alpha, alpha_p,  p_p} bounce_av_type;
+typedef enum bounce_av_type_specs {plain, alpha_alpha, alpha_p, p_alpha, p_p} bounce_av_type;
 //Struct holding the needed stuff for bounce-averaging
 //Controller should only access B_x via this accessor, because we might later allow 2-d B_x or such
 class bounce_av_data{
@@ -56,7 +56,7 @@ inline my_type Newton_Raphson_iteration(my_type last_guess, my_type s4alpha){
 }
 
 inline my_type bounce_period_approx(my_type alpha_eq){
-/**Bounce time from Summers (2007) eq 29 or Glauert/Horne 2005 eq 27*/
+/**Bounce time alpha factor from Summers (2007) eq 29 or Glauert/Horne 2005 eq 27*/
   return 1.30 - 0.56 * sin(alpha_eq);
 }
 
@@ -92,6 +92,7 @@ public:
 
 /********Basic setup functions ****/
   explicit controller(std::string file_prefix);
+  void clear_all();
   ~controller();
   bool is_good(){return my_plas.is_good();}/**< Whether controller is fully setup*/
 

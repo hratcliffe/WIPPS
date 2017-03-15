@@ -21,12 +21,12 @@ class diffusion_coeff;
 *@{ 
 \brief Helpers for bounce-averaging process
 *
-* Functions to solve for mirror latitude, bounce period etc and various helpers for these. We assume the usual dipole mangetic field. \todo can we relax the dipole assumption? Should we?
+* Functions to solve for mirror latitude, bounce period etc and various helpers for these. We assume the usual dipole mangetic field.
 */
 
 typedef enum bounce_av_type_specs {plain, alpha_alpha, alpha_p, p_alpha, p_p} bounce_av_type;
-//Struct holding the needed stuff for bounce-averaging
-//Controller should only access B_x via this accessor
+
+//**Struct holding the needed stuff for bounce-averaging. Controller should only access B_x via the accessor, which returns the value from the B array
 class bounce_av_data{
   private:
     data_array Bx {data_array(1)};//MUST be 1-D, see accessor function get_Bx_at

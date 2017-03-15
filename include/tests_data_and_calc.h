@@ -18,9 +18,9 @@
 #include "support.h"
 #include "data_array.h"
 #include "reader.h"
+#include "controller.h"
 
 class plasma;
-class controller;
 
 /**Check plasma functions, get_omega and dispersion relation
 */
@@ -96,6 +96,7 @@ class test_entity_bounce: public test_entity{
   private:
     controller * test_contr;
     std::string file_prefix;
+    int bounce_cases(bounce_av_data bounce_dat);
   public:
     test_entity_bounce();
     virtual ~test_entity_bounce();

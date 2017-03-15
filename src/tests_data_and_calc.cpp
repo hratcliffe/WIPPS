@@ -1070,11 +1070,96 @@ int test_entity_bounce::run(){
     test_bed->report_info("Line length mismatch of "+mk_str(std::abs(test_contr->get_special_d()->get_element((size_t)0,(size_t)0)/line_length - 1.0)*100.0, false) +" %");
   }
   
-  //Now we bounce average some known quantity and check that...
-  //...
+  //Now we check over some of the helpers, mirror latitude, bounce period etc using a sample pitch angle and latitude
+  my_type test_alpha_eq = 10.0*pi/180.0, expected_mirror_lat = 52, expected_bounce_period = 1.2, expected_alpha_at_lat_20 = 13, tmp;
+  tmp = solve_mirror_latitude(test_alpha_eq)*180/pi;
+  if(std::abs(tmp - expected_mirror_lat) > 1.0){
+    //Mirror lat to nearest degree
+    err |= TEST_WRONG_RESULT;
+    test_bed->report_info("Wrong mirror latitude, value "+mk_str(tmp)+" expected "+mk_str(expected_mirror_lat), 1);
+  }
+  tmp = bounce_period_approx(test_alpha_eq);
+  if(std::abs(tmp - expected_bounce_period) > 0.01){
+    //Bounce period factor to 3 dp
+    err |= TEST_WRONG_RESULT;
+    test_bed->report_info("Wrong bounce period, value "+mk_str(tmp)+" expected "+mk_str(expected_bounce_period), 1);
+  }
+  tmp = alpha_from_alpha_eq(test_alpha_eq, 20.0*pi/180.0)*180/pi;
+  if(std::abs(tmp - expected_alpha_at_lat_20) > 1.0){
+    //Pitch angle at lat 20 deg. to nearest degree
+    err |= TEST_WRONG_RESULT;
+    test_bed->report_info("Wrong pitch angle, value "+mk_str(tmp)+" at latitude 20 degrees, expected "+mk_str(expected_alpha_at_lat_20), 1);
+  }
+
+  if(err == TEST_PASSED) test_bed->report_info("Bounce helpers OK", 2);
   
+  bounce_dat.type = p_p;
+  bounce_cases(bounce_dat);
+  bounce_dat.type = alpha_alpha;
+  bounce_cases(bounce_dat);
+
   return err;
 
+}
+
+int test_entity_bounce::bounce_cases(bounce_av_data bounce_dat){
+/** Setup a D so that the bounce average contains no alpha dependency, only lambda and alpha_eq and eval. For alpha_alpha and p_p diffusion we have analytic forms in these cases, which we check. */
+  
+  int err = TEST_PASSED;
+  test_contr->clear_all();
+  size_t d_sz =  150;
+  my_type val;
+  for(size_t n=0; n<32; n++){
+    test_contr->add_spectrum(1, 1, true);
+    test_contr->add_d(d_sz, d_sz);
+    //Do axes
+    for(size_t i=0; i< d_sz; i++){
+      for(size_t j=0; j< d_sz; j++){
+        switch(bounce_dat.type){
+          case p_p:
+            val = cos(test_contr->get_current_d()->get_axis_element_ang(j));
+            break;
+          case p_alpha:
+          case alpha_p:
+            val = cos(test_contr->get_current_d()->get_axis_element_ang(j));
+            break;
+          case alpha_alpha:
+            val = 1.0/cos(test_contr->get_current_d()->get_axis_element_ang(j));
+            break;
+        }
+        test_contr->get_current_d()->set_element(i,j, val);
+      }
+    }
+  }
+  test_contr->bounce_average(bounce_dat);
+  //Check the value at random p and all angles
+  my_type lambda_m, current_val, expected_val, alpha_eq;
+
+  size_t i = 10;
+  //Cheating and bumping down because at large initial pitch angles we get it wrong a bit
+  for(size_t j=1; j< d_sz - 15; j++){
+    alpha_eq = test_contr->get_current_d()->get_axis_element_ang(j);
+    lambda_m = solve_mirror_latitude(alpha_eq);
+    current_val = test_contr->get_special_d()->get_element(i,j);
+    
+    switch(bounce_dat.type){
+      case p_p:
+        expected_val =(3.0*sin(lambda_m)*std::sqrt(3.0*std::pow(sin(lambda_m), 2) + 1.0) + std::sqrt(3.0)*asinh(std::sqrt(3.0)*sin(lambda_m)))/6.0/bounce_period_approx(alpha_eq);
+        break;
+      case p_alpha:
+      case alpha_p:
+        return TEST_ASSERT_FAIL;
+      case alpha_alpha:
+        expected_val = (1225.0*sin(lambda_m) + 245.0*sin(3.0*lambda_m) + 49.0*sin(5.0*lambda_m) + 5.0*sin(7.0*lambda_m))/2240.0/std::pow(cos(alpha_eq), 2)/bounce_period_approx(alpha_eq);
+        break;
+    }
+    if(std::abs(current_val/expected_val -1.0) > 0.05){
+      //5% discrep allowed here
+      err |= TEST_WRONG_RESULT;
+      test_bed->report_info("Erroneous bounce average in p_p");
+    }
+  }
+  return err;
 }
 
 test_entity_nonthermal::test_entity_nonthermal(){

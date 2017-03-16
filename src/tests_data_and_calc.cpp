@@ -719,7 +719,7 @@ int test_entity_spectrum::albertGs_tests(){
   for(size_t i=0; i< n_tests;i++){
     tmp_omega = std::abs(om_ce_local)/10.0 + 89.0/100.0 * om_max * (1.0 - exp(-i));
     //Cover range from small to just below om_ce...
-    G1 = test_contr->get_current_spectrum()->get_G1(tmp_omega);
+    G1 = get_G1(test_contr->get_current_spectrum(), tmp_omega);
 
     //Analytic calculations for truncated Gaussians, see Albert 2005
     
@@ -743,7 +743,7 @@ int test_entity_spectrum::albertGs_tests(){
 
     tmp_x = ANG_MIN + i * (ANG_MAX - ANG_MIN)/(n_tests-1);
     
-    G2 = test_contr->get_current_spectrum()->get_G2(tmp_omega, tmp_x);
+    G2 = get_G2(test_contr->get_current_spectrum(), tmp_omega, tmp_x);
     
     G2_analytic = std::pow((( mass_ratio / (1.0 + mass_ratio))*om_ce_local*om_ce_local/om_pe_local/om_pe_local), 1.5);
     G2_analytic *= exp(- (tmp_x*tmp_x)/std::pow(SPECTRUM_ANG_STDDEV, 2));

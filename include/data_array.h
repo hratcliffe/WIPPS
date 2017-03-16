@@ -77,7 +77,7 @@ public:
   bool set_axis_element(size_t dim, size_t pt, my_type val);
   my_type * get_axis(size_t dim, size_t & length);
   float get_res(size_t i)const;
-  size_t get_axis_index_from_value(size_t dim, my_type value);
+  size_t get_axis_index_from_value(size_t dim, my_type value)const;
 
 /********Data/axis fillers, file IO ****/
   bool populate_axis(size_t dim, my_type * dat_in, size_t n_tot);

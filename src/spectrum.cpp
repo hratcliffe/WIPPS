@@ -1021,91 +1021,6 @@ bool spectrum::read_from_file(std::fstream &file){
   return err;
 }
 
-/********Main spectral calculations ****/
-
-calc_type spectrum::get_G1(calc_type omega){
-/** \brief G1 from Albert 2005.
-*
-*Gets the value of B^2(w) (interpolated if necessary) and the normalising constant from norm_B. NB this uses the given spectrum omega range and assumes that beyond this there is "no" wave power. \todo Test this
-*/
-
-  my_type tmpB2;
-  if(norm_B == 0.0) calc_norm_B();
-  size_t len, offset;
-  my_type data_bit[2];
-  my_type ax_val;
-  my_type * axis = get_omega_axis(len);
-
-  ax_val = (my_type) omega;
-  
-  offset = where(axis, len, ax_val);
-  //Interpolate if possible, else use the end
-  if(offset > 0 && offset < len){
-    data_bit[0] = get_B_element(offset-1);
-    data_bit[1] = get_B_element(offset);
-    tmpB2 = interpolate_linear(get_omega_axis(len) + offset-1, data_bit, ax_val);
-    //tmpB2 = data_bit[0];
-  }else if(offset == 0){
-    //we're right at end, can't meaningfully interpolate, use raw
-    tmpB2 = get_B_element(0);
-  }else{
-    //offset <0 or >= len, value not found
-    tmpB2 = 0.0;
-  }
-
-  //Add norm. constant
-  return tmpB2/norm_B;
-
-}
-
-calc_type spectrum::get_G2(calc_type omega, calc_type x){
-/** \brief Get G2 from Albert 2005
-*
-* Gets the value of g(w, x) and the normalising constant from norm_g \todo IS THIS OMEGA OR do we calc omega according to conditions on integral??? \todo interpolate on omega? or angle or both. Or fix angle axis as matched to D. In some sense we want to minimise work here... \todo CHECK and FIXXXX and test
-*/
-
-
-  int om_ind, offset;
-  size_t len;
-  my_type tmpg;
-  my_type data_bit[2];
-
-  len = get_omega_length();
-
-  if(!g_is_angle_only){
-    om_ind = where(get_omega_axis(len), len, omega);
-  }
-  else om_ind = 0;
-  
-  if(om_ind>=0 && norm_g[om_ind] == 0.0){
-    calc_norm_g(omega);
-  }
-  
-  //Bump up to miss B row
-  my_type * axis = get_angle_axis(len);
-  offset = where(axis, len, x);
-  
-  //Interpolate if possible, else use the end
-  if(offset > 0 && offset < (long)len){
-    data_bit[0] = get_g_element(offset-1, om_ind);
-    data_bit[1] = get_g_element(offset, om_ind);
-    tmpg = interpolate_linear(axis + offset-1, data_bit, (my_type)x);
-
-  }else if(offset==0){
-    //we're right at end, can't meaningfully interpolate, use raw
-    tmpg = get_g_element(offset, om_ind);
-
-  }else{
-    //offset <0 or > len, value not found
-    tmpg = 0.0;
-  }
-
-  
-  if(offset >=0 && om_ind >=0)return tmpg/norm_g[om_ind];
-  else return 0.0;
-
-}
-
 /********Data release (for testing) ****/
 data_array spectrum::copy_out_B(){
 /** \brief Return a copy of B array*/
@@ -1120,3 +1035,90 @@ data_array spectrum::copy_out_g(){
   return g_copy;
 
 }
+
+/********Main spectral calculations ****/
+
+calc_type get_G1(spectrum * my_spect, calc_type omega){
+/** \brief G1 from Albert 2005.
+*
+*Gets the value of B^2(w) (interpolated if necessary) and the normalising constant from norm_B. NB this uses the given spectrum omega range and assumes that beyond this there is "no" wave power. \todo Test this
+*/
+
+  my_type tmpB2;
+  if(my_spect->get_norm_B() == 0.0) my_spect->calc_norm_B();
+  size_t len = my_spect->get_omega_length(), offset;
+  my_type data_bit[2], ax_bit[2], ax_val;
+  
+  offset = my_spect->get_om_axis_index_from_value(omega);
+  //Interpolate if possible, else use the end
+  if(offset > 0 && offset < len){
+    data_bit[0] = my_spect->get_B_element(offset-1);
+    data_bit[1] = my_spect->get_B_element(offset);
+    ax_bit[0] = my_spect->get_om_axis_element(offset-1);
+    ax_bit[1] = my_spect->get_om_axis_element(offset);
+    ax_val = (my_type) omega;
+    tmpB2 = interpolate_linear(ax_bit, data_bit, ax_val);
+  }else if(offset == 0){
+    //we're right at end, can't meaningfully interpolate, use raw
+    tmpB2 = my_spect->get_B_element(0);
+  }else{
+    //offset <0 or >= len, value not found
+    tmpB2 = 0.0;
+  }
+
+  //Add norm. constant
+  return tmpB2/my_spect->get_norm_B();
+
+}
+
+calc_type get_G2(spectrum * my_spect, calc_type omega, calc_type x){
+/** \brief Get G2 from Albert 2005
+*
+* Gets the value of g(w, x) and the normalising constant from norm_g \todo interpolate on omega? or angle or both. Or fix angle axis as matched to D. In some sense we want to minimise work here... \todo CHECK and FIXXXX and test
+*/
+
+  long om_ind, offset;
+  size_t len = my_spect->get_omega_length();
+  my_type tmpg;
+  my_type data_bit[2], ax_bit[2];
+
+  len = my_spect->get_omega_length();
+
+  if(!my_spect->get_g_is_angle_only()){
+    om_ind = my_spect->get_om_axis_index_from_value(omega);
+    //where(my_spect->get_omega_axis(len), len, omega);
+  }
+  else om_ind = 0;
+  
+  //Calc norm if hasn't been
+  if(om_ind >= 0 && my_spect->get_norm_g(om_ind) == 0.0){
+    my_spect->calc_norm_g(om_ind);
+  }
+  
+//  my_type * axis = my_spect->get_angle_axis(len);
+//  offset = where(axis, len, x);
+  len = my_spect->get_angle_length();
+  offset = my_spect->get_ang_axis_index_from_value(x);
+  //Interpolate if possible, else use the end
+  if(offset > 0 && offset < (long)len){
+    data_bit[0] = my_spect->get_g_element(offset-1, om_ind);
+    data_bit[1] = my_spect->get_g_element(offset, om_ind);
+    ax_bit[0] = my_spect->get_ang_axis_element(offset-1);
+    ax_bit[1] = my_spect->get_ang_axis_element(offset);
+    tmpg = interpolate_linear(ax_bit, data_bit, (my_type)x);
+
+  }else if(offset == 0){
+    //we're right at end, can't meaningfully interpolate, use raw
+    tmpg = my_spect->get_g_element(offset, om_ind);
+
+  }else{
+    //offset <0 or > len, value not found
+    tmpg = 0.0;
+  }
+
+  
+  if(offset >= 0 && om_ind >= 0)return tmpg/my_spect->get_norm_g(om_ind);
+  else return 0.0;
+
+}
+

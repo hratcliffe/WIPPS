@@ -62,10 +62,6 @@ class spectrum{
 /******** Access helper functions ****/
   int where_omega(my_type value);
 
-/********Spectrum operation helpers ****/
-  bool calc_norm_B();
-  bool calc_norm_g(size_t om_ind);
-
 /********Access wrappers ****/
 /** \ingroup spectAcc 
 *@{ */
@@ -79,7 +75,7 @@ public:
   my_type time[2];/**< Time range over which data are taken*/
   size_t space[2];/**< Space range over which data are taken*/
   int wave_id; /**< ID for which wave mode cutout we're going for. See support.h*/
-
+  bool get_g_is_angle_only(){return g_is_angle_only;}
 /********Technical stuff making my_array a proper "object" ****/
   bool operator==(const spectrum &rhs)const;
   bool operator!=(const spectrum &rhs)const{return !(*this == rhs);}/**< See spectrum::operator==()*/
@@ -108,13 +104,15 @@ public:
   calc_type check_upper();
   calc_type get_peak_omega();
 
+/********Spectrum operation helpers ****/
+  bool calc_norm_B();
+  bool calc_norm_g(size_t om_ind);
+  my_type get_norm_B(){return norm_B;}
+  my_type get_norm_g(size_t om_ind){return (om_ind < get_omega_length())? norm_g[om_ind]:0.0;}
+  
 /********File IO ****/
   bool write_to_file(std::fstream &file);
   bool read_from_file(std::fstream &file);
-  
-/********Main spectral calculations ****/
-  calc_type get_G1(calc_type omega);
-  calc_type get_G2(calc_type omega, calc_type x);
   
 /********Data release (for testing) ****/
   data_array  copy_out_B();
@@ -138,6 +136,9 @@ public:
   inline my_type get_om_axis_element(size_t nx)const{return B_omega_array.get_axis_element(0, nx);}
   inline my_type get_ang_axis_element(size_t nx)const{return g_angle_array.get_axis_element(1, nx);}
 
+  inline size_t get_om_axis_index_from_value(my_type omega)const{return B_omega_array.get_axis_index_from_value(0, omega);}
+  inline size_t get_ang_axis_index_from_value(my_type ang)const{return g_angle_array.get_axis_index_from_value(1, ang);}
+
   inline void set_om_axis_element(size_t nx, my_type val){B_omega_array.set_axis_element(0, nx, val);g_angle_array.set_axis_element(0, nx, val);}
   inline void set_ang_axis_element(size_t nx, my_type val){g_angle_array.set_axis_element(1, nx, val);}
 
@@ -157,6 +158,8 @@ public:
   
 };
 
-
+/********Main spectral calculations ****/
+calc_type get_G1(spectrum * my_spect, calc_type omega);
+calc_type get_G2(spectrum * my_spect, calc_type omega, calc_type x);
 
 #endif

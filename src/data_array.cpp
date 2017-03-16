@@ -405,13 +405,17 @@ my_type * data_array::get_axis(size_t dim, size_t & length){
 
 }
 
-size_t data_array::get_axis_index_from_value(size_t dim, my_type value){
+size_t data_array::get_axis_index_from_value(size_t dim, my_type value)const{
 /** Get the index on axis dim of value value*/
   size_t len = dims[dim];
-  long where_val = where(get_axis(dim, len), len, value);
-  if(where_val >= 0) return where_val;
-  else return 0;
-
+  long index = get_axis_index(dim, 0);
+  if(index != -1){
+    long where_val = where(axes+index, len, value);
+    if(where_val >= 0) return where_val;
+    else return 0;
+  }else{
+    return 0;
+  }
 }
 
 /********Data/axis fillers, file IO ****/
@@ -910,7 +914,7 @@ bool fft_array(const data_array &data_in, data_array & data_out){
 #ifndef NO_FFT
 /** \brief FFT data_array
 *
-* Data and axes in this object are FFT'd using FFTW and stored into the instance pointed to by data_out. Data_out must be created with correct dimensions first, but we check and return error (1) if it is not so.
+* Data and axes in this object are FFT'd using FFTW and stored into the instance pointed to by data_out. Data_out must be created with correct dimensions first, but we check and return error (1) if it is not so. The returned values are the abs-square of the FFT.
 */
 
   //Check output array is defined and has correct dimensions

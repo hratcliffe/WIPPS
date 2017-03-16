@@ -284,6 +284,33 @@ d x .
 %%\end{align}
 %
 
+\section{Evaluation of G2}
+G2 in Albert (2005) is integral over theta, but in our case we have a $\tan(\theta)$ axis so we transform 
+\begin{equation}
+x = \tan(\theta)
+\end{equation}
+so
+\begin{equation}
+\frac{\mathrm{d} \tan(\theta)}{\mathrm{d} \theta} = \sec^2(\theta) = \frac{1}{\cos^2(\theta)}
+\end{equation}
+i.e.
+\begin{equation}
+\mathrm{d} \theta = \cos^2(\theta) \mathrm{d}\tan\theta
+\end{equation}
+providing $\cos\theta \ne 0$. Similarly, the $\sin\theta$ term is 
+\begin{equation}
+\sin\theta = \tan \theta \cos\theta 
+%= \frac{\tan\theta}{\sqrt{\tan^2 \theta + 1}}
+%\tan^2\theta + 1 = \sec^2(\theta) = \frac{1}{\cos^2(\theta)}
+\end{equation}
+so the $\sin\theta \mathrm{d}\theta$ becomes
+\begin{equation}
+\tan\theta \cos^3\theta \mathrm{d}\tan\theta= \frac{\tan\theta}{(\tan^2 \theta + 1)^{3/2}}\mathrm{d}\tan\theta
+\end{equation}
+
+
+\begin{equation}
+\end{equation}
 
 
 

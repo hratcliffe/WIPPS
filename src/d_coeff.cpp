@@ -268,7 +268,7 @@ Get mu, dmu/domega which are used to:
               Eq7 = -1.0* (my_mu.mu*omega_n/(omega_calc[ii]*(omega_calc[ii]-omega_n)) - my_mu.dmudom)/(my_mu.mu *std::sin(theta)*std::cos(theta) - dmudx);
               //Need this iff we use second expression in Eq 5
               numerator = std::pow( -s2alpha + omega_n/omega_calc[ii], 2);
-              D_tmp += numerator * my_mu.phi/std::abs(1.0 - Eq6)*spect->get_G1(omega_calc[ii])*spect->get_G2(omega_calc[ii], x[j]); // FAKENUMBERS This will be the n summed D so add onto it each n iteration
+              D_tmp += numerator * my_mu.phi/std::abs(1.0 - Eq6)*get_G1(spect, omega_calc[ii])*get_G2(spect, omega_calc[ii], x[j]); // FAKENUMBERS This will be the n summed D so add onto it each n iteration
             }
           }
         }

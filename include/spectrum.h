@@ -36,7 +36,7 @@ class spectrum{
 
 /********Tags and info ****/
   my_type max_power;/**<Value of maximum in spectral power*/
-  bool angle_is_function;/**< Whether we have g(omega, x) (false) or just g(x) (true) */
+  bool g_is_angle_only;/**< Whether we have g(omega, x) (false) or just g(x) (true) */
   int function_type;/**< Type code for angular function. See support.h */
   size_t smooth;/**<Smoothing applied to B_omega, if any*/
   my_type norm_B;/**< Norm of B(w)*/

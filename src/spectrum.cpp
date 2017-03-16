@@ -65,12 +65,12 @@ spectrum::spectrum(int n_om, int n_ang, bool separable){
   //Setup correct shape/size g. Allocates memory to store the normalising values so that int_x g = 1 for each omega
   if(separable){
     this->g_angle_array = data_array(1, n_ang);
-    angle_is_function = true;
+    g_is_angle_only = true;
     function_type = FUNCTION_DELTA;
     norm_g = (my_type *) calloc(1, sizeof(my_type));
   }else{
     this->g_angle_array = data_array(n_om, n_ang);
-    angle_is_function = false;
+    g_is_angle_only = false;
     norm_g = (my_type *) calloc(n_ang, sizeof(my_type));
   }
   //Cache the norms and maxes
@@ -145,13 +145,13 @@ spectrum::spectrum(std::string filename){
     //Now set up g correct size
     if(dims[0] == 1){
       this->g_angle_array = data_array(1, dims[1]);
-      angle_is_function = true;
+      g_is_angle_only = true;
       function_type = FUNCTION_DELTA;
       norm_g = (my_type *) calloc(1, sizeof(my_type));
       //Single row so only one norm
     }else{
       this->g_angle_array = data_array(dims[0], dims[1]);
-      angle_is_function = false;
+      g_is_angle_only = false;
       norm_g = (my_type *) calloc(dims[1], sizeof(my_type));
       //Norm each row
     }
@@ -189,8 +189,8 @@ spectrum::spectrum(std::string filename){
     size_t function_tmp = 0;
     if(file) file.read((char*)&function_tmp, sizeof(size_t));
     function_type = (int) function_tmp;
-    this->angle_is_function = true;
-    if(function_type == FUNCTION_NULL) this->angle_is_function = false;
+    this->g_is_angle_only = true;
+    if(function_type == FUNCTION_NULL) this->g_is_angle_only = false;
     if(file) file.read((char*) &this->smooth, sizeof(size_t));
   }
 
@@ -296,7 +296,7 @@ bool spectrum::make_angle_distrib(){
 */
 
 
-  if(!angle_is_function){
+  if(!g_is_angle_only){
     my_error_print("Angular distrib is not a function. Returning", mpi_info.rank);
     return 1;
   }
@@ -402,7 +402,7 @@ void spectrum::make_test_spectrum(int angle_type, bool two_sided, my_type om_ce)
 bool spectrum::generate_spectrum(data_array &parent, int om_fuzz, int angle_type, data_array * mask){
 /**\brief Generate spectrum from data
 *
-*Takes a parent data array and generates the corresponding spectrum. Windows using the specified wave dispersion and integrates over frequency using om_fuzz percent band. Axes are copied from the parent. If the spectrum is of separable type (angle_is_function = true), the angular distribution is generated with functional form specified by angle_type.  IMPORTANT: when using real angular data we roughly fuzz around the correct k values, but this is not uniform! Non-smooth or rapidly varying data may give odd results @param parent Data array to read from. Spectrum will have the same units as this @param om_fuzz Band width around dispersion curve in percent of central frequency @param angle_type Angular distribution functional form @param mask (optional) data_array matching sizes of parent, will be filled with the masking array used for spectrum generation. If nullptr or nothing is supplied, no mask is output. \todo omega vs k, is there some normalising to do? \todo 2-d and 3-d extractions don't quite agree at k=0. factor ~10 and variations near 0
+*Takes a parent data array and generates the corresponding spectrum. Windows using the specified wave dispersion and integrates over frequency using om_fuzz percent band. Axes are copied from the parent. If the spectrum is of separable type (g_is_angle_only = true), the angular distribution is generated with functional form specified by angle_type.  IMPORTANT: when using real angular data we roughly fuzz around the correct k values, but this is not uniform! Non-smooth or rapidly varying data may give odd results @param parent Data array to read from. Spectrum will have the same units as this @param om_fuzz Band width around dispersion curve in percent of central frequency @param angle_type Angular distribution functional form @param mask (optional) data_array matching sizes of parent, will be filled with the masking array used for spectrum generation. If nullptr or nothing is supplied, no mask is output. \todo omega vs k, is there some normalising to do? \todo 2-d and 3-d extractions don't quite agree at k=0. factor ~10 and variations near 0
 */
 
   if(!this->is_good()){
@@ -410,7 +410,7 @@ bool spectrum::generate_spectrum(data_array &parent, int om_fuzz, int angle_type
     return 1;
   }
 
-  if(parent.is_good() && angle_is_function){
+  if(parent.is_good() && g_is_angle_only){
     //Require parent to be 2-D
     if(parent.get_dims() != 2){
       my_error_print("Functional angle form requires 2-D parent", mpi_info.rank);
@@ -636,10 +636,10 @@ bool spectrum::check_ids(const data_array & src)const{
 void spectrum::copy_tags(const spectrum & src){
 /** \brief Copy tags
 *
-*Copies tag fields from src array to this. Tags are the angle_is_function, the function_type and the wave_id. See also spectrum::copy_ids()
+*Copies tag fields from src array to this. Tags are the g_is_angle_only, the function_type and the wave_id. See also spectrum::copy_ids()
 */
 
-  this->angle_is_function = src.angle_is_function;
+  this->g_is_angle_only = src.g_is_angle_only;
   this->function_type = src.function_type;
   this->wave_id = src.wave_id;
 
@@ -648,11 +648,11 @@ void spectrum::copy_tags(const spectrum & src){
 bool spectrum::check_tags(const spectrum & src)const{
 /** \brief Check tags
 *
-*Check tag fields match src. Tags are the angle_is_function, the function_type and the wave_id. See also spectrum::check_ids()
+*Check tag fields match src. Tags are the g_is_angle_only, the function_type and the wave_id. See also spectrum::check_ids()
 */
 
   bool err = false;
-  if(this->angle_is_function != src.angle_is_function) err = true;
+  if(this->g_is_angle_only != src.g_is_angle_only) err = true;
   if(this->function_type != src.function_type) err = true;
   if(this->wave_id != src.wave_id) err = true;
 
@@ -715,7 +715,7 @@ bool spectrum::calc_norm_B(){
 bool spectrum::calc_norm_g(size_t om_ind){
 /** \brief Normalise g_w(x)
 *
-*Calculate the norm of g used in e.g. denom of Albert eq 3 or calc'd in derivations.tex. Contains one value for each omega entry.  \todo Catch zero norms \todo test
+*Calculate the norm of g used in e.g. denom of Albert eq 3 or calc'd in derivations.tex. Contains one value for each omega entry. \todo test
 */
 
   size_t len = get_angle_length();
@@ -733,7 +733,7 @@ bool spectrum::calc_norm_g(size_t om_ind){
   
   size_t lena = get_omega_length();
   //Check omega index is in range
-  if(!angle_is_function){
+  if(!g_is_angle_only){
     //om_ind = where(get_omega_axis(lena), lena, omega);
     if(om_ind >= lena) return 1;
   }else{
@@ -756,6 +756,9 @@ bool spectrum::calc_norm_g(size_t om_ind){
   //integrate
   my_type norm_g_tmp = integrator(integrand, len, d_axis);
 
+  //Soften so can never be zero. Should only approach this if g_om(theta) is everywhere zero, so set simply to something tiny
+  if(norm_g_tmp < std::numeric_limits<my_type>::min()) norm_g_tmp = std::numeric_limits<my_type>::min();
+  
   norm_g[om_ind] = norm_g_tmp;
   
   //clean up
@@ -1010,8 +1013,8 @@ bool spectrum::read_from_file(std::fstream &file){
     size_t function_tmp = 0;
     if(file) file.read((char*) &function_tmp, sizeof(size_t));
     function_type = (int) function_tmp;
-    this->angle_is_function = true;
-    if(function_type == FUNCTION_NULL) this->angle_is_function = false;
+    this->g_is_angle_only = true;
+    if(function_type == FUNCTION_NULL) this->g_is_angle_only = false;
     if(file) file.read((char*) &this->smooth, sizeof(size_t));
   }
 
@@ -1023,20 +1026,15 @@ bool spectrum::read_from_file(std::fstream &file){
 calc_type spectrum::get_G1(calc_type omega){
 /** \brief G1 from Albert 2005.
 *
-*Gets the value of B^2(w) (interpolated if necessary) and the normalising constant from norm_B
-\todo Does it matter that our k is limited? Do waves really go to low intensity in bit we see \todo Do we need the vg conversion factor? \todo CHECK and FIXXXX and test
+*Gets the value of B^2(w) (interpolated if necessary) and the normalising constant from norm_B. NB this uses the given spectrum omega range and assumes that beyond this there is "no" wave power. \todo Test this
 */
 
-  calc_type B2;
   my_type tmpB2;
-  if(norm_B ==0.0) calc_norm_B();
+  if(norm_B == 0.0) calc_norm_B();
   size_t len, offset;
   my_type data_bit[2];
   my_type ax_val;
   my_type * axis = get_omega_axis(len);
-
-  //If we have B(k) we need to change to B(w)
-  my_type change_of_vars = 1.0;
 
   ax_val = (my_type) omega;
   
@@ -1051,15 +1049,12 @@ calc_type spectrum::get_G1(calc_type omega){
     //we're right at end, can't meaningfully interpolate, use raw
     tmpB2 = get_B_element(0);
   }else{
-    //offset <0 or > len, value not found
+    //offset <0 or >= len, value not found
     tmpB2 = 0.0;
   }
 
-  //Add change_of_vars constant in case we have k axis
-  B2 = (calc_type) tmpB2 * change_of_vars;
-
   //Add norm. constant
-  return B2/norm_B;
+  return tmpB2/norm_B;
 
 }
 
@@ -1077,7 +1072,7 @@ calc_type spectrum::get_G2(calc_type omega, calc_type x){
 
   len = get_omega_length();
 
-  if(!angle_is_function){
+  if(!g_is_angle_only){
     om_ind = where(get_omega_axis(len), len, omega);
   }
   else om_ind = 0;

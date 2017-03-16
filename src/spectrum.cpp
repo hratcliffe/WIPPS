@@ -867,7 +867,7 @@ calc_type spectrum::check_upper(){
 
   if(get_om_axis_element(1) < get_om_axis_element(2)){
   //Axis presumed to be +ve only, move in from top to find first rise above threshold
-    for(size_t i=0; i< ax_len; i+=stride){
+    for(size_t i=1; i< ax_len; i+=stride){
       if((get_B_element(ax_len - i) < threshold && get_B_element(ax_len - i - stride) > threshold)){
         index = i;
         break;
@@ -875,7 +875,7 @@ calc_type spectrum::check_upper(){
     }
   }else{
   //Axis presumed to be symmetrical. Move in from both ends
-    for(size_t i=0; i< len; i+=stride){
+    for(size_t i=1; i< len; i+=stride){
       if((get_B_element(i) < threshold && get_B_element(i+stride) > threshold) ||(get_B_element(ax_len - i) < threshold && get_B_element(ax_len - i - stride) > threshold)){
         index = i;
         break;
@@ -1080,18 +1080,20 @@ calc_type get_G2(spectrum * my_spect, calc_type omega, calc_type x){
 * Gets the value of g(w, x) and the normalising constant from norm_g \todo interpolate on omega? or angle or both. Or fix angle axis as matched to D. In some sense we want to minimise work here... \todo CHECK and FIXXXX and test
 */
 
-  long om_ind, offset;
+  long om_ind, norm_ind, offset;
   size_t len = my_spect->get_omega_length();
   my_type tmpg;
   my_type data_bit[2], ax_bit[2];
 
   len = my_spect->get_omega_length();
 
-  if(!my_spect->get_g_is_angle_only()){
-    om_ind = my_spect->get_om_axis_index_from_value(omega);
+  //If seperable, we have only one (omega) entry in g and norm_g in position 0, so that's where we lookup
+//  if(!my_spect->get_g_is_angle_only()){
+    norm_ind = my_spect->get_om_axis_index_from_value(omega);
+    if(norm_ind < 0 ) return 0.0;
+    om_ind = (my_spect->get_g_is_angle_only()? 0: norm_ind);
     //where(my_spect->get_omega_axis(len), len, omega);
-  }
-  else om_ind = 0;
+  //}
   
   //Calc norm if hasn't been
   if(om_ind >= 0 && my_spect->get_norm_g(om_ind) == 0.0){
@@ -1104,8 +1106,8 @@ calc_type get_G2(spectrum * my_spect, calc_type omega, calc_type x){
   offset = my_spect->get_ang_axis_index_from_value(x);
   //Interpolate if possible, else use the end
   if(offset > 0 && offset < (long)len){
-    data_bit[0] = my_spect->get_g_element(offset-1, om_ind);
-    data_bit[1] = my_spect->get_g_element(offset, om_ind);
+    data_bit[0] = my_spect->get_g_element(om_ind, offset-1);
+    data_bit[1] = my_spect->get_g_element(om_ind, offset);
     ax_bit[0] = my_spect->get_ang_axis_element(offset-1);
     ax_bit[1] = my_spect->get_ang_axis_element(offset);
     tmpg = interpolate_linear(ax_bit, data_bit, (my_type)x);

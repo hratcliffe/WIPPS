@@ -23,7 +23,7 @@ class controller;
 
 /** \brief A spectrum in omega and angle
 *
-*Holds data on the omega and angle distributions. If fed an FFTd data array this will be X^2(omega, theta) where X is E or B. The latter can depend on omega! Can be created/destroyed only by controllers, so has no public constructor/destructors. IMPORTANT: because we are working with FFT data, we assume the angle/frequency axis either covers some small cutout in +ve domain, or is symmetrical in positive and negative values. A few of the specific routines here use this to simplify things. The sign of omega is simply copied from the sign of k. The "angle" axis is stored as tan(theta) for theta the wave normal angle. Access to elements should use the wrappers at the bottom of spectrum.h, described in \ref spectAcc because internal layout could change in future \todo Breakout Albert stuff into seperate class or free functions
+*Holds data on the omega and angle distributions. If fed an FFTd data array this will be X^2(omega, theta) where X is E or B. The latter can depend on omega! Can be created/destroyed only by controllers, so has no public constructor/destructors. IMPORTANT: because we are working with FFT data, we assume the angle/frequency axis either covers some small cutout in +ve domain, or is symmetrical in positive and negative values. A few of the specific routines here use this to simplify things. The sign of omega is simply copied from the sign of k. The "angle" axis is stored as tan(theta) for theta the wave normal angle. Access to elements should use the wrappers at the bottom of spectrum.h, described in \ref spectAcc because internal layout could change in future
   \author Heather Ratcliffe \date 24/09/2015 \ingroup cls
 */
 class spectrum{

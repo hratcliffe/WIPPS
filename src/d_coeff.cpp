@@ -340,15 +340,19 @@ my_type diffusion_coeff::get_element_by_values(my_type p, my_type alpha){
 #endif
     return 0.0;
   }
-  size_t len = 0;
+  size_t len_a=0, len_p = 0;
   long alpha_ind, p_ind;
 
-  my_type * d_axis = this->get_axis(0, len);
-  p_ind = where(d_axis, len, p);
-  d_axis = this->get_axis(1, len);
-  alpha_ind = where(d_axis, len, angle_to_stored_angle(alpha));
+  my_type * d_axis = this->get_axis(0, len_p);
+  p_ind = where(d_axis, len_p, p);
+  d_axis = this->get_axis(1, len_a);
+  alpha_ind = where(d_axis, len_a, angle_to_stored_angle(alpha));
 
-  return this->get_element(p_ind, alpha_ind);
+  if(p_ind >=0 && alpha_ind >= 0 && p_ind < len_p && alpha_ind < len_a){
+    return this->get_element(p_ind, alpha_ind);
+  }else{
+    return 0.0;
+  }
 
 }
 

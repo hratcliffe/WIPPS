@@ -67,11 +67,11 @@ spectrum::spectrum(int n_om, int n_ang, bool separable){
     this->g_angle_array = data_array(1, n_ang);
     g_is_angle_only = true;
     function_type = FUNCTION_DELTA;
-    norm_g = (my_type *) calloc(1, sizeof(my_type));
+    norm_g = (my_type *) calloc(n_om, sizeof(my_type));
   }else{
     this->g_angle_array = data_array(n_om, n_ang);
     g_is_angle_only = false;
-    norm_g = (my_type *) calloc(n_ang, sizeof(my_type));
+    norm_g = (my_type *) calloc(n_om, sizeof(my_type));
   }
   //Cache the norms and maxes
   this->init();
@@ -91,7 +91,7 @@ spectrum::spectrum(std::string filename){
   if(!file.is_open()) return;
 
   bool err = 0, cont = 1;
-  size_t end_block=0, next_block=0;
+  size_t end_block=0, next_block=0, om_sz;
   size_t jump_pos=0;
   file.seekg(-1*sizeof(size_t), file.end);
   file.read((char*) &end_block, sizeof(size_t));
@@ -111,6 +111,7 @@ spectrum::spectrum(std::string filename){
     file.seekg(0, std::ios::beg);
     //return to start
     B_omega_array = data_array(dims[0]);
+    om_sz = dims[0];
     err = B_omega_array.read_from_file(file);
   }
   if(cont && err){
@@ -147,7 +148,7 @@ spectrum::spectrum(std::string filename){
       this->g_angle_array = data_array(1, dims[1]);
       g_is_angle_only = true;
       function_type = FUNCTION_DELTA;
-      norm_g = (my_type *) calloc(1, sizeof(my_type));
+      norm_g = (my_type *) calloc(om_sz, sizeof(my_type));
       //Single row so only one norm
     }else{
       this->g_angle_array = data_array(dims[0], dims[1]);
@@ -820,14 +821,16 @@ bool spectrum::truncate_x(my_type x_min, my_type x_max){
   }
 
   int index = -1;
-  size_t len = get_angle_length(), om_len = get_omega_length();
+  size_t len = get_angle_length(), om_len;
 
+  om_len =  (g_is_angle_only? 1 : get_omega_length());
+  
   if(x_min > TAN_MIN){
     index = where(get_angle_axis(len), len, x_min);
     if(index != -1){
       for(size_t i=0; i< (size_t)index; i++){
         for(size_t j=0; j< om_len; j++){
-          set_g_element(i, j, 0.0);
+          set_g_element(j, i, 0.0);
         }
       }
     }
@@ -838,13 +841,13 @@ bool spectrum::truncate_x(my_type x_min, my_type x_max){
     if(index != -1){
       for(size_t i=index; i< len; i++){
         for(size_t j=0; j< om_len; j++){
-          set_g_element(i, j, 0.0);
+          set_g_element(j, i, 0.0);
         }
       }
     }
   }
   for(size_t i = 0; i< om_len; i++){
-    calc_norm_g(get_om_axis_element(i));
+    calc_norm_g(i);
   }
   return 0;
 

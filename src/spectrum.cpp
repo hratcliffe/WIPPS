@@ -1041,7 +1041,7 @@ data_array spectrum::copy_out_g(){
 calc_type get_G1(spectrum * my_spect, calc_type omega){
 /** \brief G1 from Albert 2005.
 *
-*Gets the value of B^2(w) (interpolated if necessary) and the normalising constant from norm_B. NB this uses the given spectrum omega range and assumes that beyond this there is "no" wave power. \todo Test this
+*Gets the value of B^2(w) (interpolated if necessary) and the normalising constant from norm_B. NB this uses the given spectrum omega range and assumes that beyond this there is "no" wave power.
 */
 
   my_type tmpB2;

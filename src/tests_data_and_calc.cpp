@@ -682,7 +682,7 @@ int test_entity_spectrum::albertGs_tests(){
 */
   int err = TEST_PASSED;
 
-  calc_type om_ce_local, om_pe_local, G1, G2, G1_analytic, G2_analytic;
+  calc_type om_ce_local, om_pe_local, G1, G2, G1_analytic, G2_analytic, G1_tracker = 0.0;
   om_ce_local = test_contr->get_plasma().get_omega_ref("ce");
   om_pe_local = test_contr->get_plasma().get_omega_ref("pe");
 
@@ -703,7 +703,7 @@ int test_entity_spectrum::albertGs_tests(){
   test_contr->get_current_spectrum()->make_test_spectrum(FUNCTION_GAUSS);
   
   my_type om_min, om_max, x_min, x_max, om_peak;
-  om_min = 12000.0;
+  om_min = 2001.0;
   om_max = 16500.0;
   //make sure this is lower than the test spectrum axis range
   x_min = 0.0;
@@ -714,10 +714,10 @@ int test_entity_spectrum::albertGs_tests(){
   om_peak = test_contr->get_current_spectrum()->get_peak_omega();
   //Now we have a test spectrum. Need to know what its normalisations should be. And what the Albert functions should resolve to.
   
-  my_type width=0.1*om_peak;
+  my_type width = 0.1*om_peak;
   
-  for(size_t i=0; i< n_tests;i++){
-    tmp_omega = std::abs(om_ce_local)/10.0 + 89.0/100.0 * om_max * (1.0 - exp(-i));
+  for(size_t i = 0; i < n_tests; i++){
+    tmp_omega = om_min + (float) i/(float) n_tests * (om_max-om_min);
     //Cover range from small to just below om_ce...
     G1 = get_G1(test_contr->get_current_spectrum(), tmp_omega);
 
@@ -730,11 +730,15 @@ int test_entity_spectrum::albertGs_tests(){
     }else{
       G1_analytic = 0.0;
     }
-
-    if( (G1 != 0.0 && std::abs(G1-G1_analytic)/(G1) > LOW_PRECISION)|| (G1 == 0.0 && G1_analytic != 0.0)){
+    G1_tracker += G1_analytic;//Keep sum to check we're not hitting zero everywhere
+    if( G1_analytic > 0.0 && ((G1 != 0.0 && std::abs(G1-G1_analytic)/(G1) > LOW_PRECISION)|| (G1 == 0.0 && G1_analytic != 0.0))){
       err |= TEST_WRONG_RESULT;
       test_bed->report_info("G1 does not match analytic calc, relative error = "+mk_str((std::abs(G1/G1_analytic)-1.0)*100, true)+" at "+mk_str(tmp_omega, true), mpi_info.rank);
     }
+  }
+  if(G1_tracker < tiny_my_type){
+    err |= TEST_ASSERT_FAIL;
+    test_bed->report_info("G1 is always zero", mpi_info.rank);
   }
 
 

@@ -304,6 +304,10 @@ Etc */
     //Long should be big enough
     return (long) nx;
   }else{
+#ifdef DEBUG_RANGE
+    my_error_print("Array index out of range", mpi_info.rank);
+    throw std::out_of_range ("1D array indexer");
+#endif
     return -1;
   }
 
@@ -321,6 +325,10 @@ long my_array::get_index(size_t nx, size_t ny)const{
   if((nx < dims[0]) && (ny<dims[1])){
     return (long) (ny*dims[0] + nx);
   }else{
+#ifdef DEBUG_RANGE
+    my_error_print("Array index out of range", mpi_info.rank);
+    throw std::out_of_range ("2D array indexer");
+#endif
     return -1;
   }
 }
@@ -337,6 +345,10 @@ long my_array::get_index(size_t nx, size_t ny, size_t nz)const{
   if((nx < dims[0]) && (ny<dims[1]) && ((nz<dims[2]))){
     return (nz*dims[1]+ ny)*dims[0] + nx;
   }else{
+#ifdef DEBUG_RANGE
+    my_error_print("Array index out of range", mpi_info.rank);
+    throw std::out_of_range ("3D array indexer");
+#endif
     return -1;
   }
 }
@@ -353,6 +365,10 @@ long my_array::get_index(size_t nx, size_t ny, size_t nz, size_t nt)const{
   if((nx < dims[0]) && (ny<dims[1])&& ((nz<dims[2]))&& ((nt<dims[3]))){
     return ((nt*dims[2] +nz)*dims[1]+ ny)*dims[0] + nx;
   }else{
+#ifdef DEBUG_RANGE
+    my_error_print("Array index out of range", mpi_info.rank);
+    throw std::out_of_range ("Arb-D array indexer");
+#endif
     return -1;
   }
 }

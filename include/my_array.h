@@ -16,6 +16,7 @@
 //Set debug flag if we've set DEBUG_ALL
 #ifdef DEBUG_ALL
 #define DEBUG_DIMS
+#define DEBUG_RANGE
 #endif
 
 class data_array;

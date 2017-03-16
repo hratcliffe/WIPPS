@@ -686,12 +686,12 @@ int test_entity_spectrum::albertGs_tests(){
   om_ce_local = test_contr->get_plasma().get_omega_ref("ce");
   om_pe_local = test_contr->get_plasma().get_omega_ref("pe");
 
-  calc_type mass_ratio = 1836.2;
+  calc_type mass_ratio = 1.0/1836.2;
 
   size_t n_tests = 10;
   calc_type tmp_omega=0.0, tmp_x;
 
-  test_contr->add_spectrum(5000, DEFAULT_N_ANG, true);
+  test_contr->add_spectrum(4096, DEFAULT_N_ANG, true);
 
   if(!test_contr->get_current_spectrum()->is_good()){
     my_error_print("Spectrum in invalid state. Aborting", mpi_info.rank);
@@ -701,9 +701,9 @@ int test_entity_spectrum::albertGs_tests(){
   }
 
   test_contr->get_current_spectrum()->make_test_spectrum(FUNCTION_GAUSS);
-  
+    
   my_type om_min, om_max, x_min, x_max, om_peak;
-  om_min = 2001.0;
+  om_min = 500.0;
   om_max = 16500.0;
   //make sure this is lower than the test spectrum axis range
   x_min = 0.0;
@@ -733,7 +733,7 @@ int test_entity_spectrum::albertGs_tests(){
     G1_tracker += G1_analytic;//Keep sum to check we're not hitting zero everywhere
     if( G1_analytic > 0.0 && ((G1 != 0.0 && std::abs(G1-G1_analytic)/(G1) > LOW_PRECISION)|| (G1 == 0.0 && G1_analytic != 0.0))){
       err |= TEST_WRONG_RESULT;
-      test_bed->report_info("G1 does not match analytic calc, relative error = "+mk_str((std::abs(G1/G1_analytic)-1.0)*100, true)+" at "+mk_str(tmp_omega, true), mpi_info.rank);
+      test_bed->report_info("G1 does not match analytic calc, relative error = "+mk_str((std::abs(G1/G1_analytic)-1.0)*100, true)+"% at "+mk_str(tmp_omega, true), mpi_info.rank);
     }
   }
   if(G1_tracker < tiny_my_type){
@@ -744,15 +744,16 @@ int test_entity_spectrum::albertGs_tests(){
 
   tmp_omega = 0.6 * std::abs(om_ce_local);
   for(size_t i=0; i< n_tests;i++){
-
-    tmp_x = ANG_MIN + i * (ANG_MAX - ANG_MIN)/(n_tests-1);
+    tmp_x = ANG_MIN + (float) i * (ANG_MAX - ANG_MIN)/(float)(n_tests-1);
     
     G2 = get_G2(test_contr->get_current_spectrum(), tmp_omega, tmp_x);
     
     G2_analytic = std::pow((( mass_ratio / (1.0 + mass_ratio))*om_ce_local*om_ce_local/om_pe_local/om_pe_local), 1.5);
-    G2_analytic *= exp(- (tmp_x*tmp_x)/std::pow(SPECTRUM_ANG_STDDEV, 2));
+    G2_analytic *= exp(- std::pow( (tmp_x - 0.0)/SPECTRUM_ANG_STDDEV, 2));
+    G2_analytic /= calc_I_omega(tmp_omega, test_contr->get_current_spectrum(), test_contr);
+    std::cout<<G2_analytic<<' '<<G2<<' '<<G2_analytic/G2<<'\n';
     
-    }
+  }
 
 
   std::fstream outfile;
@@ -763,6 +764,35 @@ int test_entity_spectrum::albertGs_tests(){
 
   return err;
 }
+
+my_type calc_I_omega(my_type omega, spectrum * my_spect, controller * my_contr){
+
+  my_type Psi, theta, x, dx, g_x, I_contrib, I_contrib2, I_om = 0.0, om_sq_p_e;
+  size_t x_sz = my_spect->get_angle_length();
+  my_type om_ce_local = my_contr->get_plasma().get_omega_ref("ce");
+  my_type om_pe_local = my_contr->get_plasma().get_omega_ref("pe");
+  om_sq_p_e = omega*omega/om_ce_local/om_pe_local;
+  calc_type M = 1.0/1836.2;//m_e/m_p
+
+  for(size_t i = 0; i < x_sz-1; i++){
+    x = my_spect->get_ang_axis_element(i);
+    dx = std::abs( x - my_spect->get_ang_axis_element(i+1));
+    theta = atan(x);
+    //Take RH mode, hence -ve sign
+    Psi = 1.0 - om_sq_p_e - std::pow(sin(theta), 2)/2.0 + std::sqrt(std::pow(sin(theta), 4)/4.0 + std::pow(omega/om_pe_local*(1.0 - M)*cos(theta), 2));
+    //std::cout<<1.0 - om_sq_p_e - std::pow(sin(theta), 2)/2.0<<' '<<(std::pow(sin(theta), 4)/4.0 + std::pow(omega/om_pe_local*(1.0 - M)*cos(theta), 2))<<' '<<Psi<<'\n';
+    
+    g_x = my_spect->get_g_element(i);
+    I_contrib = x * std::pow( (1.0 + x*x)*Psi, -1.5);
+    I_contrib2 = 1.0 + 1.0/Psi * (om_sq_p_e - 0.5 * std::pow(omega/om_pe_local*(1.0-M), 2)/( ( 1.0+ x*x)*(Psi - 1.0 + om_sq_p_e ) + 0.5*x*x ) );
+    
+//    std::cout<<g_x<<' '<<Psi<<' '<<I_contrib<<' '<<I_contrib2<<'\n';
+    I_om += g_x * I_contrib * I_contrib2 * dx;
+  
+  }
+  return I_om;
+}
+
 //----------------------------------------------------------------
 
 test_entity_levelone::test_entity_levelone(){

@@ -730,25 +730,24 @@ bool spectrum::calc_norm_g(size_t om_ind){
   //Construct dx axis for integration. Note x = tan theta
 
   mu my_mu;
-  my_type x, psi, omega = get_om_axis_element(om_ind);
+  my_type x, psi, omega = get_om_axis_element(om_ind), g_el;
   
   size_t lena = get_omega_length();
   //Check omega index is in range
-  if(!g_is_angle_only){
-    //om_ind = where(get_omega_axis(lena), lena, omega);
-    if(om_ind >= lena) return 1;
-  }else{
-    //G has no dependence on omega, should be requesting only 0th element
-    if(om_ind > 0) return 1;
-  }
+  if(om_ind >= lena) return 1;
 
   for(size_t i = 0; i < len; i++){
     x = get_ang_axis_element(i);
     psi = atan(x);
     my_mu = plas.get_root(0.0, omega, psi);
-
     if(!my_mu.err){
-      integrand[i] = get_g_element(om_ind, i) * x * std::pow((std::pow(x, 2)+1.0), -1.5)*std::pow(my_mu.mu, 2) * std::abs( my_mu.mu + omega*my_mu.dmudom);
+      if(g_is_angle_only){
+        g_el = get_g_element(0, i);
+      }else{
+        g_el = get_g_element(om_ind, i);
+      }
+      integrand[i] = g_el * x * std::pow((std::pow(x, 2)+1.0), -1.5)*std::pow(my_mu.mu, 2) * std::abs( my_mu.mu + omega*my_mu.dmudom);
+
     }
     //product of g(theta) * x (x^2+1)^-(3/2) * mu^2 |mu+omega dmu/domega|
     //See Derivations#Evaluation_of_G2 for details \todo Insert docs snippet link
@@ -758,10 +757,18 @@ bool spectrum::calc_norm_g(size_t om_ind){
   my_type norm_g_tmp = integrator(integrand, len, d_axis);
 
   //Soften so can never be zero. Should only approach this if g_om(theta) is everywhere zero, so set simply to something tiny
-  if(norm_g_tmp < std::numeric_limits<my_type>::min()) norm_g_tmp = std::numeric_limits<my_type>::min();
+  if(norm_g_tmp < std::numeric_limits<my_type>::min()){
+#ifdef DEBUG_ALL
+    if(omega > 0){
+      my_error_print("Zero norm for g", mpi_info.rank);
+      throw std::domain_error("Zero norm for g");
+    }
+    //0 norm when omega is zero is ok
+#endif
+    norm_g_tmp = std::numeric_limits<my_type>::min();
+  }
   
   norm_g[om_ind] = norm_g_tmp;
-  
   //clean up
   free(d_axis);
   free(integrand);
@@ -846,7 +853,7 @@ bool spectrum::truncate_x(my_type x_min, my_type x_max){
       }
     }
   }
-  for(size_t i = 0; i< om_len; i++){
+  for(size_t i = 0; i< get_omega_length(); i++){
     calc_norm_g(i);
   }
   return 0;
@@ -1088,20 +1095,15 @@ calc_type get_G2(spectrum * my_spect, calc_type omega, calc_type x){
   len = my_spect->get_omega_length();
 
   //If seperable, we have only one (omega) entry in g and norm_g in position 0, so that's where we lookup
-//  if(!my_spect->get_g_is_angle_only()){
-    norm_ind = my_spect->get_om_axis_index_from_value(omega);
-    if(norm_ind < 0 ) return 0.0;
-    om_ind = (my_spect->get_g_is_angle_only()? 0: norm_ind);
-    //where(my_spect->get_omega_axis(len), len, omega);
-  //}
-  
+  norm_ind = my_spect->get_om_axis_index_from_value(omega);
+  if(norm_ind < 0 ) return 0.0;
+  om_ind = (my_spect->get_g_is_angle_only()? 0: norm_ind);
+
   //Calc norm if hasn't been
-  if(om_ind >= 0 && my_spect->get_norm_g(om_ind) == 0.0){
-    my_spect->calc_norm_g(om_ind);
+  if(norm_ind >= 0 && my_spect->get_norm_g(norm_ind) == 0.0){
+    my_spect->calc_norm_g(norm_ind);
   }
   
-//  my_type * axis = my_spect->get_angle_axis(len);
-//  offset = where(axis, len, x);
   len = my_spect->get_angle_length();
   offset = my_spect->get_ang_axis_index_from_value(x);
   //Interpolate if possible, else use the end
@@ -1120,9 +1122,10 @@ calc_type get_G2(spectrum * my_spect, calc_type omega, calc_type x){
     //offset <0 or > len, value not found
     tmpg = 0.0;
   }
-
   
-  if(offset >= 0 && om_ind >= 0)return tmpg/my_spect->get_norm_g(om_ind);
+  if(offset >= 0 && om_ind >= 0){
+    return tmpg/my_spect->get_norm_g(norm_ind);
+  }
   else return 0.0;
 
 }

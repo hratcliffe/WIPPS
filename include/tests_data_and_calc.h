@@ -22,6 +22,8 @@
 
 class plasma;
 
+my_type calc_I_omega(my_type omega, spectrum * my_spect, controller * my_contr);
+
 /**Check plasma functions, get_omega and dispersion relation
 */
 class test_entity_plasma : public test_entity{

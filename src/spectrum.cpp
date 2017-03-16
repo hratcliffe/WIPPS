@@ -38,11 +38,9 @@ void spectrum::init(){
 
   max_power = B_omega_array.maxval();
   calc_norm_B();
-  size_t n = get_B_dims();
-  my_type omega;
-  for(size_t i=0; i< n; i++){
-    omega = get_om_axis_element(i);
-    calc_norm_g(omega);
+  size_t len = get_omega_length();
+  for(size_t i = 0; i < len; i++){
+    calc_norm_g(i);
   }
 }
 
@@ -231,7 +229,7 @@ spectrum & spectrum::operator=(const spectrum& src){
   construct();
 
   //(Deep) copy all fields
-  size_t g_sz = src.get_g_dims(0);
+  size_t g_sz = src.get_omega_length();
   norm_g = (my_type *) calloc(g_sz, sizeof(my_type));
   std::copy(src.norm_g, src.norm_g + g_sz, this->norm_g);
   this->g_angle_array = src.g_angle_array;
@@ -255,7 +253,7 @@ spectrum::spectrum(const spectrum &src){
   if(!src.is_good()) return;
 
   //Copy all fields
-  size_t g_sz = src.get_g_dims(0);
+  size_t g_sz = src.get_omega_length();
   norm_g = (my_type *) calloc(g_sz, sizeof(my_type));
   std::copy(src.norm_g, src.norm_g + g_sz, this->norm_g);
   this->g_angle_array = src.g_angle_array;
@@ -285,7 +283,7 @@ void spectrum::make_angle_axis(){
 *
 * Create uniform angle axis from TAN_MIN to TAN_MAX (see support.h). In general these are interpreted as tan(theta) values.
 */
-  calc_type res = (TAN_MAX - TAN_MIN)/get_g_dims(1);
+  calc_type res = (TAN_MAX - TAN_MIN)/get_angle_length();
   int offset = -TAN_MIN/res;
   g_angle_array.make_linear_axis(1, res, offset);
 
@@ -307,7 +305,7 @@ bool spectrum::make_angle_distrib(){
     return 1;
   }
   make_angle_axis();
-  size_t len = get_g_dims(1);
+  size_t len = get_angle_length();
   my_type val;
 
   if(function_type == FUNCTION_DELTA){
@@ -329,7 +327,7 @@ bool spectrum::make_angle_distrib(){
     }
   }else if(function_type == FUNCTION_ISO){
 
-    val = 1.0/ (TAN_MAX - TAN_MIN)*get_g_dims(1)/(get_g_dims(1)-1);
+    val = 1.0/ (TAN_MAX - TAN_MIN)*get_angle_length()/(get_angle_length()-1);
     if(std::abs(TAN_MIN) < GEN_PRECISION) val = val / 2.0;
     for(size_t i=0; i<len; ++i) set_g_element(i,val);
 
@@ -404,7 +402,7 @@ void spectrum::make_test_spectrum(int angle_type, bool two_sided, my_type om_ce)
 bool spectrum::generate_spectrum(data_array &parent, int om_fuzz, int angle_type, data_array * mask){
 /**\brief Generate spectrum from data
 *
-*Takes a parent data array and generates the corresponding spectrum. Windows using the specified wave dispersion and integrates over frequency using om_fuzz percent band. Axes are copied from the parent. If the spectrum is of separable type (angle_is_function = true), the angular distribution is generated with functional form specified by angle_type.  IMPORTANT: when using real angular data we roughly fuzz around the correct k values, but this is not uniform! Non-smooth or rapidly varying data may give odd results @param parent Data array to read from @param om_fuzz Band width around dispersion curve in percent of central frequency @param angle_type Angular distribution functional form @param mask (optional) data_array matching sizes of parent, will be filled with the masking array used for spectrum generation. If nullptr or nothing is supplied, no mask is output. \todo omega vs k, is there some normalising to do? \todo 2-d and 3-d extractions don't quite agree at k=0. factor ~10 and variations near 0
+*Takes a parent data array and generates the corresponding spectrum. Windows using the specified wave dispersion and integrates over frequency using om_fuzz percent band. Axes are copied from the parent. If the spectrum is of separable type (angle_is_function = true), the angular distribution is generated with functional form specified by angle_type.  IMPORTANT: when using real angular data we roughly fuzz around the correct k values, but this is not uniform! Non-smooth or rapidly varying data may give odd results @param parent Data array to read from. Spectrum will have the same units as this @param om_fuzz Band width around dispersion curve in percent of central frequency @param angle_type Angular distribution functional form @param mask (optional) data_array matching sizes of parent, will be filled with the masking array used for spectrum generation. If nullptr or nothing is supplied, no mask is output. \todo omega vs k, is there some normalising to do? \todo 2-d and 3-d extractions don't quite agree at k=0. factor ~10 and variations near 0
 */
 
   if(!this->is_good()){
@@ -438,10 +436,10 @@ bool spectrum::generate_spectrum(data_array &parent, int om_fuzz, int angle_type
     //One sided axis (runs 0 to max) rather than -max to max. These are the only options
     bool one_sided = (std::abs(om_ax[0]) < std::abs(om_ax[len/2]));
 
-    for(size_t i=0; i<get_B_dims(0); ++i){
+    for(size_t i = 0; i < get_omega_length(); ++i){
       //Convert parent k-axis value to omega, preserving sign
       om_disp = get_omega(parent.get_axis_element(0,i), WAVE_WHISTLER);
-      if(!one_sided && i<= get_B_dims(0)/2) sgn = -1.0;
+      if(!one_sided && i<= get_omega_length()/2) sgn = -1.0;
       else sgn = 1.0;
       om_disp *= sgn;
       //Set spectrum axis to this value
@@ -507,7 +505,7 @@ bool spectrum::generate_spectrum(data_array &parent, int om_fuzz, int angle_type
       //We can assume either +ve and -ve k (include i_sgn in kx_high, or omega (include in om_low and high)
       
       tmp_sum = 0.0;
-      for(size_t j = 0; j< get_g_dims(1); j++){
+      for(size_t j = 0; j< get_angle_length(); j++){
         tantheta = get_ang_axis_element(j);
         theta = atan(tantheta);
 //----------Fuzz omega--------------------
@@ -575,7 +573,7 @@ bool spectrum::generate_spectrum(data_array &parent, int om_fuzz, int angle_type
       //Now the angles are done, we norm. g and set B
       //Use some small value to prevent a divide by zero
       if(std::abs(tmp_sum) > tiny_my_type){
-        for(size_t j = 0; j< get_g_dims(1); j++) set_g_element(i, j, get_g_element(i, j)/tmp_sum);
+        for(size_t j = 0; j< get_angle_length(); j++) set_g_element(i, j, get_g_element(i, j)/tmp_sum);
       }
       set_B_element(i, tmp_sum);
       //Store the max power for later
@@ -697,10 +695,10 @@ my_type spectrum::get_k(my_type omega, int wave_type, bool deriv, my_type theta)
 bool spectrum::calc_norm_B(){
 /** \brief Calculate norming of B(w)
 *
-* Calculate the total square integral of values over range \todo Is this data bare or squared? Which do we want?
+* Calculate the total square integral of values over range, int_{om_min}^{om_max} B^2(omega) d omega.
 */
 
-  int len = get_B_dims(0);
+  int len = get_omega_length();
   my_type * d_axis = (my_type *) calloc(len, sizeof(my_type));
   my_type * data = (my_type *) malloc(len*sizeof(my_type));
 
@@ -714,36 +712,36 @@ bool spectrum::calc_norm_B(){
   return 0;
 }
 
-bool spectrum::calc_norm_g(my_type omega){
+bool spectrum::calc_norm_g(size_t om_ind){
 /** \brief Normalise g_w(x)
 *
-*Calculate the norm of g used in e.g. denom of Albert eq 3 or calc'd in derivations.tex. We assume omega, x are off the axes already so no interpolation.  \todo Catch zero norms \todo test \todo Taking omega wont work how we want
+*Calculate the norm of g used in e.g. denom of Albert eq 3 or calc'd in derivations.tex. Contains one value for each omega entry.  \todo Catch zero norms \todo test
 */
 
-  size_t len = get_g_dims(1);
+  size_t len = get_angle_length();
   if(!my_controller) return 1;
   plasma plas = my_controller->get_plasma();
 
   my_type * d_axis = (my_type *) calloc(len, sizeof(my_type));
   my_type * integrand = (my_type *) calloc(len, sizeof(my_type));
 
-  for(size_t i=0; i<len-1; i++) d_axis[i] = get_ang_axis_element(i+1) - get_ang_axis_element(i);
-  //Construct dx axis for integration
+  for(size_t i = 0; i < len-1; i++) d_axis[i] = get_ang_axis_element(i+1) - get_ang_axis_element(i);
+  //Construct dx axis for integration. Note x = tan theta
 
   mu my_mu;
-
-  long om_ind = 0;
+  my_type x, psi, omega = get_om_axis_element(om_ind);
   
-  size_t lena = get_B_dims(0);
+  size_t lena = get_omega_length();
+  //Check omega index is in range
   if(!angle_is_function){
-    om_ind = where(get_omega_axis(lena), lena, omega);
+    //om_ind = where(get_omega_axis(lena), lena, omega);
+    if(om_ind >= lena) return 1;
+  }else{
+    //G has no dependence on omega, should be requesting only 0th element
+    if(om_ind > 0) return 1;
   }
-  if(om_ind<0) return 1;
-  //break if Omega is out of range
 
-  my_type x, psi;
-
-  for(size_t i=0; i<len; i++){
+  for(size_t i = 0; i < len; i++){
     x = get_ang_axis_element(i);
     psi = atan(x);
     my_mu = plas.get_root(0.0, omega, psi);
@@ -752,6 +750,7 @@ bool spectrum::calc_norm_g(my_type omega){
       integrand[i] = get_g_element(om_ind, i) * x * std::pow((std::pow(x, 2)+1.0), -1.5)*std::pow(my_mu.mu, 2) * std::abs( my_mu.mu + omega*my_mu.dmudom);
     }
     //product of g(theta) * x (x^2+1)^-(3/2) * mu^2 |mu+omega dmu/domega|
+    //See Derivations#Evaluation_of_G2 for details \todo Insert docs snippet link
   }
   
   //integrate
@@ -787,7 +786,7 @@ bool spectrum::truncate_om(my_type om_min, my_type om_max){
   }
 
   int index = -1;
-  int len = get_B_dims(0);
+  int len = get_omega_length();
 
   if(om_min > get_om_axis_element(1)){
     index=where_omega(om_min);
@@ -809,7 +808,7 @@ bool spectrum::truncate_om(my_type om_min, my_type om_max){
 bool spectrum::truncate_x(my_type x_min, my_type x_max){
 /** \brief Truncate angle distribution at x_min and x_max.
 *
-*Zeros all elements outside the range [x_min, x_max]. x_min must be < x_max. If x_min or max are out of range, nothing is done at that end. \todo Should we renorm. g now?
+*Zeros all elements outside the range [x_min, x_max]. x_min must be < x_max. If x_min or max are out of range, nothing is done at that end.
 */
 
   if(x_min >= x_max){
@@ -818,7 +817,7 @@ bool spectrum::truncate_x(my_type x_min, my_type x_max){
   }
 
   int index = -1;
-  size_t len = get_g_dims(1), om_len = get_g_dims(0);
+  size_t len = get_angle_length(), om_len = get_omega_length();
 
   if(x_min > TAN_MIN){
     index = where(get_angle_axis(len), len, x_min);
@@ -841,7 +840,9 @@ bool spectrum::truncate_x(my_type x_min, my_type x_max){
       }
     }
   }
-
+  for(size_t i = 0; i< om_len; i++){
+    calc_norm_g(get_om_axis_element(i));
+  }
   return 0;
 
 }
@@ -853,7 +854,7 @@ calc_type spectrum::check_upper(){
 */
 
   size_t stride = 1;
-  size_t ax_len = get_B_dims(0);
+  size_t ax_len = get_omega_length();
   size_t len = ax_len/2 - stride;
   my_type threshold = SPECTRUM_THRESHOLD*this->max_power;
   size_t index = 0;
@@ -895,7 +896,7 @@ calc_type spectrum::get_peak_omega(){
 
   calc_type value = -1.0, tmp;
   int index;
-  for(size_t i=0; i<get_B_dims(0); ++i){
+  for(size_t i = 0; i < get_omega_length(); ++i){
     tmp = get_B_element(i);
     if(tmp > value){
       index = i;
@@ -1022,7 +1023,7 @@ bool spectrum::read_from_file(std::fstream &file){
 calc_type spectrum::get_G1(calc_type omega){
 /** \brief G1 from Albert 2005.
 *
-*Gets the value of B(w) (interpolated if necessary) and the normalising constant from norm_B
+*Gets the value of B^2(w) (interpolated if necessary) and the normalising constant from norm_B
 \todo Does it matter that our k is limited? Do waves really go to low intensity in bit we see \todo Do we need the vg conversion factor? \todo CHECK and FIXXXX and test
 */
 
@@ -1074,7 +1075,7 @@ calc_type spectrum::get_G2(calc_type omega, calc_type x){
   my_type tmpg;
   my_type data_bit[2];
 
-  len = get_B_dims(0);
+  len = get_omega_length();
 
   if(!angle_is_function){
     om_ind = where(get_omega_axis(len), len, omega);

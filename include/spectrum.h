@@ -23,7 +23,7 @@ class controller;
 
 /** \brief A spectrum in omega and angle
 *
-*Holds data on the omega and angle distributions. The latter can depend on omega! Can be created/destroyed only by controllers, so has not public constructor/destructors. IMPORTANT: because we are working with FFT data, we assume the angle/frequency axis either covers some small cutout in +ve domain, or is symmetrical in positive and negative values. A few of the specific routines here use this to simplify things. The sign of omega is simply copied from the sign of k. The "angle" axis is stored as tan(theta) for theta the wave normal angle. Access to elements should use the wrappers at the bottom of spectrum.h, described in \ref spectAcc because internal layout could change in future
+*Holds data on the omega and angle distributions. If fed an FFTd data array this will be X^2(omega, theta) where X is E or B. The latter can depend on omega! Can be created/destroyed only by controllers, so has no public constructor/destructors. IMPORTANT: because we are working with FFT data, we assume the angle/frequency axis either covers some small cutout in +ve domain, or is symmetrical in positive and negative values. A few of the specific routines here use this to simplify things. The sign of omega is simply copied from the sign of k. The "angle" axis is stored as tan(theta) for theta the wave normal angle. Access to elements should use the wrappers at the bottom of spectrum.h, described in \ref spectAcc because internal layout could change in future \todo Breakout Albert stuff into seperate class or free functions
   \author Heather Ratcliffe \date 24/09/2015 \ingroup cls
 */
 class spectrum{
@@ -64,7 +64,7 @@ class spectrum{
 
 /********Spectrum operation helpers ****/
   bool calc_norm_B();
-  bool calc_norm_g(my_type omega);
+  bool calc_norm_g(size_t om_ind);
 
 /********Access wrappers ****/
 /** \ingroup spectAcc 
@@ -145,6 +145,9 @@ public:
   inline size_t get_g_dims(size_t i)const{return this->g_angle_array.get_dims(i);}
   inline size_t get_B_dims()const{return this->B_omega_array.get_dims();}
   inline size_t get_B_dims(size_t i)const{return this->B_omega_array.get_dims(i);}
+  inline size_t get_angle_length()const{return this->g_angle_array.get_dims(1);}
+  inline size_t get_omega_length()const{return this->B_omega_array.get_dims(0);}
+  
 /** @} */
 
 #ifdef RUN_TESTS_AND_EXIT

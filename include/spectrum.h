@@ -40,7 +40,7 @@ class spectrum{
   int function_type;/**< Type code for angular function. See support.h */
   size_t smooth;/**<Smoothing applied to B_omega, if any*/
   my_type norm_B;/**< Norm of B(w)*/
-  my_type * norm_g;/**< Norms of g_w(x) for each w*/
+  my_type * norm_g;/**< Norms of g_w(x) for each w. Note even if g itself indep of omega, this is NOT*/
 
 /********Basic setup and allocation functions ****/
   void construct();
@@ -136,8 +136,8 @@ public:
   inline my_type get_om_axis_element(size_t nx)const{return B_omega_array.get_axis_element(0, nx);}
   inline my_type get_ang_axis_element(size_t nx)const{return g_angle_array.get_axis_element(1, nx);}
 
-  inline size_t get_om_axis_index_from_value(my_type omega)const{return B_omega_array.get_axis_index_from_value(0, omega);}
-  inline size_t get_ang_axis_index_from_value(my_type ang)const{return g_angle_array.get_axis_index_from_value(1, ang);}
+  inline long get_om_axis_index_from_value(my_type omega)const{return B_omega_array.get_axis_index_from_value(0, omega);}
+  inline long get_ang_axis_index_from_value(my_type ang)const{return g_angle_array.get_axis_index_from_value(1, ang);}
 
   inline void set_om_axis_element(size_t nx, my_type val){B_omega_array.set_axis_element(0, nx, val);g_angle_array.set_axis_element(0, nx, val);}
   inline void set_ang_axis_element(size_t nx, my_type val){g_angle_array.set_axis_element(1, nx, val);}

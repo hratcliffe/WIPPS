@@ -405,16 +405,15 @@ my_type * data_array::get_axis(size_t dim, size_t & length){
 
 }
 
-size_t data_array::get_axis_index_from_value(size_t dim, my_type value)const{
+long data_array::get_axis_index_from_value(size_t dim, my_type value)const{
 /** Get the index on axis dim of value value*/
   size_t len = dims[dim];
   long index = get_axis_index(dim, 0);
   if(index != -1){
     long where_val = where(axes+index, len, value);
-    if(where_val >= 0) return where_val;
-    else return 0;
+    return where_val;
   }else{
-    return 0;
+    return -1;
   }
 }
 

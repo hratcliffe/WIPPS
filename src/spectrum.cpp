@@ -742,7 +742,7 @@ bool spectrum::calc_norm_g(size_t om_ind){
     my_mu = plas.get_root(0.0, omega, psi);
     if(!my_mu.err){
       if(g_is_angle_only){
-        g_el = get_g_element(0, i);
+        g_el = get_g_element(i);
       }else{
         g_el = get_g_element(om_ind, i);
       }
@@ -798,17 +798,36 @@ bool spectrum::truncate_om(my_type om_min, my_type om_max){
 
   int index = -1;
   int len = get_omega_length();
+  int len_ang = get_angle_length();
 
   if(om_min > get_om_axis_element(1)){
-    index=where_omega(om_min);
-    if(index != -1) for(int i=0; i< index; i++) set_B_element(i, 0.0);
+    index = where_omega(om_min);
+    if(index != -1){
+      for(int i=0; i< index; i++){
+        set_B_element(i, 0.0);
+        if(!g_is_angle_only){
+          for(size_t j = 0; j< len_ang; j++){
+            set_g_element(i, j, 0.0);
+          }
+        }
+      }
     //Zero up to om_min
+    }
   }
 
   if(om_max < get_om_axis_element(len-1)){
-    index=where_omega(om_max);
-    if(index != -1) for(int i = index; i< len; i++) set_B_element(i, 0.0);
+    index = where_omega(om_max);
+    if(index != -1){
+      for(int i = index; i< len; i++){
+        set_B_element(i, 0.0);
+        if(!g_is_angle_only){
+          for(size_t j = 0; j< len_ang; j++){
+            set_g_element(i, j, 0.0);
+          }
+        }
+      }
     //Zero after om_max
+    }
   }
 
   calc_norm_B();
@@ -1116,14 +1135,14 @@ calc_type get_G2(spectrum * my_spect, calc_type omega, calc_type x){
 
   }else if(offset == 0){
     //we're right at end, can't meaningfully interpolate, use raw
-    tmpg = my_spect->get_g_element(offset, om_ind);
+    tmpg = my_spect->get_g_element(om_ind, offset);
 
   }else{
     //offset <0 or > len, value not found
     tmpg = 0.0;
   }
-  
-  if(offset >= 0 && om_ind >= 0){
+
+  if(offset >= 0 && norm_ind >= 0){
     return tmpg/my_spect->get_norm_g(norm_ind);
   }
   else return 0.0;

@@ -1,11 +1,12 @@
 \documentclass[]{article}
 \usepackage[lmargin = 3cm, rmargin = 3cm]{geometry}
 \usepackage{amsmath}
-\title{Derivation of resonant frequencies}
+\usepackage{hyperref}
+\title{Derivations of Diffusion coefficient factors}
 
 \begin{document}
-
-\section{Resonant frequency}
+\tableofcontents
+\section{Resonant frequencies in high-density approximation}
 Start from Stix Equation 2.45 for the Right hand mode, noting that $\Omega_c$ contains the \emph{sign} of the particle charge:
 \begin{equation}\label{A}
 \mu^2 =  1 - \frac {\omega_{pe}^2}{\omega(\omega + \Omega_e \cos\theta)}
@@ -65,7 +66,8 @@ or dividing through by $(\omega_{ref})^3$:
 \end{align}
 which are expected to be order 1 for $n \sim 1$ and $\tilde{v}, \cos\theta \sim 1$.
 
-\section{Normalisation of angular distribution}
+\section{Normalisation of angular distribution, $N(\omega)$}
+\label{NormingAngDistrib}
 \newcommand{\atan}{\mathrm{atan}}
 \newcommand{\st}{\right|}
 
@@ -77,18 +79,29 @@ Using Eq A6:
 \begin{equation}
 J \left( \frac{k_\perp, k_\parallel}{\omega, x} \right) = - \left.\frac{\partial k_\perp}{\partial x}\right|_\omega \cdot \left.\frac{\partial k_\parallel}{\partial \omega}\right|_{k_\perp}, 
 \end{equation}
-We don't yet assume symmetry in $x$ so the integral is $-\infty$ to $\infty$.
 
-\subsection{IBP}
-Since we have a term $k_\perp  \frac{\partial k_\perp}{\partial x}= \frac{\partial (k_\perp^2)}{2 \partial x}$ it suggests we can use integration by parts on this. We need
+\noindent Using $k_\perp = x k_\parallel$ and $ \mu = c k /\omega$ we get 
+\begin{equation}
+\frac{\partial k_\perp}{\partial x} = \left. \frac{\partial}{\partial x} \left( x \cos(\atan x) \frac{\mu(x) \omega}{c}\right)\st_\omega.
+\end{equation}
+Using the chain rule:
+\begin{equation}
+\frac{\partial k_\perp}{\partial x} = \frac{\partial}{\partial x} \left( x \cos(\atan x)\right) \frac{\mu(x) \omega}{c} + x \cos(\atan x)\frac{\omega}{c}\frac{\partial \mu(x)}{\partial x}.
+\end{equation}
+Note that 
 \begin{align}
-N(\omega) = \frac{2}{(2\pi)^2} \int_0^\infty g_\omega( \tan^{-1} x ) \left| \frac{\partial k_\perp}{\partial x}k_\perp\right|_\omega \left| \frac{\partial k_\parallel}{\partial \omega}\right|_{k_\perp}   d x
+\cos(\atan x) = \frac{1}{\sqrt{(x^2 + 1)}}, & \sin(\atan x) = \frac{x}{\sqrt{(x^2 + 1)}}
 \end{align}
-%Using $k_\perp = x k_\parallel$ and $ \mu = c k /\omega$ we get
-%\begin{align}
-%k_\perp \frac{\partial k_\perp}{\partial x} &= \frac{\partial (k_\perp^2)}{2 \partial x}
-%\end{align}
-The other term we need is 
+then we get
+\begin{equation}
+\frac{\partial k_\perp}{\partial x} = \frac{1}{(x^2+1)^\frac{3}{2}} \frac{\mu(x) \omega}{c} +\frac{x}{\sqrt{(x^2+1)}} \frac{\omega}{c}\frac{\partial \mu(x)}{\partial x}. 
+\end{equation}
+However, we need to evaluate this at a fixed $\omega$ which means that $ck/\mu = \mathrm{Const}$ and as $k$ is a free variable the $\partial\mu/\partial x$ must be 0. This then becomes
+\begin{equation}
+\left.\frac{\partial k_\perp}{\partial x}\st_\omega = \frac{\omega}{c \sqrt{(x^2+1)}}\frac{\mu(x)}{(1+x^2)} .
+\end{equation}
+
+\noindent The other term we need is 
 \begin{equation}\label{kpar_omega} \left.\frac{\partial k_\parallel}{\partial \omega}\right|_{k_\perp}, 
 \end{equation}
 We can implicitly differentiate $k^2 = k_\parallel^2 + k_\perp^2$ as $ 2 k dk = 2 k_\perp dk_\perp + 2 k_\parallel dk_\parallel$ which for $k_\perp$ held constant means
@@ -106,87 +119,32 @@ So
 \end{align}
 Alternately we write $k_\parallel = (k^2 - k_\perp^2)^{1/2}$ and differentiate this by $\omega$ to get the same result. We note that this term is to be evaluated at constant $k_\perp$, or equivalently constant $ x \mu / \sqrt{x^2 +1}$, and that $k/k_\parallel = \sqrt{x^2 +1}$
 
-Using the standard expression for 3-term IBP, i.e.
-\begin{align}\label{IBP}
-\int_a^b u v dw = [uvw]_a^b - \int_a^b uw dv - \int_a^b vw du
-\end{align} we put
-\begin{align}
-u&= \sqrt{x^2 +1} \left.\left( \frac{\partial \mu}{\partial \omega} + \frac {\mu}{\omega}\right) \st_{k_\perp}\\
-v&=g(x)\\
-dw &= \frac{\partial}{\partial x}\left(\frac{x^2 \mu^2}{x^2 +1}\right)
-\end{align}
-Then we need $\frac{\partial u}{\partial x}$. But we know that in $u$ $ x \mu / \sqrt{x^2 +1}$ is constant. So
-\begin{align}
-\frac{\partial u}{\partial x} &= \frac{\partial}{\partial x} \left[ \frac{x^2+1}{x} \left( \frac{\partial}{\partial \omega} \frac{x \mu}{\sqrt{x^2+1}}  + \frac{x \mu}{\omega\sqrt{x^2+1}} \right)\right]\\
-&=\frac{\partial}{\partial x} \left(\frac{x^2+1}{x} \right) \left( \frac{\partial}{\partial \omega} \frac{x \mu}{\sqrt{x^2+1}}  + \frac{x \mu}{\omega\sqrt{x^2+1}} \right)
-\end{align}
-And $w$ is trivially integrated.
-%\begin{align}
-%\int_0^\infty \left| \frac{\partial k_\perp}{\partial x}k_\perp\right|_\omega \left| \frac{\partial k_\parallel}{\partial \omega}\right|_{k_\perp}   d x &= \int_0^\infty \frac{x^2 \mu^2}{x^2 +1} \frac{x^2-1}{x^2}  \frac{x}{\sqrt{x^2 +1}} \left( \frac{\partial \mu}{\partial \omega} + \frac{ \mu}{\omega} \right)  d x\\
-%&=\int_0^\infty \frac{\mu^2 (x^2-1) x}{(x^2 +1)^{3/2}} \left( \frac{\partial \mu}{\partial \omega} + \frac{ \mu}{\omega} \right)  d x
-%\end{align}
-Now taking terms one by one in \ref{IBP} and assuming well behaved $\mu, g(x)$ and $g(x)\rightarrow 0, x\rightarrow \infty$ and symmetry of $g$, hence antisymmetry of $dg/dx$:
-\begin{align}
-[uvw] &= 0 \\
-\int u w dv &= \int f(x^2) \frac{dg}{dx}\notag\\
-&= 0 \; \left(f(x^2) \;\mathrm{symmetric \,by\, definition}\: \frac{dg}{dx} \;\mathrm{antisymmetric}\right)\\
-\int vw du &= \int g(x) \frac{\mu^2 (x^2-1) x}{(x^2 +1)^{3/2}} \left( \frac{\partial \mu}{\partial \omega} + \frac{ \mu}{\omega} \right)  d x
-\end{align}
-Then the full expression becomes \begin{equation}\label{N_IBP}
-N(\omega) = \frac{\omega^3}{(2\pi)^2 c^3} \int_{-\infty}^\infty g_\omega( \atan x ) 
- \frac{\mu(x)^2 x (x^2-1)}{(1+x^2)^{3/2}}
- \left| \frac{\partial \mu}{\partial \omega} + \frac {\mu}{\omega}\right|
- d x .
-\end{equation}
-
-\subsection{Erroneous? Full expansion}
-Left here for information. Note this needs to then account for the restriction on the term in \ref{kpar_omega}. 
-Using $k_\perp = x k_\parallel$ and $ \mu = c k /\omega$ we get 
-\begin{equation}
-\frac{\partial k_\perp}{\partial x} = \left. \frac{\partial}{\partial x} \left( x \cos(\atan x) \frac{\mu(x) \omega}{c}\right)\st_\omega.
-\end{equation}
-Using the chain rule:
-\begin{equation}
-\frac{\partial k_\perp}{\partial x} = \frac{\partial}{\partial x} \left( x \cos(\atan x)\right) \frac{\mu(x) \omega}{c} + x \cos(\atan x)\frac{\omega}{c}\frac{\partial \mu(x)}{\partial x}.
-\end{equation}
-Note that 
-\begin{align}
-\cos(\atan x) = \frac{1}{\sqrt{(x^2 + 1)}}, & \sin(\atan x) = \frac{x}{\sqrt{(x^2 + 1)}}
-\end{align}
-then we get
-\begin{equation}
-\frac{\partial k_\perp}{\partial x} = \frac{1}{(x^2+1)^\frac{3}{2}} \frac{\mu(x) \omega}{c} +\frac{x}{\sqrt{(x^2+1)}} \frac{\omega}{c}\frac{\partial \mu(x)}{\partial x},
-\end{equation}
-which becomes
-\begin{equation}
-\left.\frac{\partial k_\perp}{\partial x}\st_\omega = \frac{\omega}{c \sqrt{(x^2+1)}}\left( \frac{\mu(x)}{(1+x^2)}  + x \frac{\partial \mu(x)}{\partial x}\right).
-\end{equation}
-
-The other term was found in previous section, so we get:
+\noindent Using these we get:
 \begin{equation}
 N(\omega) = \frac{2  \omega^2}{(2\pi)^2 c^2} \int_0^\infty g_\omega( \tan^{-1} x )
-\left| \frac{\mu(x)}{(1+x^2)}  + x \frac{\partial \mu(x)}{\partial x}\right|
+\left| \frac{\mu(x)}{(1+x^2)} \right|
 \left| \frac{\partial \mu}{\partial \omega} + \frac {ck}{\omega^2}\right|
  k_\perp d x .
 \end{equation}
 The final step is to eliminate $k_\perp$ in favour of $\omega, x, \mu(\omega, x)$, using $ k_\perp = \mu \omega \sin(\atan x)/c$ to get 
-\begin{equation}
+\begin{equation}\label{N_om}
 N(\omega) = \frac{2  \omega^3}{(2\pi)^2 c^3} \int_0^\infty g_\omega( \atan x ) 
-\frac{x \mu(x, \omega)}{\sqrt{(x^2 + 1)}}  \left| \frac{\mu(x)}{(1+x^2)}  + x \frac{\partial \mu(x)}{\partial x}\right|
+\frac{x \mu^2(x, \omega)}{(x^2 + 1)^{3/2}}
  \left| \frac{\partial \mu}{\partial \omega} + \frac {\mu}{\omega}\right|
  d x .
 \end{equation}
 
 \section{Obtaining Lyons A7}
+
 Substitute Lyons Eq (12) for Whistler mode (rewritten in terms of $x = \tan \theta$):
 \begin{align}
 &\mu^2 = \frac{\omega_{pe}^2}{\Omega_c^2}\frac{1+M}{M} \Psi^{-1} =: A \Psi^{-1}\\
 &\Psi = 1 - \frac{\omega^2}{\Omega_p\Omega_e} - \frac{x^2}{2(x^2 + 1)} + \left[\frac{x^4}{4(x^2+1)^2} + \left(\frac{\omega}{\Omega_p}\right)^2(1-M)^2\frac{1}{x^2 +1}\right]^{1/2}
-\end{align} into \ref{N_IBP}
+\end{align} into \ref{N_om} with $M = m_e /m_p$
 to get
 \begin{equation}
 N(\omega) = \frac{\omega^3}{(2\pi)^2 c^3} \int_{-\infty}^\infty g_\omega( \atan x ) 
- \frac{x (x^2-1)}{(1+x^2)^{3/2}} A \Psi^{-1}
+ \frac{x}{(1+x^2)^{3/2}} A \Psi^{-1}
   \left( A^{1/2}\frac{\partial  \Psi^{-1/2}}{\partial \omega} + \frac {A^{1/2}\Psi^{-1/2}}{\omega}\right) d x .
 \end{equation} Then
 \begin{align}
@@ -205,12 +163,15 @@ So
 And finally
 \begin{align}
 N(\omega) &= A^{3/2}\frac{\omega^2}{(2\pi)^2 c^3} \int_{-\infty}^\infty g_\omega( x ) 
- \frac{x (x^2-1)}{(1+x^2)^{3/2}} ((1+x^2) \Psi)^{-\frac{3}{2}}\times\notag\\
+ \frac{x}{(1+x^2)^{3/2}} ( \Psi)^{-\frac{3}{2}}\times\notag\\
 & \left( 1 +\Psi^{-1} \left[  \frac{ \omega^2}{\Omega_p\Omega_e} - \frac{1}{2}\left[(1+x^2)\left(\Psi - 1 + \frac{\omega^2}{\Omega_p\Omega_e}\right) + \frac{x^2}{2}\right]^{-1} \frac{\omega^2}{\Omega_p^2}(1-M)^2  \right] \right)
 d x .
 \end{align} 
 
-
+Note that the second factor is defined as $I(\omega)$, 
+\begin{align}
+I(\omega) := \left( 1 +\Psi^{-1} \left[  \frac{ \omega^2}{\Omega_p\Omega_e} - \frac{1}{2}\left[(1+x^2)\left(\Psi - 1 + \frac{\omega^2}{\Omega_p\Omega_e}\right) + \frac{x^2}{2}\right]^{-1} \frac{\omega^2}{\Omega_p^2}(1-M)^2  \right] \right)
+\end{align}
 
 %\begin{align}
 %N(\omega) &= \frac{2  \omega^3 A^{3/2}}{(2\pi)^2 c^3} \int g_\omega( \atan x ) 
@@ -284,7 +245,7 @@ d x .
 %%\end{align}
 %
 
-\section{Evaluation of G2}
+\section{G2 transformation to tan axis}
 G2 in Albert (2005) is integral over theta, but in our case we have a $\tan(\theta)$ axis so we transform 
 \begin{equation}
 x = \tan(\theta)
@@ -303,17 +264,163 @@ providing $\cos\theta \ne 0$. Similarly, the $\sin\theta$ term is
 %= \frac{\tan\theta}{\sqrt{\tan^2 \theta + 1}}
 %\tan^2\theta + 1 = \sec^2(\theta) = \frac{1}{\cos^2(\theta)}
 \end{equation}
-so the $\sin\theta \mathrm{d}\theta$ becomes
-\begin{equation}
-\tan\theta \cos^3\theta \mathrm{d}\tan\theta= \frac{\tan\theta}{(\tan^2 \theta + 1)^{3/2}}\mathrm{d}\tan\theta
+so using $ \tan^2\theta + 1 = \sec^2\theta$ we get
+\begin{equation}\label{TanTransform}
+\sin\theta \mathrm{d}\theta = \tan\theta \cos^3\theta \mathrm{d}\tan\theta= \frac{\tan\theta}{(\tan^2 \theta + 1)^{3/2}}\mathrm{d}\tan\theta = \frac{x}{(x^2+1)^{3/2}} f\mathrm{d}x
 \end{equation}
 
 
+\section{Relation of Alberts G1 and G2 to Lyons equations}
+Consider Albert Eq 2 (Al2) which is
+\begin{align}
+D_{\alpha\alpha}^{nx} &= \frac{B_{wave}^2}{B_0^2}(mv)^2 \frac{\pi}{2}\frac{\Omega_c^2}{\Delta\omega}\frac{\cos^2\theta}{|v_\parallel/c|^3}  \Phi_n^2 \frac{(-\sin^2\alpha + \omega_n/\omega)^2}{|1-(\partial \omega/\partial k_\parallel)_x/v_\parallel |} G_1 G_2\\
+G_1(\omega) &= \frac{(\Delta \omega)B^2(\omega)}{\int B^2(\omega^\prime) \mathrm{d} \omega^\prime}\\
+G_2(\omega, \theta) &= \frac{g_\omega(\theta)}{\int g_\omega(\theta^\prime) \mu^2 | \mu + \omega \partial\mu/\partial\omega| \sin \theta^\prime \mathrm{d} \theta^\prime}\label{Alb_G_2}
+\end{align}
+noting that we have restored the normalisation factors from
+\begin{equation}
+D_{xx} = \Omega_c (B_{wave}^2/B_0^2)(mv)^2 D^{norm}_{xx}
+\end{equation}
+and that
+\begin{equation}
+B_{wave}^2 = \int B^2(\omega^\prime)\mathrm{d}\omega^\prime
+\end{equation}
+
+$\Phi_n^2$ is as in Lyons, Eq 9 (Ly9) and contains some Bessel functions etc etc
+
+Ly2 should match Al2. Take Ly2 and subs for $\Theta$ as given before 9, and get $|B|$ from the appendix:
+\begin{align}
+D_{\alpha\alpha}^{nk_\perp} &= \mathrm{lim}_{V\rightarrow \infty} \frac{\pi q^2}{(2\pi)^2 V m^2 v_\parallel} \left[ \frac{-\sin^2\alpha + n \Omega/\omega_k}{\cos \alpha}\right]^2 \frac{ |B_k|^2 |\Phi_{n,k}|^2}{\mu^2 |1-(\partial \omega_k/\partial k_\parallel)_x/v_\parallel |}\\
+|B_k|^2 &= \frac{V}{N(\omega)}B^2(\omega)g_\omega(\theta)
+\end{align}
+where $q, m$ are the (per species) charge and mass respectively. Derivation of $N(\omega)$ following Lyons was done above. 
+
+They look fairly consistent, so let's rearrange the Lyons one to match the Albert:
+\begin{align}
+D_{\alpha\alpha}^{nk_\perp} &= \mathrm{lim}_{V\rightarrow \infty} \frac{\pi q^2}{(2\pi)^2 V m^2 v_\parallel} \left[ \frac{-\sin^2\alpha + n \Omega/\omega_k}{\cos \alpha}\right]^2 \frac{ |\Phi_{n,k}|^2}{\mu^2 |1-(\partial \omega_k/\partial k_\parallel)_x/v_\parallel|} \frac{V}{N(\omega)}B^2(\omega)g_\omega(\theta)
+\end{align}
+Cancel the $V$ and subs the prefactors of $N$ from Eq \ref{N_om} so that 
+\begin{equation} \label{N_prime} N(\omega) =: N^\prime(\omega) \frac{\omega^3}{(2\pi)^2 c^3}\end{equation}
+\begin{align}
+D_{\alpha\alpha}^{nk_\perp} &= \frac{\pi q^2}{m^2 v_\parallel} \left[ \frac{-\sin^2\alpha + n \Omega/\omega_k}{\cos \alpha}\right]^2 \frac{ |\Phi_{n,k}|^2}{\mu^2 |1-(\partial \omega_k/\partial k_\parallel)_x/v_\parallel|} \frac{1}{N^\prime(\omega)}B^2(\omega)g_\omega(\theta)\frac{ c^3}{\omega^3}
+\end{align}
+$\cos^2 \alpha$ can be replaced by $(v_\parallel/v)^2$
+
+\begin{align}\label{LyMid}
+D_{\alpha\alpha}^{nk_\perp} &= \frac{\pi q^2 v^2}{m^2 (v_\parallel/c)^3 \omega^3} \frac{1}{\mu^2} |\Phi_{n,k}|^2 \frac{ (-\sin^2\alpha + n \Omega/\omega_k)^2}{ |1-(\partial \omega_k/\partial k_\parallel)_x/v_\parallel|} \frac{1}{N^\prime(\omega)}B^2(\omega)g_\omega(\theta)
+\end{align}
+
+Tackle G1 and G2 next. Starting from Eq \ref{N_om} and Eq \ref{N_prime}
+\begin{equation}
+N^\prime(\omega) =\int_{-\infty}^\infty g_\omega( \atan x ) 
+ \frac{\mu(x)^2 x}{(1+x^2)^{3/2}}
+ \left| \frac{\partial \mu}{\partial \omega} + \frac {\mu}{\omega}\right|
+ d x
+\end{equation} and Eq \ref{Alb_G_2} with Eq \ref{TanTransform} which gives a denominator of
+\begin{align}
+G2_{denom} &= \int g_\omega(\theta^\prime) \mu^2 | \mu + \omega \partial\mu/\partial\omega| \sin \theta^\prime \mathrm{d} \theta^\prime\\
+&=\int g_\omega(atan(x^\prime)) \mu^2 | \mu + \omega \partial\mu/\partial\omega|  \frac{x^\prime}{((x^\prime)^2 + 1)^{3/2}}\mathrm{d}x^\prime
+\end{align}
+i.e.
+\begin{align}
+G2_{denom} = \omega N^\prime(\omega)
+\end{align}
+For G1 we just absorb the $B^2_{wave}$ and $\Delta \omega$ and so Eq \ref{LyMid} becomes
+
+\begin{align}\label{LyMid}
+D_{\alpha\alpha}^{nk_\perp} &= \frac{\pi q^2 v^2}{m^2 (v_\parallel/c)^3 \omega^3} \frac{1}{\mu^2} |\Phi_{n,k}|^2 \frac{ (-\sin^2\alpha + n \Omega/\omega_k)^2}{ |1-(\partial \omega_k/\partial k_\parallel)_x/v_\parallel|} \frac{G_1}{\Delta \omega} B^2_{wave} \omega G_2
+\end{align}
+Recalling
+\begin{align}
+\frac{c k}{\omega} &= \mu(\omega) = \frac{c k_\parallel}{ \omega \cos\theta}\\
+\omega -k_\parallel v_\parallel &= \frac{n \Omega_e}{\gamma}
+\end{align} we get
+\begin{align}\label{LyMid2}
+D_{\alpha\alpha}^{nk_\perp} &= \frac{\pi q^2 v^2}{m^2 (v_\parallel/c)^3}\frac{1}{c^2 k^2} |\Phi_{n,k}|^2 \frac{ (-\sin^2\alpha + n \Omega/\omega_k)^2}{ |1-(\partial \omega_k/\partial k_\parallel)_x/v_\parallel|} \frac{G_1}{\Delta \omega} B^2_{wave} G_2
+\end{align}
+
+Then  using $ \Omega_c = q B_0 / m_e c$ we find
+
+\begin{align}\label{LyMid3}
+D_{\alpha\alpha}^{nk_\perp} &= \frac{B^2_{wave}}{B_0^2} \frac{\pi v^2 \Omega_c^2}{\Delta \omega(v_\parallel/c)^3}\frac{1}{ k^2} |\Phi_{n,k}|^2 \frac{ (-\sin^2\alpha + n \Omega/\omega_k)^2}{ |1-(\partial \omega_k/\partial k_\parallel)_x/v_\parallel|} G_1 G_2
+\end{align}
+
+However, this is the expression for $D(k_\perp)$ while Albert has $D(x)$, so comparing Ly1 to Alb5 implies
+\begin{equation}
+D_{\alpha\alpha} = \int x D(x) \mathrm{d}x = \int k_\perp D(k_\perp) \mathrm{d} k_\perp
+\end{equation}
+and we must multiply the Lyons result by $k_\perp/x dk_\perp/dx$. $dk_\perp/dx = k (x^2+1)^{-3/2}$ and so
+\[ \frac{k_\perp}{x}\frac{\mathrm{d} k_\perp}{\mathrm{d} x} = \frac{k^2}{(x^2+1)}  = k^2 \cos^4\theta\]
+so we end up with, after reordering terms
+\begin{align}\label{LyEnd}
+D_{\alpha\alpha}^{nx} &= \frac{B^2_{wave}}{B_0^2} \pi v^2 \frac{ \Omega_c^2 }{\Delta \omega}\frac{\cos^4\theta}{(v_\parallel/c)^3} |\Phi_{n,k}|^2 \frac{ (-\sin^2\alpha + n \Omega/\omega_k)^2}{ |1-(\partial \omega_k/\partial k_\parallel)_x/v_\parallel|} G_1 G_2
+\end{align}
+
+NB NB NB we have some erroneous $m^2$ and a $cos^4$ instead of 2
+
+
+\begin{align}
+D_{\alpha\alpha}^{nx} &= \frac{B_{wave}^2}{B_0^2}(mv)^2 \frac{\pi}{2}\frac{\Omega_c^2}{\Delta\omega}\frac{\cos^2\theta}{|v_\parallel/c|^3}  \Phi_n^2 \frac{(-\sin^2\alpha + \omega_n/\omega)^2}{|1-(\partial \omega/\partial k_\parallel)_x/v_\parallel|} G_1 G_2 \end{align}
+
+
 \begin{equation}
 \end{equation}
 
+\appendix
+\section{Failing attempt to derive Lyons N factor using IBP}
+Since we have a term $k_\perp  \frac{\partial k_\perp}{\partial x}= \frac{\partial (k_\perp^2)}{2 \partial x}$ it suggests we can use integration by parts on this. We need
+\begin{align}
+N(\omega) = \frac{2}{(2\pi)^2} \int_0^\infty g_\omega( \tan^{-1} x ) \left| \frac{\partial k_\perp}{\partial x}k_\perp\right|_\omega \left| \frac{\partial k_\parallel}{\partial \omega}\right|_{k_\perp}   d x
+\end{align}
+%Using $k_\perp = x k_\parallel$ and $ \mu = c k /\omega$ we get
+%\begin{align}
+%k_\perp \frac{\partial k_\perp}{\partial x} &= \frac{\partial (k_\perp^2)}{2 \partial x}
+%\end{align}
 
+The other term is as in \ref{NormingAngDistrib}.
 
+Using the standard expression for 3-term IBP, i.e.
+\begin{align}\label{IBP}
+\int_a^b u v dw = [uvw]_a^b - \int_a^b uw dv - \int_a^b vw du
+\end{align} we put
+\begin{align}
+u&= \sqrt{x^2 +1} \left.\left( \frac{\partial \mu}{\partial \omega} + \frac {\mu}{\omega}\right) \st_{k_\perp}\\
+v&=g(x)\\
+dw &= \frac{\partial}{\partial x}\left(\frac{x^2 \mu^2}{x^2 +1}\right)
+\end{align}
+Then we need $\frac{\partial u}{\partial x}$. But we know that in $u$ $ x \mu / \sqrt{x^2 +1}$ is constant. So
+\begin{align}
+\frac{\partial u}{\partial x} &= \frac{\partial}{\partial x} \left[ \frac{x^2+1}{x} \left( \frac{\partial}{\partial \omega} \frac{x \mu}{\sqrt{x^2+1}}  + \frac{x \mu}{\omega\sqrt{x^2+1}} \right)\right]\\
+&=\frac{\partial}{\partial x} \left(\frac{x^2+1}{x} \right) \left( \frac{\partial}{\partial \omega} \frac{x \mu}{\sqrt{x^2+1}}  + \frac{x \mu}{\omega\sqrt{x^2+1}} \right)
+\end{align}
+And $w$ is trivially integrated.
+%\begin{align}
+%\int_0^\infty \left| \frac{\partial k_\perp}{\partial x}k_\perp\right|_\omega \left| \frac{\partial k_\parallel}{\partial \omega}\right|_{k_\perp}   d x &= \int_0^\infty \frac{x^2 \mu^2}{x^2 +1} \frac{x^2-1}{x^2}  \frac{x}{\sqrt{x^2 +1}} \left( \frac{\partial \mu}{\partial \omega} + \frac{ \mu}{\omega} \right)  d x\\
+%&=\int_0^\infty \frac{\mu^2 (x^2-1) x}{(x^2 +1)^{3/2}} \left( \frac{\partial \mu}{\partial \omega} + \frac{ \mu}{\omega} \right)  d x
+%\end{align}
+Now taking terms one by one in \ref{IBP} and assuming well behaved $\mu, g(x)$ and $g(x)\rightarrow 0, x\rightarrow \infty$ and symmetry of $g$, hence antisymmetry of $dg/dx$:
+\begin{align}
+[uvw] &= 0 \\
+\int u w dv &= \int f(x^2) \frac{dg}{dx}\notag\\
+&= 0 \; \left(f(x^2) \;\mathrm{symmetric \,by\, definition}\: \frac{dg}{dx} \;\mathrm{antisymmetric}\right)\\
+\int vw du &= \int g(x) \frac{\mu^2 (x^2-1) x}{(x^2 +1)^{3/2}} \left( \frac{\partial \mu}{\partial \omega} + \frac{ \mu}{\omega} \right)  d x
+\end{align}
+Then the full expression becomes \begin{equation}\label{N_IBP}
+N(\omega) = \frac{\omega^3}{(2\pi)^2 c^3} \int_{-\infty}^\infty g_\omega( \atan x ) 
+ \frac{\mu(x)^2 x (x^2-1)}{(1+x^2)^{3/2}}
+ \left| \frac{\partial \mu}{\partial \omega} + \frac {\mu}{\omega}\right|
+ d x .
+\end{equation}
 
+*******
+NB NB NB NB We expected instead this:
+\begin{equation}\label{N_IBP}
+N(\omega) = \frac{\omega^3}{(2\pi)^2 c^3} \int_{-\infty}^\infty g_\omega( \atan x ) 
+ \frac{\mu(x)^2 x}{(1+x^2)^{3/2}}
+ \left| \frac{\partial \mu}{\partial \omega} + \frac {\mu}{\omega}\right|
+ d x .
+\end{equation}
+
+and the other derivation appears to get this correctly
 
 \end{document}

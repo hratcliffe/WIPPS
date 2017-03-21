@@ -21,9 +21,9 @@
 
 tests * test_bed;/**<Global testbed controlling tests*/
 
-const int err_codes[err_tot] ={TEST_PASSED, TEST_WRONG_RESULT, TEST_NULL_RESULT, TEST_ASSERT_FAIL, TEST_USERDEF_ERR1, TEST_USERDEF_ERR2, TEST_USERDEF_ERR3, TEST_USERDEF_ERR4, TEST_FATAL_ERR};/**< List of error codes available*/
+const int err_codes[err_tot] ={TEST_PASSED, TEST_WRONG_RESULT, TEST_NULL_RESULT, TEST_ASSERT_FAIL, TEST_USERDEF_ERR1, TEST_USERDEF_ERR2, TEST_USERDEF_ERR3, TEST_USERDEF_ERR4, TEST_REMOVE_ERR, TEST_FATAL_ERR};/**< List of error codes available*/
 
-std::string err_names[err_tot]={"None", "Wrong result", "Invalid Null result", "Assignment or assertion failed", "{Message 1 here}", "{Message 2 here}", "{Message 3 here}", "{Message 4 here}", "Fatal error"};/**< Names corresponding to error codes, which are reported in log files*/
+std::string err_names[err_tot]={"None", "Wrong result", "Invalid Null result", "Assignment or assertion failed", "{Message 1 here}", "{Message 2 here}", "{Message 3 here}", "{Message 4 here}", "SQUASHED ERRORS", "Fatal error"};/**< Names corresponding to error codes, which are reported in log files*/
 
 void tests::set_verbosity(size_t verb){
 /** \brief Set verbosity
@@ -103,8 +103,13 @@ void tests::report_err(int err, int test_id){
 *
 * Logs error text corresponding to code err for test defined by test_id. Errors are always recorded.*/
   if(test_id == -1) test_id = current_test_id;
-  if(err ==TEST_PASSED) set_colour('b');
-  else set_colour('r');
+  if(err ==TEST_PASSED || err == TEST_REMOVE_ERR){
+    set_colour('b');
+  }else if((err & TEST_REMOVE_ERR) == TEST_REMOVE_ERR){
+    set_colour('y');
+  }else{
+    set_colour('r');
+  }
   if(is_fatal(err)) set_colour('*');
   my_error_print(outfile, get_printable_error(err, test_id), mpi_info.rank);
   my_error_print(nullptr, get_printable_error(err, test_id), mpi_info.rank);
@@ -250,17 +255,26 @@ bool tests::run_tests(){
 *Runs each test in list and reports total errors found. @return 0 for no errors, 1 else
 */
 
-  int total_errs = 0;
+  int total_errs = 0, total_warnings = 0;
   for(current_test_id=0; current_test_id< (int)test_list.size(); current_test_id++){
     int err = test_list[current_test_id]->run();
     report_err(err);
-    total_errs += (bool) err;
+    if(err != TEST_PASSED && err != TEST_REMOVE_ERR){
+      if((err & TEST_REMOVE_ERR) != TEST_REMOVE_ERR) total_errs++;
+      else total_warnings ++;
+    }
     //Add one if any error was returned
   }
   this->set_colour('*');
-  if(total_errs > 0) this->set_colour('r');
-  else this->set_colour('b');
+  if(total_errs > 0){
+    this->set_colour('r');
+  }else if(total_warnings > 0){
+    this->set_colour('y');
+  }else{
+    this->set_colour('b');
+  }
   my_error_print(mk_str(total_errs)+" failed tests", mpi_info.rank);
+  if(total_warnings > 0) my_error_print(mk_str(total_warnings)+" tests with squashed errors", mpi_info.rank);
   this->set_colour();
   return total_errs > 0;
 

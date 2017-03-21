@@ -21,7 +21,6 @@ diffusion_coeff::diffusion_coeff(int n_momenta, int n_angs):data_array(n_momenta
   wave_id = WAVE_WHISTLER;
   latitude = 0;
   tag="";
-  // FAKENUMBERS for testing
 }
 
 void diffusion_coeff::set_ids(float time1, float time2, int space1, int space2, int wave_id, char block_id[ID_SIZE]){
@@ -112,36 +111,23 @@ void diffusion_coeff::make_pitch_axis(){
   make_linear_axis(1, res, offset);
 }
 
-d_report diffusion_coeff::calculate(bool quiet){
+d_report diffusion_coeff::calculate(D_type_spec type_of_D, bool quiet){
 /** \brief Calculate D from wave spectrum and plasma
 *
-*Uses the data available via my_controller to calculate D, the raw diffusion coefficient as function of particle velocity and pitch angle.
-* \todo Complete and cleanup \todo n ranges \todo OPtion for alpha-alpha, alpha-v etc?
+*Uses the data available via my_controller to calculate D, the raw diffusion coefficient as function of particle velocity and pitch angle. For more details of the calculation see Derivations#Calculation_of_D
+* \todo Check n ranges and refine?
 */
 
-/*Subsections:
-To solve Eq 2 in Albert:
-Get G1
-
-Get phi (note also needs mu internally)
-Get mu, dmu/domega which are used to:
-  get G2 - needs mu, dmu/domega
-  get denominator | 1 - (d omega / d kparallel)_x | from 6 - needs mu, dmu/domega
-  get Eq 7 factor - needs mu, dmu/domega, dmu/dx
-
-*/
-
-//loop over th, w, psi, alpha, n
-//HERE we want to end up with D_alpha_alpha
-
-  plasma plas;
-  spectrum * spect;
+//----Initialise d_report --------
   d_report report;
   report.n_solutions = 0;
   report.n_fails = 0;
   report.error = true;
   report.n_av = 0;
   
+//----- Get the plasma and spectrum bits
+  plasma plas;
+  spectrum * spect;
   if(my_controller){
     plas = my_controller->get_plasma();
     spect = my_controller->get_current_spectrum();
@@ -150,135 +136,117 @@ Get mu, dmu/domega which are used to:
     my_error_print("No controller", mpi_info.rank);
     return report;
   }
+  this->copy_ids(spect);//Copy block id, ranges etc from spect.
+  calc_type k_thresh = spect->check_upper();
 
+//---- Set type of D to calculate
+  bool is_mixed=false, is_pp=false;
+  if(type_of_D == D_type_spec::alpha_p || type_of_D == D_type_spec::p_alpha) is_mixed = true;
+  else if(type_of_D == D_type_spec::p_p) is_pp = true;
 
-  this->copy_ids(spect);
-  //copy block id, ranges etc from spect.
-  calc_type theta, omega_n=0.0, D_tmp, k_thresh;
-  calc_type alpha, v_par, c2th, s2alpha, tan_alpha; /* temporaries for clarity*/
-  calc_type Eq6, mu_dom_mu, Eq7, dmudx, numerator, gamma_particle;
+//----- Major definitions------------------
+  calc_type theta, omega_n = 0.0, D_part_n_sum, D_final_without_consts;
+  calc_type alpha, v_par, c2th, s2alpha, tan_alpha;
+  calc_type Eq6, dmudx, numerator, gamma_particle, D_conversion_factor;
   int n_min, n_max;
   std::vector<calc_type> omega_calc;
   mu_dmudom my_mu;
   
-  calc_type om_ce_ref = plas.get_omega_ref("ce");
-  calc_type D_consts = 0.5* pi*om_ce_ref*pow(v0, 3);
-  //Time saving constant
+  calc_type om_ce_ref = plas.get_omega_ref("ce"), omega_solution;
+  calc_type D_consts = 0.5* pi*om_ce_ref*std::pow(v0, 3);//Constant part of D ( pi/2 Om_ce*c^3)
 
-  //Temporaries for wave normal angle***********************************
+//-------- Wave angle temporaries -----------------
+  //D has to be integrated over x, so we need a temporary and the axis
+  /** \todo Why are we using different angles for D and for waves?*/
   calc_type *D_theta = (calc_type *) calloc(n_thetas, sizeof(calc_type));
   calc_type *x = (calc_type *) calloc(n_thetas, sizeof(calc_type));
- 
-  /** \todo Why are we using different angles for D and for waves?*/
-
-  for(int i=0; i<n_thetas; ++i){
-    x[i] = i* 4.0/n_thetas;/** \todo 4-> constant value*/
-  }
-
   calc_type *dx = (calc_type *) calloc(n_thetas, sizeof(calc_type));
-  for(int i=0; i<n_thetas -1; ++i){
-    dx[i] = x[i+1] - x[i];
-  }
+  for(int i = 0; i < n_thetas; ++i) x[i] = i* TAN_MAX/n_thetas;
+  for(int i = 0; i < n_thetas - 1; ++i) dx[i] = x[i+1] - x[i];
   
-  
-  k_thresh = spect->check_upper();
-  //*******************************************************************
 
-  
-  //innermost loop should be n. Next theta, as we need mu at each theta. Omega and x are interchangeable...
-  //Alpha remains, as does particle v.
-
-
-  size_t last_report=0;
+//-------- Some reporting info --------
+  size_t last_report = 0;
   size_t report_interval = dims[0]/10; //10 prints per round
   if(report_interval > 20) report_interval = 20;
   if(report_interval < 1) report_interval = 1;
 
   int counter = 0, non_counter = 0;
   size_t n_av = 0, n_omega=0;
+
 //-------------------Main loops here----------------------------
 //We have deep nested loops. Move ANYTHING that can be as far up tree as possible
 
-//  for(int i =0; i< ((1< dims[0]) ? 1:dims[0]); ++i){
-  for(size_t i =0; i< dims[0]; ++i){
+  for(size_t v_par_ind = 0; v_par_ind < dims[0]; v_par_ind++){
     //particle parallel velocity or momentum
-    v_par = get_axis_element(0, i);
-    //Get limits on n for each velocity
+    v_par = get_axis_element(0, v_par_ind);
+    //Get limits on n for this velocity
     n_min = get_min_n(v_par, k_thresh, om_ce_ref);
     n_max = get_max_n(v_par, k_thresh, om_ce_ref);
-    n_av += n_max;
+    n_av += n_max;//Track the average n_max over all iterations
 
     if(!quiet){
       my_print("Velocity "+mk_str(v_par/v0, true)+" c", mpi_info.rank);
-
-      if((i-last_report) >= report_interval){
-        my_print("i "+mk_str(i), mpi_info.rank);
-  
-        last_report = i;
+      if((v_par_ind - last_report) >= report_interval){
+        my_print("i "+mk_str(v_par_ind), mpi_info.rank);
+        last_report = v_par_ind;
       }
     }
-//    for(int k =0; k< ((1 <dims[1]) ? 1: dims[1]); k++){
-    for(size_t k =0; k< dims[1]; k++){
+    for(size_t part_pitch_ind = 0; part_pitch_ind < dims[1]; part_pitch_ind++){
       //particle pitch angle
-      alpha = get_axis_element_ang(k);
+      alpha = get_axis_element_ang(part_pitch_ind);
       tan_alpha = tan(alpha);
       s2alpha = std::pow(std::sin(alpha), 2);
       gamma_particle = gamma_rel(v_par* std::sqrt(1.0 + tan_alpha*tan_alpha));
 
-      for(int j=0;j<n_thetas; ++j){
+      for(int wave_ang_ind = 0; wave_ang_ind < n_thetas; wave_ang_ind++){
       //theta loop for wave angle or x=tan theta
-        theta = atan(x[j]);
+        theta = atan(x[wave_ang_ind]);
         c2th = std::pow(cos(theta), 2);
+        D_part_n_sum = 0.0;
 
-        D_tmp = 0.0;
-        for(int n=n_min; n<n_max; ++n){
+        for(int n = n_min; n < n_max; ++n){
           // n is resonant number
-          omega_calc = plas.get_resonant_omega(x[j], v_par, (calc_type) n);
+          omega_calc = plas.get_resonant_omega(x[wave_ang_ind], v_par, (calc_type) n);
           omega_n = (calc_type) n * om_ce_ref;
           n_omega = omega_calc.size();
           if(n_omega > 0){
           //With loop if is redundant but we might want to log the failure
-            for(size_t ii =0; ii< n_omega; ++ii){
-            //each solution
-              //std::cout<<"Freq is "<<omega_calc[ii]/my_const.omega_ce<<std::endl;
-
-              my_mu = plas.get_high_dens_phi_mu_om(omega_calc[ii], theta, alpha, n, gamma_particle);
+            for(size_t om_solution_num = 0; om_solution_num < n_omega; ++om_solution_num){
+              //Loop over solutions
+              omega_solution = omega_calc[om_solution_num];
+              my_mu = plas.get_high_dens_phi_mu_om(omega_solution, theta, alpha, n, gamma_particle);
+              //This tracks how many solutions and non-solutions for the final report
               if(my_mu.err){
-                //Once angle is included we have no solution
+                //Once angle is included we found no solution
                 non_counter++;
                 continue;
-                
               }else{
                 counter ++;
               }
-              //No solution
               
-              mu_dom_mu = my_mu.mu + omega_calc[ii] * my_mu.dmudom;
-              dmudx = my_mu.dmudtheta *c2th;
-              //Chain rule...
+              dmudx = my_mu.dmudtheta * c2th;//Chain rule
+              Eq6 = omega_solution/(omega_solution - omega_n)* my_mu.mu/(my_mu.mu + omega_solution * my_mu.dmudom);
+              numerator = std::pow( -s2alpha + omega_n/omega_solution, 2);
+              D_conversion_factor = sin(alpha)*cos(alpha)/(-s2alpha + omega_n/omega_solution);
 
-              // FAKENUMBERS
-              Eq6 = omega_calc[ii]/(omega_calc[ii] - omega_n)* my_mu.mu/mu_dom_mu;
-
-              Eq7 = -1.0* (my_mu.mu*omega_n/(omega_calc[ii]*(omega_calc[ii]-omega_n)) - my_mu.dmudom)/(my_mu.mu *std::sin(theta)*std::cos(theta) - dmudx);
-              //Need this iff we use second expression in Eq 5
-              numerator = std::pow( -s2alpha + omega_n/omega_calc[ii], 2);
-              D_tmp += numerator * my_mu.phi/std::abs(1.0 - Eq6)*get_G1(spect, omega_calc[ii])*get_G2(spect, omega_calc[ii], x[j]); // FAKENUMBERS This will be the n summed D so add onto it each n iteration
+              //Get the part of D summed over n. Note additional factors below
+              //NB NB get_G_1 precancels the \Delta\omega and B_wave factors
+              D_part_n_sum += numerator * my_mu.phi/std::abs(1.0 - Eq6)*get_G1(spect, omega_solution)*get_G2(spect, omega_solution, x[wave_ang_ind]);
+              
+              //Convert alpha_alpha to requested D type
+              D_part_n_sum = (is_mixed ? D_part_n_sum*D_conversion_factor : D_part_n_sum);
+              D_part_n_sum = (is_pp ? D_part_n_sum*D_conversion_factor*D_conversion_factor : D_part_n_sum);
             }
           }
         }
-        //Store into theta array. Might not need tmp in the end
-        //Except that it saves us one multiplication per iteration without acting on element in place after.
-        D_theta[j] = D_tmp*c2th;
-
+        //Store into temporary theta array
+        D_theta[wave_ang_ind] = D_part_n_sum*c2th;
       }
-      //now integrate in x = tan theta
-      D_tmp = integrator(D_theta, dims[1], dx);
-      //Leaves us with one D for each alpha and v.
-      //Store into data at i, k (momentum, angle)
-      set_element(i, k, D_tmp*D_consts);
-      //What about 1/delta omega???
-    
+      //now integrate in x = tan theta, restore the velocity factor and save
+      D_final_without_consts = integrator(D_theta, dims[1], dx);
+      D_final_without_consts /= v_par * (1.0 - s2alpha);
+      set_element(v_par_ind, part_pitch_ind, D_final_without_consts*D_consts);
     }
   }
 //------------End main loops-----------------------------------
@@ -287,6 +255,7 @@ Get mu, dmu/domega which are used to:
   free(x);
   free(D_theta);
   
+//----Assemble the final report -----------------------------
   report.n_solutions = counter;
   report.n_fails = non_counter;
   report.error = false;

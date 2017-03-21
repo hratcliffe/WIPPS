@@ -21,13 +21,15 @@ class spectrum;
 class plasma;
 class controller;
 
+enum class D_type_spec {alpha_alpha, alpha_p, p_alpha, p_p};
+
 /** \brief Diffusion coefficient object
 *
-* Specialised data_array containing the calculated coefficient plus relevant ids. Can be made/destroyed only by controller object. In general should be a 2-D array with first axis momentum, second pitch-angle \todo Consider locking away the angle axis, and/or moving away from tan
+* Specialised data_array containing the calculated coefficient plus relevant ids. Can be made/destroyed only by controller object. In general should be a 2-D array with first axis momentum, second pitch-angle
 @author Heather Ratcliffe @date 23/09/2015 \ingroup cls
 */
 class diffusion_coeff: public data_array{
-
+/**\todo Consider locking away the angle axis, and/or moving away from tan*/
 private:
 
   int n_thetas; /**< Number of wave normal angles to consider for integrals*/
@@ -53,7 +55,7 @@ public:
 
   bool write_to_file(std::fstream &file);
 
-  d_report calculate(bool quiet=0);
+  d_report calculate(D_type_spec type_of_D = D_type_spec::alpha_alpha, bool quiet=0);
 
   //--- Helpers for accessing and values. Because we might want a tan or plain angle axis and we don't want that to contaminate the rest of the code
   my_type get_element_by_values(my_type p, my_type alpha);

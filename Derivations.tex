@@ -12,6 +12,10 @@ Stix 2.45 (sign as for Whistler mode):
 \begin{equation}
 \mu^2 =  1 - \frac {\omega_{pe}^2}{\omega(\omega + \Omega_e \cos\theta)}
 \end{equation}
+Doppler resonance condition:
+\begin{equation}
+\omega -k_\parallel v_\parallel = \frac{n \Omega_e}{\gamma}
+\end{equation}
 
 
 
@@ -368,6 +372,25 @@ D_{\alpha\alpha}^{nx} &= \frac{B_{wave}^2}{B_0^2}(mv)^2 \frac{\pi}{2}\frac{\Omeg
 
 NB NB I think this is because they use $g(\theta)$ vs $g(\tan(\theta))$ respectively!!
 
+\section{Calculation of D}
+
+Since D is evaluated at each $p, \alpha$ and to do so requires integrating over wave angle and totalling over both $n$ and the resonant omegas we have 4 or 5 nested loops unavoidably. Therefore we break the calculation down and hoist everything as high as possible. Taking
+\begin{align}
+D_{\alpha\alpha}^{nx} &= x \frac{B_{wave}^2}{B_0^2}(mv)^2 \frac{\pi}{2}\frac{\Omega_c^2}{\Delta\omega}\frac{\cos^2\theta}{|v_\parallel/c|^3}  \Phi_n^2 \frac{(-\sin^2\alpha + \omega_n/\omega)^2}{|1-(\partial \omega/\partial k_\parallel)_x/v_\parallel|} G_1 G_2 \end{align}
+we break the terms down as follows. Note that $\omega$ is the resonant solution in the innermost loop
+
+\begin{itemize}
+\item Constant factors, \[ \frac{\pi \Omega_c^2 c^3 m^2}{2 B_0^2}\] This $m^2$ I can't match with Lyons though, see above....
+\item Particle parallel momentum $v_\parallel$, \[\frac{1}{v_\parallel^3}\]
+\item Particle pitch angle $\alpha$, which gives the \[ v^2 = \frac{v^2_\parallel}{\cos^2 \alpha}\]
+\item Wave normal angle, which we keep as $x= \tan\theta$ and integrate over and includes $x \cos^2\atan(x)$
+\item Resonance number, $n$
+\item Resonant omega solution, $\omega$ in the above equation and dictating anything containing $\mu$ also, i.e. 
+\[ \Phi_n^2 \frac{(-\sin^2\alpha + \omega_n/\omega)^2}{|1-(\partial \omega/\partial k_\parallel)_x/v_\parallel|} (G_1 B_{wave}^2/\Delta\omega) G_2 \]
+
+\end{itemize}
+
+
 
 \section{Bounce averaging of D}
 The equations for bounce averaging the various D components are:
@@ -381,8 +404,8 @@ with $\tau_B$ the bounce period of the particle, $\tau_B = 4 R_0 S(\alpha_{eq})/
 \\Using a dipole field, we have the field strength and particle pitch angles given by
 \begin{align}
 B &= B_{eq} f(\lambda)\\
-f(\lambda) &= \frac{(1+3\sin^2\lambda)^{1/2}}{\cos^6\lambda}\\
-\sin^2\alpha &= f(\lambda) \sin^2\alpha_{eq}
+f(\lambda) &= \frac{(1+3\sin^2\lambda)^{1/2}}{\cos^6\lambda}\label{bounce_f}\\
+\sin^2\alpha &= f(\lambda) \sin^2\alpha_{eq}\label{bounce_f2}
 \end{align}
 Then the time integrals can be converted to latitude integrals using
 \begin{equation}
@@ -395,15 +418,26 @@ although the $\cos \alpha$ factor makes them potentially degenerate at the mirro
 \left< D_{p p}\right> &=\frac{1}{S(\alpha_{eq})} \int_0^{\lambda_m} D_{p p}(\alpha) \frac{\sin^2 \alpha \cos^7\lambda}{\sin^2 \alpha_{eq}\cos\alpha} \mathrm{d}\lambda
 \end{align}
 NB the third equation has a $\cos\alpha$ in the denominator and is thus ill defined at the mirror point $\lambda_m$
+Using \ref{bounce_f} and \ref{bounce_f} we can rewrite these as
+\begin{align}\label{Bounce_lam_2}
+\left< D_{\alpha \alpha}\right> &=\frac{1}{S(\alpha_{eq})} \int_0^{\lambda_m} D_{\alpha \alpha}(\alpha) \frac{\cos \alpha \cos^7\lambda}{\cos^2\alpha_{eq}} \mathrm{d}\lambda\\
+\left< D_{\alpha p}\right> &=\frac{1}{S(\alpha_{eq})} \int_0^{\lambda_m} D_{\alpha p}(\alpha) \frac{\cos^4\lambda (1+3\sin^2\lambda)^{1/4}}{\cos\alpha_{eq}} \mathrm{d}\lambda\\
+\left< D_{p p}\right> &=\frac{1}{S(\alpha_{eq})} \int_0^{\lambda_m} D_{p p}(\alpha) \frac{\cos\lambda (1+3\sin^2\lambda)^{1/2}}{\cos\alpha} \mathrm{d}\lambda\label{Bounce_lam_2_c}
+\end{align}
 
 \subsection{Analytic integrals for bounce-average testing}
-For the angle and energy diffusion coefficients, we can substitute a suitable form of $D$ to allow the analytic evaluation of the bounce averaging. 
-For the $\alpha \alpha$ coefficient:
+We can substitute a suitable form of $D$ to allow the analytic evaluation of the bounce averaging. While we can always consume the entire $\alpha$ dependence that way, it's more useful to evaluate slightly different things in each case.
+For the $\alpha \alpha$ coefficient we use the original Eq \ref{Bounce_lam}:
 \begin{align}
-D_{\alpha\alpha} &= \frac{1}{\cos \theta}\\
+D_{\alpha\alpha} &= \frac{1}{\cos \alpha}\\
 \left< D_{\alpha \alpha}\right> &= \frac{1}{S(\alpha_{eq})} \frac{1}{\cos^2 \alpha_{eq}} \left[ 1225 \sin \lambda + 245 \sin 3\lambda + 49 \sin 5\lambda + 5 \sin 7\lambda\right]/2240
 \end{align}
-and for the $p p$
+similarly the mixed coefficient:
+\begin{align}
+D_{\alpha p} &= \frac{1}{\sin \alpha}\\
+\left< D_{\alpha p}\right> &= \frac{1}{S(\alpha_{eq})} \frac{1}{\cos\alpha_{eq}\sin\alpha_{eq}} \left[ 1225 \sin \lambda + 245 \sin 3\lambda + 49 \sin 5\lambda + 5 \sin 7\lambda\right]/2240
+\end{align}
+For the $p p$ we use the rewritten component Eq \ref{Bounce_lam_2_c}:
 \begin{align}
 D_{p p} & = \cos \alpha\\
 \left< D_{p p}\right> &= \frac{1}{S(\alpha_{eq})} \frac{1}{6} \left[ 3 \sin \lambda \sqrt{3 \sin^2 \lambda + 1} + \sqrt{3} \mathrm{sinh}^{-1}(\sqrt{3}\sin\lambda)\right]

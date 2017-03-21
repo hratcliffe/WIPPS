@@ -218,7 +218,7 @@ spectrum::~spectrum(){
 spectrum & spectrum::operator=(const spectrum& src){
 /** \brief Copy assignment
 *
-*Sets this equal to a (deep) copy of source, i.e duplicates the B and g arrays and all other fields \todo Behaviour if src is bad?
+*Sets this equal to a (deep) copy of source, i.e duplicates the B and g arrays and all other fields
 */
   
   //Trap self-assign or bad copy before destructing
@@ -403,7 +403,7 @@ void spectrum::make_test_spectrum(int angle_type, bool two_sided, my_type om_ce)
 bool spectrum::generate_spectrum(data_array &parent, int om_fuzz, int angle_type, data_array * mask){
 /**\brief Generate spectrum from data
 *
-*Takes a parent data array and generates the corresponding spectrum. Windows using the specified wave dispersion and integrates over frequency using om_fuzz percent band. Axes are copied from the parent. If the spectrum is of separable type (g_is_angle_only = true), the angular distribution is generated with functional form specified by angle_type.  IMPORTANT: when using real angular data we roughly fuzz around the correct k values, but this is not uniform! Non-smooth or rapidly varying data may give odd results @param parent Data array to read from. Spectrum will have the same units as this @param om_fuzz Band width around dispersion curve in percent of central frequency @param angle_type Angular distribution functional form @param mask (optional) data_array matching sizes of parent, will be filled with the masking array used for spectrum generation. If nullptr or nothing is supplied, no mask is output. \todo omega vs k, is there some normalising to do? \todo 2-d and 3-d extractions don't quite agree at k=0. factor ~10 and variations near 0
+*Takes a parent data array and generates the corresponding spectrum. Windows using the specified wave dispersion and integrates over frequency using om_fuzz percent band. Axes are copied from the parent. If the spectrum is of separable type (g_is_angle_only = true), the angular distribution is generated with functional form specified by angle_type.  IMPORTANT: when using real angular data we roughly fuzz around the correct k values, but this is not uniform! Non-smooth or rapidly varying data may give odd results @param parent Data array to read from. Spectrum will have the same units as this @param om_fuzz Band width around dispersion curve in percent of central frequency @param angle_type Angular distribution functional form @param mask (optional) data_array matching sizes of parent, will be filled with the masking array used for spectrum generation. If nullptr or nothing is supplied, no mask is output. \todo 2-d and 3-d extractions don't quite agree at k=0. factor ~10 and variations near 0
 */
 
   if(!this->is_good()){
@@ -716,7 +716,7 @@ bool spectrum::calc_norm_B(){
 bool spectrum::calc_norm_g(size_t om_ind){
 /** \brief Normalise g_w(x)
 *
-*Calculate the norm of g used in e.g. denom of Albert eq 3 or calc'd in derivations.tex. Contains one value for each omega entry. \todo test
+*Calculate the norm of g used in e.g. denom of Albert eq 3 or calc'd in derivations.tex. Contains one value for each omega entry.
 */
 
   size_t len = get_angle_length();
@@ -752,7 +752,7 @@ bool spectrum::calc_norm_g(size_t om_ind){
       integrand[i] = 0.0;
     }
     //product of g(theta) * x (x^2+1)^-(3/2) * mu^2 |mu+omega dmu/domega|
-    //See Derivations#Evaluation_of_G2 for details \todo Insert docs snippet link
+    //See Derivations#Evaluation_of_G2 for details
   }
   
   //integrate
@@ -1072,7 +1072,7 @@ data_array spectrum::copy_out_g(){
 calc_type get_G1(spectrum * my_spect, calc_type omega){
 /** \brief G1 from Albert 2005.
 *
-*Gets the value of B^2(w) (interpolated if necessary) and the normalising constant from norm_B. NB this uses the given spectrum omega range and assumes that beyond this there is "no" wave power.
+*Gets the value of B^2(w) (interpolated if necessary) and the normalising constant from norm_B. NB this uses the given spectrum omega range and assumes that beyond this there is "no" wave power. NB NB we omit the \Delta\omega factor since it cancels
 */
 
   my_type tmpB2;

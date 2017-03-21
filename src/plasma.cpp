@@ -183,7 +183,6 @@ mu plasma::get_root(calc_type th, calc_type w, calc_type psi, bool Righthand){
 
   
   /** \todo get or calc dndr and dndth*/
-  // FAKENUMBERS
   for(int i=0;i<ncomps; i++){
     dndr[i] = 0.0;
     dndth[i] = 0.0;
@@ -353,7 +352,6 @@ mu_dmudom plasma::get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int
   w3 = w2*w;
   
   /** \todo get or calc dndr and dndth */
-  // FAKENUMBERS
   for(int i=0;i<ncomps; i++){
     dndr[i] = 0.0;
     dndth[i] = 0.0;
@@ -537,7 +535,6 @@ mu_dmudom plasma::get_high_dens_phi_mu_om(calc_type w, calc_type psi, calc_type 
   w3 = w2*w;
   
   /** \todo get or calc dndr and dndth*/
-  // FAKENUMBERS
   for(int i=0;i<ncomps; i++){
     dndr[i] = 0.0;
     dndth[i] = 0.0;

@@ -196,7 +196,6 @@ int main(int argc, char *argv[]){
   contr.save_spectra(cmd_line_args.file_prefix);
   contr.save_D(cmd_line_args.file_prefix);
 
-  std::cout<<"Grep for FAKENUMBERS !!!!"<<std::endl;
 #ifndef NO_FFT
   ADD_FFTW(cleanup());
 #endif

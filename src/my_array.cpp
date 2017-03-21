@@ -123,7 +123,7 @@ my_array::~my_array(){
 my_array & my_array::operator=(const my_array& src){
 /** \brief Copy assignment
 *
-*Sets this equal to a (deep) copy of source \todo Behaviour if src is bad?
+*Sets this equal to a (deep) copy of source
 */
 
   //Trap self-assigning or bad copy before destructing

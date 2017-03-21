@@ -422,7 +422,7 @@ long data_array::get_axis_index_from_value(size_t dim, my_type value)const{
 bool data_array::populate_axis(size_t dim, my_type * dat_in, size_t n_tot){
 /** \brief Fill axis from dat_in
 *
-*Populates axis from dat_in. n_tot should be size of input array. Number of elements copied will be the smaller of n_tot and size of dimension dim. @return 0 (success) 1 (error) \todo Protect from throws in std::copy
+*Populates axis from dat_in. n_tot should be size of input array. Number of elements copied will be the smaller of n_tot and size of dimension dim. @return 0 (success) 1 (error)
 */
 
   if(dim >=n_dims) return 1;

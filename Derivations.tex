@@ -6,6 +6,15 @@
 
 \begin{document}
 \tableofcontents
+
+\section{Copies of some equations and their major sources}
+Stix 2.45 (sign as for Whistler mode):
+\begin{equation}
+\mu^2 =  1 - \frac {\omega_{pe}^2}{\omega(\omega + \Omega_e \cos\theta)}
+\end{equation}
+
+
+
 \section{Resonant frequencies in high-density approximation}
 Start from Stix Equation 2.45 for the Right hand mode, noting that $\Omega_c$ contains the \emph{sign} of the particle charge:
 \begin{equation}\label{A}
@@ -266,9 +275,12 @@ providing $\cos\theta \ne 0$. Similarly, the $\sin\theta$ term is
 \end{equation}
 so using $ \tan^2\theta + 1 = \sec^2\theta$ we get
 \begin{equation}\label{TanTransform}
-\sin\theta \mathrm{d}\theta = \tan\theta \cos^3\theta \mathrm{d}\tan\theta= \frac{\tan\theta}{(\tan^2 \theta + 1)^{3/2}}\mathrm{d}\tan\theta = \frac{x}{(x^2+1)^{3/2}} f\mathrm{d}x
+\sin\theta \mathrm{d}\theta = \tan\theta \cos^3\theta \mathrm{d}\tan\theta= \frac{\tan\theta}{(\tan^2 \theta + 1)^{3/2}}\mathrm{d}\tan\theta = \frac{x}{(x^2+1)^{3/2}} \mathrm{d}x
 \end{equation}
-
+Then Albert's Eq 3 for G2 becomes
+\begin{equation}
+G_2 = g_\omega(\theta)/\left[\int g_\omega(\atan(\theta^\prime)) \mu^2 \left| \mu + \omega \frac{\partial \mu}{\partial\omega} \right| \frac{x}{(x^2+1)^{3/2}} \mathrm{d}x\right]
+\end{equation}
 
 \section{Relation of Alberts G1 and G2 to Lyons equations}
 Consider Albert Eq 2 (Al2) which is
@@ -285,9 +297,7 @@ and that
 \begin{equation}
 B_{wave}^2 = \int B^2(\omega^\prime)\mathrm{d}\omega^\prime
 \end{equation}
-
-$\Phi_n^2$ is as in Lyons, Eq 9 (Ly9) and contains some Bessel functions etc etc
-
+$\Phi_n^2$ is as in Lyons, Eq 9 (Ly9) and contains some Bessel functions etc etc\\
 Ly2 should match Al2. Take Ly2 and subs for $\Theta$ as given before 9, and get $|B|$ from the appendix:
 \begin{align}
 D_{\alpha\alpha}^{nk_\perp} &= \mathrm{lim}_{V\rightarrow \infty} \frac{\pi q^2}{(2\pi)^2 V m^2 v_\parallel} \left[ \frac{-\sin^2\alpha + n \Omega/\omega_k}{\cos \alpha}\right]^2 \frac{ |B_k|^2 |\Phi_{n,k}|^2}{\mu^2 |1-(\partial \omega_k/\partial k_\parallel)_x/v_\parallel |}\\
@@ -299,18 +309,17 @@ They look fairly consistent, so let's rearrange the Lyons one to match the Alber
 \begin{align}
 D_{\alpha\alpha}^{nk_\perp} &= \mathrm{lim}_{V\rightarrow \infty} \frac{\pi q^2}{(2\pi)^2 V m^2 v_\parallel} \left[ \frac{-\sin^2\alpha + n \Omega/\omega_k}{\cos \alpha}\right]^2 \frac{ |\Phi_{n,k}|^2}{\mu^2 |1-(\partial \omega_k/\partial k_\parallel)_x/v_\parallel|} \frac{V}{N(\omega)}B^2(\omega)g_\omega(\theta)
 \end{align}
-Cancel the $V$ and subs the prefactors of $N$ from Eq \ref{N_om} so that 
-\begin{equation} \label{N_prime} N(\omega) =: N^\prime(\omega) \frac{\omega^3}{(2\pi)^2 c^3}\end{equation}
+Cancel the $V$ and subs the prefactors of $N$ from Eq \ref{N_om}, i.e. define
+\begin{equation} \label{N_prime} N(\omega) =: N^\prime(\omega) \frac{2\omega^3}{(2\pi)^2 c^3}\end{equation}
 \begin{align}
-D_{\alpha\alpha}^{nk_\perp} &= \frac{\pi q^2}{m^2 v_\parallel} \left[ \frac{-\sin^2\alpha + n \Omega/\omega_k}{\cos \alpha}\right]^2 \frac{ |\Phi_{n,k}|^2}{\mu^2 |1-(\partial \omega_k/\partial k_\parallel)_x/v_\parallel|} \frac{1}{N^\prime(\omega)}B^2(\omega)g_\omega(\theta)\frac{ c^3}{\omega^3}
+D_{\alpha\alpha}^{nk_\perp} &= \frac{\pi q^2}{2 m^2 v_\parallel} \left[ \frac{-\sin^2\alpha + n \Omega/\omega_k}{\cos \alpha}\right]^2 \frac{ |\Phi_{n,k}|^2}{\mu^2 |1-(\partial \omega_k/\partial k_\parallel)_x/v_\parallel|} \frac{1}{N^\prime(\omega)}B^2(\omega)g_\omega(\theta)\frac{ c^3}{\omega^3}
 \end{align}
-$\cos^2 \alpha$ can be replaced by $(v_\parallel/v)^2$
-
+$\cos^2 \alpha$ can be replaced by $(v_\parallel/v)^2$ to get
 \begin{align}\label{LyMid}
-D_{\alpha\alpha}^{nk_\perp} &= \frac{\pi q^2 v^2}{m^2 (v_\parallel/c)^3 \omega^3} \frac{1}{\mu^2} |\Phi_{n,k}|^2 \frac{ (-\sin^2\alpha + n \Omega/\omega_k)^2}{ |1-(\partial \omega_k/\partial k_\parallel)_x/v_\parallel|} \frac{1}{N^\prime(\omega)}B^2(\omega)g_\omega(\theta)
+D_{\alpha\alpha}^{nk_\perp} &= \frac{\pi q^2 v^2}{2 m^2 (v_\parallel/c)^3 \omega^3} \frac{1}{\mu^2} |\Phi_{n,k}|^2 \frac{ (-\sin^2\alpha + n \Omega/\omega_k)^2}{ |1-(\partial \omega_k/\partial k_\parallel)_x/v_\parallel|} \frac{1}{N^\prime(\omega)}B^2(\omega)g_\omega(\theta)
 \end{align}
 
-Tackle G1 and G2 next. Starting from Eq \ref{N_om} and Eq \ref{N_prime}
+\noindent Tackle G1 and G2 next. Starting from Eq \ref{N_om} and Eq \ref{N_prime}
 \begin{equation}
 N^\prime(\omega) =\int_{-\infty}^\infty g_\omega( \atan x ) 
  \frac{\mu(x)^2 x}{(1+x^2)^{3/2}}
@@ -318,54 +327,89 @@ N^\prime(\omega) =\int_{-\infty}^\infty g_\omega( \atan x )
  d x
 \end{equation} and Eq \ref{Alb_G_2} with Eq \ref{TanTransform} which gives a denominator of
 \begin{align}
-G2_{denom} &= \int g_\omega(\theta^\prime) \mu^2 | \mu + \omega \partial\mu/\partial\omega| \sin \theta^\prime \mathrm{d} \theta^\prime\\
-&=\int g_\omega(atan(x^\prime)) \mu^2 | \mu + \omega \partial\mu/\partial\omega|  \frac{x^\prime}{((x^\prime)^2 + 1)^{3/2}}\mathrm{d}x^\prime
+G2_{denom} &= \int g_\omega(\theta^\prime) \mu^2 \left| \mu + \omega \frac{\partial\mu}{\partial\omega}\right| \sin \theta^\prime \mathrm{d} \theta^\prime\\
+&=\int g_\omega(\atan(x^\prime)) \mu^2 \left| \mu + \omega \frac{\partial\mu}{\partial\omega}\right|  \frac{x^\prime}{((x^\prime)^2 + 1)^{3/2}}\mathrm{d}x^\prime
 \end{align}
 i.e.
 \begin{align}
 G2_{denom} = \omega N^\prime(\omega)
 \end{align}
 For G1 we just absorb the $B^2_{wave}$ and $\Delta \omega$ and so Eq \ref{LyMid} becomes
-
-\begin{align}\label{LyMid}
-D_{\alpha\alpha}^{nk_\perp} &= \frac{\pi q^2 v^2}{m^2 (v_\parallel/c)^3 \omega^3} \frac{1}{\mu^2} |\Phi_{n,k}|^2 \frac{ (-\sin^2\alpha + n \Omega/\omega_k)^2}{ |1-(\partial \omega_k/\partial k_\parallel)_x/v_\parallel|} \frac{G_1}{\Delta \omega} B^2_{wave} \omega G_2
+\begin{align}
+D_{\alpha\alpha}^{nk_\perp} &= \frac{\pi q^2 v^2}{2 m^2 (v_\parallel/c)^3 \omega^3} \frac{1}{\mu^2} |\Phi_{n,k}|^2 \frac{ (-\sin^2\alpha + n \Omega/\omega_k)^2}{ |1-(\partial \omega_k/\partial k_\parallel)_x/v_\parallel|} \frac{G_1}{\Delta \omega} B^2_{wave} \omega G_2
 \end{align}
 Recalling
 \begin{align}
-\frac{c k}{\omega} &= \mu(\omega) = \frac{c k_\parallel}{ \omega \cos\theta}\\
-\omega -k_\parallel v_\parallel &= \frac{n \Omega_e}{\gamma}
+\frac{c k}{\omega} &= \mu(\omega) %= \frac{c k_\parallel}{ \omega \cos\theta}\\
+%\omega -k_\parallel v_\parallel &= \frac{n \Omega_e}{\gamma}
 \end{align} we get
 \begin{align}\label{LyMid2}
-D_{\alpha\alpha}^{nk_\perp} &= \frac{\pi q^2 v^2}{m^2 (v_\parallel/c)^3}\frac{1}{c^2 k^2} |\Phi_{n,k}|^2 \frac{ (-\sin^2\alpha + n \Omega/\omega_k)^2}{ |1-(\partial \omega_k/\partial k_\parallel)_x/v_\parallel|} \frac{G_1}{\Delta \omega} B^2_{wave} G_2
+D_{\alpha\alpha}^{nk_\perp} &= \frac{\pi q^2 v^2}{2 m^2 (v_\parallel/c)^3}\frac{1}{c^2 k^2} |\Phi_{n,k}|^2 \frac{ (-\sin^2\alpha + n \Omega/\omega_k)^2}{ |1-(\partial \omega_k/\partial k_\parallel)_x/v_\parallel|} \frac{G_1}{\Delta \omega} B^2_{wave} G_2
 \end{align}
-
-Then  using $ \Omega_c = q B_0 / m_e c$ we find
-
+Then using $ \Omega_c = q B_0 / m_e c$ we find
 \begin{align}\label{LyMid3}
-D_{\alpha\alpha}^{nk_\perp} &= \frac{B^2_{wave}}{B_0^2} \frac{\pi v^2 \Omega_c^2}{\Delta \omega(v_\parallel/c)^3}\frac{1}{ k^2} |\Phi_{n,k}|^2 \frac{ (-\sin^2\alpha + n \Omega/\omega_k)^2}{ |1-(\partial \omega_k/\partial k_\parallel)_x/v_\parallel|} G_1 G_2
+D_{\alpha\alpha}^{nk_\perp} &= \frac{B^2_{wave}}{B_0^2} \frac{\pi v^2 \Omega_c^2}{2 \Delta \omega(v_\parallel/c)^3}\frac{1}{ k^2} |\Phi_{n,k}|^2 \frac{ (-\sin^2\alpha + n \Omega/\omega_k)^2}{ |1-(\partial \omega_k/\partial k_\parallel)_x/v_\parallel|} G_1 G_2
 \end{align}
-
 However, this is the expression for $D(k_\perp)$ while Albert has $D(x)$, so comparing Ly1 to Alb5 implies
 \begin{equation}
 D_{\alpha\alpha} = \int x D(x) \mathrm{d}x = \int k_\perp D(k_\perp) \mathrm{d} k_\perp
 \end{equation}
-and we must multiply the Lyons result by $k_\perp/x dk_\perp/dx$. $dk_\perp/dx = k (x^2+1)^{-3/2}$ and so
+and we must multiply the Lyons result by $k_\perp/x dk_\perp/dx$. 
+We have $k_\perp = k \sin \theta = k x /\sqrt(x^2 +1)$ so $dk_\perp/dx = k (x^2+1)^{-3/2}$ and
 \[ \frac{k_\perp}{x}\frac{\mathrm{d} k_\perp}{\mathrm{d} x} = \frac{k^2}{(x^2+1)}  = k^2 \cos^4\theta\]
 so we end up with, after reordering terms
 \begin{align}\label{LyEnd}
-D_{\alpha\alpha}^{nx} &= \frac{B^2_{wave}}{B_0^2} \pi v^2 \frac{ \Omega_c^2 }{\Delta \omega}\frac{\cos^4\theta}{(v_\parallel/c)^3} |\Phi_{n,k}|^2 \frac{ (-\sin^2\alpha + n \Omega/\omega_k)^2}{ |1-(\partial \omega_k/\partial k_\parallel)_x/v_\parallel|} G_1 G_2
+D_{\alpha\alpha}^{nx} &= \frac{B^2_{wave}}{B_0^2} \frac{\pi}{2} v^2 \frac{ \Omega_c^2 }{\Delta \omega}\frac{\cos^4\theta}{(v_\parallel/c)^3} |\Phi_{n,k}|^2 \frac{ (-\sin^2\alpha + n \Omega/\omega_k)^2}{ |1-(\partial \omega_k/\partial k_\parallel)_x/v_\parallel|} G_1 G_2
 \end{align}
 
-NB NB NB we have some erroneous $m^2$ and a $cos^4$ instead of 2
-
-
+NB NB NB we have some erroneous $m^2$ and a $cos^4$ instead of $cos^2$, compared to the Albert result which is
 \begin{align}
 D_{\alpha\alpha}^{nx} &= \frac{B_{wave}^2}{B_0^2}(mv)^2 \frac{\pi}{2}\frac{\Omega_c^2}{\Delta\omega}\frac{\cos^2\theta}{|v_\parallel/c|^3}  \Phi_n^2 \frac{(-\sin^2\alpha + \omega_n/\omega)^2}{|1-(\partial \omega/\partial k_\parallel)_x/v_\parallel|} G_1 G_2 \end{align}
 
+NB NB I think this is because they use $g(\theta)$ vs $g(\tan(\theta))$ respectively!!
 
+
+\section{Bounce averaging of D}
+The equations for bounce averaging the various D components are:
+
+\begin{align}\label{Bounce_time}
+\left< D_{\alpha \alpha}\right> &=\frac{1}{\tau_B} \int_0^{\tau_B} D_{\alpha \alpha}(\alpha) \left(\frac{\partial \alpha_{eq}}{\partial \alpha}\right)^2 \mathrm{d}t\\
+\left< D_{\alpha p}\right> &=\frac{1}{\tau_B} \int_0^{\tau_B} D_{\alpha p}(\alpha) \left(\frac{\partial \alpha_{eq}}{\partial \alpha}\right) \mathrm{d}t\\
+\left< D_{p p}\right> &=\frac{1}{\tau_B} \int_0^{\tau_B} D_{p p}(\alpha) \mathrm{d}t
+\end{align}
+with $\tau_B$ the bounce period of the particle, $\tau_B = 4 R_0 S(\alpha_{eq})/v_0$ and $S(\alpha_{eq}) \simeq 1.3 - 0.56 \sin\alpha_{eq}$
+\\Using a dipole field, we have the field strength and particle pitch angles given by
+\begin{align}
+B &= B_{eq} f(\lambda)\\
+f(\lambda) &= \frac{(1+3\sin^2\lambda)^{1/2}}{\cos^6\lambda}\\
+\sin^2\alpha &= f(\lambda) \sin^2\alpha_{eq}
+\end{align}
+Then the time integrals can be converted to latitude integrals using
 \begin{equation}
+v_0 \cos \alpha \mathrm{d} t = R_0 \cos \lambda (1+3\sin^2\lambda)^{1/2} \mathrm{d}\lambda
 \end{equation}
+although the $\cos \alpha$ factor makes them potentially degenerate at the mirror point. The equations are then
+\begin{align}\label{Bounce_lam}
+\left< D_{\alpha \alpha}\right> &=\frac{1}{S(\alpha_{eq})} \int_0^{\lambda_m} D_{\alpha \alpha}(\alpha) \frac{\cos \alpha \cos^7\lambda}{\cos^2\alpha_{eq}} \mathrm{d}\lambda\\
+\left< D_{\alpha p}\right> &=\frac{1}{S(\alpha_{eq})} \int_0^{\lambda_m} D_{\alpha p}(\alpha) \frac{\sin \alpha \cos^7\lambda}{\sin \alpha_{eq}\cos\alpha_{eq}} \mathrm{d}\lambda\\
+\left< D_{p p}\right> &=\frac{1}{S(\alpha_{eq})} \int_0^{\lambda_m} D_{p p}(\alpha) \frac{\sin^2 \alpha \cos^7\lambda}{\sin^2 \alpha_{eq}\cos\alpha} \mathrm{d}\lambda
+\end{align}
+NB the third equation has a $\cos\alpha$ in the denominator and is thus ill defined at the mirror point $\lambda_m$
 
+\subsection{Analytic integrals for bounce-average testing}
+For the angle and energy diffusion coefficients, we can substitute a suitable form of $D$ to allow the analytic evaluation of the bounce averaging. 
+For the $\alpha \alpha$ coefficient:
+\begin{align}
+D_{\alpha\alpha} &= \frac{1}{\cos \theta}\\
+\left< D_{\alpha \alpha}\right> &= \frac{1}{S(\alpha_{eq})} \frac{1}{\cos^2 \alpha_{eq}} \left[ 1225 \sin \lambda + 245 \sin 3\lambda + 49 \sin 5\lambda + 5 \sin 7\lambda\right]/2240
+\end{align}
+and for the $p p$
+\begin{align}
+D_{p p} & = \cos \alpha\\
+\left< D_{p p}\right> &= \frac{1}{S(\alpha_{eq})} \frac{1}{6} \left[ 3 \sin \lambda \sqrt{3 \sin^2 \lambda + 1} + \sqrt{3} \mathrm{sinh}^{-1}(\sqrt{3}\sin\lambda)\right]
+\end{align}
+
+\newpage
 \appendix
 \section{Failing attempt to derive Lyons N factor using IBP}
 Since we have a term $k_\perp  \frac{\partial k_\perp}{\partial x}= \frac{\partial (k_\perp^2)}{2 \partial x}$ it suggests we can use integration by parts on this. We need

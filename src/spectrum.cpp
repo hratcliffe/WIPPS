@@ -746,8 +746,10 @@ bool spectrum::calc_norm_g(size_t om_ind){
       }else{
         g_el = get_g_element(om_ind, i);
       }
-      integrand[i] = g_el * x * std::pow((std::pow(x, 2)+1.0), -1.5)*std::pow(my_mu.mu, 2) * std::abs( my_mu.mu + omega*my_mu.dmudom);
+      integrand[i] = g_el * x / std::pow((std::pow(x, 2)+1.0), 1.5)*std::pow(my_mu.mu, 2) * std::abs( my_mu.mu + omega*my_mu.dmudom);
 
+    }else{
+      integrand[i] = 0.0;
     }
     //product of g(theta) * x (x^2+1)^-(3/2) * mu^2 |mu+omega dmu/domega|
     //See Derivations#Evaluation_of_G2 for details \todo Insert docs snippet link
@@ -1103,7 +1105,7 @@ calc_type get_G1(spectrum * my_spect, calc_type omega){
 calc_type get_G2(spectrum * my_spect, calc_type omega, calc_type x){
 /** \brief Get G2 from Albert 2005
 *
-* Gets the value of g(w, x) and the normalising constant from norm_g \todo interpolate on omega? or angle or both. Or fix angle axis as matched to D. In some sense we want to minimise work here... \todo CHECK and FIXXXX and test
+* Gets the value of g(w, x) and the normalising constant from norm_g \todo Currently interpolates angle only. Perhaps interpolate on omega too? Is there a way to match angle axes better?
 */
 
   long om_ind, norm_ind, offset;
@@ -1121,6 +1123,7 @@ calc_type get_G2(spectrum * my_spect, calc_type omega, calc_type x){
   //Calc norm if hasn't been
   if(norm_ind >= 0 && my_spect->get_norm_g(norm_ind) == 0.0){
     my_spect->calc_norm_g(norm_ind);
+    if(norm_ind < len) my_spect->calc_norm_g(norm_ind + 1);
   }
   
   len = my_spect->get_angle_length();

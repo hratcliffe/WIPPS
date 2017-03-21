@@ -134,11 +134,6 @@ Get mu, dmu/domega which are used to:
 //loop over th, w, psi, alpha, n
 //HERE we want to end up with D_alpha_alpha
 
-  //To DO!
-  //get n ranges... and add in
-
-  //We probably want to set the n and theta ranges in another routine... or using UI data
-
   plasma plas;
   spectrum * spect;
   d_report report;

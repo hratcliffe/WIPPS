@@ -689,7 +689,7 @@ int test_entity_spectrum::albertGs_tests(){
   calc_type mass_ratio = 1.0/1836.2;
 
   size_t n_tests = 10;
-  calc_type tmp_omega=0.0, tmp_x;
+  calc_type tmp_omega = 0.0, tmp_x;
 
   test_contr->add_spectrum(4096, DEFAULT_N_ANG, true);
 
@@ -741,7 +741,6 @@ int test_entity_spectrum::albertGs_tests(){
     test_bed->report_info("G1 is always zero", mpi_info.rank);
   }
 
-  test_bed->report_info("        G2 checks are incomplete!!!!!!!!!!!!!!!!!", 1);
   size_t ang_sz = test_contr->get_current_spectrum()->get_angle_length();
   my_type norm = 1.0/ (std::sqrt(2.0*pi) * SPECTRUM_ANG_STDDEV);
   for(size_t j = 1; j < n_tests; j++){
@@ -758,8 +757,13 @@ int test_entity_spectrum::albertGs_tests(){
       G2_analytic *= 2.0;
       //These limits are arbitrary but currently pass...
       /** \todo Find remaining discrepancy*/
-      if(G2_analytic > 1e-40 && std::abs(G2/G2_analytic - 1.0) > 0.08){
-        test_bed->report_info("G2 does not match analytic calc, relative error = "+mk_str((std::abs(G2/G2_analytic)-1.0)*100, true)+"% at omega="+mk_str(tmp_omega, true)+" and x="+mk_str(tmp_x, true), mpi_info.rank);
+      if(G2_analytic > 1e-40 && std::abs(G2/G2_analytic - 1.0) > 0.01){
+        //Squash errors below 8% mismatch
+        if(std::abs(G2/G2_analytic - 1.0) < 0.08){
+          err |= TEST_REMOVE_ERR;
+        }else{
+          test_bed->report_info("G2 does not match analytic calc, relative error = "+mk_str((std::abs(G2/G2_analytic)-1.0)*100, true)+"% at omega="+mk_str(tmp_omega, true)+" and x="+mk_str(tmp_x, true), mpi_info.rank);
+        }
         err |= TEST_WRONG_RESULT;
       }
     }
@@ -1148,9 +1152,11 @@ int test_entity_bounce::run(){
   if(err == TEST_PASSED) test_bed->report_info("Bounce helpers OK", 2);
   
   bounce_dat.type = p_p;
-  bounce_cases(bounce_dat);
+  err |= bounce_cases(bounce_dat);
   bounce_dat.type = alpha_alpha;
-  bounce_cases(bounce_dat);
+  err |= bounce_cases(bounce_dat);
+  bounce_dat.type = alpha_p;
+  err |= bounce_cases(bounce_dat);
 
   return err;
 
@@ -1170,12 +1176,17 @@ int test_entity_bounce::bounce_cases(bounce_av_data bounce_dat){
     for(size_t i=0; i< d_sz; i++){
       for(size_t j=0; j< d_sz; j++){
         switch(bounce_dat.type){
+          case plain:
+            val = 0.0;
+            break;
           case p_p:
             val = cos(test_contr->get_current_d()->get_axis_element_ang(j));
             break;
           case p_alpha:
           case alpha_p:
-            val = cos(test_contr->get_current_d()->get_axis_element_ang(j));
+            val = 1.0/sin(test_contr->get_current_d()->get_axis_element_ang(j));
+            //At zero we'll use any finite value because the numerator will be zero
+            if(test_contr->get_current_d()->get_axis_element_ang(j) == 0.0) val = 1.0;
             break;
           case alpha_alpha:
             val = 1.0/cos(test_contr->get_current_d()->get_axis_element_ang(j));
@@ -1188,29 +1199,40 @@ int test_entity_bounce::bounce_cases(bounce_av_data bounce_dat){
   test_contr->bounce_average(bounce_dat);
   //Check the value at random p and all angles
   my_type lambda_m, current_val, expected_val, alpha_eq;
-
+  std::string err_string;
   size_t i = 10;
   //Cheating and bumping down because at large initial pitch angles we get it wrong a bit
-  for(size_t j=1; j< d_sz - 15; j++){
+  /** \todo Can we fix this at large angle, or small angle for sin?*/
+  for(size_t j=1; j< d_sz; j++){
     alpha_eq = test_contr->get_current_d()->get_axis_element_ang(j);
     lambda_m = solve_mirror_latitude(alpha_eq);
     current_val = test_contr->get_special_d()->get_element(i,j);
     
     switch(bounce_dat.type){
+      case plain:
+        return TEST_ASSERT_FAIL;//Not meant to try this here
       case p_p:
         expected_val =(3.0*sin(lambda_m)*std::sqrt(3.0*std::pow(sin(lambda_m), 2) + 1.0) + std::sqrt(3.0)*asinh(std::sqrt(3.0)*sin(lambda_m)))/6.0/bounce_period_approx(alpha_eq);
+        err_string = "p_p";
+        if(j > d_sz - 12) err |= TEST_REMOVE_ERR;
         break;
       case p_alpha:
       case alpha_p:
-        return TEST_ASSERT_FAIL;
+        expected_val = (1225.0*sin(lambda_m) + 245.0*sin(3.0*lambda_m) + 49.0*sin(5.0*lambda_m) + 5.0*sin(7.0*lambda_m))/2240.0/cos(alpha_eq)/sin(alpha_eq)/bounce_period_approx(alpha_eq);
+        err_string = "alpha_p";
+        if(j < 12) err |= TEST_REMOVE_ERR;
+        break;
       case alpha_alpha:
         expected_val = (1225.0*sin(lambda_m) + 245.0*sin(3.0*lambda_m) + 49.0*sin(5.0*lambda_m) + 5.0*sin(7.0*lambda_m))/2240.0/std::pow(cos(alpha_eq), 2)/bounce_period_approx(alpha_eq);
+        err_string = "alpha_alpha";
+        if(j > d_sz - 12) err |= TEST_REMOVE_ERR;
         break;
     }
     if(std::abs(current_val/expected_val -1.0) > 0.05){
-      //5% discrep allowed here
+      //Moderate discrep allowed here
+//      std::cout<<j<<' '<<current_val<<' '<<expected_val<<' '<<std::abs(current_val/expected_val -1.0)<<'\n';
       err |= TEST_WRONG_RESULT;
-      test_bed->report_info("Erroneous bounce average in p_p");
+      if((err & TEST_REMOVE_ERR) != TEST_REMOVE_ERR) test_bed->report_info("Erroneous bounce average in "+err_string+" mismatch "+mk_str((int)(std::abs(current_val/expected_val -1.0)*100))+'%', 2);
     }
   }
   return err;

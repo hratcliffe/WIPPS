@@ -274,7 +274,11 @@ bool tests::run_tests(){
     this->set_colour('b');
   }
   my_error_print(mk_str(total_errs)+" failed tests", mpi_info.rank);
-  if(total_warnings > 0) my_error_print(mk_str(total_warnings)+" tests with squashed errors", mpi_info.rank);
+  
+  if(total_warnings > 0){
+    this->set_colour('y');
+    my_error_print(mk_str(total_warnings)+" tests with squashed errors", mpi_info.rank);
+  }
   this->set_colour();
   return total_errs > 0;
 

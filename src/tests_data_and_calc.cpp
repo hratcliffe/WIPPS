@@ -1032,7 +1032,7 @@ int test_entity_levelone::basic_tests(size_t n_dims_in, int flatten_on, bool has
   test_bed->report_info("Spectrum output in "+filename, 1);
 
   test_contr->add_spectrum(filename+".ref");
-  if(*(test_contr->get_current_spectrum()) != *(test_contr->get_spectrum_by_num(1))){
+  if(test_contr->get_current_spectrum() != nullptr && test_contr->get_spectrum_by_num(1) != nullptr && *(test_contr->get_current_spectrum()) != *(test_contr->get_spectrum_by_num(1))){
     test_bed->report_info("New spectrum does not match reference");
     err |= TEST_WRONG_RESULT;
   }

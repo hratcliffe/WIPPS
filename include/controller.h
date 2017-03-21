@@ -26,7 +26,7 @@ class diffusion_coeff;
 
 typedef enum bounce_av_type_specs {plain, alpha_alpha, alpha_p, p_alpha, p_p} bounce_av_type;
 
-//**Struct holding the needed stuff for bounce-averaging. Controller should only access B_x via the accessor, which returns the value from the B array
+/**Struct holding the needed stuff for bounce-averaging. Controller should only access B_x via the accessor, which returns the value from the B array. NB NB we don't currently use this B_x, rather an assumed dipole. \todo Consider using B_x rather than assuming a dipole */
 class bounce_av_data{
   private:
     data_array Bx {data_array(1)};//MUST be 1-D, see accessor function get_Bx_at
@@ -36,6 +36,7 @@ class bounce_av_data{
     my_type L_shell {4.0};
     my_type max_latitude {90.0};/**< Maximum latitude of "field line" in degrees*/
     void set_Bx_size(size_t len){this->Bx.resize(0, len);len_x = Bx.get_dims(0);}//Resize B and update length
+    bool set_Bx(data_array Bx_in){if(Bx_in.get_dims() == 1 && Bx_in.get_dims(0) == len_x){Bx = Bx_in; return true;}else{return false;}}
     inline my_type get_Bx_at(my_type lat){return Bx.get_element(Bx.get_axis_index_from_value(0, lat));}
 };
 

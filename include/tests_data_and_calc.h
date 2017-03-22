@@ -86,7 +86,8 @@ class test_entity_d : public test_entity{
   private:
     controller * test_contr;
     std::string file_prefix;
-
+    int basic_tests();
+    int full_D_tests();
   public:
     test_entity_d();
     virtual ~test_entity_d();

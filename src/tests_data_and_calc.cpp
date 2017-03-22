@@ -873,6 +873,8 @@ test_entity_levelone::~test_entity_levelone(){
 int test_entity_levelone::run(){
 /** \brief Test entire level-1 data extraction
 *
+*Set runtime_flag "no_level_one" to skip a full level-one testing
+
 **/
 
   int err = TEST_PASSED;
@@ -881,39 +883,42 @@ int test_entity_levelone::run(){
 //  if(mpi_info.rank == 0) get_deck_constants(file_prefix);
 //  share_consts();
 
-  strncpy(block_id, "ay", ID_SIZE);
-  file_prefix = "./files/l1/l1";
-  space_in[0] = 0;
-  space_in[1] = 1024;
-  time_in[0] = 0;
-  time_in[1] = 4;
-  time_in[2] = 100;
-
-  err|= setup();
-  if(!test_bed->check_for_abort(err)) err|= basic_tests(1, -1, true);
-  if(my_reader){
-    delete my_reader;
-    my_reader = nullptr;
-  }
-  if(test_contr){
-    delete test_contr;
-    test_contr = nullptr;
-  }
-
-  if(!test_bed->check_for_abort(err)){
-    file_prefix = "./files/2dtest/";
-    strncpy(block_id, "ey", ID_SIZE);
+  if(test_bed->runtime_flags.count("no_level_one") == 0){
+    strncpy(block_id, "ay", ID_SIZE);
+    file_prefix = "./files/l1/l1";
     space_in[0] = 0;
     space_in[1] = 1024;
     time_in[0] = 0;
-    time_in[1] = 50;
-    time_in[2] = 0;
+    time_in[1] = 4;
+    time_in[2] = 100;
 
-    err|=setup();
-    if(!test_bed->check_for_abort(err)) err|= basic_tests(2, 1, true);
-    if(!test_bed->check_for_abort(err)) err|= basic_tests(2, -1, false, "_space", 2, 0.01f*my_const.omega_ce, 1.5f*my_const.omega_ce);
+    err|= setup();
+    if(!test_bed->check_for_abort(err)) err|= basic_tests(1, -1, true);
+    if(my_reader){
+      delete my_reader;
+      my_reader = nullptr;
+    }
+    if(test_contr){
+      delete test_contr;
+      test_contr = nullptr;
+    }
+
+    if(!test_bed->check_for_abort(err)){
+      file_prefix = "./files/2dtest/";
+      strncpy(block_id, "ey", ID_SIZE);
+      space_in[0] = 0;
+      space_in[1] = 1024;
+      time_in[0] = 0;
+      time_in[1] = 50;
+      time_in[2] = 0;
+
+      err|=setup();
+      if(!test_bed->check_for_abort(err)) err|= basic_tests(2, 1, true);
+      if(!test_bed->check_for_abort(err)) err|= basic_tests(2, -1, false, "_space", 2, 0.01f*my_const.omega_ce, 1.5f*my_const.omega_ce);
+    }
+  }else{
+    test_bed->report_info("Skipping level-one tests due to flag -no_level_one", 0);
   }
-  
   return err;
 }
 
@@ -1091,7 +1096,11 @@ test_entity_d::~test_entity_d(){
 }
 
 int test_entity_d::run(){
-/** \todo WRITE d_testing! \todo Do some checks with final report...*/
+/** Testing of D comes in 2 parts. Since a full useful calculation takes quite a while, here we only test that the calculation proceeds and such. 
+Set runtime_flag "full_d" to perform a full sample D calculation
+
+ \todo WRITE d_testing! */
+
   int err = TEST_PASSED;
   
   deck_constants const_tmp = my_const;
@@ -1099,6 +1108,25 @@ int test_entity_d::run(){
   share_consts();
 
   test_contr = new controller(file_prefix);
+  err |= basic_tests();
+  if(test_bed->runtime_flags.count("full_d") > 0){
+    err |= full_D_tests();
+  }else{
+    test_bed->report_info("Skipping full_D tests. Invoke with flag -full_d", 0);
+  }
+
+  my_const = const_tmp;
+  share_consts();
+
+  return err;
+}
+
+int test_entity_d::basic_tests(){
+/** \brief Simple tests of D
+*
+* Does some simple checks that D calc proceeds and some basic things are true
+*/
+  int err = TEST_PASSED;
   test_bed->report_info("Reading spectrum", mpi_info.rank);
   //Now dump to file and read back in and compare
   bool err2 = test_contr->add_spectrum("spect_out.dat");
@@ -1106,21 +1134,51 @@ int test_entity_d::run(){
     test_bed->report_info("Calculating test D", mpi_info.rank);
     test_contr->add_d(5, 5);
     d_report report = test_contr->get_current_d()->calculate();
-    err |= report.error;
     if(report.error){
       test_bed->report_info("Error calculating D", mpi_info.rank);
+      err |= TEST_ASSERT_FAIL;
     }
+    //Only a "small fraction" of solutions should be lost to the angle inclusion
+    if(report.n_fails > report.n_solutions/20.0){
+      test_bed->report_info("Unexpected number of failed solutions in D");
+      err |= TEST_WRONG_RESULT;
+    }
+
+  }else{
+    err |= TEST_ASSERT_FAIL;
+  }
+
+  return err;
+}
+
+int test_entity_d::full_D_tests(){
+
+  int err = TEST_PASSED;
+
+  bool err2 = test_contr->add_spectrum("spect_out.dat");
+  if(!err2){
+    test_bed->report_info("Calculating full D... This may take a (very) long time!", mpi_info.rank);
+    test_contr->add_d(50, 50);
+    d_report report = test_contr->get_current_d()->calculate();
+    if(report.error){
+      test_bed->report_info("Error calculating full D", mpi_info.rank);
+      err |= TEST_ASSERT_FAIL;
+    }
+
     test_bed->report_info("Writing test file", mpi_info.rank);
 
     std::fstream file;
     file.open("test_d.dat", std::ios::binary|std::ios::trunc|std::ios::out|std::ios::in);
     if(file) test_contr->get_current_d()->write_to_file(file);
     file.close();
+    
+    //Now we should read a file containing sample D info and compare some features
+    
+    
   }else{
     err |= TEST_ASSERT_FAIL;
   }
-  my_const = const_tmp;
-  share_consts();
+
 
   return err;
 }

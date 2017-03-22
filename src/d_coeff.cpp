@@ -197,8 +197,11 @@ d_report diffusion_coeff::calculate(D_type_spec type_of_D, bool quiet){
       alpha = get_axis_element_ang(part_pitch_ind);
       tan_alpha = tan(alpha);
       s2alpha = std::pow(std::sin(alpha), 2);
+      //Combination of v_par and pitch angle might exceed v0, in which case we skip on because that's nonsense
+      /** \todo Use p rather than v to avoid this superluminal problem*/
+      if(std::abs(v_par* std::sqrt(1.0 + tan_alpha*tan_alpha)) >= v0) continue;
       gamma_particle = gamma_rel(v_par* std::sqrt(1.0 + tan_alpha*tan_alpha));
-
+      
       for(int wave_ang_ind = 0; wave_ang_ind < n_thetas; wave_ang_ind++){
       //theta loop for wave angle or x=tan theta
         theta = atan(x[wave_ang_ind]);
@@ -216,6 +219,7 @@ d_report diffusion_coeff::calculate(D_type_spec type_of_D, bool quiet){
               //Loop over solutions
               omega_solution = omega_calc[om_solution_num];
               my_mu = plas.get_high_dens_phi_mu_om(omega_solution, theta, alpha, n, gamma_particle);
+
               //This tracks how many solutions and non-solutions for the final report
               if(my_mu.err){
                 //Once angle is included we found no solution
@@ -224,7 +228,7 @@ d_report diffusion_coeff::calculate(D_type_spec type_of_D, bool quiet){
               }else{
                 counter ++;
               }
-              
+
               dmudx = my_mu.dmudtheta * c2th;//Chain rule
               Eq6 = omega_solution/(omega_solution - omega_n)* my_mu.mu/(my_mu.mu + omega_solution * my_mu.dmudom);
               numerator = std::pow( -s2alpha + omega_n/omega_solution, 2);

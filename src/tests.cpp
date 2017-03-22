@@ -33,6 +33,27 @@ void tests::set_verbosity(size_t verb){
   this->verbosity = std::min((int)verb, max_verbos);
 }
 
+void tests::set_runtime_flags(int argc, char *argv[]){
+/** Set the runtime flags
+*
+* Takes the command line args and stores in the runtime flags map. Each flag can be either a -thing or a -thing val where val is an int. Flags may not start with a digit
+*/
+
+  std::string current_flag;
+  int val = 0;
+  for(int i = 0; i < argc; i++){
+    current_flag = argv[i];
+    if(argv[i][0] == '-') current_flag = current_flag.substr(1, current_flag.size());
+    else continue;
+    val = 0;
+    if(i < argc-1 && (argv[i+1][0] != '-'  || (argv[i+1][1] >='0' && argv[i+1][1] <='9'))){
+      val = atoi(argv[i+1]);
+      i++;
+    }
+    runtime_flags[str_to_lower(current_flag)] = val;
+  }
+}
+
 void tests::setup_tests(){
 /** \brief Setup test bed
 *

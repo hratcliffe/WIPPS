@@ -14,6 +14,7 @@
 #include <fstream>
 #include <iostream>
 #include <vector>
+#include <map>
 #include "support.h"
 /*
 check 2011 paper for whistler mode tests
@@ -78,6 +79,7 @@ class tests{
     void setup_tests();
     void cleanup_tests();
   public:
+    std::map<std::string, int> runtime_flags;/**<Strings for runtime control*/
     tests(){setup_tests();};
     ~tests(){cleanup_tests();};
     void report_err(int err, int test_id=-1);
@@ -85,6 +87,7 @@ class tests{
     void add_test(test_entity* test);
     bool run_tests();
     void set_verbosity(size_t verb);
+    void set_runtime_flags(int argc, char *argv[]);
     void set_colour(char col=0);
     bool check_for_abort(int err);
     bool set_userdef_error(int err_code, std::string message);

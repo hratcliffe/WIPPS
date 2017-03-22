@@ -61,6 +61,7 @@ int main(int argc, char *argv[]){
 
   test_bed = new tests();
   test_bed->set_verbosity(2);
+  test_bed->set_runtime_flags(argc, argv);
   int err = test_bed->run_tests();
   delete test_bed;
   exit(err);

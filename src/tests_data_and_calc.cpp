@@ -873,8 +873,8 @@ test_entity_levelone::~test_entity_levelone(){
 int test_entity_levelone::run(){
 /** \brief Test entire level-1 data extraction
 *
-*Set runtime_flag "no_level_one" to skip a full level-one testing
-
+*
+Set runtime_flag "no_level_one" to skip a full level-one testing
 **/
 
   int err = TEST_PASSED;
@@ -1097,7 +1097,8 @@ test_entity_d::~test_entity_d(){
 
 int test_entity_d::run(){
 /** Testing of D comes in 2 parts. Since a full useful calculation takes quite a while, here we only test that the calculation proceeds and such. 
-Set runtime_flag "full_d" to perform a full sample D calculation
+*
+*Set runtime_flag "full_d" to perform a full sample D calculation
 
  \todo WRITE d_testing! */
 
@@ -1157,8 +1158,8 @@ int test_entity_d::full_D_tests(){
 
   bool err2 = test_contr->add_spectrum("spect_out.dat");
   if(!err2){
-    test_bed->report_info("Calculating full D... This may take a (very) long time!", mpi_info.rank);
-    test_contr->add_d(50, 50);
+    test_bed->report_info("Calculating full D... This may take a (very) long time!\nEnsure optimisation is on during compile!", mpi_info.rank);
+    test_contr->add_d(100, 100);
     d_report report = test_contr->get_current_d()->calculate();
     if(report.error){
       test_bed->report_info("Error calculating full D", mpi_info.rank);

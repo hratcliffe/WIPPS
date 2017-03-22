@@ -1,0 +1,2 @@
+In class test__entity__d:<p>Set runtime_flag "full_d" to perform a full sample D calculation</p>
+In class test__entity__levelone:<p>Set runtime_flag "no_level_one" to skip a full level-one testing</p>

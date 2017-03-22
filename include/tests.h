@@ -60,11 +60,19 @@ class test_entity{
 *
 *Controls running of tests and their logging etc
 *To add a test, do the following:
+*
 *Descend an object from test_entity which has at least a constructor doing any setup required, a name string for output id, a function run taking no parameters which performs the necessary test and a destructor doing cleanup. Add any other member variables or functions required, including their headers also. In tests::setup_tests create an instance of your class as test_obj = new your_class() and then add your test to the remit using add_test(test_obj); Alternately make the instance and use the global test_bed using test_bed->add(your pntr) from anywhere.
+*
 *To add errors, add the message into the blank spaces in the list below, err_names, and declare a const int of desired name aliased to TEST_USERDEF_ERR* where * = 1-4
+*
 *To report the errors by code, call test_bed->report_err(err); To report other salient information use test_bed->report_info(info, verbosity) where the second parameter is an integer describing the verbosity setting at which to print this info (0 = always, larger means more and more detail. 1 is given as default parameter for this function).
-
-
+*
+*To allow conditional running of tests etc, there is a map of runtime_flags which holds all command line arguments. These are assumed to be either a -flag_name or a pair -flag_name integer_flag_value. Available flags are:
+*
+\htmlinclude tests_runtime_flags.txt
+*/
+/*To include flags in these docs, include comment line in any functions in the relevant test_entity of the form
+"*Set runtime_flag "flag_name" to <action description>"
 */
 
 class tests{

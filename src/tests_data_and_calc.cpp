@@ -61,12 +61,13 @@ int test_entity_plasma::analytic_dispersion(){
   int err=TEST_PASSED;
 
   calc_type k, om, om_new, d_om, d_k;
+  calc_type om_ce = plas->get_omega_ref("ce"), om_pe = plas->get_omega_ref("pe");
   size_t n_tests = 5;
   //First whistlers
   //At very large k we should get om_ce and at 0, we get 0
   k = 100;
   om = plas->get_dispersion(k, WAVE_WHISTLER);
-  if(std::abs(om /plas->get_omega_ref("ce") -1.0) > GEN_PRECISION) err |=TEST_WRONG_RESULT;
+  if(std::abs(om /om_ce -1.0) > GEN_PRECISION) err |=TEST_WRONG_RESULT;
   k = 0;
   om = plas->get_dispersion(k, WAVE_WHISTLER);
   if(std::abs(om) > GEN_PRECISION) err |=TEST_WRONG_RESULT;
@@ -82,76 +83,111 @@ int test_entity_plasma::analytic_dispersion(){
   
   //If we pick a few e.g.s and do them both ways we should get same result back. Start with omega for simplicity
   for(size_t i=1; i<= n_tests; i++){
-    om = (float)i *plas->get_omega_ref("ce")/(float) (n_tests +1);
+    om = (float)i * om_ce/(float) (n_tests +1);
     k = plas->get_dispersion(om, WAVE_WHISTLER, true);
     om_new = plas->get_dispersion(k, WAVE_WHISTLER);
     if(std::abs(om /om_new -1.0) > GEN_PRECISION) err |=TEST_WRONG_RESULT;
   }
   
-  //Derivs should be 0 at 0 and large omega.
-
-  k=100;
+  //Derivs should be 0 at 0 for all cases and all modes
+  k=0;
+  //Cheat and loop through the wave indices
+  for(int wave_id = WAVE_WHISTLER; wave_id <= WAVE_O; wave_id++){
+    d_om = plas->get_dispersion(k, wave_id, false, true);
+    if(std::abs(d_om) > GEN_PRECISION) err |=TEST_WRONG_RESULT;
+  }
+  //For whistler at large omega deriv is 0
+  k = 100;
   d_om = plas->get_dispersion(k, WAVE_WHISTLER, false, true);
   if(std::abs(d_om) > GEN_PRECISION) err |=TEST_WRONG_RESULT;
-  k = 0;
-  d_om = plas->get_dispersion(k, WAVE_WHISTLER, false, true);
-  if(std::abs(d_om) > GEN_PRECISION) err |=TEST_WRONG_RESULT;
-
   
   //Finally derivs at our samples should be inverses
   for(size_t i=1; i<= n_tests; i++){
-    om = (float)i *plas->get_omega_ref("ce")/(float) (n_tests +1);
+    om = (float)i * om_ce/(float) (n_tests +1);
     k = plas->get_dispersion(om, WAVE_WHISTLER, true);
     
     d_om = plas->get_dispersion(k, WAVE_WHISTLER, false, true);
     d_k = plas->get_dispersion(om, WAVE_WHISTLER, true, true);
-    if(std::abs(d_om*d_k -1.0) > GEN_PRECISION) err |=TEST_WRONG_RESULT;
+    if(std::abs(d_om*d_k - 1.0) > GEN_PRECISION) err |=TEST_WRONG_RESULT;
   }
   
   //Finally we check how it handles out of range
   try{
-    k = plas->get_dispersion(plas->get_omega_ref("ce")*1.5, WAVE_WHISTLER, true);
+    k = plas->get_dispersion(om_ce*1.5, WAVE_WHISTLER, true);
   }catch(const std::exception& e){
     std::string message = e.what();
     test_bed->report_info("Exception in analytic dispersion, message " +message, 1);
     err |= TEST_ASSERT_FAIL;
   }
 
-  //Now EM
-  //At 0, we get om_pe
+  //Now EM and plasma
+  //At 0, we get om_pe for P and O, and X-mode cuts for X
   k = 0;
   om = plas->get_dispersion(k, WAVE_O);
-  if(std::abs(om - plas->get_omega_ref("pe")) > GEN_PRECISION) err |=TEST_WRONG_RESULT;
+  if(std::abs(om - om_pe) > GEN_PRECISION) err |=TEST_WRONG_RESULT;
+  om = plas->get_dispersion(k, WAVE_PLASMA);
+  if(std::abs(om - om_pe) > GEN_PRECISION) err |=TEST_WRONG_RESULT;
+
+  om = plas->get_dispersion(k, WAVE_X_LOW);
+  my_type X_cut = 0.5 * (- om_ce +  std::sqrt(om_ce*om_ce + 4.0*om_pe*om_pe));
+  if(std::abs(om - X_cut) > GEN_PRECISION) err |=TEST_WRONG_RESULT;
+
+  om = plas->get_dispersion(k, WAVE_X_UP);
+  X_cut = 0.5 * (om_ce +  std::sqrt(om_ce*om_ce + 4.0*om_pe*om_pe));
+  if(std::abs(om - X_cut) > GEN_PRECISION) err |=TEST_WRONG_RESULT;
+
+  //And back again
+  X_cut = 0.5 * (- om_ce +  std::sqrt(om_ce*om_ce + 4.0*om_pe*om_pe))*(1.0 + GEN_PRECISION/5.0);//Tiny bump to ensure we're in solvable range
+  k = plas->get_dispersion(X_cut, WAVE_X_LOW, true);
+  if(std::abs(k - 0.0) > GEN_PRECISION) err |= TEST_WRONG_RESULT;
+  X_cut = 0.5 * ( om_ce +  std::sqrt(om_ce*om_ce + 4.0*om_pe*om_pe))*(1.0 + GEN_PRECISION/5.0);
+  k = plas->get_dispersion(X_cut, WAVE_X_UP, true);
+  if(std::abs(k - 0.0) > GEN_PRECISION) err |= TEST_WRONG_RESULT;
   
   //If we pick a few e.g.s and do them both ways we should get same result back. Go from say om_pe to 3om_pe
   for(size_t i=1; i<= n_tests; i++){
-    om = plas->get_omega_ref("pe")*(1.0+ + 2.0*(float)i/(float) (n_tests +1));
+    om = plas->get_omega_ref("pe")*(1.0+ 2.0*(float)i/(float) (n_tests +1));
     k = plas->get_dispersion(om, WAVE_O, true);
     om_new = plas->get_dispersion(k, WAVE_O);
     if(std::abs(om /om_new -1.0) > GEN_PRECISION) err |=TEST_WRONG_RESULT;
+    k = plas->get_dispersion(om, WAVE_PLASMA, true);
+    om_new = plas->get_dispersion(k, WAVE_PLASMA);
+    if(std::abs(om /om_new -1.0) > GEN_PRECISION) err |=TEST_WRONG_RESULT;
+/*    k = plas->get_dispersion(om, WAVE_X_LOW, true);
+    om_new = plas->get_dispersion(k, WAVE_X_LOW);
+    if(std::abs(om /om_new -1.0) > GEN_PRECISION) err |=TEST_WRONG_RESULT;*/
+    k = plas->get_dispersion(om, WAVE_X_UP, true);
+    om_new = plas->get_dispersion(k, WAVE_X_UP);
+    if(om > X_cut){
+      if(std::abs(om /om_new -1.0) > GEN_PRECISION) err |=TEST_WRONG_RESULT;
+    }
   }
-  
-  //Derivs should be 0 at 0 and ~1/c at very large omega
-  k = 0;
-  d_om = plas->get_dispersion(k, WAVE_O, false, true);
-  if(std::abs(d_om) > GEN_PRECISION) err |=TEST_WRONG_RESULT;
-  om = 100* plas->get_omega_ref("pe");
-  d_k = plas->get_dispersion(om, WAVE_O, true, true);
-  if(std::abs(d_k*v0 - 1.0) > LOW_PRECISION) err |=TEST_WRONG_RESULT;
+
+  //Plasma wave goes to sqrt(3) v_t and O, X to c
+  k = 100;
+  for(int wave_id = WAVE_O; wave_id <= WAVE_O; wave_id++){
+    d_om = plas->get_dispersion(k, wave_id, false, true);
+    if(std::abs(d_om - v0)/v0 > GEN_PRECISION) err |=TEST_WRONG_RESULT;
+  }
+  d_om = plas->get_dispersion(k, WAVE_PLASMA, false, true);
+  if(std::abs(d_om - std::sqrt(3)*0.01*v0)/d_om > GEN_PRECISION) err |=TEST_WRONG_RESULT;
 
   //Finally derivs at our samples should be inverses
   for(size_t i=1; i<= n_tests; i++){
-    om = plas->get_omega_ref("pe")*(1.0+ + 2.0*(float)i/(float) (n_tests +1));
-    k = plas->get_dispersion(om, WAVE_O, true);
-    
-    d_om = plas->get_dispersion(k, WAVE_O, false, true);
-    d_k = plas->get_dispersion(om, WAVE_O, true, true);
-    if(std::abs(d_om*d_k -1.0) > GEN_PRECISION) err |=TEST_WRONG_RESULT;
+    om = om_pe + (float)i *om_pe/(float) (n_tests +1);
+    for(int j = WAVE_PLASMA; j<= WAVE_O; j++){
+      k = plas->get_dispersion(om, j, true);
+      d_om = plas->get_dispersion(k, j, false, true);
+      d_k = plas->get_dispersion(om, j, true, true);
+      if(std::abs(d_om*d_k - 1.0) > GEN_PRECISION) err |=TEST_WRONG_RESULT;
+    }
   }
+
   //Finally we check how it handles out of range
   try{
-    k = plas->get_dispersion(plas->get_omega_ref("pe")*0.8, WAVE_O, true);
-
+    for(int j = WAVE_PLASMA; j < WAVE_X_LOW; j++){
+      k = plas->get_dispersion(plas->get_omega_ref("pe")*0.3, j, true);
+    }
   }catch(const std::exception& e){
     std::string message = e.what();
     test_bed->report_info("Exception in analytic dispersion, message " +message, 1);

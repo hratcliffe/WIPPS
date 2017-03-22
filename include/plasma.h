@@ -38,6 +38,7 @@ private:
   calc_type pmass[ncomps];/**<Per species mass*/
   calc_type pcharge[ncomps];/**<Per species charge*/
   calc_type pdens[ncomps];/**<Per species density*/
+  calc_type pvth[ncomps];/**<Per species thermal velocity*/
 
   plasma_state is_setup;/**<Check for validity*/
 /********Basic setup and allocation functions ****/

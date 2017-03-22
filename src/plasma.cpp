@@ -43,7 +43,8 @@ plasma_state plasma::configure_from_file(std::string file_prefix){
 *mass = 1.0*me
 *charge = -1.0
 *dens = 1.0
-*Masses can be given relative to me or mp by ending the line with *mX. Charges are assumed relative to q0 and densities to the reference_density given by omega_pe in deck constants
+*v_th = 0.01
+*Masses can be given relative to me or mp by ending the line with *mX. Charges are assumed relative to q0, densities to the reference_density given by omega_pe in deck constants, and v_th to c
 On error we continue using defaults set below
 */
 
@@ -65,6 +66,11 @@ On error we continue using defaults set below
   pdens[1] = 1.0 * ref_dens;
   pdens[2] = 0.0 * ref_dens;
   pdens[3] = 0.0*ref_dens;
+
+  pvth[0] = 0.01*v0;
+  pvth[1] = 0.001*v0;
+  pvth[2] = 0.001*v0;
+  pvth[3] = 0.001*v0;
 
 //End default values -----------------------------------------
 
@@ -104,8 +110,13 @@ On error we continue using defaults set below
           if(tail == "me") pmass[block_num] = atof(val.c_str())* me;
           else if(tail == "mp") pmass[block_num] = atof(val.c_str())* mp;
         
-        }else if(name == "charge") pcharge[block_num] = atof(val.c_str()) * q0;
-        else if(name == "dens") pdens[block_num] = atof(val.c_str()) * ref_dens;
+        }else if(name == "charge"){
+          pcharge[block_num] = atof(val.c_str()) * q0;
+        }else if(name == "dens"){
+          pdens[block_num] = atof(val.c_str()) * ref_dens;
+        }else if(name == "v_th"){
+          pvth[block_num] = atof(val.c_str())*v0;
+        }
       }
     }
   }
@@ -764,13 +775,14 @@ std::vector<calc_type> plasma::get_resonant_omega(calc_type x, calc_type v_par, 
 calc_type plasma::get_dispersion(my_type in, int wave_type, bool reverse, bool deriv, my_type theta)const{
 /** \brief Solve analytic dispersion (approx)
 *
-* By default returns omega for a given k (see reverse and deriv params param). Uses local reference cyclotron and plasma frequencies and works with UNNORMALISED quantitites. NB: parameters out of range will silently return 0. NB: For Whistler modes this is an approximation and intended to be perfectly reversible. @param k Wavenumber @param wave_type wave species (see support.h) @param reverse Return k for input omega @param deriv Whether to instead return anayltic v_g @param theta Wavenormal angle, default 0.0  \todo Any other modes?*/
+* By default returns omega for a given k (see reverse and deriv params param). Uses local reference cyclotron and plasma frequencies and works with UNNORMALISED quantitites. NB: parameters out of range will silently return 0. NB: For Whistler modes this is an approximation and intended to be perfectly reversible. @param k Wavenumber @param wave_type wave species (see support.h) @param reverse Return k for input omega @param deriv Whether to instead return anayltic v_g @param theta Wavenormal angle, default 0.0  \todo Complete Xmode?*/
 
 #ifdef DEBUG_ALL
   //Argument preconditions. Check only in debug mode for speed
-  if(wave_type < WAVE_WHISTLER || wave_type > WAVE_X) my_error_print("!!!!!!!!Error in get_dispersion, wave_type unknown (wave_type="+mk_str(wave_type)+")!!!!!!", 0);
+  if(wave_type < WAVE_WHISTLER || wave_type > WAVE_X_LOW) my_error_print("!!!!!!!!Error in get_dispersion, wave_type unknown (wave_type="+mk_str(wave_type)+")!!!!!!", 0);
   //Theta is not conditioned because we reduce it below. This may change though
   //In is either a frequency or a wavenumber and thus has no limits, although may wish to add sanity limits
+  if((wave_type == WAVE_X_LOW || wave_type == WAVE_X_UP) && deriv) my_error_print("!!!!This path not yet implemented", 0);
 #endif
 
 
@@ -814,8 +826,32 @@ calc_type plasma::get_dispersion(my_type in, int wave_type, bool reverse, bool d
           ret = 0.5*om_pe_sq*std::abs(om_ce_loc)/std::pow(in_minus_om, 2)/std::sqrt(-om_pe_sq*in/in_minus_om)  /v0;
         }
       }
-      break;//Case break
-
+      break;
+    case WAVE_PLASMA:
+      //Grab v_t as the first electron species in the plasma file
+      {
+      my_type v_t = 0.0;
+      my_type om_ce_sin_sq = std::pow(om_ce_loc*std::sin(theta), 2);
+      for(int i = 0; i < ncomps; i++){
+        if(pmass[i] == me){
+          v_t = pvth[i];
+          break;
+        }
+      }
+      if(!reverse){
+      //This is "Z" mode, to get pure plasma use theta=0. Note also that it requires a single dominant electron thermal speed
+        my_type kv_t_3_sq = 3.0*in*std::pow(v_t, 2);
+        ret = std::sqrt(om_pe_loc*om_pe_loc + kv_t_3_sq*in + om_ce_sin_sq);
+        if(deriv) ret = kv_t_3_sq/ret;
+      }else{
+        my_type tmp = in*in - om_pe_loc*om_pe_loc - om_ce_sin_sq;
+        if(tmp > 0){
+          if(deriv) ret = in/(sqrt(3.0*tmp) *v_t);
+          else ret = std::sqrt(tmp/3.0)/v_t;
+        }
+      }
+      break;
+      }
     case WAVE_O :
       if(!reverse){
         ret = std::sqrt(om_pe_loc*om_pe_loc + std::pow(v0*in, 2));
@@ -825,6 +861,22 @@ calc_type plasma::get_dispersion(my_type in, int wave_type, bool reverse, bool d
         ret = std::sqrt(in*in -om_pe_loc*om_pe_loc);
         if(!deriv) ret = ret/v0;
         else ret = in/v0/ret;
+      }
+      break;
+    case WAVE_X_UP:
+    case WAVE_X_LOW:
+      if(!reverse){
+        int sgn = 1;
+        if(wave_type == WAVE_X_LOW) sgn = -1;
+        my_type c_sq_k_sq = std::pow(v0*in, 2), om_pe_sq = om_pe_loc*om_pe_loc, om_ce_sq = om_ce_loc*om_ce_loc, tmp;
+        tmp = (sgn * std::sqrt(std::pow(om_ce_sq - c_sq_k_sq, 2) + 4.0 *om_pe_sq*om_ce_sq) + c_sq_k_sq + 2.0*om_pe_sq + om_ce_sq)/2.0;
+        if(tmp != tmp ) break;//no solution...
+        if(tmp > 0) ret = std::sqrt(tmp);
+        else ret = std::sqrt(- tmp);
+      }else{
+        //How do we select correct branch??
+        my_type om_pe_sq = om_pe_loc*om_pe_loc, om_sq = in * in;
+        if(!deriv) ret = in/v0 * std::sqrt(1.0 - om_pe_sq/om_sq * (om_sq - om_pe_sq)/(om_sq - om_pe_sq - om_ce_loc*om_ce_loc));
       }
       break;
   }

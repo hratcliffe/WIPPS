@@ -82,15 +82,14 @@ const int ID_SIZE = 10;/**< Length of block ids*/
 
 const int WAVE_WHISTLER = 1; /**< Code to id wave as whistler mode */
 const int WAVE_PLASMA = 2; /**< Code to id wave as plasma/Langmuir wave*/
-
 const int WAVE_O = 3; /**< Code to id wave as ordinary EM mode */
-const int WAVE_X = 4; /**< Code to id wave as ordinary EM mode */
+const int WAVE_X_UP = 4; /**< Code to id wave as X EM mode, upper branch */
+const int WAVE_X_LOW = 5; /**< Code to id wave as X EM mode, lower branch */
 
 const int FUNCTION_NULL = 0; /**< Code to id spectral angular distribution as absent */
 const int FUNCTION_DELTA = 1; /**< Code to id spectral angular distribution as delta function (with integral 1) */
 const int FUNCTION_GAUSS = 2; /**< Code to id spectral angular distribution as gaussian (with integral 1) */
 const int FUNCTION_ISO = 3; /**< Code to id spectral angular distribution as isotropic (with integral 1) */
-
 
 const std::string OMEGA_CE = "wCe";/**< String specifying  omega_ce in deck.status*/
 const std::string OMEGA_PE = "wpe";/**< String specifying  omega_pe in deck.status*/

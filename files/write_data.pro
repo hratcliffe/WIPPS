@@ -65,12 +65,17 @@ END
 next_loc  = next_loc + my_sz*3 + sz_sz*3
 writeu, filenum, next_loc
 IF(N_ELEMENTS(extr) GT 0) THEN extra_tags=tag_names(extr) else extra_tags=[]
-IF(where(extra_tags EQ 'TIME') NE -1) THEN time=extr.time ELSE time=[0.0*io_check, 1.0]
+
+time=[0.0*io_check, 1.0]
+IF(where(extra_tags EQ 'TIME') NE -1) THEN time[*] = extr.time
 ;Use io_check as we know it has correct type
 writeu, filenum, time
-IF(where(extra_tags EQ 'SPACE') NE -1) THEN space=extr.space ELSE space=[0ull, 1ull]
+
+space = [0ull, 1ull]
+IF(where(extra_tags EQ 'SPACE') NE -1) THEN space[*] = extr.space
 writeu, filenum, space
-IF(where(extra_tags EQ 'B_REF') NE -1) THEN b_ref=extr.b_ref ELSE b_ref = 0.0*io_check
+
+IF(where(extra_tags EQ 'B_REF') NE -1) THEN b_ref = fix(extr.b_ref, type=size(io_check, /type)) ELSE b_ref = 0.0*io_check
 writeu, filenum, b_ref
 
 next_loc = next_loc + sz_sz + 10
@@ -97,6 +102,7 @@ end
 
 function write_data, filelabel, data, axes, usenum=usenum, _extra=extr
 ;Write data wrapper. If usenum is set, assume filelabel is a lun. Otherwise assume it's a string name
+;Note that a string-named file will always be closed
   IF(~KEYWORD_SET(usenum)) THEN BEGIN
     filenum=0
     print, filelabel

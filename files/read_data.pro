@@ -24,13 +24,7 @@ ENDIF
 
 data = read_block(filenum, hdr.my_type, hdr.block_type)
 
-tmp = FSTAT(filenum)
-POINT_LUN, filenum, (tmp.size - hdr.int_sz)
-start_pos = hdr.block_type
-readu, filenum, start_pos
-POINT_LUN, filenum, start_pos
-
-next_block = start_pos
+next_block = hdr.block_type
 readu, filenum, next_block
 
 IF(~KEYWORD_SET(NOEXT)) THEN BEGIN

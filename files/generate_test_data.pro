@@ -16,6 +16,7 @@ n_pts = [1024, 500]
 om_ce = 17588.200878
 om_pe = 35176.401757
 k_peak = n_pts[0]/ 12.0 ;Location of peaks in k relative to k=0 at n_pts[0]/2.0
+norm_B_sq = (1e-10)^2 ;100pT field
 
 ;Fixed constants
 q0 = 1.602176565d-19 ; elementary charge [C]
@@ -65,14 +66,14 @@ k_distrib[0:n_pts[0]/2.0 -1] = reverse(k_distrib[n_pts[0]/2.0:n_pts[0]-1])
 
 FOR i=0, sz[1]-1 DO BEGIN
   cells = abs(om_min_ind[i]-om_max_ind[i]-1)
-  IF(cells GT 0) THEN FFT_data[i, om_min_ind[i]:om_max_ind[i]] = k_distrib[i]/cells
+  IF(cells GT 0) THEN FFT_data[i, om_min_ind[i]:om_max_ind[i]] = norm_B_sq * k_distrib[i]/cells
 END
 
 ;Mirror data
 FFT_data[*, 0:n_pts[1]/2-1] = (FFT_data[*, n_pts[1]-1:n_pts[1]/2:-1]) 
 
 ;Save the data
-err = write_data(output_file, FFT_data, axes, id='FFTd')
+err = write_data(output_file, FFT_data, axes, id='FFTd', TIME=[0, 1], SPACE=[0, 1], B_REF = 1.0)
 
 PRINT, "Making spectrum"
 
@@ -80,7 +81,7 @@ PRINT, "Making spectrum"
 calculate_energy_density, FFT_data, axes, dispersion, output=spectrum, margin=om_fuzz*2
 ;Make it fuzzier...
 ;Save the spectrum
-err = write_data(spectrum_file, spectrum, list(dispersion), id="spect")
+err = write_data(spectrum_file, spectrum, list(dispersion), id="spect", TIME=[0, 1], SPACE=[0, 1], B_REF = 1.0)
 
 end
 

@@ -440,13 +440,13 @@ int test_entity_plasma::other_modes(){
 int test_entity_plasma::phi_dom(){
 /** \brief Test other plasma returns
 *
-* Checks the values of mu.dom, mu.dmudtheta and phi against special cases. \todo Write this Phi is pretty utestable really...
+* Checks the values of mu.dom, mu.dmudtheta and phi against special cases.
 */
 
   int err=TEST_PASSED;
   size_t n_tests = 10;
 
-  calc_type mu_tmp1, mu_tmp2, om_ce_local, om_pe_local;
+  calc_type mu_tmp1, mu_tmp2, om_ce_local, om_pe_local, tmp_phi;
   om_ce_local = plas->get_omega_ref("ce");
   om_pe_local = plas->get_omega_ref("pe");
 
@@ -458,6 +458,26 @@ int test_entity_plasma::phi_dom(){
   mu my_mu_all, my_mu_all_p;
 
   calc_type tmp_omega = 0.0, tmp_theta=pi/(calc_type)(n_tests), gamma_particle = 1.0;
+
+  test_bed->report_info("Testing phi", 1);
+  //For phi all we can really do is check that it's positive (as it's a square) and check it's not NaN, especially for n=0
+  for( int n = -4; n < 4 ; n++){
+    my_mu = plas->get_high_dens_phi_mu_om(std::abs(om_ce_local)* 0.5, tmp_theta, 0.0, 0, gamma_particle);
+    if(my_mu.phi != my_mu.phi || my_mu.phi < 0){
+      err |= TEST_ASSERT_FAIL;
+      test_bed->report_info("Phi is invalid in get_high_dens_phi_mu_om for n="+mk_str(n), 2);
+    }
+    tmp_phi = my_mu.phi;
+    my_mu = plas->get_phi_mu_om(std::abs(om_ce_local)* 0.5, tmp_theta, 0.0, 0, gamma_particle);
+    if(my_mu.phi != my_mu.phi || my_mu.phi < 0){
+      err |= TEST_ASSERT_FAIL;
+      test_bed->report_info("Phi is invalid in get_phi_mu_om for n="+mk_str(n), 2);
+    }
+    if(my_mu.phi != tmp_phi){
+      err |= TEST_WRONG_RESULT;
+      test_bed->report_info("Inconsistent phi with high dens for n="+mk_str(n), 2);
+    }
+  }
 
   test_bed->report_info("Testing dmu/domega", 1);
 

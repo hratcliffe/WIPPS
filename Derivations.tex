@@ -390,7 +390,21 @@ we break the terms down as follows. Note that $\omega$ is the resonant solution 
 
 \end{itemize}
 
+\section{Really important subtleties that often get glossed over}
 
+\subsection{Arguments of Bessel functions in Phi}
+In Lyons (between Eq 3 and 4) we have that the Bessel function args Big-Theta or Phi are
+\[ k_\perp v_\perp / \Omega_l\]
+Albert converts these to 
+\[ n x \tan \alpha (\omega -\omega_n)/\omega_n\] which DOES NOT WORK for $n = 0$. Assuming that the $n/\omega_n$ is introduced in that form, we can simply cancel the $n$. Alternately perhaps we want a different arg when $n=0$ which is a Landau resonance. 
+
+\subsection{Sign of cyclotron frequency}
+
+Lyons considers a signed $\Omega_l$ but an unsigned $\Omega_e$. Albert has only unsigned $\Omega_c$. 
+
+\subsection{Sign of resonant omega and multiple root counting}
+The previous subsection and the fact that negative wave frequency $\omega$ is mostly ignored means I don't know which solutions should be considered. In the resonance condition
+\[ \omega  - k_\parallel v_\parallel = - \frac{n |\Omega_c|}{\gamma} \] we get plus and minus signs for the same omega value for pairwise sign swaps of $k_\parallel$, $v_\parallel$ and $n$. It's not clear in Albert whether these things should be signed or whether sign is absorbed into angle, but in Lyons with the $\perp \parallel$ breakdown both must be signed. 
 
 \section{Bounce averaging of D}
 The equations for bounce averaging the various D components are:

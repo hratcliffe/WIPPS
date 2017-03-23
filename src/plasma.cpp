@@ -494,13 +494,15 @@ mu_dmudom plasma::get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int
     D_mu2S = D / (mu2 - S);
     calc_type calc_n = (calc_type) n;
     omega_n = -1.0 * calc_n * my_const.omega_ce/gamma_particle;
+    calc_type omega_n_slash_n = -1.0 * my_const.omega_ce/gamma_particle;
     //temporaries for simplicity
 
     term1 = (mu2* s2psi - P)/(mu2);
     
     denom = pow(D_mu2S*term1, 2) + c2psi*pow((P/mu2), 2);
     
-    bessel_arg = calc_n* std::tan(psi)*tan(alpha) * (w - omega_n)/omega_n;// n x tan alpha (om - om_n)/om_n
+    bessel_arg = tan(psi)*tan(alpha) * (w - omega_n)/omega_n_slash_n;// n x tan alpha (om - om_n)/om_n
+    /** \todo What should this arg be when n is 0?*/
     
     tmp_besp = boost::math::cyl_bessel_j(abs(n)+1, bessel_arg);
     tmp_besm = boost::math::cyl_bessel_j(abs(n)-1, bessel_arg);
@@ -509,16 +511,17 @@ mu_dmudom plasma::get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int
     term2 += (1 - D_mu2S)*tmp_besm;
     
     //tmp_bes = boost::math::cyl_bessel_j(abs(n), bessel_arg);
-    tmp_bes = 0.5*bessel_arg *(tmp_besp + tmp_besm)/calc_n;
+    if(n != 0) tmp_bes = 0.5*bessel_arg *(tmp_besp + tmp_besm)/calc_n;
+    else tmp_bes = boost::math::cyl_bessel_j(abs(n), bessel_arg);
     //Use bessel identity to save time.
     // J_(n-1) + J_(n+1) = (2 n / arg) J_n
     term3 = scpsi*tmp_bes/std::tan(alpha);
 
     my_mu.phi = std::pow((0.5*term1*term2 + term3), 2)/denom;
+    if(alpha == 0) my_mu.phi = 0;
 
   }
 
-  
   return my_mu;
 }
 
@@ -705,7 +708,6 @@ mu_dmudom plasma::get_high_dens_phi_mu_om(calc_type w, calc_type psi, calc_type 
     if(alpha == 0) my_mu.phi = 0;
   }
 
-  
   return my_mu;
 }
 

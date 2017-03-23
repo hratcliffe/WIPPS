@@ -84,7 +84,7 @@ int main(int argc, char *argv[]){
     //Mask requested, create array for it and call
     mask = new data_array();
     mask->clone_empty(data_in);
-    contr.get_current_spectrum()->generate_spectrum(data_in, my_args.fuzz, my_args.ang, mask);
+    contr.get_current_spectrum()->generate_spectrum(data_in, my_args.fuzz, my_args.ang, DEFAULT_SPECTRUM_ANG_STDDEV, mask);
   }else{
     contr.get_current_spectrum()->generate_spectrum(data_in, my_args.fuzz, my_args.ang);
   }

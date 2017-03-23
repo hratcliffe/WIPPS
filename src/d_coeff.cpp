@@ -274,10 +274,10 @@ d_report diffusion_coeff::calculate(D_type_spec type_of_D, bool quiet){
 int diffusion_coeff::get_min_n(calc_type v_par, my_type k_thresh, calc_type om_ce){
 /** \brief Limits on n 
 *
-* Uses the maximum k and the velocity to give min/max n to consider (note signs). Note always has abs value ge 1. \todo Is there a tighter limt? This is quite weak...
+* Uses the maximum k and the velocity to give min/max n to consider (note signs). Note always has abs value ge 1. We cap gamma by assuming the particle velocity is limited.
 */
 
-  calc_type gamma = gamma_rel(v_par);
+  calc_type gamma = gamma_rel(0.75*v0);
   int n = std::max(-(int)(gamma * k_thresh * std::abs(v_par / om_ce)), -n_n);
   return std::min(-1, n);
 }
@@ -285,10 +285,11 @@ int diffusion_coeff::get_min_n(calc_type v_par, my_type k_thresh, calc_type om_c
 int diffusion_coeff::get_max_n(calc_type v_par, my_type k_thresh, calc_type om_ce){
 /** \brief Limits on n 
 *
-* Uses the maximum k and the velocity to give min/max n to consider (note signs)
+* Uses the maximum k and the velocity to give min/max n to consider (note signs) and cap to 1.
 */
 
-  calc_type gamma = gamma_rel(v_par);
+  calc_type gamma = gamma_rel(0.75*v0);
+
   int n = std::min((int)(gamma * k_thresh * std::abs(v_par / om_ce)), n_n);
   return std::max(1, n);
 }

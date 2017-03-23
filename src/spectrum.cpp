@@ -290,7 +290,7 @@ void spectrum::make_angle_axis(){
 
 }
 
-bool spectrum::make_angle_distrib(){
+bool spectrum::make_angle_distrib(my_type std_dev){
 /** \brief Generate angle axis and distribution
 *
 *Generates an angle axis linear spaced in tan theta between TAN_MIN and TAN_MAX. Then generates and fills the angular spectrum according to function specified by function_type member variable. Options are in support.h and are FUNCTION_DELTA: delta function with peak at 0 angle. FUNCTION_GAUSS: Gaussian with std-dev SPECTRUM_ANG_STDDEV, centre at 0 angle. FUNCTION_ISO: Isotropic distribution over range considered. The integrals are either 0.5 for 0 to TAN_MAX or 1 for -TAN_MAX to TAN_MAX. Other combinations are not guaranteed
@@ -320,10 +320,10 @@ bool spectrum::make_angle_distrib(){
   }else if(function_type == FUNCTION_GAUSS){
     my_type ax_el;
     my_type norm;
-    norm = 1.0/ (std::sqrt(2.0*pi) * SPECTRUM_ANG_STDDEV);
+    norm = 1.0/ (std::sqrt(2.0*pi) * std_dev);
     for(size_t i=0; i<len; ++i){
       ax_el = get_ang_axis_element(i);
-      val = std::exp( -0.5 * std::pow(ax_el/SPECTRUM_ANG_STDDEV, 2)) * norm;
+      val = std::exp( -0.5 * std::pow(ax_el/std_dev, 2)) * norm;
       set_g_element(i,val);
     }
   }else if(function_type == FUNCTION_ISO){
@@ -344,10 +344,10 @@ bool spectrum::make_angle_distrib(){
 }
 
 #ifdef RUN_TESTS_AND_EXIT
-void spectrum::make_test_spectrum(int angle_type, bool two_sided, my_type om_ce){
+void spectrum::make_test_spectrum(int angle_type, bool two_sided, my_type om_ce, my_type std_dev){
 /** \brief Generate dummy spectrum
 *
-*Makes a basic spectrum object with suitable number of points, and Gaussian(s) centred at fixed k/freq and x value @param angle_type Function to use for angular distrib @param two_sided Whether to generate symmetric spectrum or one-sided @param om_ce Plasma frequency to use \todo Change tests and remove this
+*Makes a basic spectrum object with suitable number of points, and Gaussian(s) centred at fixed k/freq and x value @param angle_type Function to use for angular distrib @param two_sided Whether to generate symmetric spectrum or one-sided @param om_ce Plasma frequency to use
 */
 
   if(!this->is_good()){
@@ -365,7 +365,7 @@ void spectrum::make_test_spectrum(int angle_type, bool two_sided, my_type om_ce)
   my_type res = om_ce*(1.0+(my_type)two_sided)/(my_type)len0;
   //Generate axes for one or two-sided
   for(size_t i=0; i<len0; i++) *(ax_ptr+i) = res*((my_type)i - (my_type)two_sided *(my_type)len0/2.);
-  make_angle_distrib();
+  make_angle_distrib(std_dev);
 
   //Set values to match our test spectrum data
   my_type centre, width, background = 0.0;
@@ -400,7 +400,7 @@ void spectrum::make_test_spectrum(int angle_type, bool two_sided, my_type om_ce)
 }
 #endif
 
-bool spectrum::generate_spectrum(data_array &parent, int om_fuzz, int angle_type, data_array * mask){
+bool spectrum::generate_spectrum(data_array &parent, int om_fuzz, int angle_type, my_type std_dev, data_array * mask){
 /**\brief Generate spectrum from data
 *
 *Takes a parent data array and generates the corresponding spectrum. Windows using the specified wave dispersion and integrates over frequency using om_fuzz percent band. Axes are copied from the parent. If the spectrum is of separable type (g_is_angle_only = true), the angular distribution is generated with functional form specified by angle_type.  IMPORTANT: when using real angular data we roughly fuzz around the correct k values, but this is not uniform! Non-smooth or rapidly varying data may give odd results @param parent Data array to read from. Spectrum will have the same units as this @param om_fuzz Band width around dispersion curve in percent of central frequency @param angle_type Angular distribution functional form @param mask (optional) data_array matching sizes of parent, will be filled with the masking array used for spectrum generation. If nullptr or nothing is supplied, no mask is output. \todo 2-d and 3-d extractions don't quite agree at k=0. factor ~10 and variations near 0
@@ -468,7 +468,7 @@ bool spectrum::generate_spectrum(data_array &parent, int om_fuzz, int angle_type
       if(total > max) max = total;
     }
     //Generate the angular distrib function
-    make_angle_distrib();
+    make_angle_distrib(std_dev);
     this->max_power = max;
 
   }else if(parent.is_good() && parent.get_dims()==3){

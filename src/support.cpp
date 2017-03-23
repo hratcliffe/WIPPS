@@ -348,7 +348,7 @@ void log_code_constants(std::string file_prefix){
     file<<"V_MAX "<<V_MAX<<'\n';
     file<<"ANG_MIN "<<ANG_MIN<<'\n';
     file<<"ANG_MAX "<<ANG_MAX<<'\n';
-    file<<"SPECTRUM_ANG_STDDEV "<<SPECTRUM_ANG_STDDEV<<'\n';
+    file<<"DEFAULT_SPECTRUM_ANG_STDDEV "<<DEFAULT_SPECTRUM_ANG_STDDEV<<'\n';
     file<<"SPECTRUM_THRESHOLD "<<SPECTRUM_THRESHOLD<<'\n';
 
   }

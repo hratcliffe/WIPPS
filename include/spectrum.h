@@ -57,7 +57,7 @@ class spectrum{
 
 /********Setup helper functions ****/
   void make_angle_axis();
-  bool make_angle_distrib();
+  bool make_angle_distrib(my_type std_dev);
 
 /******** Access helper functions ****/
   int where_omega(my_type value);
@@ -83,9 +83,9 @@ public:
 /********Setup helper functions ****/
   inline bool is_good()const{return (B_omega_array.is_good() && g_angle_array.is_good() && norm_g);}/**<Check if a spectrum is complete and useable*/
 #ifdef RUN_TESTS_AND_EXIT
-  void make_test_spectrum(int angle_type=FUNCTION_DELTA, bool two_sided=false, my_type om_ce=17000.0);
+  void make_test_spectrum(int angle_type=FUNCTION_DELTA, bool two_sided=false, my_type om_ce=17000.0, my_type std_dev = DEFAULT_SPECTRUM_ANG_STDDEV);
 #endif
-  bool generate_spectrum(data_array& parent, int om_fuzz=10, int angle_type=FUNCTION_DELTA, data_array * mask=nullptr);
+  bool generate_spectrum(data_array& parent, int om_fuzz=10, int angle_type=FUNCTION_DELTA, my_type std_dev = DEFAULT_SPECTRUM_ANG_STDDEV, data_array * mask=nullptr);
 
   void set_ids(float time1, float time2, int space1, int space2, int wave_id, char block_id[10], int function_type=FUNCTION_DELTA);
   void copy_ids(const data_array & src);

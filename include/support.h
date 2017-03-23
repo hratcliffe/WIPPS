@@ -117,7 +117,7 @@ const my_type TAN_MIN = 0.0;/**< Minimum angle (tan theta) for D, spectra etc. G
 const my_type TAN_MAX = 4.0;/**< Maximum angle (tan theta) for D, spectra etc*/
 const my_type ANG_MIN = 0.0;/**< Minimum angle for spectra etc. Generally should be 0 or -ANG_MAX*/
 const my_type ANG_MAX = pi/2;/**< Maximum angle for spectra etc*/
-const my_type SPECTRUM_ANG_STDDEV = 0.2;/**< "Std Dev" of angular distribution (in tan theta) for D \todo Make parameter?*/
+const my_type DEFAULT_SPECTRUM_ANG_STDDEV = 0.2;/**< "Std Dev" of angular distribution (in tan theta) of spectrum*/
 const my_type SPECTRUM_THRESHOLD = 1e-3;/**< Fraction of peak power considered to be "significant" spectral power*/
 
 /** @} */

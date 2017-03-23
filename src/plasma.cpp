@@ -501,9 +501,8 @@ mu_dmudom plasma::get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int
     
     denom = pow(D_mu2S*term1, 2) + c2psi*pow((P/mu2), 2);
     
-    bessel_arg = tan(psi)*tan(alpha) * (w - omega_n)/omega_n_slash_n;// n x tan alpha (om - om_n)/om_n
-    /** \todo What should this arg be when n is 0?*/
-    
+    bessel_arg = tan(psi)*tan(alpha) * (w - omega_n)/omega_n_slash_n;// n x tan alpha (om - om_n)/om_n, but allowing n/n = 1 even when n = 0
+
     tmp_besp = boost::math::cyl_bessel_j(abs(n)+1, bessel_arg);
     tmp_besm = boost::math::cyl_bessel_j(abs(n)-1, bessel_arg);
 
@@ -689,8 +688,7 @@ mu_dmudom plasma::get_high_dens_phi_mu_om(calc_type w, calc_type psi, calc_type 
     
     denom = pow(D_mu2S*term1, 2) + c2psi*pow((P/mu2), 2);
     
-    bessel_arg = tan(psi)*tan(alpha) * (w - omega_n)/omega_n_slash_n;// n x tan alpha (om - om_n)/om_n
-    /** \todo What should this arg be when n is 0?*/
+    bessel_arg = tan(psi)*tan(alpha) * (w - omega_n)/omega_n_slash_n;// n x tan alpha (om - om_n)/om_n, but allowing n/n = 1 even when n = 0
 
     tmp_besp = boost::math::cyl_bessel_j(abs(n)+1, bessel_arg);
     tmp_besm = boost::math::cyl_bessel_j(abs(n)-1, bessel_arg);

@@ -55,7 +55,7 @@ int test_entity_plasma::run(){
 int test_entity_plasma::analytic_dispersion(){
 /** \brief Check analytic dispersion relations
 *
-*Checks the analytic relations, both ways and including derivatives \todo Check theta
+*Checks the analytic relations, both ways and including derivatives
 */
 
   int err=TEST_PASSED;
@@ -109,6 +109,23 @@ int test_entity_plasma::analytic_dispersion(){
     d_om = plas->get_dispersion(k, WAVE_WHISTLER, false, true);
     d_k = plas->get_dispersion(om, WAVE_WHISTLER, true, true);
     if(std::abs(d_om*d_k - 1.0) > GEN_PRECISION) err |=TEST_WRONG_RESULT;
+  }
+  //Quick check that omega is propto cos theta for fixed k, as is the derivative
+  my_type theta, ref_om, ref_d_om;
+  for(size_t i = 0; i< n_tests; i++){
+    //Some rough range of k's
+    k = 0.001;
+    theta = (float) i / (float) n_tests * ANG_MAX;
+    om = plas->get_dispersion(k, WAVE_WHISTLER, false, false, theta);
+    d_om = plas->get_dispersion(k, WAVE_WHISTLER, false, true, theta);
+    if(i == 0){
+      ref_om = om;
+      ref_d_om = d_om;
+    }
+    if(std::abs(om -ref_om * cos(theta))/om > GEN_PRECISION || std::abs(d_om - ref_d_om * cos(theta))/d_om > GEN_PRECISION){
+      err |= TEST_WRONG_RESULT;
+      test_bed -> report_info("Wrong angle behaviour of Whistler dispersion", 2);
+    }
   }
   
   //Finally we check how it handles out of range
@@ -800,7 +817,7 @@ int test_entity_spectrum::albertGs_tests(){
   }
 
   size_t ang_sz = test_contr->get_current_spectrum()->get_angle_length();
-  my_type norm = 1.0/ (std::sqrt(2.0*pi) * SPECTRUM_ANG_STDDEV);
+  my_type norm = 1.0/ (std::sqrt(2.0*pi) * DEFAULT_SPECTRUM_ANG_STDDEV);
   for(size_t j = 1; j < n_tests; j++){
     tmp_omega = (float) j/(float) (n_tests) * std::abs(om_ce_local);
     for(size_t i=0; i< ang_sz;i++){
@@ -809,7 +826,7 @@ int test_entity_spectrum::albertGs_tests(){
       G2 = get_G2(test_contr->get_current_spectrum(), tmp_omega, tmp_x);
       G2_analytic = std::pow((( mass_ratio / (1.0 + mass_ratio))*om_ce_local*om_ce_local/om_pe_local/om_pe_local), 1.5);
       //Same g in num and denom so don't need to normalise, but we do anyway
-      G2_analytic *= norm*exp(-0.5* std::pow( (tmp_x - 0.0)/SPECTRUM_ANG_STDDEV, 2));
+      G2_analytic *= norm*exp(-0.5* std::pow( (tmp_x - 0.0)/DEFAULT_SPECTRUM_ANG_STDDEV, 2));
       G2_analytic /= calc_I_omega(tmp_omega, test_contr->get_current_spectrum(), test_contr);
       /** \todo Trace this 2...*/
       G2_analytic *= 2.0;
@@ -845,7 +862,7 @@ my_type calc_I_omega(my_type omega, spectrum * my_spect, controller * my_contr){
   calc_type M = 1.0/1836.2;//m_e/m_p
   my_type om_cp = om_ce_local*M;
   om_sq_p_e = omega*omega/om_ce_local/om_cp;
-  my_type norm = 1.0/ (std::sqrt(2.0*pi) * SPECTRUM_ANG_STDDEV), mu_245_sq;
+  my_type norm = 1.0/ (std::sqrt(2.0*pi) * DEFAULT_SPECTRUM_ANG_STDDEV), mu_245_sq;
   mu my_mu;
   plasma my_plas = my_contr->get_plasma();
 
@@ -866,7 +883,7 @@ my_type calc_I_omega(my_type omega, spectrum * my_spect, controller * my_contr){
       Psi = std::pow(om_pe_local/om_ce_local, 2) * (1.0+M)/M / my_mu.mu/my_mu.mu;
       //Psi = std::pow(om_pe_local/om_ce_local, 2) * (1.0+M)/M / mu_245_sq;
       //Normalisation of g cancels once we calc. G2, but factors in the exponential wont. However, this matches our Gaussian g_x exactly
-      g_x = norm*exp(-0.5* std::pow( (x - 0.0)/SPECTRUM_ANG_STDDEV, 2));
+      g_x = norm*exp(-0.5* std::pow( (x - 0.0)/DEFAULT_SPECTRUM_ANG_STDDEV, 2));
       I_contrib = x * std::pow( (1.0 + x*x)*Psi, -1.5);
       I_contrib2 = 1.0 + 1.0/Psi * (om_sq_p_e - 0.5 * std::pow(omega/om_pe_local*(1.0-M), 2)/(( 1.0+ x*x)*(Psi - 1.0 + om_sq_p_e ) + 0.5*x*x ) );
       
@@ -1187,7 +1204,7 @@ int test_entity_d::full_D_tests(){
       test_bed->report_info("Error calculating full D", mpi_info.rank);
       err |= TEST_ASSERT_FAIL;
     }
-
+    test_bed->report_info("Average resonances "+mk_str(report.n_av), 2);
     test_bed->report_info("Writing test file", mpi_info.rank);
 
     std::fstream file;

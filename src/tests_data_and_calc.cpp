@@ -436,22 +436,27 @@ int test_entity_plasma::phi_dom(){
   calc_type tmp_omega = 0.0, tmp_theta = pi/(calc_type)(n_tests), gamma_particle = 1.0;
 
   test_bed->report_info("Testing phi", 1);
-  //For phi all we can really do is check that it's positive (as it's a square) and check it's not NaN, especially for n=0
+  //For phi all we can really do is check that it's positive (as it's a square) and check it's not NaN, especially for n=0, and also of "order 1"
   for( int n = -4; n < 4 ; n++){
-    my_mu = plas->get_high_dens_phi_mu_om(std::abs(om_ce_local)* 0.5, tmp_theta, 0.0, 0, gamma_particle);
+    my_mu = plas->get_high_dens_phi_mu_om(std::abs(om_ce_local)* 0.5, tmp_theta, pi/10.0, 0, gamma_particle);
     if(my_mu.phi != my_mu.phi || my_mu.phi < 0){
       err |= TEST_ASSERT_FAIL;
       test_bed->report_info("Phi is invalid in get_high_dens_phi_mu_om for n="+mk_str(n), 2);
     }
     tmp_phi = my_mu.phi;
-    my_mu = plas->get_phi_mu_om(std::abs(om_ce_local)* 0.5, tmp_theta, 0.0, 0, gamma_particle);
+    my_mu = plas->get_phi_mu_om(std::abs(om_ce_local)* 0.5, tmp_theta, pi/10.0, 0, gamma_particle);
     if(my_mu.phi != my_mu.phi || my_mu.phi < 0){
       err |= TEST_ASSERT_FAIL;
       test_bed->report_info("Phi is invalid in get_phi_mu_om for n="+mk_str(n), 2);
     }
-    if(my_mu.phi != tmp_phi){
+    //Allow 15%
+    if((my_mu.phi- tmp_phi)/my_mu.phi > 0.15){
       err |= TEST_WRONG_RESULT;
-      test_bed->report_info("Inconsistent phi with high dens for n="+mk_str(n), 2);
+      test_bed->report_info("Inconsistent phi ("+mk_str(my_mu.phi)+ ") with high dens phi ("+mk_str(tmp_phi)+") for n="+mk_str(n), 2);
+    }
+    if(tmp_phi < 0.1 || tmp_phi > 10.0){
+      err |= TEST_WRONG_RESULT;
+      test_bed->report_info("Phi is not order 1 for n="+mk_str(n), 2);
     }
   }
 

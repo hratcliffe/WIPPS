@@ -135,6 +135,7 @@ else ifeq ($(strip $(MODE)),test)
   CFLAGS += -DRUN_TESTS_AND_EXIT
   #CFLAGS += $(PROFILE)
   CFLAGS += $(DEBUG)
+  CFLAGS += $(OPTIMISE)
   SED_STR_Test = sed -i.bak 's/ NO_RUN_TESTS_AND_EXIT/ RUN_TESTS_AND_EXIT/' Doxyfile
 else ifeq ($(strip $(MODE)),profile)
   CFLAGS += $(PROFILE)
@@ -287,5 +288,5 @@ veryclean:
 
 docs:
 	@echo Running Doxygen...
-	@if ! [[ `which Doxygen` ]]; then echo "Doxygen not found"; else printf "Options:\nType: ";egrep ' USE_FLOAT' ./Doxyfile >>/dev/null && echo "Float" || echo "Double";printf "Mode: ";egrep '[ \t]+RUN_TESTS_AND_EXIT' ./Doxyfile >>/dev/null && echo "Test"; echo; doxygen Doxyfile &> Doxy.log; echo Processing Doxygen output...; ./redox.sh; echo Running pdftex...; cd latex ; pdflatex --file-line-error --synctex=1 -interaction nonstopmode ./refman.tex &> ../docs.log; cd ..; echo "Docs built. See Doxy.log and docs.log for details"; fi
+	@if ! [[ `which Doxygen` ]]; then echo "Doxygen not found"; else printf "Options:\nType: ";egrep ' USE_FLOAT' ./Doxyfile >>/dev/null && echo "Float" || echo "Double";printf "Mode: ";egrep '[ \t]+RUN_TESTS_AND_EXIT' ./Doxyfile >>/dev/null && echo "Test"; echo; ./generate_runtime_flags.sh; doxygen Doxyfile &> Doxy.log; echo Processing Doxygen output...; ./redox.sh; echo Running pdftex...; cd latex ; pdflatex --file-line-error --synctex=1 -interaction nonstopmode ./refman.tex &> ../docs.log; cd ..; echo "Docs built. See Doxy.log and docs.log for details"; fi
 

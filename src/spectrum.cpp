@@ -730,7 +730,7 @@ bool spectrum::calc_norm_g(size_t om_ind){
   //Construct dx axis for integration. Note x = tan theta
 
   mu my_mu;
-  my_type x, psi, omega = get_om_axis_element(om_ind), g_el;
+  my_type x, psi, omega = std::abs(get_om_axis_element(om_ind)), g_el;
   
   size_t lena = get_omega_length();
   //Check omega index is in range
@@ -1117,6 +1117,8 @@ calc_type get_G2(spectrum * my_spect, calc_type omega, calc_type x){
 
   //If seperable, we have only one (omega) entry in g and norm_g in position 0, so that's where we lookup
   norm_ind = my_spect->get_om_axis_index_from_value(omega);
+  if(omega < 0) norm_ind --;//Fix the discrepancy between +ve and -ve omega because where takes first greater than.
+
   if(norm_ind < 0 ) return 0.0;
   om_ind = (my_spect->get_g_is_angle_only()? 0: norm_ind);
 

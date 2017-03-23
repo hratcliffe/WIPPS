@@ -188,10 +188,12 @@ mu plasma::get_root(calc_type th, calc_type w, calc_type psi, bool Righthand){
   //Argument preconditions. Check only in debug mode for speed
   if(psi < 0 || psi >= pi) my_error_print("!!!!!!!!Error in get_root, pitch angle (psi="+mk_str(psi)+") out of range!!!!!!", 0);
   if(th < 0 || th >= pi/2.0) my_error_print("!!!!!!!!Error in get_root, position angle (th="+mk_str(th)+") out of range!!!!!!", 0);
-  //I don't think there's an upper or lower bound on w we need to enforce
-  
+  //I don't think there's an upper or lower bound on w we need to enforce, only positivity. We'll take abs below and succeed, but in debug mode also warn
+  if(w < 0) my_error_print("!!!!!!Error in get_root, wave frequency (w="+mk_str(w)+") is negative!!!!!!", 0);
+
 #endif
 
+  w = std::abs(w);
   
   /** \todo get or calc dndr and dndth*/
   for(int i=0;i<ncomps; i++){
@@ -354,11 +356,11 @@ mu_dmudom plasma::get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int
   if(psi < 0 || psi >= pi) my_error_print("!!!!!!!!Error in get_phi_mu_om, pitch angle (psi="+mk_str(psi)+") out of range!!!!!!", 0);
   if(alpha < 0 || alpha >= pi) my_error_print("!!!!!!!!Error in get_phi_mu_om, particle pitch angle (alpha="+mk_str(alpha)+") out of range!!!!!!", 0);
   if(gamma_particle < 1) my_error_print("!!!!!!!!Error in get_phi_mu_om, particle gamma (gamma_particle="+mk_str(gamma_particle)+") out of range!!!!!!", 0);
-
-  //I don't think there's an upper or lower bound on w we need to enforce
+  //I don't think there's an upper or lower bound on w we need to enforce, only positivity. We'll take abs below and succeed, but in debug mode also warn
+  if(w < 0) my_error_print("!!!!!!Error in get_phi_mu_om, wave frequency (w="+mk_str(w)+") is negative!!!!!!", 0);
   //Nor any actual bounds on n
 #endif
-  
+  w = std::abs(w);
   w2 = w*w;
   w3 = w2*w;
   
@@ -538,10 +540,11 @@ mu_dmudom plasma::get_high_dens_phi_mu_om(calc_type w, calc_type psi, calc_type 
   if(psi < 0 || psi >= pi) my_error_print("!!!!!!!!Error in get_high_dens_phi_mu_om, pitch angle (psi="+mk_str(psi)+") out of range!!!!!!", 0);
   if(alpha < 0 || alpha >= pi) my_error_print("!!!!!!!!Error in get_high_dens_phi_mu_om, particle pitch angle (alpha="+mk_str(alpha)+") out of range!!!!!!", 0);
   if(gamma_particle < 1) my_error_print("!!!!!!!!Error in get_high_dens_phi_mu_om, particle gamma (gamma_particle="+mk_str(gamma_particle)+") out of range!!!!!!", 0);
-  //I don't think there's an upper or lower bound on w we need to enforce
+  //I don't think there's an upper or lower bound on w we need to enforce. Only positivity. We'll take abs below and succeed, but in debug mode also warn
+  if(w < 0) my_error_print("!!!!!!Error in get_high_dens_phi_mu_om, wave frequency (w="+mk_str(w)+") is negative!!!!!!", 0);
   //Nor any bounds on n
 #endif
-  
+  w = std::abs(w);
   w2 = w*w;
   w3 = w2*w;
   
@@ -676,28 +679,30 @@ mu_dmudom plasma::get_high_dens_phi_mu_om(calc_type w, calc_type psi, calc_type 
     D_mu2S = D / (mu2 - S);
     calc_type calc_n = (calc_type) n;
     omega_n = -1.0 * calc_n * my_const.omega_ce/gamma_particle;
+    calc_type omega_n_slash_n = -1.0 * my_const.omega_ce/gamma_particle;
     //temporaries for simplicity
 
-    term1 = (mu2* s2psi - P)/(mu2);
+    term1 = (mu2 * s2psi - P)/(mu2);
     
     denom = pow(D_mu2S*term1, 2) + c2psi*pow((P/mu2), 2);
     
-    bessel_arg = calc_n* std::tan(psi)*tan(alpha) * (w - omega_n)/omega_n;// n x tan alpha (om - om_n)/om_n
-    
+    bessel_arg = tan(psi)*tan(alpha) * (w - omega_n)/omega_n_slash_n;// n x tan alpha (om - om_n)/om_n
+    /** \todo What should this arg be when n is 0?*/
+
     tmp_besp = boost::math::cyl_bessel_j(abs(n)+1, bessel_arg);
     tmp_besm = boost::math::cyl_bessel_j(abs(n)-1, bessel_arg);
 
-    term2 = (1 + D_mu2S)*tmp_besp;
-    term2 += (1 - D_mu2S)*tmp_besm;
+    term2 = (1.0 + D_mu2S) * tmp_besp + (1.0 - D_mu2S) * tmp_besm;
     
     //tmp_bes = boost::math::cyl_bessel_j(abs(n), bessel_arg);
-    tmp_bes = 0.5*bessel_arg *(tmp_besp + tmp_besm)/calc_n;
+    if(n != 0) tmp_bes = 0.5*bessel_arg *(tmp_besp + tmp_besm)/calc_n;
+    else tmp_bes = boost::math::cyl_bessel_j(abs(n), bessel_arg);
     //Use bessel identity to save time.
     // J_(n-1) + J_(n+1) = (2 n / arg) J_n
     term3 = scpsi*tmp_bes/std::tan(alpha);
 
     my_mu.phi = std::pow((0.5*term1*term2 + term3), 2)/denom;
-
+    if(alpha == 0) my_mu.phi = 0;
   }
 
   
@@ -707,8 +712,11 @@ mu_dmudom plasma::get_high_dens_phi_mu_om(calc_type w, calc_type psi, calc_type 
 std::vector<calc_type> plasma::get_resonant_omega(calc_type x, calc_type v_par, int n)const{
 /** \brief Solve plasma dispersion and doppler resonance simultaneously
 *
-*Obtains solutions of the Doppler resonance condition omega - k_par v_par = -n Omega_ce and a high-density approximation to the Whistler mode dispersion relation simultaneously. Assumes pure electron-proton plasma and uses cubic_solve. ONLY solutions between -om_ce_local and om_ce_local, excluding omega = 0, are considered. "Zero" solutions are those less than the GEN_PRECISION constant in support.h. If solutions are found, they're returned in vector, otherwise empty vector is returned. @param x Wave normal angle @param v_par Particle velocity to solve with @param n Resonance number.
-  \todo Extend to general case? \todo Do we need to keep a sign for omega?
+*Obtains solutions of the Doppler resonance condition omega - k_par v_par = -n Omega_ce and a high-density approximation to the Whistler mode dispersion relation simultaneously. Assumes pure electron-proton plasma and uses cubic_solve. ONLY solutions between -om_ce_local and om_ce_local, excluding omega = 0, are considered. "Zero" solutions are those less than the GEN_PRECISION constant in support.h. If solutions are found, they're returned in vector, otherwise empty vector is returned. 
+*
+*Note that since k_parallel and v_parallel in resonant condition are signed, we will get multiple entries of ± omega for the corresponding ±k and ±n. These should be handled by the calling code, as k may or may not be handled with both signs
+@param x Wave normal angle @param v_par Particle velocity to solve with @param n Resonance number.
+  \todo Extend to general case?
 */
 
 #ifdef DEBUG_ALL

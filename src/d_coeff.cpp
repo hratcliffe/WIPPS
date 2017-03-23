@@ -217,7 +217,10 @@ d_report diffusion_coeff::calculate(D_type_spec type_of_D, bool quiet){
           //With loop if is redundant but we might want to log the failure
             for(size_t om_solution_num = 0; om_solution_num < n_omega; ++om_solution_num){
               //Loop over solutions
-              omega_solution = omega_calc[om_solution_num];
+              //Ignore sign info for now. This might lead to double or quad counting, that can be resolved later
+              /** \todo Check for double counting*/
+              omega_solution = std::abs(omega_calc[om_solution_num]);
+              
               my_mu = plas.get_high_dens_phi_mu_om(omega_solution, theta, alpha, n, gamma_particle);
 
               //This tracks how many solutions and non-solutions for the final report
@@ -233,11 +236,9 @@ d_report diffusion_coeff::calculate(D_type_spec type_of_D, bool quiet){
               Eq6 = omega_solution/(omega_solution - omega_n)* my_mu.mu/(my_mu.mu + omega_solution * my_mu.dmudom);
               numerator = std::pow( -s2alpha + omega_n/omega_solution, 2);
               D_conversion_factor = sin(alpha)*cos(alpha)/(-s2alpha + omega_n/omega_solution);
-
               //Get the part of D summed over n. Note additional factors below
               //NB NB get_G_1 precancels the \Delta\omega and B_wave factors
-              D_part_n_sum += numerator * my_mu.phi/std::abs(1.0 - Eq6)*get_G1(spect, omega_solution)*get_G2(spect, omega_solution, x[wave_ang_ind]);
-              
+              D_part_n_sum += numerator * my_mu.phi / std::abs(1.0 - Eq6) * get_G1(spect, omega_solution) * get_G2(spect, omega_solution, x[wave_ang_ind]);
               //Convert alpha_alpha to requested D type
               D_part_n_sum = (is_mixed ? D_part_n_sum*D_conversion_factor : D_part_n_sum);
               D_part_n_sum = (is_pp ? D_part_n_sum*D_conversion_factor*D_conversion_factor : D_part_n_sum);

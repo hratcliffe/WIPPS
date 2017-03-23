@@ -229,7 +229,7 @@ int test_entity_plasma::resonant_freq(){
     err |= TEST_WRONG_RESULT;
   }
   
-  calc_type expected_result =  0.50, corresponding_v =  0.162251 * v0;
+  calc_type expected_result =  0.50, corresponding_v =  0.162251 * v0, omega_solution, sgn_solution;
   results = plas->get_resonant_omega(0.0, corresponding_v, -1);
   //Insert a known result here from the IDL code, with one root
   //Since we're using a sample like this, only expect a few sf of equality as the IDL uses quite different process
@@ -258,17 +258,19 @@ int test_entity_plasma::resonant_freq(){
         /**Now check each element of the resonant frequency solution set satisfies Stix 2.45 and the resonance condition together*/
         for(size_t i=0; i<results.size(); ++i){
           //test_bed->report_info("Freq is "+mk_str(results[i], true)+" = "+mk_str(results[i]/my_const.omega_ce, true)+" om_ce", 2);
-          
-          mu_tmp1 = std::pow(v0 * (gamma*results[i] - n*om_ce_local)/(gamma*results[i] * v_par *cos_theta), 2);
-          mu_tmp2 = (1.0 - (std::pow(om_pe_local,2)/(results[i]*(results[i] + om_ce_local*cos_theta))));
+          omega_solution = std::abs(results[i]);
+          sgn_solution = results[i]/omega_solution;
+
+          mu_tmp1 = std::pow(v0 * (gamma * sgn_solution*omega_solution - n*om_ce_local)/(gamma * sgn_solution * omega_solution * v_par *cos_theta), 2);
+          mu_tmp2 = (1.0 - (std::pow(om_pe_local,2)/(sgn_solution * omega_solution *(sgn_solution * omega_solution + om_ce_local*cos_theta))));
 
           if(std::abs((mu_tmp1 - mu_tmp2)/mu_tmp1) > NUM_PRECISION){
             err|=TEST_WRONG_RESULT;
-            test_bed->report_info("refractive index mismatch of "+mk_str((mu_tmp1-mu_tmp2)/mu_tmp1), 2);
+            test_bed->report_info("refractive index mismatch of "+mk_str((int)((mu_tmp1-mu_tmp2)/mu_tmp1)*100) +'%', 2);
           }
         
           //Also check there is a valid full mu solution
-          my_mu = plas->get_high_dens_phi_mu_om(results[i], std::atan(x), 0.0, 0, gamma);
+          my_mu = plas->get_high_dens_phi_mu_om(omega_solution, std::atan(x), 0.0, 0, gamma);
           if(my_mu.err){
             err|=TEST_WRONG_RESULT;
             test_bed->report_info("No full mu solution for resonant frequency", 2);

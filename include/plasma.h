@@ -43,6 +43,10 @@ private:
   plasma_state is_setup;/**<Check for validity*/
 /********Basic setup and allocation functions ****/
   plasma_state configure_from_file(std::string file_prefix);
+
+/********Dispersion solver core ****/  
+  mu_dmudom get_phi_mu_from_stix(calc_type w, calc_type psi,calc_type alpha, int n, calc_type gamma_particle, calc_type R, calc_type L, calc_type P, bool skip_phi, bool Righthand)const;
+
 public:
 
 /********Basic setup and allocation functions ****/
@@ -57,10 +61,10 @@ public:
   void set_B0(my_type B0);
 
 /********Dispersion solvers ****/
-  
-  mu get_root(calc_type th, calc_type w, calc_type psi, bool Righthand=true);
-  mu_dmudom get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int n, calc_type gamma_particle,bool Righthand=true)const;
-  mu_dmudom get_high_dens_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int n,calc_type gamma_particle, bool Righthand=true)const;
+  mu_dmudom get_mu(calc_type w, calc_type psi) const{return get_phi_mu_om(w, psi, 0.0, 0, 1.0, true);}
+  mu_dmudom get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int n, calc_type gamma_particle, bool skip_phi = false, bool Righthand=true)const;
+  mu_dmudom get_high_dens_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int n, calc_type gamma_particle, bool skip_phi=false, bool Righthand=true)const;
+
   std::vector<calc_type> get_resonant_omega(calc_type x, calc_type v_par, int n)const;
   calc_type get_dispersion(my_type k, int wave_type, bool reverse=0, bool deriv=0, my_type theta=0.0)const;
 // calc_type gamma_particle,

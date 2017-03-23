@@ -317,19 +317,15 @@ int test_entity_plasma::high_density(){
   om_pe_local = plas->get_omega_ref("pe");
 
   size_t n_tests = 10;
-  calc_type tmp_omega=0.0, tmp_theta=pi/(calc_type)(n_tests+1), gamma_particle = 1.0;
-  mu_dmudom my_mu;
-  mu my_mu_all;
-  mu_dmudom my_mu_dens;
-  int err_cnt=0;
+  calc_type tmp_omega = 0.0, tmp_theta = pi/(calc_type)(n_tests+1), gamma_particle = 1.0;
+  mu_dmudom my_mu, my_mu_dens;
+  int err_cnt = 0;
   test_bed->report_info("Testing whistler high density approx.", 1);
 
   for(size_t i =0; i<n_tests; i++){
     tmp_omega += std::abs(om_ce_local)/(calc_type)(n_tests + 1);
     my_mu = plas->get_phi_mu_om(tmp_omega, tmp_theta, 0.0, 0, gamma_particle);
     my_mu_dens = plas->get_high_dens_phi_mu_om(tmp_omega, tmp_theta, 0.0, 0, gamma_particle);
-    my_mu_all = plas->get_root(0.0, tmp_omega, tmp_theta);
-
     /** my_mu.mu should roughly equal Stix 2.45*/
     mu_tmp2 = sqrt(1.0 - (std::pow(om_pe_local,2)/(tmp_omega*(tmp_omega + om_ce_local*std::cos(tmp_theta)))));
     if(std::abs(my_mu.mu-mu_tmp2)/my_mu.mu > LOW_PRECISION){
@@ -346,21 +342,12 @@ int test_entity_plasma::high_density(){
 
       test_bed->report_info("  Mu "+mk_str(my_mu_dens.mu)+" difference "+mk_str(my_mu_dens.mu - mu_tmp2)+" relative error "+mk_str((my_mu_dens.mu-mu_tmp2)/my_mu_dens.mu), 2);
     }
-
-    /**my_mu_all.mu and my_mu.mu should be exactly equal*/
-    if(std::abs(my_mu_all.mu-my_mu.mu) > PRECISION){
-      test_bed->report_info("Inconsistent root between get_root and get_phi_mu_om", 2);
-      err|=TEST_WRONG_RESULT;
-    }
-    
   }
   
   tmp_omega = 0.6*std::abs(om_ce_local);
   for(size_t i =0; i<n_tests; i++){
     tmp_theta += pi/(calc_type)(n_tests+1);
     my_mu = plas->get_phi_mu_om(tmp_omega, tmp_theta, 0.0, 0, gamma_particle);
-    my_mu_all = plas->get_root(0.0, tmp_omega, tmp_theta);
-
     /* my_mu.mu should roughly equal Stix 2.45*/
     mu_tmp2 = sqrt(1.0 - (std::pow(om_pe_local,2)/(tmp_omega*(tmp_omega + om_ce_local*std::cos(tmp_theta)))));
     if(std::abs(my_mu.mu-mu_tmp2)/my_mu.mu > LOW_PRECISION){
@@ -369,13 +356,6 @@ int test_entity_plasma::high_density(){
 
       test_bed->report_info("    Mu "+mk_str(my_mu.mu)+" difference "+mk_str(my_mu.mu - mu_tmp2)+" relative error "+mk_str((my_mu.mu-mu_tmp2)/my_mu.mu), 2);
     }
-     //my_mu_all.mu and my_mu.mu should be exactly equal:
-    if(std::abs(my_mu_all.mu-my_mu.mu) > PRECISION){
-      test_bed->report_info("Inconsistent root between get_root and get_phi_mu_om", 2);
-      err|=TEST_WRONG_RESULT;
-    }
-
- 
   }
   if(err_cnt> 0){
     test_bed->report_info("Total "+mk_str(err_cnt)+" out of "+mk_str(2*(int)n_tests)+" issues in high density approx or dispersion solver at precision: "+mk_str(LOW_PRECISION), 1);
@@ -401,53 +381,33 @@ int test_entity_plasma::other_modes(){
   test_bed->report_info("Testing dispersion solver for plasma O mode", 1);
   size_t n_tests = 10;
   mu_dmudom my_mu;
-  mu my_mu_all;
-
   /**Try plasma wave modes in solvers, perpendicular propagation*/
   calc_type tmp_omega = om_pe_local;
   calc_type tmp_theta = pi/2.0;
   for(size_t i =0; i<n_tests; i++){
     tmp_omega += std::abs(om_pe_local)/(calc_type)(n_tests + 1);
-    my_mu_all = plas->get_root(0.0, tmp_omega, tmp_theta);
     my_mu = plas->get_phi_mu_om(tmp_omega, tmp_theta, 0.0, 0, gamma_particle);
 
     mu_tmp2 = std::sqrt(std::pow(tmp_omega, 2) - std::pow(om_pe_local, 2))/tmp_omega;
     
-    if(std::abs(my_mu_all.mu-mu_tmp2)/my_mu_all.mu > LOW_PRECISION){
-      
+    if(std::abs(my_mu.mu-mu_tmp2)/my_mu.mu > LOW_PRECISION){
       test_bed->report_info("Error in approx or dispersion solver for plasma wave at "+mk_str(tmp_omega/std::abs(om_pe_local))+" "+mk_str(tmp_theta), 1);
-      
-      test_bed->report_info("Mu "+mk_str(my_mu_all.mu)+" difference "+mk_str(my_mu_all.mu - mu_tmp2)+" relative error "+mk_str((my_mu_all.mu-mu_tmp2)/my_mu_all.mu), 2);
+      test_bed->report_info("Mu "+mk_str(my_mu.mu)+" difference "+mk_str(my_mu.mu - mu_tmp2)+" relative error "+mk_str((my_mu.mu-mu_tmp2)/my_mu.mu), 2);
     }
-    if(std::abs(my_mu_all.mu-my_mu.mu) > PRECISION){
-      test_bed->report_info("Inconsistent root between get_root and get_phi_mu_om", 2);
-      err|=TEST_WRONG_RESULT;
-
-    }
-    
   }
   /**Try left hand X mode too*/
   test_bed->report_info("Testing dispersion solver for plasma X mode", 1);
 
   calc_type omega_UH = std::sqrt(om_pe_local*om_pe_local + om_ce_local*om_ce_local);
-  for(size_t i =0; i<n_tests; i++){
+  for(size_t i = 0; i < n_tests; i++){
     tmp_omega += std::abs(om_pe_local)/(calc_type)(n_tests + 1);
-    my_mu_all = plas->get_root(0.0, tmp_omega, tmp_theta, false);
     my_mu = plas->get_phi_mu_om(tmp_omega, tmp_theta, 0.0, 0, gamma_particle, false);
-    
     mu_tmp2 = std::sqrt(1.0 - std::pow(om_pe_local/tmp_omega, 2)*(std::pow(tmp_omega, 2) - std::pow(om_pe_local, 2))/(std::pow(tmp_omega, 2) - std::pow(omega_UH, 2)));
-    if(std::abs(my_mu_all.mu-mu_tmp2)/my_mu_all.mu > LOW_PRECISION){
-      
-      test_bed->report_info("Error in approx or dispersion solver for plasma wave at "+mk_str(tmp_omega/std::abs(om_pe_local))+" "+mk_str(tmp_theta), 1);
-      
-      test_bed->report_info("Mu "+mk_str(my_mu_all.mu)+" difference "+mk_str(my_mu_all.mu - mu_tmp2)+" relative error "+mk_str((my_mu_all.mu-mu_tmp2)/my_mu_all.mu), 2);
-    }
-    if(std::abs(my_mu_all.mu-my_mu.mu) > PRECISION){
-      test_bed->report_info("Inconsistent root between get_root and get_phi_mu_om", 2);
-      err|=TEST_WRONG_RESULT;
 
+    if(std::abs(my_mu.mu-mu_tmp2)/my_mu.mu > LOW_PRECISION){
+      test_bed->report_info("Error in approx or dispersion solver for plasma wave at "+mk_str(tmp_omega/std::abs(om_pe_local))+" "+mk_str(tmp_theta), 1);
+      test_bed->report_info("Mu "+mk_str(my_mu.mu)+" difference "+mk_str(my_mu.mu - mu_tmp2)+" relative error "+mk_str((my_mu.mu-mu_tmp2)/my_mu.mu), 2);
     }
-    
   }
 
   return err;
@@ -463,7 +423,7 @@ int test_entity_plasma::phi_dom(){
   int err=TEST_PASSED;
   size_t n_tests = 10;
 
-  calc_type mu_tmp1, mu_tmp2, om_ce_local, om_pe_local, tmp_phi;
+  calc_type mu_tmp1, om_ce_local, om_pe_local, tmp_phi;
   om_ce_local = plas->get_omega_ref("ce");
   om_pe_local = plas->get_omega_ref("pe");
 
@@ -472,9 +432,8 @@ int test_entity_plasma::phi_dom(){
   //Derivative step size.
 
   mu_dmudom my_mu, my_mu_p;
-  mu my_mu_all, my_mu_all_p;
 
-  calc_type tmp_omega = 0.0, tmp_theta=pi/(calc_type)(n_tests), gamma_particle = 1.0;
+  calc_type tmp_omega = 0.0, tmp_theta = pi/(calc_type)(n_tests), gamma_particle = 1.0;
 
   test_bed->report_info("Testing phi", 1);
   //For phi all we can really do is check that it's positive (as it's a square) and check it's not NaN, especially for n=0
@@ -501,28 +460,14 @@ int test_entity_plasma::phi_dom(){
   for(size_t i =0; i<n_tests; i++){
     tmp_omega += std::abs(om_ce_local)/(calc_type)(n_tests + 1);
     my_mu = plas->get_phi_mu_om(tmp_omega, tmp_theta, 0.0, 0, gamma_particle);
-    my_mu_all = plas->get_root(0.0, tmp_omega, tmp_theta);
     my_mu_p = plas->get_phi_mu_om(tmp_omega+d_omega, tmp_theta, 0.0, 0, gamma_particle);
-    my_mu_all_p = plas->get_root(0.0, tmp_omega+d_omega, tmp_theta);
 
     /** Approx numerical derivative*/
     mu_tmp1 = (my_mu.mu - my_mu_p.mu)/d_omega;
-    mu_tmp2 = (my_mu_all.mu - my_mu_all_p.mu)/d_omega;
     if(std::abs(std::abs(mu_tmp1/my_mu.dmudom) - 1.0) > NUM_PRECISION){
       err|=TEST_WRONG_RESULT;
       test_bed->report_info("Wrong derivative in get_phi_mu_om", 2);
     }
-    if(std::abs(std::abs(mu_tmp2/my_mu_all.dmudom) - 1.0) > NUM_PRECISION){
-      err|=TEST_WRONG_RESULT;
-      test_bed->report_info("Wrong derivative in get_root", 2);
-    }
-
-    /**my_mu_all.mu and my_mu.mu should be exactly equal*/
-    if(std::abs(my_mu_all.dmudom-my_mu.dmudom) > PRECISION){
-      test_bed->report_info("Inconsistent derivative between get_root and get_phi_mu_om", 2);
-      err|=TEST_WRONG_RESULT;
-    }
-    
   }
   
   test_bed->report_info("Testing dmu/dtheta", 1);
@@ -531,31 +476,15 @@ int test_entity_plasma::phi_dom(){
   for(size_t i =0; i<n_tests; i++){
     tmp_theta += pi/(calc_type)(n_tests+1);
     my_mu = plas->get_phi_mu_om(tmp_omega, tmp_theta, 0.0, 0, gamma_particle);
-    my_mu_all = plas->get_root(0.0, tmp_omega, tmp_theta);
     my_mu_p = plas->get_phi_mu_om(tmp_omega, tmp_theta+d_theta, 0.0, 0, gamma_particle);
-    my_mu_all_p = plas->get_root(0.0, tmp_omega, tmp_theta+d_theta);
 
     /** Approx numerical derivative. Manually fix signs*/
     mu_tmp1 = -(my_mu.mu - my_mu_p.mu)/d_theta;
-
-    mu_tmp2 = -(my_mu_all.mu - my_mu_all_p.mu)/d_theta;
-    
     if(std::abs(std::abs(mu_tmp1 /my_mu.dmudtheta) - 1.0) > NUM_PRECISION){
       err|=TEST_WRONG_RESULT;
       test_bed->report_info("Wrong derivative in get_phi_mu_om at omega = "+mk_str(tmp_omega/std::abs(om_ce_local), true) +" and phi = "+mk_str(tmp_theta/pi, true)+" pi", 2);
 
     }
-    if(std::abs(std::abs(mu_tmp2/my_mu_all.dmudtheta) - 1.0) > NUM_PRECISION){
-      err|=TEST_WRONG_RESULT;
-      test_bed->report_info("Wrong derivative in get_root at omega = "+mk_str(tmp_omega/std::abs(om_ce_local), true) +" and phi = "+mk_str(tmp_theta/pi, true)+" pi", 2);
-
-    }
-    /**my_mu_all.mu and my_mu.mu should be exactly equal*/
-    if(std::abs(my_mu_all.dmudtheta-my_mu.dmudtheta) > PRECISION){
-      test_bed->report_info("Inconsistent derivative between get_root and get_phi_mu_om", 2);
-      err|=TEST_WRONG_RESULT;
-    }
-    
   }
 
   return err;
@@ -863,14 +792,14 @@ my_type calc_I_omega(my_type omega, spectrum * my_spect, controller * my_contr){
   my_type om_cp = om_ce_local*M;
   om_sq_p_e = omega*omega/om_ce_local/om_cp;
   my_type norm = 1.0/ (std::sqrt(2.0*pi) * DEFAULT_SPECTRUM_ANG_STDDEV), mu_245_sq;
-  mu my_mu;
+  mu_dmudom my_mu;
   plasma my_plas = my_contr->get_plasma();
 
   for(size_t i = 1; i < x_sz; i++){
     x = my_spect->get_ang_axis_element(i);
     dx = std::abs( x - my_spect->get_ang_axis_element(i-1));
     theta = atan(x);
-    my_mu = my_plas.get_root(0.0, omega, theta);
+    my_mu = my_plas.get_mu(omega, theta);
     if(std::abs(omega) < std::abs(om_ce_local*cos(theta))){
       //Mu has no solutions where omega exceeds Om_ce*cos(theta)
       //NB sign selected for Whistler branch

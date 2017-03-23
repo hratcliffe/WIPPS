@@ -729,7 +729,7 @@ bool spectrum::calc_norm_g(size_t om_ind){
   for(size_t i = 0; i < len-1; i++) d_axis[i] = get_ang_axis_element(i+1) - get_ang_axis_element(i);
   //Construct dx axis for integration. Note x = tan theta
 
-  mu my_mu;
+  mu_dmudom my_mu;
   my_type x, psi, omega = std::abs(get_om_axis_element(om_ind)), g_el;
   
   size_t lena = get_omega_length();
@@ -739,7 +739,7 @@ bool spectrum::calc_norm_g(size_t om_ind){
   for(size_t i = 0; i < len; i++){
     x = get_ang_axis_element(i);
     psi = atan(x);
-    my_mu = plas.get_root(0.0, omega, psi);
+    my_mu = plas.get_mu(omega, psi);
     if(!my_mu.err){
       if(g_is_angle_only){
         g_el = get_g_element(i);

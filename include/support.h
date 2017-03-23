@@ -157,22 +157,6 @@ const struct mpi_info_struc mpi_info_null = {0, -1};/**< Null MPI struct for sin
 
 extern mpi_info_struc mpi_info;
 
-/** \brief Full refractive index
-*
-*Contains refractive index mu and all derivatives, plus error flag
-*/
-struct mu{
-  calc_type mu; /**< Refractive index */
-  calc_type mug; /**< */
-  calc_type dmudr; /**< d mu /dr (radial distance) */
-  calc_type dmudlat; /**< d mu/ d latitude */
-  calc_type dmudtheta; /**< d mu / d theta (wave normal angle) */
-  calc_type dmudom; /**< d mu / d omega (wave frequency)*/
-  calc_type alpha; /**< */
-  int err; /**< 0 if mu found successfully, 1 else*/
-
-};
-
 /** \brief Reduced refractive index
 *
 *Contains refractive index mu, the two derivative needed for diffusion coefficient calculation, the phi function of e.g. Albert 2005 and error flag

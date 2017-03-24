@@ -16,7 +16,7 @@ n_pts = [1024, 500]
 om_ce = 17588.200878
 om_pe = 35176.401757
 k_peak = n_pts[0]/ 12.0 ;Location of peaks in k relative to k=0 at n_pts[0]/2.0
-norm_B_sq = (1e-10)^2 ;100pT field
+norm_B_sq = (1e-10)^2/1e4 ;100pT field over 1e4 "frequency width"
 
 ;Fixed constants
 q0 = 1.602176565d-19 ; elementary charge [C]
@@ -82,6 +82,61 @@ calculate_energy_density, FFT_data, axes, dispersion, output=spectrum, margin=om
 ;Make it fuzzier...
 ;Save the spectrum
 err = write_data(spectrum_file, spectrum, list(dispersion), id="spect", TIME=[0, 1], SPACE=[0, 1], B_REF = 1.0)
+
+end
+
+pro generate_Albert_spect
+;Creates mock spectrum as used in Albert for example D calcs
+;Truncated Gaussians in B and angle
+
+;Changeable params
+om_mid = 0.35
+delta_om = 0.15
+om_min = 0.05
+om_max = 0.65
+delta_x = tan(!pi/6)
+x_min = 0
+x_mid = 0
+x_max = 1
+
+n_pts_om = 1024
+n_pts_x = 100
+
+spectrum_file = "d_testspectrum.dat"
+deck_file_prefix = "d_test"
+
+const = read_deck(dir = './', pref = deck_file_prefix)
+
+om_ce = const.wce
+om_pe = const.wpe
+
+;Fixed constants
+q0 = 1.602176565d-19 ; elementary charge [C]
+m0 = 9.10938291d-31  ; electron mass [kg]
+v0 = 2.99792458d8    ; speed of light [m/s]
+kb = 1.3806488d-23   ; Boltzmann's constant [J/K]
+mu0 = 4.0d-7 * !dpi  ; Magnetic constant [N/A^2]
+epsilon0 = 8.8541878176203899d-12 ; Electric constant [F/m]
+h_planck = 6.62606957d-34 ; Planck constant [J s]
+
+;Make the axes
+
+om_ax = findgen(n_pts_om)*om_max*1.2/n_pts_om
+x_ax = findgen(n_pts_x)*x_max*1.2/n_pts_x
+
+B_arr = exp(- (om_ax - om_mid)^2/delta_om^2)
+B_arr(where(om_ax LT om_min)) = 0.0
+B_arr(where(om_ax GT om_max)) = 0.0
+
+ang_arr = transpose(exp(-(x_ax - x_mid)^2/delta_x))
+ang_arr(where(x_ax LT x_min)) = 0.0
+ang_arr(where(x_ax GT x_max)) = 0.0
+
+B = {data:B_arr, axes:{x:om_ax}, space:[0, 1], time:[0, 1], B_ref: 1}
+ang = {data:ang_arr, axes:{x:[1], y:x_ax}, space:[0, 1], time:[0, 1], B_ref: 1}
+
+spectrum = {B: B, ang: ang}
+err = write_spect(spectrum_file, spectrum)
 
 end
 

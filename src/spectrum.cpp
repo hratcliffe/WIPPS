@@ -91,8 +91,8 @@ spectrum::spectrum(std::string filename){
   if(!file.is_open()) return;
 
   bool err = 0, cont = 1;
-  size_t end_block=0, next_block=0, om_sz;
-  size_t jump_pos=0;
+  size_t end_block=0, next_block=0, om_sz = 0;
+  size_t jump_pos=0, g_first_dim = 0;
   file.seekg(-1*sizeof(size_t), file.end);
   file.read((char*) &end_block, sizeof(size_t));
   file.seekg(0, std::ios::beg);
@@ -141,27 +141,27 @@ spectrum::spectrum(std::string filename){
     }
   
   }
+  if(dims.size() > 1) g_first_dim = dims[0];//We need this later
+  if(g_first_dim != 1 && g_first_dim != om_sz) cont = false;//g size doesn't match to B size
   if(cont){
     file.seekg(jump_pos);
     //Now set up g correct size
-    if(dims[0] == 1){
+    if(g_first_dim){
       this->g_angle_array = data_array(1, dims[1]);
       g_is_angle_only = true;
       function_type = FUNCTION_DELTA;
-      norm_g = (my_type *) calloc(om_sz, sizeof(my_type));
       //Single row so only one norm
     }else{
       this->g_angle_array = data_array(dims[0], dims[1]);
       g_is_angle_only = false;
-      norm_g = (my_type *) calloc(dims[1], sizeof(my_type));
       //Norm each row
     }
-  
+    norm_g = (my_type *) calloc(om_sz, sizeof(my_type));
     err = g_angle_array.read_from_file(file);
   
     if(err){
       my_error_print("File read failed", mpi_info.rank);
-      cont =0;
+      cont = 0;
     }
   }
   if(cont){
@@ -190,8 +190,9 @@ spectrum::spectrum(std::string filename){
     size_t function_tmp = 0;
     if(file) file.read((char*)&function_tmp, sizeof(size_t));
     function_type = (int) function_tmp;
+    //If g_first_dim = 1 we probably have a test file. But this may not be specifying all the extra flags, so we keep but effectively ignore the function_type
     this->g_is_angle_only = true;
-    if(function_type == FUNCTION_NULL) this->g_is_angle_only = false;
+    if(g_first_dim > 1) this->g_is_angle_only = false;
     if(file) file.read((char*) &this->smooth, sizeof(size_t));
   }
 

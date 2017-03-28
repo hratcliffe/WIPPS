@@ -79,7 +79,8 @@ IF(KEYWORD_SET(close_file) || where(extra_tags EQ 'CLOSE_FILE') NE -1) THEN BEGI
   writeu, filenum, null_byte
   writeu, filenum, ftr_start
 END
-RETURN, 0
+
+RETURN, ret_hdr
 
 end
 

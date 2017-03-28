@@ -132,10 +132,10 @@ ang_arr = transpose(exp(-(x_ax - x_mid)^2/delta_x))
 ang_arr(where(x_ax LT x_min)) = 0.0
 ang_arr(where(x_ax GT x_max)) = 0.0
 
-B = {data:B_arr, axes:{x:om_ax*const.wce}, space:[0, 1], time:[0, 1], B_ref: 1}
-ang = {data:ang_arr, axes:{x:[1], y:x_ax}, space:[0, 1], time:[0, 1], B_ref: 1}
-
+B = {data:B_arr, axes:{x:om_ax*float(const.wce)}, space:[0, 1], time:[0.0, 1.0], B_ref: 1.0}
+ang = {data:ang_arr, axes:{x:[1.0], y:x_ax}, space:[0, 1], time:[0.0, 1.0], B_ref: 1.0}
 spectrum = {B: B, ang: ang}
+
 err = write_spect(spectrum_file, spectrum)
 
 end

@@ -109,6 +109,8 @@ const = read_deck(dir = './', pref = deck_file_prefix)
 
 om_ce = const.wce
 om_pe = const.wpe
+desired_norm_B_sq = (1e-10)^2 ;100pT field, so if int B d omega is normed to 1 this will be correct
+norm_B = 1
 
 ;Fixed constants
 q0 = 1.602176565d-19 ; elementary charge [C]
@@ -127,6 +129,9 @@ x_ax = findgen(n_pts_x)*x_max*1.2/n_pts_x
 B_arr = exp(- (om_ax - om_mid)^2/delta_om^2)
 B_arr(where(om_ax LT om_min)) = 0.0
 B_arr(where(om_ax GT om_max)) = 0.0
+norm_B = float(total(B_arr)*abs(om_ax[1]-om_ax[0])*om_ce)
+B_arr = desired_norm_B_sq*B_arr/norm_B
+
 
 ang_arr = transpose(exp(-(x_ax - x_mid)^2/delta_x))
 ang_arr(where(x_ax LT x_min)) = 0.0

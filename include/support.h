@@ -111,8 +111,8 @@ const std::string GLOBAL = "glb";/**< Tag identifying diffusion coefficient proc
 
 const char HANDLED_ARG[2] = "*";
 
-const my_type V_MIN = -0.3*v0;/**< Minimum particle velocity for D*/
-const my_type V_MAX = 0.3*v0;/**< Maximum particle velocity for D*/
+const my_type V_MIN = 0;/**< Minimum particle velocity for D*/
+const my_type V_MAX = 0.99*v0;/**< Maximum particle velocity for D*/
 const my_type TAN_MIN = 0.0;/**< Minimum angle (tan theta) for D, spectra etc. Generally should be 0 or -TAN_MAX*/
 const my_type TAN_MAX = 4.0;/**< Maximum angle (tan theta) for D, spectra etc*/
 const my_type ANG_MIN = 0.0;/**< Minimum angle for spectra etc. Generally should be 0 or -ANG_MAX*/
@@ -196,6 +196,8 @@ struct d_report{
   size_t n_solutions;/**< How many mu calculations had solutions*/
   size_t n_fails;/**< How many mu calculations had no solution*/
   size_t n_av;/**< Average n_max used for calc*/
+  size_t n_max;/**< Max n_max used in calcs*/
+  size_t n_min;/**< Min n_min used in calcs. Not '-' is omitted*/
 
 };
 /** @} */

@@ -12,7 +12,7 @@
 diffusion_coeff::diffusion_coeff(int n_momenta, int n_angs):data_array(n_momenta, n_angs){
 /** \brief Create coefficient
 *
-*Creates rectangular data_array and sets additional parameters to defaults @param nx Number of points in momentum to use @param n_angs Number of angle points
+*Creates rectangular data_array and sets additional parameters to defaults @param nx Number of points in momentum to use @param n_angs Number of angle points \todo Match n_thetas to spectrum??
 */
   my_controller = nullptr;
 
@@ -95,7 +95,7 @@ void diffusion_coeff::make_velocity_axis(){
 *
 *Makes linear axis between V_MIN and V_MAX
 */
-  calc_type res = (V_MAX - V_MIN)/this->get_dims(0);
+  calc_type res = (V_MAX - V_MIN)/(this->get_dims(0)-1);
   long offset = std::abs(V_MIN)/res;
   make_linear_axis(0, res, offset);
 }
@@ -124,6 +124,8 @@ d_report diffusion_coeff::calculate(D_type_spec type_of_D, bool quiet){
   report.n_fails = 0;
   report.error = true;
   report.n_av = 0;
+  report.n_max = 0;
+  report.n_min = 0;
   
 //----- Get the plasma and spectrum bits
   plasma plas;
@@ -138,6 +140,7 @@ d_report diffusion_coeff::calculate(D_type_spec type_of_D, bool quiet){
   }
   this->copy_ids(spect);//Copy block id, ranges etc from spect.
   calc_type k_thresh = spect->check_upper();
+  my_print("Using omega upper threshold of "+ mk_str(plas.get_dispersion(k_thresh, WAVE_WHISTLER)/plas.get_omega_ref("ce")), 1);
 
 //---- Set type of D to calculate
   bool is_mixed=false, is_pp=false;
@@ -146,14 +149,14 @@ d_report diffusion_coeff::calculate(D_type_spec type_of_D, bool quiet){
 
 //----- Major definitions------------------
   calc_type theta, omega_n = 0.0, D_part_n_sum, D_final_without_consts;
-  calc_type alpha, v_par, c2th, s2alpha, tan_alpha;
-  calc_type Eq6, dmudx, numerator, gamma_particle, D_conversion_factor;
+  calc_type alpha, mod_v, c2th, s2alpha, tan_alpha, cos_alpha;
+  calc_type Eq6, numerator, gamma_particle, D_conversion_factor;
   int n_min, n_max;
   std::vector<calc_type> omega_calc;
   mu_dmudom my_mu;
-  
+
   calc_type om_ce_ref = plas.get_omega_ref("ce"), omega_solution;
-  calc_type D_consts = 0.5* pi*om_ce_ref*std::pow(v0, 3);//Constant part of D ( pi/2 Om_ce*c^3)
+  calc_type D_consts = 0.5* pi*om_ce_ref*om_ce_ref*v0 * std::pow(1.0/plas.get_B0(), 2) * spect->get_norm_B();//Constant part of D ( pi/2 Om_ce*c^3) * m^2 / B_0^2. But we then divide by (m^2 c^2) so that we get D/p^2 by just dividing by (gamma^2 - 1)
 
 //-------- Wave angle temporaries -----------------
   //D has to be integrated over x, so we need a temporary and the axis
@@ -177,31 +180,33 @@ d_report diffusion_coeff::calculate(D_type_spec type_of_D, bool quiet){
 //-------------------Main loops here----------------------------
 //We have deep nested loops. Move ANYTHING that can be as far up tree as possible
 
-  for(size_t v_par_ind = 0; v_par_ind < dims[0]; v_par_ind++){
+  for(size_t v_ind = 0; v_ind < dims[0]; v_ind++){
     //particle parallel velocity or momentum
-    v_par = get_axis_element(0, v_par_ind);
-    //Get limits on n for this velocity
-    n_min = get_min_n(v_par, k_thresh, om_ce_ref);
-    n_max = get_max_n(v_par, k_thresh, om_ce_ref);
-    n_av += n_max;//Track the average n_max over all iterations
-
+    mod_v = get_axis_element(0, v_ind);
+    gamma_particle = gamma_rel(mod_v);
+    if(std::abs(mod_v) < 1.0) continue;//Skip if velocity is tiny
+    
     if(!quiet){
-      my_print("Velocity "+mk_str(v_par/v0, true)+" c", mpi_info.rank);
-      if((v_par_ind - last_report) >= report_interval){
-        my_print("i "+mk_str(v_par_ind), mpi_info.rank);
-        last_report = v_par_ind;
+      my_print("Velocity "+mk_str(mod_v/v0, true)+" c", mpi_info.rank);
+      if((v_ind - last_report) >= report_interval){
+        my_print("i "+mk_str(v_ind)+" (n_max, n_min "+mk_str(report.n_max)+' '+mk_str(report.n_min)+")", mpi_info.rank);
+        last_report = v_ind;
       }
     }
     for(size_t part_pitch_ind = 0; part_pitch_ind < dims[1]; part_pitch_ind++){
       //particle pitch angle
       alpha = get_axis_element_ang(part_pitch_ind);
       tan_alpha = tan(alpha);
+      cos_alpha = cos(alpha);
       s2alpha = std::pow(std::sin(alpha), 2);
-      //Combination of v_par and pitch angle might exceed v0, in which case we skip on because that's nonsense
-      /** \todo Use p rather than v to avoid this superluminal problem*/
-      if(std::abs(v_par* std::sqrt(1.0 + tan_alpha*tan_alpha)) >= v0) continue;
-      gamma_particle = gamma_rel(v_par* std::sqrt(1.0 + tan_alpha*tan_alpha));
-      
+
+      //Get limits on n for this velocity and angle
+      n_min = get_min_n(mod_v, cos_alpha, k_thresh, om_ce_ref);
+      n_max = get_max_n(mod_v, cos_alpha, k_thresh, om_ce_ref);
+      n_av += n_max;//Track the average n_max over all iterations
+      report.n_max = std::max(report.n_max, (size_t)n_max);//Track the extreme n_max and n_min
+      report.n_min = std::max(report.n_min, (size_t) -n_min);
+
       for(int wave_ang_ind = 0; wave_ang_ind < n_thetas; wave_ang_ind++){
       //theta loop for wave angle or x=tan theta
         theta = atan(x[wave_ang_ind]);
@@ -209,8 +214,9 @@ d_report diffusion_coeff::calculate(D_type_spec type_of_D, bool quiet){
         D_part_n_sum = 0.0;
 
         for(int n = n_min; n < n_max; ++n){
+//          {int n = 0;
           // n is resonant number
-          omega_calc = plas.get_resonant_omega(x[wave_ang_ind], v_par, (calc_type) n);
+          omega_calc = plas.get_resonant_omega(x[wave_ang_ind], mod_v*cos_alpha, gamma_particle, (calc_type) n);
           omega_n = (calc_type) n * om_ce_ref;
           n_omega = omega_calc.size();
           if(n_omega > 0){
@@ -223,16 +229,9 @@ d_report diffusion_coeff::calculate(D_type_spec type_of_D, bool quiet){
               
               my_mu = plas.get_high_dens_phi_mu_om(omega_solution, theta, alpha, n, gamma_particle);
 
-              //This tracks how many solutions and non-solutions for the final report
-              if(my_mu.err){
-                //Once angle is included we found no solution
-                non_counter++;
-                continue;
-              }else{
-                counter ++;
-              }
+              my_mu.err ? non_counter++ : counter++;
+              //If err is true, then once angle is included we found no solution. Keep track for final report
 
-              dmudx = my_mu.dmudtheta * c2th;//Chain rule
               Eq6 = omega_solution/(omega_solution - omega_n)* my_mu.mu/(my_mu.mu + omega_solution * my_mu.dmudom);
               numerator = std::pow( -s2alpha + omega_n/omega_solution, 2);
               D_conversion_factor = sin(alpha)*cos(alpha)/(-s2alpha + omega_n/omega_solution);
@@ -246,12 +245,12 @@ d_report diffusion_coeff::calculate(D_type_spec type_of_D, bool quiet){
           }
         }
         //Store into temporary theta array
-        D_theta[wave_ang_ind] = D_part_n_sum*c2th;
+        D_theta[wave_ang_ind] = D_part_n_sum * c2th * x[wave_ang_ind];
       }
       //now integrate in x = tan theta, restore the velocity factor and save
-      D_final_without_consts = integrator(D_theta, dims[1], dx);
-      D_final_without_consts /= v_par * (1.0 - s2alpha);
-      set_element(v_par_ind, part_pitch_ind, D_final_without_consts*D_consts);
+      D_final_without_consts = integrator(D_theta, n_thetas, dx);
+      D_final_without_consts /= mod_v*std::pow(cos_alpha, 3);
+      set_element(v_ind, part_pitch_ind, D_final_without_consts*D_consts);
     }
   }
 //------------End main loops-----------------------------------
@@ -264,34 +263,34 @@ d_report diffusion_coeff::calculate(D_type_spec type_of_D, bool quiet){
   report.n_solutions = counter;
   report.n_fails = non_counter;
   report.error = false;
-  report.n_av = n_av/dims[0];
+  report.n_av = n_av/dims[0]/dims[1];
   my_print(mk_str(counter) + " solutions vs "+ mk_str(non_counter), mpi_info.rank);
   
   return report;
   
 }
 
-int diffusion_coeff::get_min_n(calc_type v_par, my_type k_thresh, calc_type om_ce){
+int diffusion_coeff::get_min_n(calc_type mod_v, calc_type cos_alpha,  my_type k_thresh, calc_type om_ce){
 /** \brief Limits on n 
 *
-* Uses the maximum k and the velocity to give min/max n to consider (note signs). Note always has abs value ge 1. We cap gamma by assuming the particle velocity is limited.
+* Uses the maximum k and the velocity to give min/max n to consider (note signs). Note always has abs value ge 1.
 */
 
-  calc_type gamma = gamma_rel(0.75*v0);
-  int n = std::max(-(int)(gamma * k_thresh * std::abs(v_par / om_ce)), -n_n);
-  return std::min(-1, n);
+  calc_type gamma = gamma_rel(mod_v);
+  int n = std::max(-(int)(gamma * k_thresh * std::abs(mod_v*cos_alpha / om_ce)), -n_n);
+  return std::min(-1, n-1);
 }
 
-int diffusion_coeff::get_max_n(calc_type v_par, my_type k_thresh, calc_type om_ce){
+int diffusion_coeff::get_max_n(calc_type mod_v, calc_type cos_alpha, my_type k_thresh, calc_type om_ce){
 /** \brief Limits on n 
 *
 * Uses the maximum k and the velocity to give min/max n to consider (note signs) and cap to 1.
 */
 
-  calc_type gamma = gamma_rel(0.75*v0);
+  calc_type gamma = gamma_rel(mod_v);
 
-  int n = std::min((int)(gamma * k_thresh * std::abs(v_par / om_ce)), n_n);
-  return std::max(1, n);
+  int n = std::min((int)(gamma * k_thresh * std::abs(mod_v*cos_alpha / om_ce)), n_n);
+  return std::max(1, n+1);
 }
 
 void diffusion_coeff::copy_ids( spectrum * src){

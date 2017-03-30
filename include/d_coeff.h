@@ -39,8 +39,8 @@ private:
   explicit diffusion_coeff(int n_momenta, int n_ang);
   virtual ~diffusion_coeff(){;};
 
-  int get_min_n(calc_type v_par, my_type k_thresh, calc_type om_ce);
-  int get_max_n(calc_type v_par, my_type k_thresh, calc_type om_ce);
+  int get_min_n(calc_type mod_v, calc_type cos_alpha, my_type k_thresh, calc_type om_ce);
+  int get_max_n(calc_type mod_v, calc_type cos_alpha, my_type k_thresh, calc_type om_ce);
 
   void make_velocity_axis();
   void make_pitch_axis();

@@ -220,7 +220,7 @@ int test_entity_plasma::analytic_dispersion(){
 int test_entity_plasma::resonant_freq(){
 /** \brief Check resonant frequency solver
 *
-*Checks the returned resonant frequency obeys equations used to derive it by solving both for mu.
+*Checks the returned resonant frequency obeys equations used to derive it by solving both for mu. \todo Check for angles with PROPER gamma!!!
 */
 
   int err=TEST_PASSED;
@@ -240,14 +240,15 @@ int test_entity_plasma::resonant_freq(){
 
   //Check the n=0 and v=0 degenerate cases
   //Zero angle, zero velocity, any n, expect empty result
-  results = plas->get_resonant_omega(0.0, 0.0, -1);
+  results = plas->get_resonant_omega(0.0, 0.0, 1.0, -1);
   if(results.size() != 1 && (results[0]/om_ce_local - 1.0 > PRECISION)){
     test_bed->report_info("Erroneous solution when v=0 in resonant frequency solver", 2);
     err |= TEST_WRONG_RESULT;
   }
   
   calc_type expected_result =  0.50, corresponding_v =  0.162251 * v0, omega_solution, sgn_solution;
-  results = plas->get_resonant_omega(0.0, corresponding_v, -1);
+  gamma = gamma_rel(corresponding_v);
+  results = plas->get_resonant_omega(0.0, corresponding_v, gamma, -1);
   //Insert a known result here from the IDL code, with one root
   //Since we're using a sample like this, only expect a few sf of equality as the IDL uses quite different process
   if(results.size() != 1 || std::abs(std::abs(results[0]/om_ce_local)-expected_result) > LOW_PRECISION){
@@ -256,34 +257,35 @@ int test_entity_plasma::resonant_freq(){
   }
   
   //Check over the range of other cases
-  //Loop over particle velocity
+  //Loop over particle velocity, assuming propagation at alpha = pi/8 say
   for(int ii=0; ii<n_tests; ii++){
     v_par = (0.01 + 0.5*(float)ii/ (float)(n_tests+1))* v0;
     //Loop over angles
     for(int j=0; j< n_tests; j++){
-      x = 4.0* (float) j / (float)(n_tests+1);
+      x = 4.0 * (float) j / (float)(n_tests+1);
       cos_theta = std::cos(std::atan(x));
       //Loop over n
       for(int k=0; k< n_tests; k++){
         n = -n_tests/2 + k*n_tests/2;
         
-        gamma2 = 1.0/( 1.0 - std::pow(v_par/v0, 2));
+        gamma2 = 1.0/( 1.0 - std::pow(v_par/cos(pi/8.0)/v0, 2));
         
         gamma = std::sqrt(gamma2);
         
-        results = plas->get_resonant_omega(x, v_par, n);
+        results = plas->get_resonant_omega(x, v_par, gamma, n);
         /**Now check each element of the resonant frequency solution set satisfies Stix 2.45 and the resonance condition together*/
         for(size_t i=0; i<results.size(); ++i){
-          //test_bed->report_info("Freq is "+mk_str(results[i], true)+" = "+mk_str(results[i]/my_const.omega_ce, true)+" om_ce", 2);
+
           omega_solution = std::abs(results[i]);
           sgn_solution = results[i]/omega_solution;
 
+          //Solve Res condition for mu = kc/om
           mu_tmp1 = std::pow(v0 * (gamma * sgn_solution*omega_solution - n*om_ce_local)/(gamma * sgn_solution * omega_solution * v_par *cos_theta), 2);
+          
           mu_tmp2 = (1.0 - (std::pow(om_pe_local,2)/(sgn_solution * omega_solution *(sgn_solution * omega_solution + om_ce_local*cos_theta))));
-
           if(std::abs((mu_tmp1 - mu_tmp2)/mu_tmp1) > NUM_PRECISION){
             err|=TEST_WRONG_RESULT;
-            test_bed->report_info("refractive index mismatch of "+mk_str((int)((mu_tmp1-mu_tmp2)/mu_tmp1)*100) +'%', 2);
+            test_bed->report_info("Refractive index mismatch of "+mk_str((int)(std::abs((mu_tmp1-mu_tmp2))/mu_tmp1)*100) +'%', 2);
           }
         
           //Also check there is a valid full mu solution
@@ -632,9 +634,8 @@ int test_entity_spectrum::basic_tests2(){
   int err = TEST_PASSED;
 
   std::fstream outfile, infile;
-  size_t len=0;
-  my_type total_error =0.0;
-
+  size_t len = 0;
+  my_type total_error = 0.0;
   test_contr->get_current_spectrum()->generate_spectrum(test_dat_fft ,10, FUNCTION_GAUSS);
 
   test_spect = data_array(file_prefix + "spectrum.dat", true);

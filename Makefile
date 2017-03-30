@@ -135,16 +135,22 @@ else ifeq ($(strip $(MODE)),test)
   CFLAGS += -DRUN_TESTS_AND_EXIT
   #CFLAGS += $(PROFILE)
   CFLAGS += $(DEBUG)
-  CFLAGS += $(OPTIMISE)
+  ifeq ($(strip $(NO_OPT)), 1)
+    CFLAGS += $(OPTIMISE)
+  endif
   SED_STR_Test = sed -i.bak 's/ NO_RUN_TESTS_AND_EXIT/ RUN_TESTS_AND_EXIT/' Doxyfile
 else ifeq ($(strip $(MODE)),profile)
   CFLAGS += $(PROFILE)
-  CFLAGS += $(OPTIMISE)
+  ifeq ($(strip $(NO_OPT)), 1)
+    CFLAGS += $(OPTIMISE)
+  endif
   #LFLAGS += $(PROFILE)
 else ifdef MODE
   $(error Unknown MODE)
 else
-  CFLAGS += $(OPTIMISE)
+  ifeq ($(strip $(NO_OPT)), 1)
+    CFLAGS += $(OPTIMISE)
+  endif
 endif
 #Check we have a valid MODE selection and set the right flags and docs
 

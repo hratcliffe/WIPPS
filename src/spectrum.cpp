@@ -896,9 +896,10 @@ calc_type spectrum::check_upper(){
 
   if(get_om_axis_element(1) < get_om_axis_element(2)){
   //Axis presumed to be +ve only, move in from top to find first rise above threshold
+    index = ax_len;
     for(size_t i=1; i< ax_len; i+=stride){
       if((get_B_element(ax_len - i) < threshold && get_B_element(ax_len - i - stride) > threshold)){
-        index = i;
+        index = ax_len - i;
         break;
       }
     }

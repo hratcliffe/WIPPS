@@ -387,8 +387,8 @@ mu_dmudom plasma::get_phi_mu_from_stix(calc_type w, calc_type psi, calc_type alp
       tmp_besp = boost::math::cyl_bessel_j(abs(n)+1, bessel_arg);
       tmp_besm = boost::math::cyl_bessel_j(abs(n)-1, bessel_arg);
 
-      term2 = (1 + D_mu2S)*tmp_besp;
-      term2 += (1 - D_mu2S)*tmp_besm;
+      term2 = (1.0 + D_mu2S)*tmp_besp;
+      term2 += (1.0 - D_mu2S)*tmp_besm;
       
       //tmp_bes = boost::math::cyl_bessel_j(abs(n), bessel_arg);
       if(n != 0) tmp_bes = 0.5*bessel_arg *(tmp_besp + tmp_besm)/calc_n;
@@ -404,7 +404,7 @@ mu_dmudom plasma::get_phi_mu_from_stix(calc_type w, calc_type psi, calc_type alp
   return my_mu;
 }
 
-std::vector<calc_type> plasma::get_resonant_omega(calc_type x, calc_type v_par, int n)const{
+std::vector<calc_type> plasma::get_resonant_omega(calc_type x, calc_type v_par, calc_type gamma_particle, int n)const{
 /** \brief Solve plasma dispersion and doppler resonance simultaneously
 *
 *Obtains solutions of the Doppler resonance condition omega - k_par v_par = -n Omega_ce and a high-density approximation to the Whistler mode dispersion relation simultaneously. Assumes pure electron-proton plasma and uses cubic_solve. ONLY solutions between -om_ce_local and om_ce_local, excluding omega = 0, are considered. "Zero" solutions are those less than the GEN_PRECISION constant in support.h. If solutions are found, they're returned in vector, otherwise empty vector is returned. 
@@ -417,6 +417,7 @@ std::vector<calc_type> plasma::get_resonant_omega(calc_type x, calc_type v_par, 
 #ifdef DEBUG_ALL
   //Argument preconditions. Check only in debug mode for speed
   if(std::abs(v_par) >= v0) my_error_print("!!!!!!!!Error in get_resonant_omega, velocity (v_par="+mk_str(v_par)+") out of range!!!!!!", 0);
+  if(gamma_particle < 1.0) my_error_print("!!!!!!!!Error in get_resonant_omega, particle gamma (gamma_particle="+mk_str(gamma_particle)+") out of range!!!!!!", 0);
 #endif
 
   std::vector<calc_type> ret_vec;
@@ -441,17 +442,15 @@ std::vector<calc_type> plasma::get_resonant_omega(calc_type x, calc_type v_par, 
   calc_type cos_th = std::cos(std::atan(x));
   calc_type vel = v_par / v0;
   //For clarity
-  calc_type vel_cos = std::pow(vel * cos_th, 2);
+  calc_type vel_cos = std::pow(vel * cos_th, 2);//Product of the two, for simplicity in expressions. But note is not meaningful, theta is the wave angle
 
-  calc_type gamma, gamma_sq;
-  gamma_sq = 1.0/( 1.0 - std::pow(vel, 2));
-  gamma = std::sqrt(gamma_sq);
+  calc_type gamma_sq = gamma_particle * gamma_particle;
 
   //Calculate coefficients
   //To maintain best precision we solve for x = omega/omega_ce_ref so x ~ 1
   a = (vel_cos - 1.0) * gamma_sq;
-  b = (vel_cos*cos_th*gamma_sq + 2.0*gamma*n - gamma_sq*cos_th)*om_ce/om_ce_ref;
-  c = ((2.0*gamma*n*cos_th - n*n)* std::pow(om_ce/om_ce_ref, 2) - std::pow(om_pe_loc/om_ce_ref, 2)*vel_cos*gamma_sq);
+  b = (vel_cos*cos_th*gamma_sq + 2.0*gamma_particle*n - gamma_sq*cos_th)*om_ce/om_ce_ref;
+  c = ((2.0 * gamma_particle * n * cos_th - n * n)* std::pow(om_ce/om_ce_ref, 2) - std::pow(om_pe_loc/om_ce_ref, 2)*vel_cos*gamma_sq);
   d = -n*n*std::pow(om_ce/om_ce_ref, 3)*cos_th;
   //Note: for n=0, d is 0. We covered v_par being zero above, so either omega = 0 and k_par = 0 or we have a normal solution, but with redundancy. We assume omega = 0 is an unhelpful solution to return. And for simplicity we don't do a special quadratic solution but just continue anyway
 

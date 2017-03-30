@@ -280,4 +280,84 @@ function om_axis, axis, index, value
 
 end
 
+function trace_energy, v_ax, ang_ax, energy
+;Trace the index pairs into v and ang axes which map to a total electron energy of energy. For each v, the corresponding alpha index is found
+
+  common consts, q0, m0, v0, kb, mu0, epsilon0, h_planck
+
+  ;Work off v axis
+  sz = (size(v_ax))[1]
+  index_arr = intarr(sz)
+  ;Map energy to v
+  gamma = energy/m0/v0^2 + 1 ; 1 is for rest-mass energy
+  total_v = v0 * sqrt(gamma^2 - 1.0)/gamma
+  for i = 0, sz-1 DO BEGIN
+    angle = acos(abs(v_ax[i])/total_v)
+    index_arr[i] = min(where(ang_ax GT angle))
+  end
+
+  return, index_arr
+end
+
+function gamma, v
+;Takes v/c
+  common consts, q0, m0, v0, kb, mu0, epsilon0, h_planck
+  return, 1.0/sqrt(1.0 - v^2)
+end
+
+function gamma_from_energy, energy
+  common consts, q0, m0, v0, kb, mu0, epsilon0, h_planck
+
+  return, energy/m0/v0^2 + 1 ; 1 is for rest-mass energy
+end
+
+function keV_to_v, energy
+  ;takes energy in keV and returns velocity in v0/c
+  common consts, q0, m0, v0, kb, mu0, epsilon0, h_planck
+
+  gam = gamma_from_energy(energy*1e3*q0)
+  return, sqrt(gam^2 -1)/gam
+end
+
+function v_to_keV, v
+  ;takes velocity in v0/c and returns energy in keV
+  common consts, q0, m0, v0, kb, mu0, epsilon0, h_planck
+
+  gam = gamma(v)
+  return, (gam - 1)*m0*v0^2/q0/1e3
+end
+
+
+function get_D_at_energy, D, energy, velocity=velocity, spread=spread
+;Lineout D to get rms(D) as function of angle (or velocity if keyword velocity set) at given energy
+;Spread is percent energy band to use, default ±10% is spread=10. Max is 99%
+
+  common consts, q0, m0, v0, kb, mu0, epsilon0, h_planck
+
+  ;Set default spread and re-range
+  if(N_ELEMENTS(spread) EQ 0) THEN spread = 10
+  if(spread LT 0) THEN spread = abs(spread)
+  if(spread GT 99) THEN spread = 99
+
+  n_els = (size(D.data))[2]
+  other_els = (size(D.data))[1]
+  if(KEYWORD_SET(velocity)) THEN BEGIN
+    n_els = (size(D.data))[1]
+    other_els = (size(D.data))[2]
+  END
+
+  inds_low = trace_energy(D.axes.x, D.axes.y, energy*(1.0-spread/100.0))
+  inds_high = trace_energy(D.axes.x, D.axes.y, energy*(1.0+spread/100.0))
+  inds_high[where(inds_high EQ -1)] = other_els - 1
+  inds_low[where(inds_low EQ -1)] = other_els - 1
+  inds_low[where(inds_low GT inds_high)] = 0
+
+  D_masked = fltarr((size(D.data))[1:2])
+  for i = 0, n_els - 1 DO D_masked[i, inds_low[i]:inds_high[i]] = D.data[i, inds_low[i]:inds_high[i]]/(inds_high[i] - inds_low[i] + 1)
+
+  if(KEYWORD_SET(velocity)) THEN D_line = total(abs(D_masked^2), 2)/total(D_masked^2/(D_masked^2+1e-30), 2) else D_line = total(abs(D_masked^2), 1)/total(D_masked^2/(D_masked^2+1e-30), 1)
+
+  return, sqrt(D_line)
+
+end
 

@@ -305,6 +305,11 @@ function gamma, v
   return, 1.0/sqrt(1.0 - v^2)
 end
 
+function gamma_from_p, p
+  common consts, q0, m0, v0, kb, mu0, epsilon0, h_planck
+  return, sqrt(1.0 + (p/v0/m0)^2)
+end
+
 function gamma_from_energy, energy
   common consts, q0, m0, v0, kb, mu0, epsilon0, h_planck
 

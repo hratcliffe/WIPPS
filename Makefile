@@ -41,7 +41,7 @@ ifdef NO_FFT
 endif
 
 #Path for FFTW libraries. Leave empty to use system install
-FFTW_PATH = ../../../FFTW_testdir/fftw-3.3.4/
+FFTW_PATH = ~/FFTW_testdir/fftw-3.3.4/
 
 #Don't check data file versions against code by default
 CFLAGS += -DDEFAULT_NOVERS
@@ -272,7 +272,7 @@ $(OBJDIR)/%.o:./$(SRCDIR)/%.cpp
 	$(CC) $(CFLAGS)  $< -o $@
 #General rule to build any obj from corresponding cpp
 
-.PHONY : tar clean veryclean docs list
+.PHONY : tar tar_built clean veryclean docs list
 
 list:
 	@$(MAKE) -pRrq -f $(INVOKEDFILE) : 2>/dev/null | awk -v RS= -F: '/^# File/,/^# Finished Make data base/ {if ($$1 !~ "^[#.]") {print $$1}}' | sort | egrep -v -e '^[^[:alnum:]]' -e '^$@$$' -v -e $(OBJDIR)
@@ -283,6 +283,10 @@ list:
 tar: dependencies.log
 	tar --no-recursion -cvzf Source.tgz $(SOURCE) $(INCLS) $(MAINSOURCE) $(UTILSSOURCE) ./files/* Makefile redox.sh process_deps.sh dependencies.log install ./install_fftw.sh ./build_sdf.sh Doxyfile test_pars
 	tar -cvzf SDF.tgz ./SDF
+
+#Tar up the runnable code, excluding build details and omitting test files etc. Includes IDL scripts,
+tar_built: utils
+	tar --no-recursion -cvzf Runnable.tgz $(UTILS) ./main ./files/help*.txt test_pars ./files/.idlstartup ./files/*.pro ./SDF/IDL/*
 
 clean:
 	@rm -f main $(UTILS) $(OBJS) $(MAINOBJS) $(UTILSOBJS)

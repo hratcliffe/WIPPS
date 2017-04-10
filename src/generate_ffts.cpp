@@ -142,7 +142,7 @@ int main(int argc, char *argv[]){
       my_error_print("Data read failed. Aborting", mpi_info.rank);
       safe_exit();
     }
-    if(err == 2) n_tims = dat.get_dims(1);
+    if(err == 2) n_tims = dat.get_dims(n_dims);
     //Check if we had to truncate data array...
 
     dat.B_ref = get_ref_Bx(cmd_line_args.file_prefix, my_space, cmd_line_args.time[0] == 0 ? 1:cmd_line_args.time[0], my_reader->current_block_is_accum());

@@ -693,7 +693,7 @@ bool my_array::write_section_to_file(std::fstream &file, std::vector<size_t> bou
 /**\brief Write a subsection of array to file
 *
 *We write only the section delimited by bounds, which should have two elements for each dimension of this array. \copydoc dummy_file_format
-   @return 0 (sucess) 1 (error) \todo Probably need arb dims version...
+   @return 0 (sucess) 1 (error)
 */
 
   if(!file.is_open() || (this->data ==nullptr)) return 1;
@@ -742,40 +742,30 @@ bool my_array::write_section_to_file(std::fstream &file, std::vector<size_t> bou
   file.write((char*) & next_location, size_sz);
 
   my_type element;
-  if(n_dims ==1){
-    for(size_t i= bounds[0]; i< bounds[1]; i++){
-      element = get_element(i);
-      file.write((char *) &element, sizeof(my_type));
-    }
-  }else if(n_dims ==2){
-    for(size_t j= bounds[2]; j< bounds[3]; j++){
-      for(size_t i= bounds[0]; i< bounds[1]; i++){
-        element = get_element(i, j);
-        file.write((char *)  &element, sizeof(my_type));
-      }
-    }
-  }else if(n_dims ==3){
-    for(size_t k= bounds[4]; k< bounds[5]; k++){
-      for(size_t j= bounds[2]; j< bounds[3]; j++){
-        for(size_t i= bounds[0]; i< bounds[1]; i++){
-          element  = get_element(i, j, k);
-          file.write((char *) &element, sizeof(my_type));
-        }
-      }
-    }
-  }else if(n_dims ==4){
-    for(size_t l= bounds[6]; l< bounds[7]; l++){
-      for(size_t k= bounds[4]; k< bounds[5]; k++){
-        for(size_t j= bounds[2]; j< bounds[3]; j++){
-          for(size_t i= bounds[0]; i< bounds[1]; i++){
-            element = get_element(i, j, k, l);
-            file.write((char *) &element , sizeof(my_type));
-          }
-        }
+
+  //Write each element to the file
+  size_t * positions;
+  positions = (size_t *) malloc(n_dims*sizeof(size_t));
+  for(size_t dim = 0; dim < n_dims; dim ++) positions[dim] = bounds[dim*2];
+
+  for(size_t el = 0; el < total_size; el++){
+    element = get_element(n_dims, positions);
+    file.write((char *) &element , sizeof(my_type));
+
+    positions[0]++;//Increment lowest dim
+    for(size_t dim = 0; dim < n_dims; dim ++){
+      //Cascade increment up ensuring each dim stays in bounds
+      if(positions[dim] >= bounds[dim*2 + 1]){
+        positions[dim] = bounds[dim*2];
+        if(dim < n_dims-1) positions[dim+1]++; //Only if not already the top dimension
+      }else{
+        //Stop looping when cascade ends
+        break;
       }
     }
   }
-  
+  free(positions);
+
   if((size_t)file.tellg() != next_location) write_err=1;
 
   //Report if any of our offsets didn't match the file

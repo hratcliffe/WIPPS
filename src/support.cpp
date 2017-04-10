@@ -634,7 +634,9 @@ std::string mk_str(bool b){
 }
 std::string mk_str(long double i, bool noexp){return mk_str((double) i, noexp);}
 std::string mk_str(float i, bool noexp){return mk_str((double) i, noexp);}
-
+std::string mk_str(char * str){
+  return std::string(str);
+}
 void trim_string(std::string &str, char ch){
   std::string tmp;
   if(str.find_first_not_of(ch) !=std::string::npos) tmp = str.substr(str.find_first_not_of(ch), str.size());

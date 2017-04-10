@@ -38,7 +38,7 @@ test_entity_reader::~test_entity_reader(){
 int test_entity_reader::run(){
 /**\brief Reads test data and checks
 *
-*For normal data we just check a test file opens and find the size from the final SDF block and test against on-disk size. For accumulated data we use test data with values corresponding to row in file, and check the values and correctness at each end.
+*For normal data we just check a test file opens and find the size from the final SDF block and test against on-disk size.  Then we read a distrib block and check it worked etc. For accumulated data we use test data with values corresponding to row in file, and check the values and correctness at each end.
 */
   int err = TEST_PASSED;
   
@@ -46,6 +46,13 @@ int test_entity_reader::run(){
   if(sz != size) err |= TEST_WRONG_RESULT;
   size_t n_dims;
   std::vector<size_t> dims;
+
+  data_array distrib = data_array(4096, 500);
+  int tmp_err = test_rdr->read_distrib(distrib, "x_px/Background", 0);
+  if(tmp_err || distrib.maxval() == distrib.minval()){
+    err |= TEST_WRONG_RESULT;
+    test_bed->report_info("Error reading distribs", 1);
+  }
 
   int rd_err = accum_reader->read_dims(n_dims, dims);
   if(rd_err){

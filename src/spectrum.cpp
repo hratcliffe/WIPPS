@@ -1107,7 +1107,7 @@ calc_type get_G1(spectrum * my_spect, calc_type omega){
 calc_type get_G2(spectrum * my_spect, calc_type omega, calc_type x){
 /** \brief Get G2 from Albert 2005
 *
-* Gets the value of g(w, x) and the normalising constant from norm_g \todo Currently interpolates angle only. Perhaps interpolate on omega too? Is there a way to match angle axes better?
+* Gets the value of g(w, x) and the normalising constant from norm_g \todo Currently interpolates angle only. Perhaps interpolate on omega too?
 */
 
   long om_ind, norm_ind, offset;

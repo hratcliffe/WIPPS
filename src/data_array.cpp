@@ -78,7 +78,7 @@ data_array::data_array(size_t n_dims, size_t * dims) : my_array(n_dims, dims){
 data_array::data_array(std::string filename, bool no_version_check){
 /**\brief Create data array from file
 *
-* Create a data array by reading from the named file. If the file does not exist nothing is done and this will be an empty array. Otherwise it reads the dimensions, sets up sizes and populates data and info
+* Create a data array by reading from the named file. If the file does not exist nothing is done and this will be an empty array. Otherwise it reads the dimensions, sets up sizes and populates data and info \todo Swap version checking to just vx.x part
 */
 
   //Initialise empty array
@@ -442,14 +442,14 @@ bool data_array::populate_axis(size_t dim, my_type * dat_in, size_t n_tot){
 void data_array::make_linear_axis(size_t dim, float res, long offset){
 /**\brief Make an axis
 *
-*Generates a linear axis for dimension dim, with resolution res, starting at value of  - offset*res @param dim Dimension to build axis for @param res Axis resolution @param offset Number of grid cells to shift downwards (leftwards) by
+*Generates a linear axis for dimension dim, with resolution res, starting at value of  - offset*res That allows one to guarantee that 0 appears regardless of the number of cells. @param dim Dimension to build axis for @param res Axis resolution @param offset Number of grid cells to shift downwards (leftwards) by
 */
 
   size_t len;
   my_type * ax_ptr = get_axis(dim, len);
 
   for(size_t i=0; i<len; i++){
-    *(ax_ptr +i) = ((float) ((long)i-offset)) * res;
+    *(ax_ptr +i) = ((float) ((long)i - offset)) * res;
   }
 }
 

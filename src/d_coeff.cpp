@@ -12,12 +12,12 @@
 diffusion_coeff::diffusion_coeff(int n_momenta, int n_angs):data_array(n_momenta, n_angs){
 /** \brief Create coefficient
 *
-*Creates rectangular data_array and sets additional parameters to defaults @param nx Number of points in momentum to use @param n_angs Number of angle points \todo Match n_thetas to spectrum??
+*Creates rectangular data_array and sets additional parameters to defaults @param nx Number of points in momentum to use @param n_thetas Number of particle pitch angle points
 */
   my_controller = nullptr;
 
   n_thetas = 100;
-  n_n = 10;
+  n_n = 15;
   wave_id = WAVE_WHISTLER;
   latitude = 0;
   tag="";
@@ -114,8 +114,7 @@ void diffusion_coeff::make_pitch_axis(){
 d_report diffusion_coeff::calculate(D_type_spec type_of_D, bool quiet){
 /** \brief Calculate D from wave spectrum and plasma
 *
-*Uses the data available via my_controller to calculate D, the raw diffusion coefficient as function of particle velocity and pitch angle. For more details of the calculation see Derivations#Calculation_of_D
-* \todo Check n ranges and refine?
+*Uses the data available via my_controller to calculate D, the raw diffusion coefficient as function of particle velocity and pitch angle. For more details of the calculation see Derivations#Calculation_of_D Note that here we use a default number of wave-normal angle points, NOT the number present in the parent spectrum. See get_G2 for details of how interpolation is done.
 */
 
 //----Initialise d_report --------
@@ -160,7 +159,6 @@ d_report diffusion_coeff::calculate(D_type_spec type_of_D, bool quiet){
 
 //-------- Wave angle temporaries -----------------
   //D has to be integrated over x, so we need a temporary and the axis
-  /** \todo Why are we using different angles for D and for waves?*/
   calc_type *D_theta = (calc_type *) calloc(n_thetas, sizeof(calc_type));
   calc_type *x = (calc_type *) calloc(n_thetas, sizeof(calc_type));
   calc_type *dx = (calc_type *) calloc(n_thetas, sizeof(calc_type));

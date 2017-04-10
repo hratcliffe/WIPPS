@@ -370,15 +370,16 @@ NB NB NB we have some erroneous $m^2$ and a $cos^4$ instead of $cos^2$, compared
 \begin{align}
 D_{\alpha\alpha}^{nx} &= \frac{B_{wave}^2}{B_0^2}(mv)^2 \frac{\pi}{2}\frac{\Omega_c^2}{\Delta\omega}\frac{\cos^2\theta}{|v_\parallel/c|^3}  \Phi_n^2 \frac{(-\sin^2\alpha + \omega_n/\omega)^2}{|1-(\partial \omega/\partial k_\parallel)_x/v_\parallel|} G_1 G_2 \end{align}
 
+FOR THE $m^2$ note that the duplicate of Lyons in Glauert/Horne doesn't have the $1/m$ factor at all...
+
 NB NB I think this is because they use $g(\theta)$ vs $g(\tan(\theta))$ respectively!!
 
 \section{Calculation of D}
 \subsection{Breakdown of terms}
 Since D is evaluated at each $p, \alpha$ and to do so requires integrating over wave angle and totalling over both $n$ and the resonant omegas we have 4 or 5 nested loops unavoidably. Therefore we break the calculation down and hoist everything as high as possible. Taking
 \begin{align}
-D_{\alpha\alpha}^{nx} &= x \frac{B_{wave}^2}{B_0^2}(mv)^2 \frac{\pi}{2}\frac{\Omega_c^2}{\Delta\omega}\frac{\cos^2\theta}{|v_\parallel/c|^3}  \Phi_n^2 \frac{(-\sin^2\alpha + \omega_n/\omega)^2}{|1-(\partial \omega/\partial k_\parallel)_x/v_\parallel|} G_1 G_2 \end{align}
+D_{\alpha\alpha}^{nx} &= \frac{B_{wave}^2}{B_0^2}(mv)^2 \frac{\pi}{2}\frac{\Omega_c^2}{\Delta\omega}\frac{\cos^2\theta}{|v_\parallel/c|^3}  \Phi_n^2 \frac{(-\sin^2\alpha + \omega_n/\omega)^2}{|1-(\partial \omega/\partial k_\parallel)_x/v_\parallel|} G_1 G_2 \end{align}
 we break the terms down as follows. Note that $\omega$ is the resonant solution in the innermost loop
-
 \begin{itemize}
 \item Constant factors, \[ \frac{\pi \Omega_c^2 c^3 m^2}{2 B_0^2}\] This $m^2$ I can't match with Lyons though, see above....
 \item Particle parallel momentum $v_\parallel$, \[\frac{1}{v_\parallel^3}\]
@@ -387,7 +388,17 @@ we break the terms down as follows. Note that $\omega$ is the resonant solution 
 \item Resonance number, $n$
 \item Resonant omega solution, $\omega$ in the above equation and dictating anything containing $\mu$ also, i.e. 
 \[ \Phi_n^2 \frac{(-\sin^2\alpha + \omega_n/\omega)^2}{|1-(\partial \omega/\partial k_\parallel)_x/v_\parallel|} (G_1 B_{wave}^2/\Delta\omega) G_2 \]
+\end{itemize}
 
+\noindent It's also useful to have some estimates of the sizes of the various terms:
+\begin{itemize}
+\item \[ \frac{\pi \Omega_c^2 c^3 m^2}{2 B_0^2} = 0.5 \pi q^2 c^3 \simeq 1e-12 \]
+\item $B^2_{wave} \sim (100 \mathrm{pT})^2 \sim 1e-20 T$
+\item Alternately we combine as $ 0.5 \pi \Omega_c^2 c^3 m^2  \simeq 1e-26$ and $B^2_{wave}/B_0^2 \simeq 1e-6$ (for 100pT waves and 100nT background)
+\item \[  |1-(\partial \omega/\partial k_\parallel)_x/v_\parallel| \simeq 1 \]
+\item $\Phi \sim 1$
+\item $G_1 \sim 1$
+\item $G_2$
 \end{itemize}
 
 \subsection{Limiting n}
@@ -397,6 +408,11 @@ Since we're working from simulation data we have fairly easy to define limits on
 
 
 \section{Really important subtleties that often get glossed over}
+
+\subsection{What D is actually a function of, and the various coordinate transforms}
+
+In both Lyons and Albert $D$ is given without arguments specified, so one probably has to infer based on Lyons  first equation and the subscripts, as well as the listed transforms to $D_{EE}$ that it's $ v$, $\alpha$ although they helpfully use $v_\parallel$ on the RHS not $v \cos\alpha$. 
+
 
 \subsection{Arguments of Bessel functions in Phi}
 In Lyons (between Eq 3 and 4) we have that the Bessel function args Big-Theta or Phi are

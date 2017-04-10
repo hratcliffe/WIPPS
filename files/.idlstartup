@@ -1,5 +1,5 @@
-!PATH=!PATH+':'+Expand_Path('/Users/heatherratcliffe/Documents/ActualWork/StockEpoch/epoch/SDF/IDL')
-@'/Users/heatherratcliffe/Documents/ActualWork/StockEpoch/epoch/SDF/IDL/Start.pro'
+!PATH=!PATH+':'+Expand_Path('../SDF/IDL')
+@'../SDF/IDL/Start.pro'
 .r './plot_helpers.pro'
 .r './read_deck.pro'
 define_consts

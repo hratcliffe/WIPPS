@@ -18,9 +18,10 @@ class diffusion_coeff;
 
 /** \brief Plasma parameters and dispersion
 *
-*Plasma objects contain specifications for a plasma, including density, B field, and species composition. In general we configure them from a file, plasma.conf, and no other constructor is provided. After construction, the plasma will be valid, but if given file is not found or reading fails, default values will be used. Two cyclotron frequencies are available, local and reference. For varying B fields, a reference B field should be given and the local om_ce will match this. The reference value always matches that in the deck_constants struct. 
-*We offer functions to solve plasma dispersion "exactly" using the various get_root, get_phi* etc functions, or get_dispersion which uses various analytic approximations, usually high density ones. The former functions are modified from file mufunctions3.f90 author  Clare E. J. Watt                                   date 18/05/10. From there: Note that mu is calculated using the Appleton-Hartree relation, and the choice of sign is obtained from Albert [2005].
+*Plasma objects contain specifications for a plasma, including density, B field, and species composition. In general we configure them from a file, plasma.conf, and no other constructor is provided. After construction, the plasma will be valid, but if given file is not found or reading fails, default values will be used. Two cyclotron frequencies are available, local and reference. For varying B fields, a reference B field should be given and the local om_ce will match this. The reference value always matches that in the deck_constants struct.
+*We offer functions to solve plasma dispersion "exactly" using the various get_root, get_phi* etc functions, or get_dispersion which uses various analytic approximations, usually high density ones. For the high-density approximations, the FIRST species is assumed to be the electrons. The former functions are modified from file mufunctions3.f90 author  Clare E. J. Watt (18/05/10). From there: Note that mu is calculated using the Appleton-Hartree relation, and the choice of sign is obtained from Albert [2005].
 *An additional function to simultaneously solve the Doppler type resonance condition, and the approximate dispersion relation are provided.
+* Note that no spatial variations in density or ambient B field are included. 
 * @author Heather Ratcliffe  @date 07/10/2015 \ingroup cls
 */
 

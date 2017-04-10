@@ -15,7 +15,7 @@
 plasma::plasma(std::string file_prefix, my_type Bx_local){
 /** \brief Set up plasma
 *
-*Sets up components from {file_prefix}plasma.conf. If a Bx_local is given, store and calc local cyclotron frequency from this. Else use the cyclotron frequency from deck constants. \todo Query add B_grad to handle space variation?
+*Sets up components from {file_prefix}plasma.conf. If a Bx_local is given, store and calc local cyclotron frequency from this. Else use the cyclotron frequency from deck constants.
 */
 
   //Set up plasma components
@@ -215,8 +215,8 @@ mu_dmudom plasma::get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int
 mu_dmudom plasma::get_high_dens_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int n, calc_type gamma_particle, bool skip_phi, bool Righthand)const{
   /** \brief Solve plasma dispersion and extensions
 *
-*Duplicates plasma::get_phi_mu_omega() but using reduced form of Stix parameters corresponding to a high-density assumption. This is mainly for comparison with the exact solution to validate this assumption.
-*Also needs particle pitch angle alpha \todo Multispecies???? */
+*Duplicates plasma::get_phi_mu_omega() but using reduced form of Stix parameters corresponding to a high-density assumption assuming the first species is the electrons. This is mainly for comparison with the exact solution to validate this assumption.
+*Also needs particle pitch angle alpha */
 
 #ifdef DEBUG_ALL
   //Argument preconditions. Check only in debug mode for speed
@@ -411,7 +411,6 @@ std::vector<calc_type> plasma::get_resonant_omega(calc_type x, calc_type v_par, 
 *
 *Note that since k_parallel and v_parallel in resonant condition are signed, we will get multiple entries of ± omega for the corresponding ±k and ±n. These should be handled by the calling code, as k may or may not be handled with both signs
 @param x Wave normal angle @param v_par Particle velocity to solve with @param n Resonance number.
-  \todo Extend to general case?
 */
 
 #ifdef DEBUG_ALL

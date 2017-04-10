@@ -42,7 +42,7 @@ struct fft_spect_args{
 fft_spect_args fft_spect_process_command_line(int argc, char *argv[]);
 
 int main(int argc, char *argv[]){
-/** \todo FFT normalisation*/
+/** \todo FFT normalisation -> V2.0*/
 //We don't need MPI here but SDF does
 
   my_print(std::string("Code Version: ")+ VERSION, mpi_info.rank);

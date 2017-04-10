@@ -43,12 +43,17 @@
  * These docs describe all classes and methods under the classes section. Helper functions, constants etc are grouped under modules.
  * \section build Building or Editing the Code
  * An install script is provided to build SDF, install fftw etc. For details run install --help
- * Build using make. If input data is type double, use \verbatim make TYPE=double \endverbatim to build with correct libraries.
+ * Build using make. If input data is type double, use \verbatim make TYPE=double \endverbatim to build with correct FFT etc libraries.
  *Any changes to code include files or addition of files will change dependencies. In this case run \verbatim make echo_deps \endverbatim before a clean build
+ * test, profile and debug options are also available. Use \verbatim make MODE=test \endverbatim etc to compile with correct flags, and see next sections for details
  *
  *\section test Integrated Testing
  * All (hopefully) significant (copout!) parts of the code should be covered by inbuilt tests. These are defined in tests.cpp and cover a mixture of unit testing, science testing and library integration tests. To run the tests, clean build with \verbatim make MODE=test \endverbatim
-* and run. Errors and outcomes are written to stderr, information to stdout. Thus \verbatim ./main > /dev/null \endverbatim will show only the former, etc. To add tests, see class \ref tests. Consider adding tests for any significant additions or changes, and running the existing ones ditto. To include tests in this documentation, run 
+* and run. Errors and outcomes are written to stderr, information to stdout. Thus \verbatim ./main > /dev/null \endverbatim will show only the former, etc. 
+* Some tests are rather heavy so are only run if flags are set. See \ref tests in the Test Docs for these. 
+* By default, all compiles are at optimisation O3. To compile with O0 for testing or debugging, pass NO_OPT = 1 to the make command.
+
+*To add tests, see class \ref tests. Consider adding tests for any significant additions or changes, and running the existing ones ditto. To include tests in this documentation, run
  \verbatim make MODE=test
 make docs
  \endverbatim Similarly, to omit them, make without test mode

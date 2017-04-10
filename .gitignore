@@ -6,7 +6,8 @@ main
 read_test
 growth
 generate_ffts
-cutout
+cutout_fft
+calculate_diffusion
 FFT_to_spectrum
 compress_distributions
 test_reading_code.cpp

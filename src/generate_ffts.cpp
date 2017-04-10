@@ -156,7 +156,7 @@ int main(int argc, char *argv[]){
       else{
         lims = extra_args.limits;
         //Check for -1 to avoid overflow in second comparison
-        if(extra_args.flat_dim != -1 && (size_t) extra_args.flat_dim != dat.get_dims()-1){
+        if(extra_args.flat_dim == -1 || (extra_args.flat_dim != -1 && (size_t) extra_args.flat_dim != dat.get_dims()-1)){
           lims[lims.size()-2] *= (dat.B_ref*q0/me);
           lims[lims.size()-1] *= (dat.B_ref*q0/me);
         }

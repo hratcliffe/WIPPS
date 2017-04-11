@@ -108,6 +108,7 @@ public:
   spectrum * get_current_spectrum();
   spectrum * get_spectrum_by_num(size_t indx);
   diffusion_coeff * get_current_d();
+  diffusion_coeff * get_d_by_num(size_t indx);
   diffusion_coeff * get_special_d();
   
   const plasma& get_plasma(){return my_plas;};/**<Get reference to the plasma object to use*/

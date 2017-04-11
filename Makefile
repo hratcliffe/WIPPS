@@ -135,20 +135,20 @@ else ifeq ($(strip $(MODE)),test)
   CFLAGS += -DRUN_TESTS_AND_EXIT
   #CFLAGS += $(PROFILE)
   CFLAGS += $(DEBUG)
-  ifeq ($(strip $(NO_OPT)), 1)
+  ifeq ($(strip $(OPTIMISE)), 1)
     CFLAGS += $(OPTIMISE)
   endif
   SED_STR_Test = sed -i.bak 's/ NO_RUN_TESTS_AND_EXIT/ RUN_TESTS_AND_EXIT/' Doxyfile
 else ifeq ($(strip $(MODE)),profile)
   CFLAGS += $(PROFILE)
-  ifeq ($(strip $(NO_OPT)), 1)
+  ifeq ($(strip $(OPTIMISE)), 1)
     CFLAGS += $(OPTIMISE)
   endif
   #LFLAGS += $(PROFILE)
 else ifdef MODE
   $(error Unknown MODE)
 else
-  ifeq ($(strip $(NO_OPT)), 1)
+  ifeq ($(strip $(OPTIMISE)), 1)
     CFLAGS += $(OPTIMISE)
   endif
 endif

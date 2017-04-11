@@ -505,7 +505,7 @@ int reader::read_data(data_array &my_data_in, size_t time_range[3], size_t space
     
     //Set last time, note we just resized the axis
     my_data_in.time[1] = my_data_in.get_axis_element(n_dims-1, my_data_in.get_dims(n_dims-1)-1);
-    
+    /** \todo Better message here*/
     if(!accumulated) my_error_print("Read stopped by error at file "+file_name + " ("+mk_str(total_reads)+" times)", mpi_info.rank);
     else my_print("Read "+mk_str(total_reads)+" times", mpi_info.rank);
     return 2;

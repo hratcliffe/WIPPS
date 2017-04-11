@@ -279,7 +279,7 @@ int test_entity_plasma::resonant_freq(){
           omega_solution = std::abs(results[i]);
           sgn_solution = results[i]/omega_solution;
 
-          //Solve Res condition for mu = kc/om
+          //Solve Res condition for mu^2 = (kc/om)^2
           mu_tmp1 = std::pow(v0 * (gamma * sgn_solution*omega_solution - n*om_ce_local)/(gamma * sgn_solution * omega_solution * v_par *cos_theta), 2);
           
           mu_tmp2 = (1.0 - (std::pow(om_pe_local,2)/(sgn_solution * omega_solution *(sgn_solution * omega_solution + om_ce_local*cos_theta))));
@@ -849,6 +849,7 @@ int test_entity_levelone::run(){
 *
 *
 Set runtime_flag "no_level_one" to skip a full level-one testing
+\todo Create some lighter weight test files!
 **/
 
   int err = TEST_PASSED;
@@ -887,8 +888,8 @@ Set runtime_flag "no_level_one" to skip a full level-one testing
       time_in[2] = 0;
 
       err|=setup();
-      if(!test_bed->check_for_abort(err)) err|= basic_tests(2, 1, true);
-      if(!test_bed->check_for_abort(err)) err|= basic_tests(2, -1, false, "_space", 2, 0.01f*my_const.omega_ce, 1.5f*my_const.omega_ce);
+      if(!test_bed->check_for_abort(err)) err |= basic_tests(2, 1, true);
+      if(!test_bed->check_for_abort(err)) err |= basic_tests(2, -1, false, "_space", 2, 0.01f*my_const.omega_ce, 1.5f*my_const.omega_ce);
     }
   }else{
     test_bed->report_info("Skipping level-one tests due to flag -no_level_one", 0);
@@ -1061,7 +1062,7 @@ int test_entity_levelone::basic_tests(size_t n_dims_in, int flatten_on, bool has
 test_entity_d::test_entity_d(){
 
   name = "D checks";
-  file_prefix = "./files/";
+  file_prefix = "./files/d_test";
 
 }
 test_entity_d::~test_entity_d(){
@@ -1099,9 +1100,10 @@ int test_entity_d::run(){
 int test_entity_d::basic_tests(){
 /** \brief Simple tests of D
 *
-* Does some simple checks that D calc proceeds and some basic things are true
+* Does some simple checks that D calc proceeds and some basic things are true. Also does an IO test
 */
   int err = TEST_PASSED;
+  
   test_bed->report_info("Reading spectrum", mpi_info.rank);
   //Now dump to file and read back in and compare
   bool err2 = test_contr->add_spectrum("spect_out.dat");
@@ -1123,6 +1125,39 @@ int test_entity_d::basic_tests(){
     err |= TEST_ASSERT_FAIL;
   }
 
+  test_bed->report_info("Testing D IO");
+  //Modify some fields to non-default
+  test_contr->get_current_d()->wave_id = 3;
+  test_contr->get_current_d()->tag = "IO test, long tag";
+  
+  //Write the current D to file
+  std::fstream outfile;
+  std::string filename = tests_dir+"d_dump.txt";
+  outfile.open(filename.c_str(), std::ios::binary|std::ios::out|std::ios::in|std::ios::trunc);
+  test_contr->get_current_d()->write_to_file(outfile);
+  outfile.close();
+  //Create new empty D
+  err2 = test_contr->add_spectrum("spect_out.dat");
+  test_contr->add_d(5, 5);
+  //Read from file
+  outfile.open(filename.c_str(), std::ios::binary|std::ios::in);
+  test_contr->get_current_d()->read_from_file(outfile);
+  //Check equality
+
+  bool D_is_eq = true;
+  for(int i=0; i< 5; i++){
+    for(int j=0; j< 5; j++){
+      if(test_contr->get_d_by_num(1)->get_element(i, j) != test_contr->get_current_d()->get_element(i, j)) D_is_eq = false;
+    }
+  }
+  if(test_contr->get_d_by_num(1)->wave_id != test_contr->get_current_d()->wave_id) D_is_eq = false;
+  //Note tag gets truncated to ten chars in writing
+  if(test_contr->get_d_by_num(1)->tag.substr(0, 10) != test_contr->get_current_d()->tag.substr(0, 10)) D_is_eq = false;
+  
+  if(!D_is_eq){
+    test_bed->report_info("Error reading D from file");
+    err |= TEST_WRONG_RESULT;
+  }
   return err;
 }
 
@@ -1130,24 +1165,25 @@ int test_entity_d::full_D_tests(){
 
   int err = TEST_PASSED;
 
-  bool err2 = test_contr->add_spectrum("spect_out.dat");
+  bool err2 = test_contr->add_spectrum(file_prefix + "spectrum.dat");
   if(!err2){
     test_bed->report_info("Calculating full D... This may take a (very) long time!\nEnsure optimisation is on during compile!", mpi_info.rank);
-    test_contr->add_d(100, 100);
+    test_contr->add_d(500, 500);
     d_report report = test_contr->get_current_d()->calculate();
     if(report.error){
       test_bed->report_info("Error calculating full D", mpi_info.rank);
       err |= TEST_ASSERT_FAIL;
     }
-    test_bed->report_info("Average resonances "+mk_str(report.n_av), 2);
+    test_bed->report_info("Average resonant number "+mk_str(report.n_av), 2);//Num resonances is 2* this +1 
+    test_bed->report_info("Max resonant number "+mk_str(report.n_max), 2);
+    
     test_bed->report_info("Writing test file", mpi_info.rank);
-
     std::fstream file;
     file.open("test_d.dat", std::ios::binary|std::ios::trunc|std::ios::out|std::ios::in);
     if(file) test_contr->get_current_d()->write_to_file(file);
     file.close();
     
-    //Now we should read a file containing sample D info and compare some features
+    //Now we should read a file containing sample D info and compare some features. Perhaps the Landau peak? General comparison of values across frequency and electron energy etc
     
     
   }else{

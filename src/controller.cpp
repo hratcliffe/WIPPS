@@ -186,6 +186,16 @@ diffusion_coeff * controller::get_current_d(){
   if(!spect_D_list.empty()) return spect_D_list[current_pair].second;
   else return nullptr;
 }
+diffusion_coeff * controller::get_d_by_num(size_t indx){
+/** \brief Return D by indx
+*
+* Return a pointer to the D indx ago, or nullptr if list is empty or indx is invalid.
+*/
+  if(indx >= spect_D_list.size()) return nullptr;
+  if(!spect_D_list.empty()) return spect_D_list[current_pair - indx].second;
+  else return nullptr;
+
+}
 diffusion_coeff * controller::get_special_d(){
 /** \brief Return current special D
 *

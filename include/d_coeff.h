@@ -53,6 +53,7 @@ public:
   void set_ids(float time1, float time2, int space1, int space2, int wave_id, char block_id[ID_SIZE]);
 
   bool write_to_file(std::fstream &file);
+  bool read_from_file(std::fstream &file);
 
   d_report calculate(D_type_spec type_of_D = D_type_spec::alpha_alpha, bool quiet=0);
 

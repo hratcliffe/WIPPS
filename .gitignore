@@ -24,6 +24,7 @@ profiler/
 *.log
 files/l1/
 files/2dtest/
+files/tmp_tests/
 callgrind*
 *.tgz
 *.png

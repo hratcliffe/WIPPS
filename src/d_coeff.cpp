@@ -41,7 +41,7 @@ void diffusion_coeff::set_ids(float time1, float time2, int space1, int space2, 
 bool diffusion_coeff::write_to_file(std::fstream &file){
 /** \brief Write diffusion coeff to file
 *
-* Writes file dump of a diffusion coefficient. NB the file passed in must be opened for input and output. \todo Read routine
+* Writes file dump of a diffusion coefficient. NB the file passed in must be opened for input and output.
 */
 
   if(!file.is_open()) return 1;
@@ -71,21 +71,26 @@ bool diffusion_coeff::write_to_file(std::fstream &file){
   file.seekg(ftr_start);
   file.write((char*) &ftr_end, sizeof(size_t));
   //Go back and correct the next_block entry
-
-/*    std::cout<<"end is "<<ftr_end<<'\n';
-  file.seekg(ftr_start);
-
-  int wave;
-  file.read((char*) &ftr_start, sizeof(size_t));
-  std::cout<<"start is "<<ftr_start<<'\n';
-
-  file.read((char*) &buffer, 10*sizeof(char));
-std::cout<<buffer<<'\n';
-  file.read((char*) &wave, sizeof(int));
-  std::cout<<wave<<'\n';
-  file.read((char*) &buffer, 10*sizeof(char));
-std::cout<<buffer<<'\n';*/
   
+  return 0;
+}
+
+bool diffusion_coeff::read_from_file(std::fstream &file){
+/** \brief Read diffusion coeff from file
+*
+* Reads file dump of a diffusion coefficient. D should have been created to the correct size already
+*/
+
+  if(!file.is_open()) return 1;
+  
+  data_array::read_from_file(file);
+
+  //Grab wave id
+  file.read((char*) &wave_id, sizeof(int));
+  //Grab tag
+  char buffer[10]="";//Initialise to empty
+  file.read(buffer, sizeof(char)*10);
+  this->tag = buffer;
   return 0;
 
 }

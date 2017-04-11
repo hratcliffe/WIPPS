@@ -41,6 +41,7 @@ const calc_type NUM_PRECISION = 1e-6;/**< Constant for equality at good numerica
 const calc_type LOW_PRECISION = 5e-3;/**< Constant for equality at low precision, i.e. different approximations to an expression*/
 const int max_verbos = 4;/**<Verbosity range for messages*/
 const std::string filename = "tests.log";/**<Test log file*/
+const std::string tests_dir ="./files/tmp_tests/";/**< Temporary directory for test output \todo Create and clean this automatically*/
 
 /**\brief Testing instance
 *

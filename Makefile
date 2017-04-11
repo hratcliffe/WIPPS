@@ -138,6 +138,9 @@ else ifeq ($(strip $(MODE)),test)
   ifeq ($(strip $(OPTIMISE)), 1)
     CFLAGS += $(OPTIMISE)
   endif
+  #Static link boost filesystem
+  LIB += $(USR)/lib/libboost_filesystem.a $(USR)/lib/libboost_system.a
+
   SED_STR_Test = sed -i.bak 's/ NO_RUN_TESTS_AND_EXIT/ RUN_TESTS_AND_EXIT/' Doxyfile
 else ifeq ($(strip $(MODE)),profile)
   CFLAGS += $(PROFILE)

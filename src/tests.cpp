@@ -25,6 +25,32 @@ const int err_codes[err_tot] ={TEST_PASSED, TEST_WRONG_RESULT, TEST_NULL_RESULT,
 
 std::string err_names[err_tot]={"None", "Wrong result", "Invalid Null result", "Assignment or assertion failed", "{Message 1 here}", "{Message 2 here}", "{Message 3 here}", "{Message 4 here}", "SQUASHED ERRORS", "Fatal error"};/**< Names corresponding to error codes, which are reported in log files*/
 
+void tests::create_test_outdir(){
+/** \brief Create the test directory
+*
+* Creates the directory tests_tmp_dir for temporary test output. If the directory exists, nothing is done and the no_clean flag is set
+*/
+  boost::filesystem::path dir(tests_tmp_dir.c_str());
+  if(boost::filesystem::exists(dir)){
+    no_clean = true;
+  }else{
+    this->report_info("Creating temporary dir "+tests_tmp_dir, 0);
+    boost::filesystem::create_directory(dir);
+  }
+}
+
+void tests::clean_test_outdir(bool no_clean){
+/** \brief Clean the test directory
+*
+* Removes contents and directory tests_tmp_dir, unless the no_clean parameter is set, when nothing is done. NB this writes to log file!
+*/
+  if(!no_clean){
+    this->report_info("Removing temporary dir "+tests_tmp_dir, 0);
+    boost::filesystem::path dir(tests_tmp_dir.c_str());
+    boost::filesystem::remove_all(dir);
+  }
+}
+
 void tests::set_verbosity(size_t verb){
 /** \brief Set verbosity
 *
@@ -57,8 +83,10 @@ void tests::set_runtime_flags(int argc, char *argv[]){
 void tests::setup_tests(){
 /** \brief Setup test bed
 *
-*Opens reporting file. Then instantiates all the test objects and adds them into the test_list
+*Opens reporting file, creates temporary dir. Then instantiates all the test objects and adds them into the test_list
 */
+  set_verbosity(1);
+
   outfile = new std::fstream();
   outfile->open(filename.c_str(), std::ios::out);
   if(!outfile->is_open()){
@@ -66,6 +94,8 @@ void tests::setup_tests(){
     //can't log so return with empty test list
     return;
   }
+
+  create_test_outdir();
 
   test_entity * test_obj;
 
@@ -256,6 +286,10 @@ void tests::cleanup_tests(){
 *
 *Deletes test objects, and closes logfile
 */
+  if(runtime_flags.count("no_clean") == 0){
+    this->clean_test_outdir(this->no_clean);
+  }
+
   if(outfile->is_open()){
     this->report_info("Testing complete and logged in " +filename, 0);
     outfile->close();
@@ -264,6 +298,7 @@ void tests::cleanup_tests(){
 
   }
   delete outfile;
+  
   for(current_test_id=0; current_test_id< (int)test_list.size(); current_test_id++){
     delete test_list[current_test_id];
     test_list[current_test_id] = nullptr;

@@ -618,7 +618,7 @@ int test_entity_spectrum::basic_tests1(){
   }else{
     test_bed->report_info("Cannot test assymmetric spectrum");
   }
-  outfile.open("spect_testy.dat", std::ios::binary|std::ios::out);
+  outfile.open(tests_tmp_dir+"spect_testy.dat", std::ios::binary|std::ios::out);
   test_contr->get_current_spectrum()->write_to_file(outfile);
   outfile.close();
   if(err == TEST_PASSED) test_bed->report_info("Test spectrum OK");
@@ -659,7 +659,7 @@ int test_entity_spectrum::basic_tests2(){
       test_bed->report_info("Mismatch between generated spectrum and test spectrum of "+mk_str(total_error));
     }
     /* Preserve the spectrum*/
-    outfile.open("spect_out.dat", std::ios::binary|std::ios::out);
+    outfile.open(tests_tmp_dir + "spect_out.dat", std::ios::binary|std::ios::out);
     test_contr->get_current_spectrum()->write_to_file(outfile);
     outfile.close();
   }else{
@@ -669,7 +669,7 @@ int test_entity_spectrum::basic_tests2(){
   
   data_array old_B = test_contr->get_current_spectrum()->copy_out_B();
   //Now dump to file and read back in and compare
-  bool err2 = test_contr->add_spectrum("spect_out.dat");
+  bool err2 = test_contr->add_spectrum(tests_tmp_dir + "spect_out.dat");
   if(err2) err |= TEST_ASSERT_FAIL;
   else{
     data_array new_B = test_contr->get_current_spectrum()->copy_out_B();
@@ -780,7 +780,7 @@ int test_entity_spectrum::albertGs_tests(){
   }
 
   std::fstream outfile;
-  outfile.open("spect_truncated.dat", std::ios::out|std::ios::binary);
+  outfile.open(tests_tmp_dir + "spect_truncated.dat", std::ios::out|std::ios::binary);
   test_contr->get_current_spectrum()->write_to_file(outfile);
   outfile.close();
 
@@ -1003,13 +1003,14 @@ int test_entity_levelone::basic_tests(size_t n_dims_in, int flatten_on, bool has
     }
   }
   
-  //Dump files and then compare to refernce files
-  std::string filename, time_str;
+  //Dump files and then compare to reference files
+  std::string filename, full_filename, time_str;
   time_str = mk_str(dat_fft.time[0], true)+"_"+mk_str(this->n_tims);
   std::string block = block_id;
-  filename = file_prefix+"tests/"+"FFT_"+block +"_"+time_str+"_"+mk_str(dat_fft.space[0])+"_"+mk_str(dat_fft.space[1]) + outfile_tag+".dat";
+  filename = "FFT_"+block +"_"+time_str+"_"+mk_str(dat_fft.space[0])+"_"+mk_str(dat_fft.space[1]) + outfile_tag+".dat";
+  full_filename = tests_tmp_dir + filename;
   std::fstream file;
-  file.open(filename.c_str(),std::ios::out|std::ios::binary);
+  file.open(full_filename.c_str(),std::ios::out|std::ios::binary);
   if(file.is_open()){
     dat_fft.write_section_to_file(file, lims);
     if(err2){
@@ -1022,17 +1023,17 @@ int test_entity_levelone::basic_tests(size_t n_dims_in, int flatten_on, bool has
   
   }
   file.close();
-  test_bed->report_info("FFT section output in "+filename, 1);
-  
-  data_array previous_fft(filename+".ref");
-  dat_fft = data_array(filename);
+  test_bed->report_info("FFT section output in "+full_filename, 1);
+  data_array previous_fft(file_prefix + "tests/"+ filename+".ref");
+  dat_fft = data_array(full_filename);
   if(previous_fft != dat_fft){
     test_bed->report_info("New FFT does not match reference");
     err |= TEST_WRONG_RESULT;
   }
 
+  full_filename = append_into_string(full_filename, "_spectrum");
   filename = append_into_string(filename, "_spectrum");
-  file.open(filename.c_str(),std::ios::out|std::ios::binary);
+  file.open(full_filename.c_str(),std::ios::out|std::ios::binary);
   if(file.is_open()){
     test_contr->get_current_spectrum()->write_to_file(file);
     if(err2){
@@ -1045,9 +1046,9 @@ int test_entity_levelone::basic_tests(size_t n_dims_in, int flatten_on, bool has
   
   }
   file.close();
-  test_bed->report_info("Spectrum output in "+filename, 1);
+  test_bed->report_info("Spectrum output in "+full_filename, 1);
 
-  test_contr->add_spectrum(filename+".ref");
+  test_contr->add_spectrum(file_prefix + "tests/" + filename + ".ref");
   if(test_contr->get_current_spectrum() != nullptr && test_contr->get_spectrum_by_num(1) != nullptr && *(test_contr->get_current_spectrum()) != *(test_contr->get_spectrum_by_num(1))){
     test_bed->report_info("New spectrum does not match reference");
     err |= TEST_WRONG_RESULT;
@@ -1071,11 +1072,9 @@ test_entity_d::~test_entity_d(){
 }
 
 int test_entity_d::run(){
-/** Testing of D comes in 2 parts. Since a full useful calculation takes quite a while, here we only test that the calculation proceeds and such. 
-*
+/** Testing of D comes in 2 parts. Since a full useful calculation takes quite a while, here we only test that the calculation proceeds and such.
 *Set runtime_flag "full_d" to perform a full sample D calculation
-
- \todo WRITE d_testing! */
+*  \todo WRITE d_testing!*/
 
   int err = TEST_PASSED;
   
@@ -1106,10 +1105,15 @@ int test_entity_d::basic_tests(){
   
   test_bed->report_info("Reading spectrum", mpi_info.rank);
   //Now dump to file and read back in and compare
-  bool err2 = test_contr->add_spectrum("spect_out.dat");
+  bool err2 = test_contr->add_spectrum(tests_tmp_dir + "spect_out.dat");
   if(!err2){
     test_bed->report_info("Calculating test D", mpi_info.rank);
     test_contr->add_d(5, 5);
+    if(!test_contr->get_current_d()){
+      //Can't go on, have no D!!!
+      err |= TEST_FATAL_ERR;
+      return err;
+    }
     d_report report = test_contr->get_current_d()->calculate();
     if(report.error){
       test_bed->report_info("Error calculating D", mpi_info.rank);
@@ -1132,12 +1136,12 @@ int test_entity_d::basic_tests(){
   
   //Write the current D to file
   std::fstream outfile;
-  std::string filename = tests_dir+"d_dump.txt";
+  std::string filename = tests_tmp_dir + "d_dump.txt";
   outfile.open(filename.c_str(), std::ios::binary|std::ios::out|std::ios::in|std::ios::trunc);
   test_contr->get_current_d()->write_to_file(outfile);
   outfile.close();
   //Create new empty D
-  err2 = test_contr->add_spectrum("spect_out.dat");
+  err2 = test_contr->add_spectrum(tests_tmp_dir + "spect_out.dat");
   test_contr->add_d(5, 5);
   //Read from file
   outfile.open(filename.c_str(), std::ios::binary|std::ios::in);

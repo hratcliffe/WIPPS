@@ -502,12 +502,14 @@ int test_entity_data_array::io_tests(){
   test_array = data_array(10, 10);
   set_vals_2d();
 
-  std::string filename = "./files/test_file.dat";
+  std::string filename = tests_tmp_dir+"test_file.dat";
   std::fstream file;
   file.open(filename.c_str(),std::ios::out|std::ios::binary);
   if(file.is_open()){
     err2 = test_array.write_to_file(file);
     file.close();
+  }else{
+    err2 = true;
   }
   if(err2) test_bed->report_info("Error writing testfile", 1);
   
@@ -733,7 +735,7 @@ int test_entity_get_and_fft::two_d(){
   time_str = mk_str(test_dat_fft.time[0], true)+"_"+mk_str(test_dat_fft.time[1],true);
   std::string block = test_dat_fft.block_id;
   
-  filename = test_rdr->file_prefix+"FFT2DTest_"+block +"_"+time_str+"_"+mk_str(test_dat_fft.space[0])+"_"+mk_str(test_dat_fft.space[1]) + ".dat";
+  filename = tests_tmp_dir+"FFT2DTest_"+block +"_"+time_str+"_"+mk_str(test_dat_fft.space[0])+"_"+mk_str(test_dat_fft.space[1]) + ".dat";
   std::fstream file;
   file.open(filename.c_str(),std::ios::out|std::ios::binary);
   if(file.is_open()){

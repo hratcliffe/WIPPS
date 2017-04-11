@@ -962,7 +962,7 @@ int test_entity_levelone::basic_tests(size_t n_dims_in, int flatten_on, bool has
   if(err2 == 1){
     return TEST_FATAL_ERR;
   }
-  if(err2 == 2) n_tims = dat.get_dims(1);
+  if(err2 == 2) n_tims = dat.get_dims(dat.get_dims() - 1);
   //Check if we had to truncate data array...
 
   dat_fft = data_array();

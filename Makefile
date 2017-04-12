@@ -297,8 +297,8 @@ clean:
 #Clean up all generated docs. Remove html and latex dirs
 cleandocs:
 	@rm -rf ./html ./latex
-	@rm ./files/tests_runtime_flags.txt
-	@find . -name "Derivations.*" ! -name "*.tex" ! -name "*.pdf" -maxdepth 1 -delete
+	@rm -f ./files/tests_runtime_flags.txt
+	@find . -maxdepth 1 -name "Derivations.*" ! -name "*.tex" ! -name "*.pdf" -delete
 
 #Removes all executables, the dependencies file, the entire objdir and the compiled SDF library
 veryclean: cleandocs

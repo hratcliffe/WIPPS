@@ -153,7 +153,7 @@ d_report diffusion_coeff::calculate(D_type_spec type_of_D, bool quiet){
 
 //----- Major definitions------------------
   calc_type theta, omega_n = 0.0, D_part_n_sum, D_final_without_consts;
-  calc_type alpha, mod_v, c2th, s2alpha, tan_alpha, cos_alpha;
+  calc_type alpha, mod_v, c2th, s2alpha, cos_alpha;
   calc_type Eq6, numerator, gamma_particle, D_conversion_factor;
   int n_min, n_max;
   std::vector<calc_type> omega_calc;
@@ -199,7 +199,6 @@ d_report diffusion_coeff::calculate(D_type_spec type_of_D, bool quiet){
     for(size_t part_pitch_ind = 0; part_pitch_ind < dims[1]; part_pitch_ind++){
       //particle pitch angle
       alpha = get_axis_element_ang(part_pitch_ind);
-      tan_alpha = tan(alpha);
       cos_alpha = cos(alpha);
       s2alpha = std::pow(std::sin(alpha), 2);
 
@@ -312,7 +311,7 @@ my_type diffusion_coeff::get_element_by_values(my_type p, my_type alpha){
 #endif
     return 0.0;
   }
-  size_t len_a=0, len_p = 0;
+  size_t len_a = 0, len_p = 0;
   long alpha_ind, p_ind;
 
   my_type * d_axis = this->get_axis(0, len_p);
@@ -320,7 +319,7 @@ my_type diffusion_coeff::get_element_by_values(my_type p, my_type alpha){
   d_axis = this->get_axis(1, len_a);
   alpha_ind = where(d_axis, len_a, angle_to_stored_angle(alpha));
 
-  if(p_ind >=0 && alpha_ind >= 0 && p_ind < len_p && alpha_ind < len_a){
+  if(p_ind >= 0 && alpha_ind >= 0 && (size_t)p_ind < len_p && (size_t)alpha_ind < len_a){
     return this->get_element(p_ind, alpha_ind);
   }else{
     return 0.0;

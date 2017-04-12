@@ -189,10 +189,8 @@ mu_dmudom plasma::get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int
   //Nor any actual bounds on n
 #endif
 
-  calc_type w2, w3;
   w = std::abs(w);
-  w2 = w*w;
-  w3 = w2*w;
+  calc_type w2 = w*w;
   
   calc_type R=1.0, L=1.0, P=1.0;
   calc_type wp[ncomps], wp2[ncomps], wc[ncomps];
@@ -228,10 +226,8 @@ mu_dmudom plasma::get_high_dens_phi_mu_om(calc_type w, calc_type psi, calc_type 
   //Nor any bounds on n
 #endif
 
-  calc_type w2, w3;
   w = std::abs(w);
-  w2 = w*w;
-  w3 = w2*w;
+  calc_type w2 = w*w;
   
   calc_type R=1.0, L=1.0, P=1.0;
   calc_type wp[ncomps], wp2[ncomps], wc[ncomps];

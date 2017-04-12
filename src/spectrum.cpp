@@ -800,8 +800,8 @@ bool spectrum::truncate_om(my_type om_min, my_type om_max){
   }
 
   int index = -1;
-  int len = get_omega_length();
-  int len_ang = get_angle_length();
+  size_t len = get_omega_length();
+  size_t len_ang = get_angle_length();
 
   if(om_min > get_om_axis_element(1)){
     index = where_omega(om_min);
@@ -821,7 +821,7 @@ bool spectrum::truncate_om(my_type om_min, my_type om_max){
   if(om_max < get_om_axis_element(len-1)){
     index = where_omega(om_max);
     if(index != -1){
-      for(int i = index; i< len; i++){
+      for(size_t i = index; i< len; i++){
         set_B_element(i, 0.0);
         if(!g_is_angle_only){
           for(size_t j = 0; j< len_ang; j++){
@@ -1127,7 +1127,8 @@ calc_type get_G2(spectrum * my_spect, calc_type omega, calc_type x){
   //Calc norm if hasn't been
   if(norm_ind >= 0 && my_spect->get_norm_g(norm_ind) == 0.0){
     my_spect->calc_norm_g(norm_ind);
-    if(norm_ind < len) my_spect->calc_norm_g(norm_ind + 1);
+    //Already checked norm_ind is non-negative
+    if((size_t)norm_ind < len) my_spect->calc_norm_g(norm_ind + 1);
   }
   
   len = my_spect->get_angle_length();

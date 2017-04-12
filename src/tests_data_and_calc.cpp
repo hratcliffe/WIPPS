@@ -425,9 +425,8 @@ int test_entity_plasma::phi_dom(){
   int err=TEST_PASSED;
   size_t n_tests = 10;
 
-  calc_type mu_tmp1, om_ce_local, om_pe_local, tmp_phi;
+  calc_type mu_tmp1, om_ce_local, tmp_phi;
   om_ce_local = plas->get_omega_ref("ce");
-  om_pe_local = plas->get_omega_ref("pe");
 
   calc_type d_omega = std::abs(om_ce_local)/1e8;
   calc_type d_theta = pi/(calc_type)(n_tests)/1e7;
@@ -797,7 +796,7 @@ my_type calc_I_omega(my_type omega, spectrum * my_spect, controller * my_contr){
   calc_type M = 1.0/1836.2;//m_e/m_p
   my_type om_cp = om_ce_local*M;
   om_sq_p_e = omega*omega/om_ce_local/om_cp;
-  my_type norm = 1.0/ (std::sqrt(2.0*pi) * DEFAULT_SPECTRUM_ANG_STDDEV), mu_245_sq;
+  my_type norm = 1.0/ (std::sqrt(2.0*pi) * DEFAULT_SPECTRUM_ANG_STDDEV);
   mu_dmudom my_mu;
   plasma my_plas = my_contr->get_plasma();
 
@@ -812,7 +811,7 @@ my_type calc_I_omega(my_type omega, spectrum * my_spect, controller * my_contr){
       Psi = 1.0 - om_sq_p_e - std::pow(sin(theta), 2)/2.0 + std::sqrt(std::pow(sin(theta), 4)/4.0 + std::pow(omega/om_cp*(1.0 - M)*cos(theta), 2));
       
       //Alternate mu using Stix 2.45
-      mu_245_sq = 1.0 - om_pe_local*om_pe_local/(omega*(omega -om_ce_local*cos(theta)));
+      //mu_245_sq = 1.0 - om_pe_local*om_pe_local/(omega*(omega -om_ce_local*cos(theta)));
       
       //Steal Psi value from mu using Lyons 12
       Psi = std::pow(om_pe_local/om_ce_local, 2) * (1.0+M)/M / my_mu.mu/my_mu.mu;

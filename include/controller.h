@@ -87,7 +87,7 @@ class controller{
   size_t current_special_d;/**<Index of current special D object*/
 
 /********Plasma, spectrum, D getters ****/
-  void get_D_size(int dims[2]);
+  void get_D_size(size_t dims[2]);
 
 public:
 

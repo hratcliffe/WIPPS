@@ -625,12 +625,15 @@ int test_entity_get_and_fft::fft_and_check_1d(data_array & dat_in, data_array & 
   int sgn = 1;
 
   //Cheating repeat of checker code either once if single_max or twice otherwise for +ve and -ve frequencies
-  for(size_t i=0; i< 2-single_max; i++){
-    if(i==0) max_val = dat_fft.maxval(max_pos);
+  for(int i=0; i< 2-single_max; i++){
+    if(i==0) max_val = dat_fft.maxval(max_pos);//NB this is updating max_pos
     //Find max above previous max_index
     else max_val = dat_fft.maxval(max_pos, max_index+1);
 
-    if(max_pos.size() < 1) err |= TEST_WRONG_RESULT;
+    if(max_pos.size() < 1){
+      err |= TEST_WRONG_RESULT;
+      continue;
+    }
     //Since we know we're 1-d we consider only 0 axis
     max_index = max_pos[0];
     sgn = dat_fft.get_axis_element(0,max_index)/std::abs(dat_fft.get_axis_element(0,max_index));
@@ -700,7 +703,10 @@ int test_entity_get_and_fft::two_d(){
 
   max_val = test_dat_fft.maxval(max_pos);
 
-  if(max_pos.size() < 2) err |= TEST_WRONG_RESULT;
+  if(max_pos.size() < 2){
+    err |= TEST_WRONG_RESULT;
+    max_pos.resize(2);//Force resize so we get the normal reports etc
+  }
   max_index = max_pos[0];
   
   if(std::abs(std::abs(test_dat_fft.get_axis_element(0,max_index)) - expected_max) > PRECISION){

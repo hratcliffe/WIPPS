@@ -146,7 +146,7 @@ void controller::delete_current_spectrum(){
 }
 
 /********Plasma, spectrum, D getters ****/
-void controller::get_D_size(int dims[2]){
+void controller::get_D_size(size_t dims[2]){
 /** \brief Get the dimensions of D
 *
 *Returns D dimensions in the dims array. Note that all D ought to be created the same size, but this is not guaranteed.
@@ -216,7 +216,7 @@ void controller::bounce_average(bounce_av_data bounce_dat){
   //Empty list, nothing to do.
 
   //Add new averaged D
-  int dims[2];
+  size_t dims[2];
   get_D_size(dims);
   this->add_d_special(dims[0], dims[1]);
   //Tag as bounce av'd and copy block id from block used
@@ -226,12 +226,10 @@ void controller::bounce_average(bounce_av_data bounce_dat){
   //Flatten down each d onto this one with all integrand included
   bool mirror_block = false;//Flag for the space block which contains mirror point
   my_type val, current_lat = 0.0, d_lat = 0.0, D_val, lat_factor, mirror_lat = pi/2.0, include_fraction, alpha_current, used_lat;
-  size_t n_blocks = spect_D_list.size(), len_ang_d;
+  size_t n_blocks = spect_D_list.size();
   my_type sin_theta, cos_theta_sq, alpha_eq;
   //Latitude increment block to block in RADIANS
   d_lat = bounce_dat.max_latitude*pi/180.0/(my_type) n_blocks;
-  //Length of the angle axes in the contributing D's
-  len_ang_d = spect_D_list[0].second->get_dims(1);
   //Loop over every p and alpha_eq in result D array
   for(size_t p_i = 0; p_i < dims[0]; p_i++){
     for(size_t ang_i = 0; ang_i < dims[1]; ang_i++){
@@ -324,7 +322,7 @@ void controller::handle_d_mpi(){
 */
 
 //Make a reduced d on root, but leaving the current_special_d counter unchanged.
-  int dims[2];
+  size_t dims[2];
   get_D_size(dims);
   int total = dims[0]*dims[1];
 

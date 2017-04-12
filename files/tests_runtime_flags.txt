@@ -1,2 +1,2 @@
-In class test__entity__d:<p>Testing of D comes in 2 parts. Since a full useful calculation takes quite a while, here we only test that the calculation proceeds and such. Set runtime_flag "full_d" to perform a full sample D calculation</p>
-In class test__entity__levelone:<p>Set runtime_flag "no_level_one" to skip a full level-one testing </p><dl class="todo"><dt><b><a class="el" href="todo.html#_todo000024">Todo
+In class test__entity__d:<p>Testing of D comes in 2 parts. Since a full useful calculation takes quite a while, here we only test that the calculation proceeds and such. Set runtime_flag "full_d" to perform a full sample D calculation </p>
+In class test__entity__levelone:<p>Set runtime_flag "no_level_one" to skip a full level-one testing</p>

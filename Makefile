@@ -275,7 +275,7 @@ $(OBJDIR)/%.o:./$(SRCDIR)/%.cpp
 	$(CC) $(CFLAGS)  $< -o $@
 #General rule to build any obj from corresponding cpp
 
-.PHONY : tar tar_built clean veryclean docs list
+.PHONY : tar tar_built clean veryclean docs list cleandocs
 
 list:
 	@$(MAKE) -pRrq -f $(INVOKEDFILE) : 2>/dev/null | awk -v RS= -F: '/^# File/,/^# Finished Make data base/ {if ($$1 !~ "^[#.]") {print $$1}}' | sort | egrep -v -e '^[^[:alnum:]]' -e '^$@$$' -v -e $(OBJDIR)
@@ -294,7 +294,14 @@ tar_built: utils
 clean:
 	@rm -f main $(UTILS) $(OBJS) $(MAINOBJS) $(UTILSOBJS)
 
-veryclean:
+#Clean up all generated docs. Remove html and latex dirs
+cleandocs:
+	@rm -rf ./html ./latex
+	@rm ./files/tests_runtime_flags.txt
+	@find . -name "Derivations.*" ! -name "*.tex" ! -name "*.pdf" -maxdepth 1 -delete
+
+#Removes all executables, the dependencies file, the entire objdir and the compiled SDF library
+veryclean: cleandocs
 	@rm -f main $(UTILS) dependencies.log*
 	@rm -rf $(OBJDIR)
 	@rm $(SDFPATH)/lib/libsdfc.a

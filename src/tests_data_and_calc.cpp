@@ -830,7 +830,7 @@ my_type calc_I_omega(my_type omega, spectrum * my_spect, controller * my_contr){
 //----------------------------------------------------------------
 
 test_entity_levelone::test_entity_levelone(){
-
+/** \todo Create some lighter weight test files!*/
   name = "level-one derivation";
   
   test_contr=nullptr;
@@ -848,7 +848,6 @@ int test_entity_levelone::run(){
 *
 *
 Set runtime_flag "no_level_one" to skip a full level-one testing
-\todo Create some lighter weight test files!
 **/
 
   int err = TEST_PASSED;
@@ -1060,7 +1059,7 @@ int test_entity_levelone::basic_tests(size_t n_dims_in, int flatten_on, bool has
 //----------------------------------------------------------------
 
 test_entity_d::test_entity_d(){
-
+/**  \todo WRITE d_testing!*/
   name = "D checks";
   file_prefix = "./files/d_test";
 
@@ -1072,8 +1071,7 @@ test_entity_d::~test_entity_d(){
 
 int test_entity_d::run(){
 /** Testing of D comes in 2 parts. Since a full useful calculation takes quite a while, here we only test that the calculation proceeds and such.
-*Set runtime_flag "full_d" to perform a full sample D calculation
-*  \todo WRITE d_testing!*/
+*Set runtime_flag "full_d" to perform a full sample D calculation*/
 
   int err = TEST_PASSED;
   

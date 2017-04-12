@@ -397,7 +397,7 @@ int reader::read_data(data_array &my_data_in, size_t time_range[3], size_t space
   }
 
   size_t i;
-  size_t last_report=0;
+  size_t last_report = 0;
   size_t report_interval = (time_range[1]-time_range[0])/10;
   if(report_interval > 20) report_interval = 20;
   if(report_interval < 1) report_interval = 1;
@@ -406,11 +406,15 @@ int reader::read_data(data_array &my_data_in, size_t time_range[3], size_t space
   my_data_in.space[0] = space_range[0];
   my_data_in.space[1] = space_range[1];
   
-  size_t rows=0; //Accumulated blocks only: number of rows to read in current file
-  size_t total_reads=0; //Current number of reads done
+  size_t rows = 0; //Accumulated blocks only: number of rows to read in current file
+  size_t total_reads = 0; //Current number of reads done
+  size_t max_rows = my_data_in.get_dims(my_data_in.get_dims()-1), max_rows_acc = max_rows; //The max number of rows to attempt to read for plain or accumulated blocks respectively
+  //Accumulated blocks contain >=1 line per file so we never access more files than there are rows in my_data_in
+  if(max_rows > time_range[1] - time_range[0]) max_rows = time_range[1] - time_range[0]; //Plain blocks: min of requested number and the array size
+  if(max_rows_acc > time_range[2]) max_rows_acc = time_range[2]; //Accum blocks: min of requested number and the array size, but can do less if there's insufficient files
 
   //Now loop over files getting data and time info
-  for(i=time_range[0]; i<time_range[1];++i){
+  for(i = time_range[0]; i < time_range[0] + max_rows;++i){
 
     file_name = get_full_name(i);
     if((i-last_report) >= report_interval){
@@ -458,7 +462,7 @@ int reader::read_data(data_array &my_data_in, size_t time_range[3], size_t space
     else{
       //Read all rows in file, but not more than time[2] rows total
       rows = block->dims[block->ndims-1];
-      if(total_reads + rows >= time_range[2]) rows = time_range[2]- total_reads;
+      if(total_reads + rows >= max_rows_acc) rows = max_rows_acc - total_reads;
 
       read_acc_time(my_data_in, handle, total_reads, rows);
       size_t val[1] = {total_reads};
@@ -483,7 +487,7 @@ int reader::read_data(data_array &my_data_in, size_t time_range[3], size_t space
     }
     sdf_close(handle);
     //Stop after time_range[2] total reads for accumulated data
-    if(accumulated && total_reads >=time_range[2]) break;
+    if(accumulated && total_reads >= max_rows_acc) break;
   }
 
   //If we did flattening, what we actually want is the average not the total
@@ -505,9 +509,28 @@ int reader::read_data(data_array &my_data_in, size_t time_range[3], size_t space
     
     //Set last time, note we just resized the axis
     my_data_in.time[1] = my_data_in.get_axis_element(n_dims-1, my_data_in.get_dims(n_dims-1)-1);
-    /** \todo Better message here*/
-    if(!accumulated) my_error_print("Read stopped by error at file "+file_name + " ("+mk_str(total_reads)+" times)", mpi_info.rank);
-    else my_print("Read "+mk_str(total_reads)+" times", mpi_info.rank);
+
+    std::string exit_reason;
+    
+    std::cout<<accumulated<<' '<<total_reads<<' '<<time_range[2]<<' '<<i<<' '<<time_range[1]<<'\n';
+    
+    if(!accumulated && (total_reads < my_data_in.get_dims(my_data_in.get_dims()-1))){
+      //Must have run out of files to read
+      exit_reason = "out of files";
+    }else if(!accumulated){
+      //Array must be filled
+      exit_reason = "array full";
+    }else if(accumulated && (total_reads < time_range[2]) && (i < time_range[1])){
+      //Array must be full
+      exit_reason = "array full";
+    }else if(accumulated && (total_reads < time_range[2])){
+      //Run out of files but haven't read all rows
+      exit_reason = "out of files";
+    }else{
+      //Out of rows
+      exit_reason = "requested rows read";
+    }
+    my_error_print("Read stopped at file "+file_name + " ("+mk_str(total_reads)+" times), "+exit_reason, mpi_info.rank);
     return 2;
   }
   else{

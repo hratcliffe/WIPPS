@@ -26,6 +26,7 @@ INCLUDE = -I $(USR)/include/ -I $(SDFPATH)/include/ -I ./include/
 LIBSDF = $(SDFPATH)/lib/libsdfc.a
 LIB := $(LIBSDF)
 LIB += -L $(USR)/lib/
+LIBBOOST = -lboost_filesystem -lboost_system
 
 #========Edit these for optimisation, debug options etc===============
 CFLAGS = -c $(INCLUDE) -DVERSION=\"$(GIT_VERSION)\" -std=c++0x -pedantic -DPARALLEL
@@ -139,8 +140,7 @@ else ifeq ($(strip $(MODE)),test)
     CFLAGS += $(OPTIMISE)
   endif
   #Static link boost filesystem
-  LIB += $(USR)/lib/libboost_filesystem.a $(USR)/lib/libboost_system.a
-
+  LIB += $(LIBBOOST)
   SED_STR_Test = sed -i.bak 's/ NO_RUN_TESTS_AND_EXIT/ RUN_TESTS_AND_EXIT/' Doxyfile
 else ifeq ($(strip $(MODE)),profile)
   CFLAGS += $(PROFILE)

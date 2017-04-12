@@ -12,6 +12,7 @@
 #include <math.h>
 #include <cmath>
 #include <mpi.h>
+#include <unistd.h>
 #include <functional>
 #include "tests.h"
 #include "tests_basic_and_code.h"
@@ -211,8 +212,7 @@ void tests::set_colour(char col){
 *
 *Set terminal output colour using std escape sequences. Accepts no argument to return to default, or rgb, cmyk and white to test text colour. NB technically not MPI safe. Use sparingly to highlight important information.
 */
-
-  my_print(this->get_color_escape(col), mpi_info.rank, 0, true);
+  if(isatty(fileno(stdout))) my_print(this->get_color_escape(col), mpi_info.rank, 0, true);
 }
 
 /**

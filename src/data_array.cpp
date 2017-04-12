@@ -204,7 +204,6 @@ data_array & data_array::operator=(const my_array& src){
 *
 *Convert a my_array into a data array. Data is deep copied, and axes are added
 */
-std::cout<<"Convert assigning\n";
 
   //Trap self-assigning or bad copy before destructing
   if(&src == this || !src.is_good()) return *this;
@@ -230,7 +229,6 @@ data_array::data_array(const my_array & src) : my_array(src){
 *
 *Convert a my_array into a data array. Data is deep copied, and axes are added
 */
-std::cout<<"Converting\n";
   construct();
   //Basic construction of additionals, already called base class copy constructor
   //Allocate axes, copy data and ids

@@ -826,16 +826,6 @@ std::vector<calc_type> cubic_solve(calc_type an, calc_type bn, calc_type cn){
 
     ret_vec.push_back(ret_root);
   }
-
-/** Used to test when writing
-  calc_type tmp;
-  for(int i=0; i<ret_vec.size(); ++i){
-    
-    tmp = std::pow(ret_vec[i], 3) + an*std::pow(ret_vec[i], 2) + bn*ret_vec[i] + cn;
-    std::cout<<"solution gives "<<tmp<<std::endl;
-  
-  }
-*/
   return ret_vec;
 
 }

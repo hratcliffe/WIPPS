@@ -512,8 +512,6 @@ int reader::read_data(data_array &my_data_in, size_t time_range[3], size_t space
 
     std::string exit_reason;
     
-    std::cout<<accumulated<<' '<<total_reads<<' '<<time_range[2]<<' '<<i<<' '<<time_range[1]<<'\n';
-    
     if(!accumulated && (total_reads < my_data_in.get_dims(my_data_in.get_dims()-1))){
       //Must have run out of files to read
       exit_reason = "out of files";

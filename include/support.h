@@ -64,7 +64,7 @@ const my_type tiny_my_type=1e-60; /**< Value below which we assume 0*/
 const size_t MAX_SIZE = 100000;/**< Maximum per-dim array size allowed (per processor if MPI in use) */
 const size_t MAX_SIZE_TOT = MAX_SIZE*MAX_SIZE;/**< Maximum overall array size allowed (per processor if MPI in use) */
 const int MAX_FILENAME_DIGITS = 7;/**< Maximum number of digits in filename dump number string*/
-const int GIT_VERSION_SIZE = 15;
+const int GIT_VERSION_SIZE = 15;/**<Length of git version string*/
 const my_type io_verify = 3.0/32.0;/**< An exactly binary representable my_type to verify we're reading what we're writing.*/
 const calc_type pi = 3.14159265359;/**< Pi */
 const calc_type v0 = 2.997924e8; /**< Speed of light in m/s^2 */
@@ -97,8 +97,8 @@ const std::string DENS_RAT = "dens_rat";/**< String specifying  density ratio in
 const std::string DENS_RATH = "dens_rath";/**< String specifying  density ratio in deck.status*/
 const std::string DENS = "dens";/**< String specifying  density in deck.status*/
 const std::string PPC = "ppc";/**< String specifying ppc in deck.status*/
-const std::string VPAR = "vtherm_par";
-const std::string VPERP = "vtherm_perp";
+const std::string VPAR = "vtherm_par";/**<String specifying parallel thermal velocity in deck.status*/
+const std::string VPERP = "vtherm_perp";/**<String specifying perpendicular thermal velocity in deck.status*/
 
 const std::string CONSTANTS = " Constant block values after";/**< String denoting start of constant value dump in deck.status*/
 const std::string CONSTANTS_END = "Deck state:";/**< String denoting end of constant value dump in deck.status*/
@@ -109,7 +109,7 @@ const std::string LOCAL = "loc";/**< Tag identifying diffusion coefficient proce
 const std::string BOUNCE_AV = "bav";/**< Tag identifying diffusion coefficient processing level: bounce averaged*/
 const std::string GLOBAL = "glb";/**< Tag identifying diffusion coefficient processing level: reduced over all space*/
 
-const char HANDLED_ARG[2] = "*";
+const char HANDLED_ARG[2] = "*";/**<Dummy string to flag command line arguments as having been handled*/
 
 const my_type V_MIN = 0;/**< Minimum particle velocity for D*/
 const my_type V_MAX = 0.99*v0;/**< Maximum particle velocity for D*/
@@ -138,8 +138,7 @@ struct deck_constants{
   float omega_ce; /**< Electron cyclotron frequency (reference)*/
   float omega_ci; /**< Ion cyclotron frequency (reference)*/
   int ppc;/**< Particles per cell used */
-  float dens_factor;
-  
+  float dens_factor;/**<Ratio of total plasma density to background plasma density*/
 };
 extern deck_constants my_const;
 
@@ -149,8 +148,8 @@ extern deck_constants my_const;
 */
 struct mpi_info_struc{
 
-  int rank;
-  int n_procs;
+  int rank;/**< Rank of current processor*/
+  int n_procs;/**<Global number of processors*/
 };
 
 const struct mpi_info_struc mpi_info_null = {0, -1};/**< Null MPI struct for single threaded jobs, without having to compile the SDF libraries seperately*/
@@ -176,7 +175,7 @@ struct mu_dmudom{
 */
 struct setup_args{
   size_t time[3];/**< Start and end dump numbers*/
-  bool use_row_time;/**Whether to use time[2] for sizing*/
+  bool use_row_time;/**<Whether to use time[2] for sizing*/
   int space[2];/**< Local space block start and end*/
   std::string block;/**< Block ID to use (ex, bz etc)*/
   std::string file_prefix;/**< Prefix part of SDF file names*/
@@ -231,13 +230,17 @@ std::vector<std::string> process_filelist(int argc, char *argv[]);
 
 class data_array;
 /********Data helpers ****/
-void divide_domain(std::vector<size_t>, size_t space[2], int per_proc, int block_num);
+void divide_domain(std::vector<size_t> dims, size_t space[2], int per_proc, int block_num);
 my_type get_ref_Bx(std::string file_prefix, size_t space_in[2], size_t time_0, bool is_acc=false);
 data_array get_Bx(std::string file_prefix, size_t space_in[2], size_t time_0, bool is_acc=false);
-bool flatten_fortran_slice(my_type * src_ptr, my_type* dest_ptr, size_t n_dims_in, size_t * sizes_in, size_t flatten_on_dim,size_t flat_start=0, size_t flat_stop=-1);//I know -1 will overflow, that is what I want
+bool flatten_fortran_slice(my_type * src_ptr, my_type* dest_ptr, size_t n_dims_in, size_t * dims_in, size_t flatten_on_dim,size_t flat_start=0, size_t flat_stop=-1);//I know -1 will overflow, that is what I want
 
 int where(my_type * ax_ptr, int len, my_type target);
 
+/** Relativistic gamma from velocity
+@param v Particle velocity
+@return Corresponding relativistic gamma
+*/
 inline calc_type gamma_rel(calc_type v){
   return 1.0/std::sqrt(1.0 - v*v/v0/v0);
 }
@@ -267,11 +270,11 @@ std::string mk_str(float i, bool noexp=0);/**<Converts float to string*/
 std::string mk_str(long double i, bool noexp=0);/**<Converts long double to string*/
 std::string mk_str(char * str);/**<Convert C string to std::string*/
 void trim_string(std::string &str, char ch=' '); /**< Trim all leading/trailing ch's from str*/
-std::string replace_char(std::string str, char ch, char repl);/**<Replace all occurences of character ch in string*/
+std::string replace_char(std::string str_in, char ch, char repl);/**<Replace all occurences of character ch in string*/
 std::string append_into_string(const std::string &in, const std::string &infix);
 bool parse_name_val(std::string in, std::string &name, std::string &val);
 inline std::string str_to_upper(std::string str){
-/** convert string to upper case */
+/** Convert string to upper case */
 
   for(size_t i=0; i<str.size(); i++){
     if(str[i] >='a' and str[i]<='z') str[i] -=32;
@@ -279,7 +282,7 @@ inline std::string str_to_upper(std::string str){
   return str;
 }
 inline std::string str_to_lower(std::string str){
-/** convert string to lower case */
+/** Convert string to lower case */
 
   for(size_t i=0; i<str.size(); i++){
     if(str[i] >='A' and str[i]<='Z') str[i] +=32;
@@ -291,20 +294,21 @@ inline std::string str_to_lower(std::string str){
 template<typename T> T integrator(T * start, int len, T * increment);
 template<typename T> void inplace_boxcar_smooth(T * start, int len, int width, bool periodic = 0);
 calc_type square_integrator(calc_type * start, int len, calc_type * increment);
-std::vector<calc_type> cubic_solve(calc_type a, calc_type b, calc_type c);
-//template<typename T> T interpolate(T* axis, T* vals, T target, int pts);
+std::vector<calc_type> cubic_solve(calc_type an, calc_type bn, calc_type cn);
 template<typename T> T interpolate_linear(T axis[2], T vals[2], T target);
 template<typename T> T interpolate_nearest(T axis[2], T vals[2], T target);
 
 
 /********Arithmetic operations ****/
-//These can be used with the various array apply functions to do arithmetic on arrays
-inline my_type subtract(my_type lhs, my_type rhs){return lhs - rhs;}
-inline my_type add(my_type lhs, my_type rhs){return lhs + rhs;}
-inline my_type divide(my_type lhs, my_type rhs){return lhs/rhs;}
-inline my_type multiply(my_type lhs, my_type rhs){return lhs*rhs;}
+/** \defgroup aux_fns Auxilliary functions
+*These can be used with the various array apply functions to do arithmetic on arrays without having to create lambdas
+*@{ */
 
-
+inline my_type subtract(my_type lhs, my_type rhs){return lhs - rhs;}/**< Element-wise subtraction*/
+inline my_type add(my_type lhs, my_type rhs){return lhs + rhs;}/**< Element-wise addition*/
+inline my_type divide(my_type lhs, my_type rhs){return lhs/rhs;}/**< Element-wise division*/
+inline my_type multiply(my_type lhs, my_type rhs){return lhs*rhs;/**< Element-wise multiplication*/}
+/** @} */
 
 /** @} */
 /** @} */

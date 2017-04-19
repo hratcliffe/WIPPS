@@ -35,15 +35,15 @@
 
 */
 
-const char PER_UTIL_HELP_ID = 'g';
+const char PER_UTIL_HELP_ID = 'g';/**<ID to identify help file for this utility*/
 
 struct gen_cmd_line{
-  int flat_dim;
-  bool flat_fft;
-  my_type flat_fft_min;
-  my_type flat_fft_max;
-  std::vector<my_type> limits;
-};
+  int flat_dim;/**<Flattening dimension number*/
+  bool flat_fft;/**<Flatten after FFT*/
+  my_type flat_fft_min;/**<Lower band limit for FFT flattening*/
+  my_type flat_fft_max;/**<Upper band limit for FFT flattening*/
+  std::vector<my_type> limits;/**< Limits to trim output FFT to*/
+};/**<Additional command line arguments for this utility*/
 
 gen_cmd_line special_command_line(int argc, char *argv[]);
 

@@ -87,6 +87,7 @@ void get_deck_constants(std::string file_prefix){
 /** \brief Setup run specific constants
 *
 *Reads deck.status and parses values for user defined constants etc. It will rely on using the specific deck, because it has to look for names. Any changes to deck may need updating here. Tag names are set as const strings in support.h. IMPORTANT: If we find additional density tags we fold those into om_pe. To prevent this, either remove from deck.status, or prefix their printed names with something so they do not match the strings in support.h
+@param file_prefix File prefix prepended to "deck.status"
 */
 
 
@@ -309,7 +310,8 @@ void process_command_line_help_arg(int argc, char *argv[], char help_id){
 void print_help(char code){
 /** \brief Print command line help
 *
-*Prints contents of halp_file from rank zero and calls safe exit. Input single character utility name code to get specific help (assumed to be in halp_file_[c]
+*Prints contents of halp_file from rank zero and calls safe exit.
+@param code Input single character utility name code to get specific help. If non-empty file opened is halp_file with '_'+code inserted before extension
 */
   std::ifstream halp;
   
@@ -330,7 +332,9 @@ void print_help(char code){
 void log_code_constants(std::string file_prefix){
 /** \brief Log internal constants
 *
-*Records ID codes etc as name value pairs \todo Updates?
+*Records ID codes etc as name value pairs
+@param file_prefix File path to write to
+\todo Updates?
 */
   std::ofstream file;
   std::string filename = file_prefix +"constants.dump";
@@ -397,6 +401,10 @@ void divide_domain(std::vector<size_t> dims, size_t space[2], int per_proc, int 
 /** \brief Divide dims evenly between procs
 *
 *Uses the number of space blocks from args (if specified) and the domain size from dims to ensure perfect subdivision and set current proc's bounds. We can ignore incoming space vals as they should be -1
+@param dims Vector of sizes to divide
+@param[out] space 2-element array giving the local space section for this processor
+@param per_proc Number of blocks per processor See setup_args per_proc field or see process_command_line() for example of calculation
+@param block_num Current block index on this processor
 */
 
     size_t end, block_start, block_end, block_len;
@@ -413,14 +421,26 @@ void divide_domain(std::vector<size_t> dims, size_t space[2], int per_proc, int 
 }
 
 my_type get_ref_Bx(std::string file_prefix, size_t space_in[2], size_t time_0, bool is_acc){
-/** Read reference B_x from the specfied file prefix as given, dump number time_0*/
+/** Read reference B_x from the specfied file prefix as given, dump number time_0
+@param file_prefix File path
+@param space_in Limits on x-dimension to slice out
+@param time_0 The dump time to read
+@param is_acc Whether these files use the accumulation extension to EPOCH
+@return Average bx over specified space range at given time
+*/
   data_array bx = get_Bx(file_prefix, space_in, time_0, is_acc);
   if(bx.is_good()) return avval(bx);
   else return 0.0;
 }
 
 data_array get_Bx(std::string file_prefix, size_t space_in[2], size_t time_0, bool is_acc){
-/** Read reference B_x from the specfied file prefix as given, dump number time_0*/
+/** Read reference B_x from file at path file_prefix, dump number time_0. If space_in is not [-1, -1], only the slice it dictates is read
+@param file_prefix File path
+@param space_in Limits on x-dimension to slice out
+@param time_0 The dump time to read
+@param is_acc Whether these files use the accumulation extension to EPOCH
+@return data_array containing bx data
+*/
   my_print("Getting ref B");
   char block_id[ID_SIZE];
   if(!is_acc) strcpy(block_id, "bx");
@@ -453,11 +473,18 @@ data_array get_Bx(std::string file_prefix, size_t space_in[2], size_t time_0, bo
   else return data_array();
 }
 
-
 bool flatten_fortran_slice(my_type * src_ptr, my_type* dest_ptr, size_t n_dims_in, size_t * dims_in, size_t flatten_on_dim, size_t flat_start, size_t flat_stop){
 /** \brief Flatten a Fortran-style array on the specified dimension
 *
-* The result is a Fortran-style array of rank n_dims_in - 1, containing the total along each value of the flattening dim. dest_ptr is assumed to point to an allocated block sufficient to hold the result. NB this produces a total not an average. NB flat_start and flat_stop must be valid indices into the dim to be flattened. They CANNOT be checked
+* The result is a Fortran-style array of rank n_dims_in - 1, containing the total along each value of the flattening dim. dest_ptr is assumed to point to an allocated block sufficient to hold the result. NB this produces a total not an average. NB flat_start and flat_stop must be valid indices into the dim to be flattened. They CANNOT be checked. If supplied only the slice they delimit is totalled
+@param src_ptr Pointer to start of source data
+@param dest_ptr Pointer to start of destination memory block
+@param n_dims_in Rank (number of dimensions) of input "array"
+@param dims_in Dimensions of input
+@param flatten_on_dim Dimension to flatten on
+@param flat_start Start of slice to flatten (default 0)
+@param flat_stop End of slice to flatten (default MAX_SIZE_T)
+@return 0 for success, 1 if parameters invalid (usually a range error)
 */
 /*
 * A 2-d array 5x3 is
@@ -500,6 +527,10 @@ int where(my_type * ax_ptr, int len, my_type target){
 /** \brief Find where ax_ptr exceeds target
 *
 *Checks bounds and calls locally scoped recursive whereb to do the search. Special case if target equals bottom end
+@param ax_ptr Pointer to start of axis to search
+@param len Length of axis we're searching
+@param target Target value to find
+@return Index of target in axis
 */
   int whereb(my_type * ax_ptr, int len, my_type target, int &cut,int sign); //Recursive function to do the finding
 
@@ -547,7 +578,11 @@ int whereb(my_type * ax_ptr, int len, my_type target,int &cut, int sign){
 void my_print(std::string text, int rank, int rank_to_write, bool noreturn){
 /** \brief Write output
 *
-* Currently dump to term. Perhaps also to log file. Accomodates MPI also. Set rank_to_write to -1 to dump from all. Default value is 0
+*MPI aware screen output. Prints from one or all processors to cout
+@param text Text to print
+@param rank Rank of this processor
+@param rank_to_write Which rank should do the printing, default 0. Set to -1 to print from all
+@param noreturn Set to not output a line break after text
 */
   if(rank == rank_to_write || rank_to_write == -1){
   
@@ -559,7 +594,12 @@ void my_print(std::string text, int rank, int rank_to_write, bool noreturn){
 void my_print(std::fstream * handle, std::string text, int rank, int rank_to_write, bool noreturn){
 /** \brief Write output
 *
-* Currently dump to term. Perhaps also to log file. Accomodates MPI also. Set rank_to_write to -1 to dump from all. Default value is 0
+*MPI aware file output. Prints from one or all processors to given filestream
+@param handle Filestream to write to. If this is nullptr, cout is used
+@param text Text to print
+@param rank Rank of this processor
+@param rank_to_write Which rank should do the printing, default 0. Set to -1 to print from all
+@param noreturn Set to not output a line break after text
 */
   if((rank == rank_to_write || rank_to_write == -1) && handle!=nullptr){
     *handle<<text;
@@ -575,7 +615,11 @@ void my_print(std::fstream * handle, std::string text, int rank, int rank_to_wri
 void my_error_print(std::string text, int rank, int rank_to_write, bool noreturn){
 /** \brief Write output
 *
-* Currently dump to term. Perhaps also to log file. Accomodates MPI also. Set rank_to_write to -1 to dump from all. Default value is 0
+*MPI aware screen error output. Prints from one or all processors to cerr
+@param text Text to print
+@param rank Rank of this processor
+@param rank_to_write Which rank should do the printing, default 0. Set to -1 to print from all
+@param noreturn Set to not output a line break after text
 */
   if(rank == rank_to_write || rank_to_write == -1){
   
@@ -587,7 +631,12 @@ void my_error_print(std::string text, int rank, int rank_to_write, bool noreturn
 void my_error_print(std::fstream * handle, std::string text, int rank, int rank_to_write, bool noreturn){
 /** \brief Write output
 *
-* Currently dump to term. Perhaps also to log file. Accomodates MPI also. Set rank_to_write to -1 to dump from all. Default value is 0
+*MPI aware filestream error output. Prints from one or all processors to given filestream. If this is nullptr, cerr is used
+@param handle Filestream to write to. If this is nullptr, cout is used
+@param text Text to print
+@param rank Rank of this processor
+@param rank_to_write Which rank should do the printing, default 0. Set to -1 to print from all
+@param noreturn Set to not output a line break after text
 */
   if((rank == rank_to_write || rank_to_write == -1) && handle!=nullptr){
     *handle<<text;
@@ -638,6 +687,12 @@ std::string mk_str(char * str){
   return std::string(str);
 }
 void trim_string(std::string &str, char ch){
+/** \brief Trim ch from ends of string
+*
+*Trims leading and trailing occurences of character from string
+@param str The string (will be changed)
+@param ch The character to trim
+*/
   std::string tmp;
   if(str.find_first_not_of(ch) !=std::string::npos) tmp = str.substr(str.find_first_not_of(ch), str.size());
   str=tmp;
@@ -647,6 +702,15 @@ void trim_string(std::string &str, char ch){
 }
 
 std::string replace_char(std::string str_in, char ch, char repl){
+/** \brief Replace character in string
+*
+*Replace one character with another in a string
+@param str_in Input string
+@param ch Character to replace
+@param repl Character to replace with
+@return The amended string
+*/
+
   std::string str = str_in;
   size_t pos =str.find_first_of(ch);
   while(pos != std::string::npos){
@@ -660,6 +724,9 @@ std::string append_into_string(const std::string &in, const std::string &infix){
 /** \brief Insert infix in string
 *
 *Inserts the infix string into in BEFORE the last file extension. If no '.' is found in string, append to end. First char being . is not an extension.
+@param in String to insert into. Usually ends in .[extension]
+@param infix String to insert
+@return The resulting modified string
 */
   size_t start = 0;
   if(in.size() > 0) start = in.substr(1, in.size()).find_last_of('.') +1;
@@ -677,7 +744,12 @@ bool parse_name_val(std::string in, std::string &name, std::string &val){
 /** \brief Parse x=y strings
 *
 * Basic line parser. Takes a string and if it contains an '=' splits into the left and right segments, stripping leading and trailing spaces. Returns 0 if success, 1 if no equals sign. Standard comment character is # as first non-whitespace
+@param in The input string to parse
+@param[out] name The name part
+@param[out] val The value part
+@return 0 if line parsed, 1 if it can't be
 */
+
   if(in.find_first_not_of(" \t\n") == std::string::npos) return 1;
   if(in[in.find_first_not_of(" \t\n")] == '#') return 1;
   size_t pos = in.find("=");
@@ -700,7 +772,11 @@ bool parse_name_val(std::string in, std::string &name, std::string &val){
 template<typename T> T integrator(T * start, int len, T * increment){
 /** \brief Basic numerical integrator
 *
-*Uses trapezium rule. WARNING this is working with contiguous memory. Not very C++ but faster.
+*Uses trapezium rule. WARNING this is working with contiguous memory.
+@param start Pointer to start of data
+@param len Length of data
+@param increment Pointer to start of increment axis (e.g. x[1:end]-x[0:end-1])
+@return The integrated value
 */
 
   T value = 0.0;
@@ -722,7 +798,11 @@ template double integrator<double>(double *, int, double *);
 calc_type square_integrator(calc_type * start, int len, calc_type * increment){
 /** \brief Basic numerical integrator
 *
-*Uses trapezium rule. WARNING this is working with contiguous memory. Not very C++ but faster.
+*Uses trapezium rule. WARNING this is working with contiguous memory.
+@param start Pointer to start of data
+@param len Length of data
+@param increment Pointer to start of increment axis (e.g. x[1:end]-x[0:end-1])
+@return The square-integrated value
 */
 
   calc_type value=0.0;
@@ -743,6 +823,10 @@ template<typename T> void inplace_boxcar_smooth(T * start, int len, int width, b
 /** \brief Boxcar smoothing of specified width
 *
 *Smooths the array given by start and len using specified width. If periodic is set the ends wrap around. Otherwise they one-side
+@param start Start of data interval to smooth
+@param len Length of interval to smooth
+@param width Boxcar smoothing width
+@param periodic Flag to set for wrap-around smoothing
 */
 
   if(width > len) my_print("Smoothing width exceeds array size", mpi_info.rank);
@@ -797,6 +881,10 @@ std::vector<calc_type> cubic_solve(calc_type an, calc_type bn, calc_type cn){
 /** \brief Finds roots of cubic x^3 + an x^2 + bn x + cn = 0
 *
 * Uses Num. Rec. equations, which are optimised for precision. Note that if x >>1 precision errors may result. Returns real solutions only
+@param an Coefficient of x^2
+@param bn Coefficient of x
+@param cn Constant part
+@return Vector of real roots
 */
 
   calc_type Q, R, bigA, bigB, Q3, R2, bigTheta;
@@ -834,7 +922,11 @@ std::vector<calc_type> cubic_solve(calc_type an, calc_type bn, calc_type cn){
 template<typename T> T interpolate_linear(T axis[2], T vals[2], T target){
 /** Interpolate vals on axis to target value. 
 *
-*Axis and vals should contain 2 values boxing the target. We use linear interpolation to obtain the axis value corresponding to target @param axis Axis values for interpolation @param vals Values at axis values @param target Target value to interpolate to
+*Axis and vals should contain 2 values boxing the target. We use linear interpolation to obtain the axis value corresponding to target 
+@param axis Axis values for interpolation 
+@param vals Values at axis values 
+@param target Target value to interpolate to 
+@return The interpolated value
 */
 
   T ret = (std::abs(target - axis[1]) * vals[0] + std::abs(target - axis[0]) * vals[1])/(std::abs(axis[1] - axis[0]));
@@ -849,7 +941,11 @@ template double interpolate_linear(double*, double*, double);
 template<typename T> T interpolate_nearest(T axis[2], T vals[2], T target){
 /** Interpolate vals on axis to target value. 
 *
-*Axis and vals should contain 2 values boxing the target. We select the nearest axis value as corresponding to target @param axis Axis values for interpolation @param vals Values at axis values @param target Target value to interpolate to
+*Axis and vals should contain 2 values boxing the target. We select the nearest axis value as corresponding to target 
+@param axis Axis values for interpolation 
+@param vals Values at axis values 
+@param target Target value to interpolate to 
+@return The interpolated value
 */
 
   T ret = 0.0;

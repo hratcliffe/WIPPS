@@ -35,7 +35,7 @@ private:
   int n_n; /**< Max number of resonances to consider */
   controller * my_controller;/**< Owning controller which gives access to plasma and spectrum*/
   friend class controller;
-  explicit diffusion_coeff(int n_momenta, int n_ang);
+  explicit diffusion_coeff(int n_momenta, int n_angs);
   virtual ~diffusion_coeff(){;};
 
   int get_min_n(calc_type mod_v, calc_type cos_alpha, my_type k_thresh, calc_type om_ce);
@@ -43,7 +43,7 @@ private:
 
   void make_velocity_axis();
   void make_pitch_axis();
-  void copy_ids(spectrum * spect);
+  void copy_ids(spectrum * src);
 
 public:
 
@@ -60,10 +60,10 @@ public:
   //--- Helpers for accessing and values. Because we might want a tan or plain angle axis and we don't want that to contaminate the rest of the code
   my_type get_element_by_values(my_type p, my_type alpha);
   my_type get_axis_element_ang(size_t ind);
-  inline my_type angle_to_stored_angle(my_type alpha){return(alpha);}
-  inline my_type stored_angle_to_angle(my_type alpha){return(alpha);}
-//  inline my_type angle_to_stored_angle(my_type alpha){return tan(alpha);}
-//  inline my_type stored_angle_to_angle(my_type alpha){return atan(alpha);}
+  inline my_type angle_to_stored_angle(my_type alpha){return(alpha);}/**<Convert actual angle in radians to stored angle axis value @param alpha Actual angle value @return Converted value in axis*/
+  inline my_type stored_angle_to_angle(my_type value){return(value);}/**<Convert stored angle axis value to actual angle in radians @param value Stored angle value @return Actual angle value */
+//  inline my_type angle_to_stored_angle(my_type alpha){return tan(alpha);}/**<Convert actual angle in radians to stored angle axis value @param alpha Actual angle value @return Converted value in axis*/
+//  inline my_type stored_angle_to_angle(my_type alpha){return atan(alpha);}/**<Convert stored angle axis value to actual angle in radians @param value Stored angle value @return Actual angle value */
 };
 
 

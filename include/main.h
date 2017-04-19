@@ -41,6 +41,8 @@
  * As well as the code, an install of boost is needed (exists on OSX and most Linux systems) as well as the correct version of FFTW libraries (float for float data, double for double). A copy of the SDF file libraries is needed from any version of EPOCH after about 4.6.3. To generate the docs Doxygen and pdftex are used.
  * \section docs This Documentation
  * These docs describe all classes and methods under the classes section. Helper functions, constants etc are grouped under modules.
+ * 
+ * Assumptions and caveats within the code are collected under \ref caveats. 
  * \section build Building or Editing the Code
  * An install script is provided to build SDF, install fftw etc. For details run install --help
  * Build using make. If input data is type double, use \verbatim make TYPE=double \endverbatim to build with correct FFT etc libraries.

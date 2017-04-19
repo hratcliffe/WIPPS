@@ -16,6 +16,8 @@ plasma::plasma(std::string file_prefix, my_type Bx_local){
 /** \brief Set up plasma
 *
 *Sets up components from {file_prefix}plasma.conf. If a Bx_local is given, store and calc local cyclotron frequency from this. Else use the cyclotron frequency from deck constants.
+@param file_prefix File prefix prepended to all files read
+@param Bx_local Local x-component of magnetic field
 */
 
   //Set up plasma components
@@ -46,6 +48,8 @@ plasma_state plasma::configure_from_file(std::string file_prefix){
 *v_th = 0.01
 *Masses can be given relative to me or mp by ending the line with *mX. Charges are assumed relative to q0, densities to the reference_density given by omega_pe in deck constants, and v_th to c
 On error we continue using defaults set below
+@param file_prefix File prefix prepended to "plasma.conf" to get file to read
+@return plasma_state object showing success and any caveats
 */
 
   calc_type ref_dens = my_const.omega_pe * my_const.omega_pe * eps0 * me / q0/q0;
@@ -143,7 +147,9 @@ On error we continue using defaults set below
 calc_type plasma::get_omega_ref(std::string code)const{
 /** \brief Reference plasma and cyclotron frequencies
 *
-*Takes a two char code string and returns the specified frequency at local position. ce is actual Cyclotron freq. c0 is a reference value
+*Get value of omega at local position
+@param code two character code string. ce is actual Cyclotron freq. c0 is a reference value. pe is plasma frequency
+@return Value of reference omega
 */
 
   code = str_to_lower(code);
@@ -162,7 +168,8 @@ calc_type plasma::get_omega_ref(std::string code)const{
 void plasma::set_B0(my_type B0){
 /** \brief Set B0
 *
-*Sets the local reference B field value and thus om_ce_local value.
+*Sets the local reference B field value and thus om_ce_local value
+@param B0 Input B0 value
 */
   this->B0 = B0;
   this->om_ce_local = std::abs(q0) * B0 / me;
@@ -172,11 +179,19 @@ void plasma::set_B0(my_type B0){
 mu_dmudom plasma::get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int n, calc_type gamma_particle, bool skip_phi, bool Righthand)const{
 /** \brief Solve plasma dispersion and extensions
 *
-*Solves Appleton-Hartree plasma dispersion and returns struct containing mu, its derivatives and error code. Also returns the Phi defined by Lyons 1974. I.e. the set of values needed to calculate D See \ref str
-*Duplicated from mufunctions by CEJ Watt
+*Solves Appleton-Hartree plasma dispersion and returns struct containing mu, its derivatives and error code. Also returns the Phi defined by Lyons 1974. I.e. the set of values needed to calculate D See \ref mu_dmudom
 *
-*On notation: within this routine and plasma::get_root we use notation as from mufunctions3.f90. In the return values as defined in support.h we match with Lyons and Albert. Thus in my_mu, we have lat, r, theta, omega for polar coordinate, r, wave normal angle and wave frequency
-*Also needs particle pitch angle alpha WATCH for Clares version which uses a different alpha entirely...
+*Duplicated from mufunctions by CEJ Watt
+@param w Wave frequency 
+@param psi Wave normal angle
+@param alpha particle pitch angle (for phi) 
+@param n Resonance number 
+@param gamma_particle Relativistic gamma for resonant particle 
+@param skip_phi Omit phi calculation 
+@param Righthand True for Righthand wave mode, false for left
+@return mu_dmudom object containing mu info
+*
+*On notation: within this routine we use notation as from mufunctions3.f90. In the return values as defined in support.h we match with Lyons and Albert. Thus in my_mu, we have lat, r, theta, omega for polar coordinate, r, wave normal angle and wave frequency
  */
  
 #ifdef DEBUG_ALL
@@ -213,8 +228,18 @@ mu_dmudom plasma::get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int
 mu_dmudom plasma::get_high_dens_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int n, calc_type gamma_particle, bool skip_phi, bool Righthand)const{
   /** \brief Solve plasma dispersion and extensions
 *
-*Duplicates plasma::get_phi_mu_omega() but using reduced form of Stix parameters corresponding to a high-density assumption assuming the first species is the electrons. This is mainly for comparison with the exact solution to validate this assumption.
-*Also needs particle pitch angle alpha */
+*Duplicates plasma::get_phi_mu_om but using reduced form of Stix parameters corresponding to a high-density assumption assuming the first species is the electrons. This is mainly for comparison with the exact solution to validate this assumption.
+@param w Wave frequency 
+@param psi Wave normal angle 
+@param alpha particle pitch angle (for phi)
+@param n Resonance number 
+@param gamma_particle Relativistic gamma for resonant particle
+@param skip_phi Omit phi calculation 
+@param Righthand True for Righthand wave mode, false for left
+@return mu_dmudom object containing mu info
+\caveat Unsurprisingly this routine uses a high density approximation to the dispersion, which assumes \f$ \omega_{pe} >> \omega_{ce} \f$
+\caveat This routine assumes that electrons are the first species of the plasma, i.e. the first species in the plasma.conf file
+*/
 
 #ifdef DEBUG_ALL
   //Argument preconditions. Check only in debug mode for speed
@@ -250,7 +275,19 @@ mu_dmudom plasma::get_high_dens_phi_mu_om(calc_type w, calc_type psi, calc_type 
 }
 
 mu_dmudom plasma::get_phi_mu_from_stix(calc_type w, calc_type psi, calc_type alpha, int n, calc_type gamma_particle, calc_type R, calc_type L, calc_type P, bool skip_phi, bool Righthand)const{
-/** Goes from the Stix RLP to the final mu. This part is the same for high dens and normal, only the params differ*/
+/** Goes from the Stix RLP to the final mu. This part is the same for high dens and normal, only the calculations of the Stix params differ
+@param w Wave frequency 
+@param psi Wave normal angle
+@param alpha particle pitch angle (for phi) 
+@param n Resonance number 
+@param gamma_particle Relativistic gamma for resonant particle 
+@param R Stix param
+@param L Stix param
+@param P Stix param
+@param skip_phi Omit phi calculation
+@param Righthand True for Righthand wave mode, false for left
+@return mu_dmudom object containing mu info
+*/
 
   calc_type w2, w3;
   w = std::abs(w);
@@ -403,10 +440,14 @@ mu_dmudom plasma::get_phi_mu_from_stix(calc_type w, calc_type psi, calc_type alp
 std::vector<calc_type> plasma::get_resonant_omega(calc_type x, calc_type v_par, calc_type gamma_particle, int n)const{
 /** \brief Solve plasma dispersion and doppler resonance simultaneously
 *
-*Obtains solutions of the Doppler resonance condition omega - k_par v_par = -n Omega_ce and a high-density approximation to the Whistler mode dispersion relation simultaneously. Assumes pure electron-proton plasma and uses cubic_solve. ONLY solutions between -om_ce_local and om_ce_local, excluding omega = 0, are considered. "Zero" solutions are those less than the GEN_PRECISION constant in support.h. If solutions are found, they're returned in vector, otherwise empty vector is returned. 
+*Obtains solutions of the Doppler resonance condition omega - k_par v_par = -n Omega_ce and a high-density approximation to the Whistler mode dispersion relation simultaneously. Assumes pure electron-proton plasma and uses cubic_solve. ONLY solutions between -om_ce_local and om_ce_local, excluding omega = 0, are considered. "Zero" solutions are those less than the GEN_PRECISION constant in support.h.
 *
 *Note that since k_parallel and v_parallel in resonant condition are signed, we will get multiple entries of ± omega for the corresponding ±k and ±n. These should be handled by the calling code, as k may or may not be handled with both signs
-@param x Wave normal angle @param v_par Particle velocity to solve with @param n Resonance number.
+@param x Wave normal angle 
+@param v_par Particle velocity to solve with 
+@param gamma_particle Relativistic gamma for resonant particle
+@param n Resonance number
+@return Vector of solutions for resonant omega, or empty vector if no solutions are found
 */
 
 #ifdef DEBUG_ALL
@@ -472,7 +513,16 @@ std::vector<calc_type> plasma::get_resonant_omega(calc_type x, calc_type v_par, 
 calc_type plasma::get_dispersion(my_type in, int wave_type, bool reverse, bool deriv, my_type theta)const{
 /** \brief Solve analytic dispersion (approx)
 *
-* By default returns omega for a given k (see reverse and deriv params param). Uses local reference cyclotron and plasma frequencies and works with UNNORMALISED quantitites. NB: parameters out of range will silently return 0. NB: For Whistler modes this is an approximation and intended to be perfectly reversible. @param k Wavenumber @param wave_type wave species (see support.h) @param reverse Return k for input omega @param deriv Whether to instead return anayltic v_g @param theta Wavenormal angle, default 0.0  \todo Complete Xmode?*/
+* By default returns omega for a given k (see reverse and deriv params param). Uses local reference cyclotron and plasma frequencies and works with UNNORMALISED quantitites. NB: parameters out of range will silently return 0. 
+@param k Wavenumber 
+@param wave_type wave species (see support.h) 
+@param reverse Return k for input omega 
+@param deriv Whether to instead return anayltic v_g 
+@param theta Wavenormal angle, default 0.0  
+@return Value of omega, or k if reverse is set
+\todo Complete Xmode?
+\caveat For Whistler modes this is an approximation and intended to be perfectly reversible.
+*/
 
 #ifdef DEBUG_ALL
   //Argument preconditions. Check only in debug mode for speed

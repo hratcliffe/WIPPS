@@ -58,9 +58,9 @@ public:
   calc_type d_f_p(calc_type p_par, calc_type p_perp, bool parallel);
 
 /********Helper functions ****/
-  void set_dp(calc_type dp){this->dp = dp;}/**<Set the dp used to get numerical derivative*/
-  calc_type get_total_dens(){return this->total_dens;}/**<Return the total density of components*/
-  bool get_norely(){return this->norely;}/**<Return flag for non-relativistic calculation*/
+  void set_dp(calc_type dp){this->dp = dp;}/**<Set the dp used to get numerical derivative @param dp Value to set*/
+  calc_type get_total_dens(){return this->total_dens;}/**< Get the total density of non-thermal components @return Ratio of density of all components to background density*/
+  bool get_norely(){return this->norely;}/**<Return state of flag for non-relativistic calculation @return Boolean true if calculations are non-relativistic, false else*/
 
 /********Special testing functions ****/
 #ifdef RUN_TESTS_AND_EXIT

@@ -21,14 +21,15 @@
 \author Heather Ratcliffe \date 09/09/2016
 */
 
-const char PER_UTIL_HELP_ID = 'd';
+const char PER_UTIL_HELP_ID = 'd';/**<ID to identify help file for this utility*/
 
 struct dist_cmd_line{
-  bool list;
-  std::string file_prefix;
-  int dump;
-  int blocks;
-};
+  bool list;/**<Flag to just list the available distribs */
+  std::string file_prefix;/**<File path prepended to all files*/
+  int dump;/**<Dump number to read*/
+  int blocks;/**<Number of space blocks to divide x dimension into*/
+};/**< Command line arguments for this utility*/
+
 
 dist_cmd_line special_command_line(int argc, char *argv[]);
 
@@ -124,7 +125,7 @@ int main(int argc, char *argv[]){
 dist_cmd_line special_command_line(int argc, char *argv[]){
 /** \brief Process commandline arguments
 *
-* Expects full list and no more.
+* This handles all command line arguments to this utility, so expects no arguments not listed below
 */
 
 

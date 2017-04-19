@@ -53,7 +53,7 @@ public:
   explicit data_array(std::string filename, bool no_version_check = false);
 #endif
   virtual ~data_array();
-  virtual bool is_good()const{return my_array::is_good() && axes;}
+  virtual bool is_good()const{return my_array::is_good() && axes;}/**< Whether array is useable @return Boolean true for good state, false for bad*/
 
 /********Technical stuff making my_array a proper "object" ****/
   data_array(const data_array &src);
@@ -63,7 +63,7 @@ public:
   bool operator!=(const data_array &rhs)const{return !(*this == rhs);}/**< See data_array::operator==()*/
   data_array(const my_array &src);
   data_array & operator=(const my_array & src);
-  bool operator==(const my_array &rhs)const{return my_array::operator==(rhs);}
+  bool operator==(const my_array &rhs)const{return my_array::operator==(rhs);}/**< Equality (size and data only) with a my_array @param rhs Array to compare to*/
   bool operator!=(const my_array &rhs)const{return !(*this == rhs);}/**< See data_array::operator==()*/
 
 /********Helpers for working with data_array ****/
@@ -90,7 +90,7 @@ public:
   bool read_from_file(std::fstream &file, bool no_version_check=false);
 #endif
   bool write_section_to_file(std::fstream &file, std::vector<my_type> limits, bool close_file=true);
-  bool write_raw_section_to_file(std::fstream &file, std::vector<size_t> limits, bool close_file=true);
+  bool write_raw_section_to_file(std::fstream &file, std::vector<size_t> index_limits, bool close_file=true);
   bool write_closer(std::fstream &file);
   
 /********Helpful functions working on entire array as a thing ****/
@@ -98,7 +98,7 @@ public:
   bool shift(size_t dim, long n_els, bool axis=1);
   data_array total(size_t dim);
   data_array total(size_t dim, my_type min, my_type max);
-  data_array total(size_t dim, size_t min, size_t max);
+  data_array total(size_t dim, size_t min_ind, size_t max_ind);
   data_array average(size_t dim, my_type min, my_type max);
   data_array average(size_t dim);
   data_array average(size_t dim, size_t min, size_t max);

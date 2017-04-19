@@ -39,6 +39,7 @@ void data_array::alloc_ax(const size_t els){
 /** \brief Allocate axis memory
 *
 * Alocate memory for axes
+@param els Number of elements to allocate
 */
   if(els > 0 && els <= this->n_dims*MAX_SIZE){
     axes=(my_type*)calloc((els),sizeof(my_type));
@@ -60,6 +61,10 @@ data_array::data_array(size_t nx, size_t ny, size_t nz, size_t nt) : my_array(nx
 /**\brief Construct a 1-4 D array
 *
 *Adds axes to a normal rectangular my_array of correct size
+@param nx Size of x dimension
+@param ny Size of y dimension, default 0
+@param nz Size of z dimension, default 0
+@param nt Size of t dimension, default 0
 */
   construct();
   size_t els= this->get_total_axis_elements();
@@ -69,7 +74,10 @@ data_array::data_array(size_t nx, size_t ny, size_t nz, size_t nt) : my_array(nx
 data_array::data_array(size_t n_dims, size_t * dims) : my_array(n_dims, dims){
 /** \brief Construct arbitrary dimension array
 *
-*Adds axes to a normal rectangular my_array of correct size, rank n_dims, dimensions dims*/
+*Adds axes to a normal rectangular my_array of correct size
+@param n_dims Rank of array to create
+@param dims Array of dimensions of array to create
+*/
   construct();
   size_t els= this->get_total_axis_elements();
   alloc_ax(els);
@@ -78,7 +86,10 @@ data_array::data_array(size_t n_dims, size_t * dims) : my_array(n_dims, dims){
 data_array::data_array(std::string filename, bool no_version_check){
 /**\brief Create data array from file
 *
-* Create a data array by reading from the named file. If the file does not exist nothing is done and this will be an empty array. Otherwise it reads the dimensions, sets up sizes and populates data and info \todo Swap version checking to just vx.x part
+* Create a data array by reading from the named file. If the file does not exist nothing is done and this will be an empty array. Otherwise it reads the dimensions, sets up sizes and populates data and info 
+@param filename Full path of file to read from
+@param no_version_check Flag to omit code version checking
+\todo Swap version checking to just vx.x part
 */
 
   //Initialise empty array
@@ -139,6 +150,8 @@ data_array & data_array::operator=(const data_array& src){
 /** \brief Copy assignment
 *
 *Set this array equal to src by (deep) copying src including data
+@param src Array to copy
+@return Copy of array
 */
   //Trap self-assigning or bad copy before destructing
   if(&src == this || !src.is_good()) return *this;
@@ -165,6 +178,7 @@ data_array::data_array(data_array && src) : my_array(src){
 /** \brief Move constructor
 *
 *Move src to new location. Copies data pointers but does not reallocate memory. Src is left empty
+@param src Array to copy
 */
   this->axes = src.axes;
   src.axes = nullptr;
@@ -175,6 +189,7 @@ data_array::data_array(const data_array &src) : my_array(src){
 /** \brief Copy constructor
 *
 *Copy src to a new instance, making a duplicate of data
+@param src Array to copy
 */
   construct();
   //Basic construction of additionals, already called base class copy constructor
@@ -189,6 +204,8 @@ bool data_array::operator==(const data_array &rhs)const{
 /** \brief Equality operator
 *
 * Check this is equal to rhs. Since copies are always deep, we check values, not data pointers
+@param rhs Array to compare to
+@return Boolean true if equal, false else
 */
   if(!my_array::operator==(rhs)) return false;
 
@@ -203,6 +220,8 @@ data_array & data_array::operator=(const my_array& src){
 /** \brief Conversion equality operator
 *
 *Convert a my_array into a data array. Data is deep copied, and axes are added
+@param src My_array object to copy data and sizes from
+@return A data array containing copy of data in src plus empty axes
 */
 
   //Trap self-assigning or bad copy before destructing
@@ -228,6 +247,7 @@ data_array::data_array(const my_array & src) : my_array(src){
 /** \brief Conversion operator
 *
 *Convert a my_array into a data array. Data is deep copied, and axes are added
+@param src My_array object to copy data and sizes from
 */
   construct();
   //Basic construction of additionals, already called base class copy constructor
@@ -242,6 +262,7 @@ my_type * data_array::disown_axes(){
 /** \brief Disown and return axes pointer
 *
 *Surrenders ownership of memory pointed to by axes NB if this pointer is not kept an manually freed, memory will leak. To aquire ownership of both the axes and data, use disown_axes and my_array::disown_data in any order, but note that after the latter, this will not be a valid array and getter/setter for data and axes will return nothing.
+@return Pointer to the axis memory
 */
   my_type * data_pointer = this->axes;
   this->axes = nullptr;
@@ -252,6 +273,7 @@ void data_array::clone_empty(const data_array &src){
 /** \brief Initialise this to match sizes of src
 *
 *This will be a valid empty array of size matching src.
+@param src Array to copy from
 */
   if(axes) free(axes);
   construct();
@@ -262,7 +284,9 @@ void data_array::clone_empty(const data_array &src){
 }
 
 void data_array::copy_ids( const data_array &src){
-/** Copies ID fields from src array to this */
+/** Copies ID fields from src array to this 
+@param src Array to copy from
+*/
 
   //Strncpy in case the src field does not actually contain a null-terminated string
   strncpy(this->block_id, src.block_id, ID_SIZE);
@@ -272,7 +296,10 @@ void data_array::copy_ids( const data_array &src){
 }
 
 bool data_array::check_ids( const data_array & src)const{
-/** Checks ID fields match src */
+/** Checks ID fields match src 
+@param src Array to check against
+@return False for non-matching ids, true for complete match
+*/
 
   bool err = false;
   if(strcmp(this->block_id, src.block_id) != 0) err = true;
@@ -287,7 +314,8 @@ bool data_array::check_ids( const data_array & src)const{
 size_t data_array::get_total_axis_elements()const{
 /** \brief Return total axes length
 *
-*Sums number of total elements in all axes
+*
+@return The number of elements in all axes combined
 */
   size_t tot_els=0;
   for(size_t i=0; i<n_dims;++i) tot_els +=dims[i];
@@ -298,7 +326,10 @@ size_t data_array::get_total_axis_elements()const{
 long data_array::get_axis_index(size_t dim, size_t pt)const{
 /** \brief Get index of axis element
 *
-*Takes care of all bounds checking and disposition in memory. Returns -1 if out of range of any sort, otherwise, the index into the backing axis store.
+*Get the position in the backing data store of point pt on dimension dim. Takes care of all bounds checking and disposition in memory
+@param dim Dimension of axis
+@param pt Index into required axis
+@return Index into 1-D array of pt, or -1 for any sort of out-of-range issue
 */
 
   if(dim >=n_dims || pt >=get_dims(dim)) return -1;
@@ -314,7 +345,9 @@ long data_array::get_axis_index(size_t dim, size_t pt)const{
 float data_array::get_res(size_t i)const{
 /**\brief Get (linear) axis resolution
 *
-*Return resolution of axis on dimension i. Takes the total length and divides by the number of elements to avoid rounding errors. If axis is not linear, this is meaningless. If the axis is undefined, or 0 or 1 in length, return will be 0.0
+*Return resolution of axis on dimension i. Takes the total length and divides by the number of elements to avoid rounding errors. If axis is not linear, this is meaningless. 
+@param i Dimension of axis
+@return 0.0 if the axis is undefined or 0 or 1 in length, otherwise the calculated linear resolution
 */
   if(dims[i] > 1) return std::abs(get_axis_element(i, dims[i]-1) - get_axis_element(i, 0))/(float)(dims[i]-1);
   else return 0.0;
@@ -325,6 +358,8 @@ std::vector<size_t> data_array::get_bounds(std::vector<my_type> limits){
 /** \brief Convert axis values to indices
 *
 * For a vector of bounds, 2 per dimension, convert the required axis bounds into index bounds
+@param limits The real physical axis values
+@return The corresponding index values
 */
 
   std::vector<size_t> index_limits;
@@ -359,7 +394,10 @@ std::vector<size_t> data_array::get_bounds(std::vector<my_type> limits){
 my_type data_array::get_axis_element(size_t dim, size_t pt)const{
 /** \brief Get axis value
 *
-* @return value at pt in dimension dim if in range, else 0.0
+* 
+@param dim Dimension
+@param pt Point to get
+@return value at pt in dimension dim if in range, else 0.0
 */
 
   long ind = get_axis_index(dim, pt);
@@ -374,7 +412,11 @@ my_type data_array::get_axis_element(size_t dim, size_t pt)const{
 bool data_array::set_axis_element(size_t dim, size_t pt, my_type val){
 /** \brief Sets axis element
 *
-*Sets elements at pt on dimension dim, @return 1 if out of range, 0 else.
+*Sets elements at pt on dimension dim, 
+@param dim Dimension
+@param pt Point to set
+@param val Value to set
+@return 1 if out of range, 0 else.
 */
 
   long index = get_axis_index(dim, pt);
@@ -390,7 +432,11 @@ bool data_array::set_axis_element(size_t dim, size_t pt, my_type val){
 my_type * data_array::get_axis(size_t dim, size_t & length){
 /**  \brief Get pointer to axis
 *
-*Returns pointer to given axis and its length. If axes don't exist or dimension is out of range, returns nullptr \todo Minimise use of this function
+*Returns pointer to given axis and its length.
+@param dim Dimension of axis to get
+@param[out] length Returns the length of axis
+@return Pointer to start of axis, or nullptr if axis doesn't exist or requested dim is out of range
+\todo Minimise use of this function
 */
 
   if(!axes || (dim >= n_dims)) return nullptr;
@@ -404,7 +450,12 @@ my_type * data_array::get_axis(size_t dim, size_t & length){
 }
 
 long data_array::get_axis_index_from_value(size_t dim, my_type value)const{
-/** Get the index on axis dim of value value*/
+/** Get the index on axis dim of value value
+*
+@param dim Dimension for lookup
+@param value Value to find
+@return Index of value in axis for dimension dim
+*/
   size_t len = dims[dim];
   long index = get_axis_index(dim, 0);
   if(index != -1){
@@ -420,7 +471,11 @@ long data_array::get_axis_index_from_value(size_t dim, my_type value)const{
 bool data_array::populate_axis(size_t dim, my_type * dat_in, size_t n_tot){
 /** \brief Fill axis from dat_in
 *
-*Populates axis from dat_in. n_tot should be size of input array. Number of elements copied will be the smaller of n_tot and size of dimension dim. @return 0 (success) 1 (error)
+*Populates axis from dat_in. Number of elements copied will be the smaller of n_tot and size of dimension dim.
+@param dim Dimension of axis to fill
+@param dat_in Pointer to start of data to copy
+@param n_tot Size of input data array
+@return 0 (success) 1 (error)
 */
 
   if(dim >=n_dims) return 1;
@@ -440,7 +495,10 @@ bool data_array::populate_axis(size_t dim, my_type * dat_in, size_t n_tot){
 void data_array::make_linear_axis(size_t dim, float res, long offset){
 /**\brief Make an axis
 *
-*Generates a linear axis for dimension dim, with resolution res, starting at value of  - offset*res That allows one to guarantee that 0 appears regardless of the number of cells. @param dim Dimension to build axis for @param res Axis resolution @param offset Number of grid cells to shift downwards (leftwards) by
+*Generates a linear axis for dimension dim, with resolution res, starting at value of  - offset*res That allows one to guarantee that 0 appears regardless of the number of cells. 
+@param dim Dimension to build axis for 
+@param res Axis resolution 
+@param offset Number of grid cells to shift downwards (leftwards) by
 */
 
   size_t len;
@@ -468,7 +526,11 @@ void data_array::make_linear_axis(size_t dim, float res, long offset){
 
 bool data_array::write_to_file(std::fstream &file, bool close_file){
 /** \brief Write data array to file
-* \copydoc dummy_data_file_format  \todo Test read/write with double, also IDL
+* \copydoc dummy_data_file_format  
+@param file Filestram to write to
+@param close_file Whether to write file final data
+@return 0 (success), 1 (error)
+* \todo Test read/write with double, also IDL
 */
 
   if(!file.is_open()) return 1;
@@ -517,6 +579,9 @@ bool data_array::read_from_file(std::fstream &file, bool no_version_check){
 /** \brief Read data array from file
 *
 *Reads data from file. This array should have already been created in the correct shape, otherwise we return an error. \copydoc dummy_data_file_format
+@param file Filestram to read from
+@param no_version_check Flag to omit version checking
+@return 0 (success), 1 (error)
 */
 
   bool err=false;
@@ -554,6 +619,10 @@ bool data_array::write_section_to_file(std::fstream &file, std::vector<my_type> 
 /** \brief Write array section to file
 *
 *Write section between given AXIS values to file. To use one dimension entire supply values less/greater than min and max axis values.
+@param file Filestram to write to
+@param limits Vector of min and max physical axis values for section. Must be 2 per dimension
+@param close_file Whether to write file final data
+@return 0 (success), 1 (error)
 */
   //Identify limits of segment from axes
   std::vector<size_t> index_limits = this->get_bounds(limits);
@@ -564,7 +633,11 @@ bool data_array::write_section_to_file(std::fstream &file, std::vector<my_type> 
 bool data_array::write_raw_section_to_file(std::fstream &file, std::vector<size_t> index_limits, bool close_file){
 /** \brief Write section of array to file
 *
-*Write section defined by the limits to supplied file. index_limits must contain 2 values per dimension. If limits are out of range then the entire dimension is used. See data_array::write_to_file for file details
+*Write section defined by the limits to supplied file. If limits are out of range then the entire dimension is used. See data_array::write_to_file for file details
+@param file Filestram to write to
+@param index_limits Vector of min and max axis indices for section. Must be 2 per dimension
+@param close_file Whether to write file final data
+@return 0 (success), 1 (error)
 */
 
   if(!file.is_open()) return 1;
@@ -627,7 +700,10 @@ bool data_array::write_raw_section_to_file(std::fstream &file, std::vector<size_
 bool data_array::write_closer(std::fstream &file){
 /** \brief Write close tag of file
 *
-*Writes the final footer into a file \todo This no longer matches a normal file on reading
+*Writes the final footer into a file 
+@param file Filestream to write to
+@return 0 (success), 1 (error)
+\todo This no longer matches a normal file on reading
 */
 
   if(!file.is_open()) return 1;
@@ -655,7 +731,11 @@ bool data_array::write_closer(std::fstream &file){
 bool data_array::resize(size_t dim, size_t sz, bool verbose){
 /** \brief Resize my_array on the fly
 *
-*dim is the dimension to resize, sz the new size. If sz < dims[dim] the first sz rows will be kept and the rest deleted. If sz > dims[dim] the new elements will be added zero initialised. Similarly for axis elements. See my_array::resize() for more.
+*If sz < dims[dim] the first sz rows will be kept and the rest deleted. If sz > dims[dim] the new elements will be added zero initialised. Similarly for axis elements. See my_array::resize() for more.
+@param dim The dimension to resize
+@param sz The new size
+@param verbose Whether to print some info
+@return 0 (success), 1 (error)
 */
 
   size_t old_sz = this->get_dims(dim);
@@ -718,7 +798,12 @@ bool data_array::resize(size_t dim, size_t sz, bool verbose){
 bool data_array::shift(size_t dim, long n_els, bool axis){
 /** Shift array on dim dim by n_els
 *
-*Shift is cyclical @param dim Dimension to shift on @param n_els Number of elements to shift by @param axis Whether to shift the corresponding axis \todo Catch std::copy errors in all places they may arise
+*Shift is cyclical 
+@param dim Dimension to shift on 
+@param n_els Number of elements to shift by 
+@param axis Whether to shift the corresponding axis 
+@return 0 (success), 1 (error)
+\todo Catch std::copy errors in all places they may arise
 */
   if(dim >= n_dims) return 0;
 
@@ -759,7 +844,9 @@ bool data_array::shift(size_t dim, long n_els, bool axis){
 data_array data_array::total(size_t dim){
 /** \brief Total array on dim dim
 *
-*Returns a new array of rank n_dims -1, containing data summed over entire range of dimension dim. Wraps function data_array::total(size_t dim, size_t min, size_t max). If dim is out of range, empty array is returned
+* Wraps function data_array::total(size_t dim, size_t min, size_t max).
+@param dim Dimension to total on
+@return A new array of rank n_dims -1, containing data summed over entire range of dimension dim. If dim is out of range, empty array is returned
 */
   //No dimension to total, return empty array
   if(dim >= this->n_dims) return data_array();
@@ -772,7 +859,11 @@ data_array data_array::total(size_t dim){
 data_array data_array::total(size_t dim, my_type min, my_type max){
 /** \brief Total array on dim dim
 *
-*Returns a new array of rank n_dims -1, containing data summed over dimension dim between min and max axis values. *Note this expects a monotonic axis*. Wraps function data_array::total(size_t dim, size_t min, size_t max). If dim is out of range, empty array is returned
+*Wraps function data_array::total(size_t dim, size_t min, size_t max).
+@param dim Dimension to total on
+@param min Minimum physical axis value of slice to total. Note this expects a monotonic axis.
+@param max Maximum physical axis value of slice to total.
+@return A new array of rank n_dims -1, containing data summed over entire range of dimension dim. If dim is out of range, empty array is returned
 */
 
   //No dimension to total, return empty array
@@ -801,7 +892,11 @@ data_array data_array::total(size_t dim, size_t min_ind, size_t max_ind){
 
 /** \brief Total along dim dim
 *
-*Returns a new array of rank this->n_dims -1, containing data summed between index values of min_ind and max_ind on dimension dim. If dim is out of range, empty array is returned. Totalling a 1-d array gives a 1-element array
+*
+@param dim Dimension to total on
+@param min_ind Minimum axis index of slice to total.
+@param max_ind Maximum axis index of slice to total.
+@return A new array of rank n_dims -1, containing data summed over entire range of dimension dim. If dim is out of range, empty array is returned. Note totalling a 1-d array gives a 1-element array
 */
 
   //No dimension to total, return empty array
@@ -859,7 +954,9 @@ data_array data_array::total(size_t dim, size_t min_ind, size_t max_ind){
 data_array data_array::average(size_t dim){
 /** \brief Average array over dim dim
 *
-*Returns a new array of rank n_dims-1 filled with the average values over the given dim. We guarantee to match total's behaviour if dim is out of range.
+*We guarantee to match total's behaviour if dim is out of range.
+@param dim Dimension to average over
+@return New array of rank n_dims-1 filled with the average values over the given dim.
 */
   size_t old_dim = this->get_dims(dim);
   data_array new_arr = this->total(dim);
@@ -871,7 +968,11 @@ data_array data_array::average(size_t dim){
 data_array data_array::average(size_t dim, my_type min, my_type max){
 /** \brief Average array over dim dim
 *
-*Returns a new array of rank n_dims-1 filled with the average values over the given dim between the given axis values. We guarantee to match total's behaviour if dim is out of range.
+*We guarantee to match total's behaviour if dim is out of range.
+@param dim Dimension to average over
+@param min Minimum axis value emcompassing desired slice
+@param max Maximum axis value emcompassing desired slice
+@return New array of rank n_dims-1 filled with the average values over the given dim.
 */
 
   //Guarantee to match behaviour of total by calling it right now
@@ -891,7 +992,11 @@ data_array data_array::average(size_t dim, my_type min, my_type max){
 data_array data_array::average(size_t dim, size_t min_ind, size_t max_ind){
 /** \brief Average array over dim dim
 *
-*Returns a new array of rank n_dims-1 filled with the average values over the given dim between the given indices. We guarantee to match total's behaviour if dim is out of range.
+*We guarantee to match total's behaviour if dim is out of range.
+@param dim Dimension to average over
+@param min Minimum axis index emcompassing desired slice
+@param max Maximum axis index emcompassing desired slice
+@return New array of rank n_dims-1 filled with the average values over the given dim.
 */
 
   //Guarantee to match behaviour of total by calling it right now

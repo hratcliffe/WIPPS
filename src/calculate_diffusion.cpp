@@ -38,7 +38,7 @@
   \author Heather Ratcliffe \date 17/02/2017
 */
 
-const char PER_UTIL_HELP_ID = 'i';
+const char PER_UTIL_HELP_ID = 'i';/**<ID to identify help file for this utility*/
 
 int main(int argc, char *argv[]){
 

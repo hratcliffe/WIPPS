@@ -33,7 +33,7 @@
 #include "spectrum.h"
 
 #ifndef RUN_TESTS_AND_EXIT
-const char PER_UTIL_HELP_ID = ' ';
+const char PER_UTIL_HELP_ID = ' ';/**<ID to identify help file for this utility*/
 #endif
 
 int main(int argc, char *argv[]){

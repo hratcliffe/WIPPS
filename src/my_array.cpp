@@ -42,6 +42,8 @@ void my_array::alloc_all(const size_t n_dims, const size_t * const dims){
 /** \brief Takes care of memory allocation
 *
 * Allocate dims array and data. If any size is zero, any exceeds MAX_SIZE, or overall exceeds MAX_SIZE_TOT, print error and stop. NB inputs will not be modified, will be copied
+@param n_dims Rank of array to allocate
+@param dims Dimensions of array to allocate
 */
 
   size_t tot_dims = 1;
@@ -70,10 +72,15 @@ void my_array::alloc_all(const size_t n_dims, const size_t * const dims){
   }
 
 }
+
 my_array::my_array(size_t nx, size_t ny, size_t nz, size_t nt){
 /** \brief 1 to 4 d rectangular array creator
 *
 *Sets up a n-d rectangular array for n = 1 to 4. Helper avoids user having to construct size_t array of dims. Default values mean any dimensions not supplied will be 0
+@param nx Size of x dimension
+@param ny Size of y dimension, default 0
+@param nz Size of z dimension, default 0
+@param nt Size of t dimension, default 0
 */
   construct();
   
@@ -100,7 +107,9 @@ my_array::my_array(size_t nx, size_t ny, size_t nz, size_t nt){
 my_array::my_array(size_t n_dims, size_t * dims ){
 /** \brief Arbitrary dim rectangular array
 *
-*Sets up internals to define an array of rank n_dims and dimensions dims, including memory allocation
+*Sets up internals of array including memory allocation
+@param n_dims Rank of array to create
+@param dims Array of dimensions of array to create
 */
   construct();
   alloc_all(n_dims, dims);
@@ -124,6 +133,8 @@ my_array & my_array::operator=(const my_array& src){
 /** \brief Copy assignment
 *
 *Sets this equal to a (deep) copy of source
+@param src Array to copy from
+@return Copy of input
 */
 
   //Trap self-assigning or bad copy before destructing
@@ -148,6 +159,7 @@ my_array::my_array(my_array && src){
 /** \brief Move constructor
 *
 *Move src to a new instance i.e. copy fields but don't move memory. Src becomes empty afterwards
+@param src Array to move
 */
 
   if(!src.dims || src.n_dims==0) return;
@@ -166,6 +178,7 @@ my_array::my_array(const my_array &src){
 /** \brief Copy constructor
 *
 *Copy src to a new instance, making a duplicate of data
+@param src Array to copy from
 */
 
   construct();
@@ -182,6 +195,8 @@ bool my_array::operator==(const my_array &rhs)const{
 /** \brief Equality operator
 *
 * Check this is equal to rhs. Since copies are always deep, we check values, not data pointers
+@param rhs Array to compare to
+@return Boolean true if equal, false else
 */
   if(this->get_dims() != rhs.get_dims()) return false;
   for(size_t i=0; i< this->get_dims(); i++) if(this->get_dims(i) != rhs.get_dims(i)) return false;
@@ -197,6 +212,7 @@ my_type * my_array::disown_data(){
 /** \brief Disown and return data pointer
 *
 *Surrenders ownership of memory pointed to by data, nullifies dimensions and returns pointer. NB if this pointer is not kept and manually freed, memory will leak. This array will then be an empty array
+@return Pointer to the disowned data array
 */
   my_type * data_pointer = this->data;
   this->data = nullptr;
@@ -210,6 +226,7 @@ void my_array::clone_empty(const my_array &src){
 /** \brief Initialise this to same sizes as src
 *
 * This will be a valid empty array of size matching src.
+@param src Array to copy dims from
 */
 
   if(!src.dims || src.n_dims==0) return;
@@ -228,6 +245,8 @@ bool my_array::copy_data(my_type * destination)const{
 /** \brief Copy the data into destination array
 *
 *Data is not lost, but a direct copy is made. Destination size will NOT be checked, the entirety of data is copied.
+@param[out] destination Pointer to destination to copy to
+@return 0, error checking not yet implemented
 */
   std::copy(this->data, this->data+this->get_total_elements(), destination);
   return 0; //Add error checking??
@@ -457,7 +476,8 @@ my_type my_array::get_element_from_index(size_t ind)const{
 }
 
 size_t my_array::get_total_elements()const{
-/** Return total size of array */
+/** Return total size of array 
+@return The total number of data elements in array*/
   size_t tot_els=1;
 
   for(size_t i=0; i<n_dims;++i) tot_els *=dims[i];
@@ -529,7 +549,10 @@ bool my_array::set_element(size_t n_dims_in, size_t * indices, my_type val){
 template<typename T> bool my_array::populate_data(T dat_in, size_t n_tot){
 /** \brief Fill array
 *
-*Populates this array from dat_in. n_tot should be the total number of elements in dat_in. The smaller of n_tot and the total number of elements in this array are copied. dat_in must match this array in row-column ordering and rank. @return 0 (sucess) 1 (error).
+*Populates this array from dat_in. n_tot should be the total number of elements in dat_in. The smaller of n_tot and the total number of elements in this array are copied. dat_in must match this array in row-column ordering and rank. 
+@param dat_in Source of copy
+@param n_tot Total number of elements to copy
+@return 0 (sucess) 1 (error).
 */
   size_t tot_els = get_total_elements();
 #ifdef DEBUG_DIMS
@@ -551,8 +574,11 @@ template bool my_array::populate_data(other_type *, size_t);
 bool my_array::populate_slice(my_type * dat_in, size_t offsets_n_dims, size_t * offsets){
 /** \brief Populate a slice of array from the input array.
 *
-* Extends populate_row to fill an array slice, that is a section of rank m < n_dims, with some finite offset in dimensions from m to n_dims only. offsets_n_dims = n_dims - m is the size of the array of offsets provided. E.g. to fill a row of a 3-d array call with n_dims_in = 3-1=2 and offsets={column, plane}. Or to fill an array of shape (x, y, t) at a single time value t_0, use n_dims_in=1, offsets={t_0}.
- @param dat_in pointer to data @param n_dims Dimensionality of input (must be less than dimension of array) @param offsets Offsets in the other dimensions
+* Fill an array slice, that is a section of rank m < n_dims, with some finite offset in dimensions from m to n_dims only. offsets_n_dims = n_dims - m is the size of the array of offsets provided. E.g. to fill a row of a 3-d array call with n_dims_in = 3-1=2 and offsets={column, plane}. Or to fill an array of shape (x, y, t) at a single time value t_0, use n_dims_in=1, offsets={t_0}.
+ @param dat_in pointer to data 
+ @param n_dims Dimensionality of input (must be less than dimension of array) 
+ @param offsets Offsets in the other dimensions
+ @return 0 for success, 1 for error
 */
 
   if(offsets_n_dims >= n_dims) return 1;
@@ -583,7 +609,12 @@ bool my_array::populate_complex_slice(my_type * dat_in, size_t n_dims_in, size_t
 /** \brief Populate a slice of array from the input array.
 *
 * Extends populate_slice to fill an array slice from a larger array. As populate slice, assumes destination is a section of dimension m, with some finite offset in dimensions from m to n only. Assuming dat_in is a 1-d array in Fortran order (see get_element) this will read the proper subsection. Note this works fine for simple slices but costs more
- @param dat_in pointer to data @param n_dims Dimensionality of input (must be less than dimension of array) @param offsets Offsets in the other dimensions @param sizes Sizes of input array \todo Add testing of this
+ @param dat_in pointer to data 
+ @param n_dims Dimensionality of input (must be less than dimension of array) 
+ @param offsets Offsets in the other dimensions 
+ @param sizes Sizes of input array 
+ @return 0 (success), 1 else
+ \todo Add testing of this
 */
   std::cerr<<"populate_complex_slice IS AN UNTESTED ROUTINE AT PRESENT !!!!!!!!!!!!!!!"<<'\n';
   if(n_dims_in >= n_dims) return 1;
@@ -638,7 +669,8 @@ bool my_array::write_to_file(std::fstream &file){
 /** \brief Write array to file
 *
 *Writes array to file. Data is in a few blocks each starting with a number defining their end position in the file. \copydoc dummy_file_format
-   @return 0 (sucess) 1 (error)
+@param file Filestream to write to
+@return 0 (success) 1 (error)
 */
   if(!file.is_open() || (this->data ==nullptr)) return 1;
 
@@ -693,7 +725,9 @@ bool my_array::write_section_to_file(std::fstream &file, std::vector<size_t> bou
 /**\brief Write a subsection of array to file
 *
 *We write only the section delimited by bounds, which should have two elements for each dimension of this array. \copydoc dummy_file_format
-   @return 0 (sucess) 1 (error)
+@param file Filestream to write to
+@param bounds Vector of indices delimiting subsection to write
+@return 0 (success) 1 (error)
 */
 
   if(!file.is_open() || (this->data ==nullptr)) return 1;
@@ -780,6 +814,9 @@ bool my_array::read_from_file(std::fstream &file, bool no_version_check){
 *
 *Reads data from file. This array should have already been created in the correct shape, otherwise we return an error.
   \copydoc dummy_file_format
+@param file Filestream to read from
+@param no_version_check Flag to disable version checking
+@return 0 (success), 1 else
 */
 
   //Read the dimensions from file and check they match this array
@@ -810,6 +847,9 @@ std::vector<size_t> my_array::read_dims_from_file(std::fstream &file, bool no_ve
 /** \brief Read dimensions from array file
 *
 *Reads dims from file into vector. Returns empty vector on read error \copydoc dummy_file_format
+@param file Filestream to read from
+@param no_version_check Flag to disable version checking
+@return Vector of dimensions
 */
   std::vector<size_t> dims_vec;
   char tmp_vers[GIT_VERSION_SIZE];
@@ -868,6 +908,10 @@ bool my_array::resize(size_t dim, size_t sz, bool verbose){
 /** \brief Resize my_array on the fly
 *
 *dim is the dimension to resize, sz the new size. If sz < dims[dim] the first sz rows will be kept and the rest deleted. If sz > dims[dim] the new elements will be added zero initialised. Note due to using 1-d memory layout both cases require copying all data and therefore briefly memory to store the old and new arrays. However shinking the last dimension does not necessarily require a copy.
+@param dim Dimension to resize
+@param sz New size for dimension
+@param verbose Flag to print extra info
+@return 0 (nothing to report) 1 else, including "new size matches, nothing done"
 */
 
   if(verbose) my_print("Attempting to resize", mpi_info.rank);
@@ -935,7 +979,10 @@ bool my_array::shift(size_t dim, long n_els){
 /** \brief Shift array on dimension dim by n_els
 *
 * Because of individual getter/setter per dimensionality, we use the 1-d backing to do this.
-* @param dim Dimension to shift, (0 to n_dims-1) @param n_els Number of elements to shift by. \todo Fix special case
+* @param dim Dimension to shift, (0 to n_dims-1) 
+@param n_els Number of elements to shift by. 
+@return 0 (success) 1 else
+\todo Fix special case
 */
 /*
 * A 2-d array 5x3 is
@@ -1110,6 +1157,9 @@ my_type my_array::partial_maxval(std::vector<std::pair<size_t, size_t> > ranges,
 /** \brief Maximum value over part of range
 *
 * WARNING: this is slow. Perhaps very slow. I'm using routines I have to knock it up quickly. Beware!!!
+@param ranges The indices to consider between on each dimension
+@param[out] ind The indices where max was located
+@return The maximum value over given ranges
 */
 
   if(ranges.size() != this->n_dims) return std::numeric_limits<my_type>::max();

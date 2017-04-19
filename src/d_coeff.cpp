@@ -12,21 +12,30 @@
 diffusion_coeff::diffusion_coeff(int n_momenta, int n_angs):data_array(n_momenta, n_angs){
 /** \brief Create coefficient
 *
-*Creates rectangular data_array and sets additional parameters to defaults @param nx Number of points in momentum to use @param n_thetas Number of particle pitch angle points
+*Creates rectangular data_array and sets additional parameters to defaults 
+@param n_momenta Number of points in momentum to use 
+@param n_angs Number of particle pitch angle points
+\caveat There is a hard limit on the number of resonances calculated, given by diffusion_coeff::n_n and set here
 */
   my_controller = nullptr;
 
   n_thetas = 100;
   n_n = 15;
   wave_id = WAVE_WHISTLER;
-  latitude = 0;
+  latitude = 0; //Doesn't do anything "yet"
   tag="";
 }
 
 void diffusion_coeff::set_ids(float time1, float time2, int space1, int space2, int wave_id, char block_id[ID_SIZE]){
 /**\brief Set parameters
 *
-*Sets the time and space ranges, wave type etc attached to the spectrum. Times should be in terms of file output time. Space in terms of grid points.
+*Sets the time and space ranges, wave type etc attached to the spectrum used to calculate this D. Times in seconds. Space in terms of grid points.
+@param time1 Initial time of data used
+@param time2 End time of data used
+@param space1 Start index of space range of data used
+@param space2 End index of space range of data used
+@param wave_id Wave type (see support.h)
+@param block_id Name of block used to calculate this D
 */
 
   this->time[0] = time1;
@@ -42,6 +51,8 @@ bool diffusion_coeff::write_to_file(std::fstream &file){
 /** \brief Write diffusion coeff to file
 *
 * Writes file dump of a diffusion coefficient. NB the file passed in must be opened for input and output.
+@param file Filestream to write to
+@return 0 for success, 1 for failure (usually file access)
 */
 
   if(!file.is_open()) return 1;
@@ -79,6 +90,9 @@ bool diffusion_coeff::read_from_file(std::fstream &file){
 /** \brief Read diffusion coeff from file
 *
 * Reads file dump of a diffusion coefficient. D should have been created to the correct size already
+@param file Filestream to read from
+@return 0 for success, 1 for failure (file access problem)
+\todo Pass through result of data_array::read
 */
 
   if(!file.is_open()) return 1;
@@ -120,6 +134,11 @@ d_report diffusion_coeff::calculate(D_type_spec type_of_D, bool quiet){
 /** \brief Calculate D from wave spectrum and plasma
 *
 *Uses the data available via my_controller to calculate D, the raw diffusion coefficient as function of particle velocity and pitch angle. For more details of the calculation see Derivations#Calculation_of_D Note that here we use a default number of wave-normal angle points, NOT the number present in the parent spectrum. See get_G2 for details of how interpolation is done.
+@param type_of_D Which D to calculate (pitch angle, momentum, mixed)
+@param quiet True to suppress display of progress
+@return d_report structure containing info on calcs
+\caveat We re-range the D calculation so what is actually calculated is D/p^2
+\caveat We currently use plasma::get_high_dens_phi_mu_om which uses the high-density approximation to the plasma dispersion, as does the resonant frequency solver plasma::get_resonant_omega
 */
 
 //----Initialise d_report --------
@@ -160,7 +179,7 @@ d_report diffusion_coeff::calculate(D_type_spec type_of_D, bool quiet){
   mu_dmudom my_mu;
 
   calc_type om_ce_ref = plas.get_omega_ref("ce"), omega_solution;
-  calc_type D_consts = 0.5* pi*om_ce_ref*om_ce_ref*v0 * std::pow(1.0/plas.get_B0(), 2) * spect->get_norm_B();//Constant part of D ( pi/2 Om_ce*c^3) * m^2 / B_0^2. But we then divide by (m^2 c^2) so that we get D/p^2 by just dividing by (gamma^2 - 1)
+  calc_type D_consts = 0.5* pi*om_ce_ref*om_ce_ref*v0 * std::pow(1.0/plas.get_B0(), 2) * spect->get_norm_B();//Constant part of D ( pi/2 Om_ce*c^3) * m^2 / B_0^2. But we then divide by (m^2 c^2) so that we get D/p^2 by just dividing by (gamma^2 - 1) which is done in the last step
 
 //-------- Wave angle temporaries -----------------
   //D has to be integrated over x, so we need a temporary and the axis
@@ -251,7 +270,7 @@ d_report diffusion_coeff::calculate(D_type_spec type_of_D, bool quiet){
       }
       //now integrate in x = tan theta, restore the velocity factor and save
       D_final_without_consts = integrator(D_theta, n_thetas, dx);
-      D_final_without_consts /= mod_v*std::pow(cos_alpha, 3);
+      D_final_without_consts /= mod_v*std::pow(cos_alpha, 3) / (gamma_particle*gamma_particle - 1.0);
       set_element(v_ind, part_pitch_ind, D_final_without_consts*D_consts);
     }
   }
@@ -275,7 +294,13 @@ d_report diffusion_coeff::calculate(D_type_spec type_of_D, bool quiet){
 int diffusion_coeff::get_min_n(calc_type mod_v, calc_type cos_alpha,  my_type k_thresh, calc_type om_ce){
 /** \brief Limits on n 
 *
-* Uses the maximum k and the velocity to give min/max n to consider (note signs). Note always has abs value ge 1.
+* Uses the maximum k and the velocity to give min/max n to consider (note signs).
+@param mod_v Abs. value of particle velocity (real value)
+@param cos_alpha Cosine of particle pitch angle
+@param k_thresh Maximum wavevector where spectrum has non-nelgible power
+@param om_ce Reference cyclotron frequency
+@return Maximum resonant number, bounded as < -1
+
 */
 
   calc_type gamma = gamma_rel(mod_v);
@@ -286,7 +311,12 @@ int diffusion_coeff::get_min_n(calc_type mod_v, calc_type cos_alpha,  my_type k_
 int diffusion_coeff::get_max_n(calc_type mod_v, calc_type cos_alpha, my_type k_thresh, calc_type om_ce){
 /** \brief Limits on n 
 *
-* Uses the maximum k and the velocity to give min/max n to consider (note signs) and cap to 1.
+* Uses the maximum k and the velocity to give min/max n to consider (note signs)
+@param mod_v Abs. value of particle velocity (real value)
+@param cos_alpha Cosine of particle pitch angle
+@param k_thresh Maximum wavevector where spectrum has non-nelgible power
+@param om_ce Reference cyclotron frequency
+@return Maximum resonant number, always at least 1
 */
 
   calc_type gamma = gamma_rel(mod_v);
@@ -296,7 +326,9 @@ int diffusion_coeff::get_max_n(calc_type mod_v, calc_type cos_alpha, my_type k_t
 }
 
 void diffusion_coeff::copy_ids( spectrum * src){
-/** Copies ID fields from src array to this*/
+/** Copies ID fields from src array to this
+*@param src Source array to copy from
+*/
 
   strcpy(this->block_id, src->block_id);
   std::copy(src->time, src->time + 2, this->time);
@@ -304,7 +336,15 @@ void diffusion_coeff::copy_ids( spectrum * src){
 }
 
 my_type diffusion_coeff::get_element_by_values(my_type p, my_type alpha){
-/** Get D element by values of p and alpha. \todo Q? try interpolating? */
+/**  \brief Lookup D element using axis values
+*
+*
+Get D element by values of p and alpha by looking up those values in the axes and returning the nearest value on grid.
+@param p Momentum value
+@param alpha Angle value
+@return Diffusion coeff. value at location
+\todo Q? try interpolating?
+*/
   if(this->get_dims() != 2){
 #ifdef DEBUG_DIMS
     my_error_print("Wrong dimensions, attempting 2 with "+mk_str(this->get_dims()));
@@ -328,7 +368,12 @@ my_type diffusion_coeff::get_element_by_values(my_type p, my_type alpha){
 }
 
 my_type diffusion_coeff::get_axis_element_ang(size_t ind){
-/** Return ANGLE value, rather than raw axis entry*/
+/** \brief Get angle axs element
+*
+*Returns an ANGLE value, rather than raw axis entry
+@param ind Index of element wanted
+@return Angle on axis at ind
+*/
   return stored_angle_to_angle(this->get_axis_element(1, ind));
 
 }

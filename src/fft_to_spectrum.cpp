@@ -25,19 +25,20 @@
 \author Heather Ratcliffe \date 12/08/2016
 */
 
-const char PER_UTIL_HELP_ID = 'f';
+const char PER_UTIL_HELP_ID = 'f';/**<ID to identify help file for this utility*/
 
 struct fft_spect_args{
-  std::string file_prefix;
-  std::string file_in;
-  std::string file_out;
-  int fuzz;
-  int smth;
-  size_t n_ang;
-  int wave;
-  int ang;
-  bool mask;
-};
+  std::string file_prefix;/**< Filepath prepended to all files*/
+  std::string file_in;/**<Input FFT filename*/
+  std::string file_out;/**<Output spectrum filename (optional)*/
+  int fuzz;/**<Fuzz for spectral cutout*/
+  int smth;/**<Smoothing width for output spectrum*/
+  size_t n_ang;/**<Number of angles for output spectrum*/
+  int wave;/**<Wave type ID (see support.h WAVE_* )*/
+  int ang;/**< Angular function type (can be FUNCTION_NULL) */
+  bool mask;/**< Flag to output spectrum extraction mask to file also*/
+};/**< Command line arguments for this utility*/
+
 
 fft_spect_args fft_spect_process_command_line(int argc, char *argv[]);
 

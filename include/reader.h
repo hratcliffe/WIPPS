@@ -37,8 +37,8 @@ class reader{
 
 /********File read routines ****/
   int pre_read(data_array& data_in, int ref_time, bool accumulated, int flatten_on, size_t &n_dims, size_t * &source_sizes);
-  int read_acc_time(data_array & data_in, sdf_file_t * handle, size_t total_reads, size_t rows);
-  int read_plain_time(data_array& data_in, sdf_file_t * handle, size_t pos);
+  void read_acc_time(data_array & data_in, sdf_file_t * handle, size_t start_pos, size_t n_times);
+  void read_plain_time(data_array& data_in, sdf_file_t * handle, size_t pos);
 public:
 
   std::string file_prefix;/**< Prefix of files before dump number*/
@@ -48,7 +48,7 @@ public:
 
 /********Basic setup and allocation functions ****/
   explicit reader();
-  explicit reader(std::string file_prefix_in,  char * block_id_in, int first=0);
+  explicit reader(std::string file_prefix_in,  char * block_id_in, int ref_file_num_in=0);
   
 /********Filename and file manipulators ****/
   void update_ref_filenum(int num);

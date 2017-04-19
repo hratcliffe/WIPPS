@@ -23,16 +23,15 @@
 
 */
 
-const char PER_UTIL_HELP_ID = 'c';
+const char PER_UTIL_HELP_ID = 'c';/**<ID to identify help file for this utility*/
 
 struct cutout_args{
+  std::string file_in;/**< Input FFT file*/
+  std::string file_out;/**< Output FFT file*/
+  std::string file_prefix;/**<File path prepended to all filenames*/
+  std::vector<my_type> limits;/**<Limits to use for cutout*/
 
-  std::string file_in;
-  std::string file_out;
-  std::string file_prefix;
-  std::vector<my_type> limits;
-
-};
+};/**< Command line arguments for this utility*/
 
 cutout_args cutout_process_command_line(int argc, char *argv[]);
 

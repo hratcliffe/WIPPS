@@ -18,6 +18,8 @@ bool non_thermal::configure_from_file(std::string file_prefix){
 /** \brief Setup non-thermal distribution from file
 *
 *Reads a [prefix]deck.status file and parses all parameters from constants block. Then, reads [prefix]nonthermal.conf and sets up a nonthermal electron distribution accordingly, using the named parameters
+@param file_prefix Prefix prepended to files deck.status and nonthermal.conf
+@return 0 (success), 1 (error)
 */
 
   //Parse all constants from deck.status file into params map
@@ -202,6 +204,7 @@ non_thermal::non_thermal(std::string file_prefix){
 /** \brief Construct non-thermal distrib
 *
 *Sets default params
+@param file_prefix Prefix prepended to all files used
 */
   //Base density is 1
   total_dens = 1.0;
@@ -227,7 +230,14 @@ Calls clean_lookup() which can be used to do anything needed to cleanup after a 
 
 /********Primary interface functions ****/
 calc_type non_thermal::d_f_p(calc_type p_par, calc_type p_perp, bool parallel){
-/** Simple Numerical derivative*/
+/** \brief Get derivative of distribution
+*
+* Get first derivative using two-point scheme
+@param p_par Parallel momentum value
+@param p_perp Perpendicular momentum value
+@param parallel Flag for whether to do parallel (true) or perpendicular (false) p deriv
+@return Value of first deriv of f
+*/
   
   if(parallel) return (f_p(p_par+dp, p_perp) -f_p(p_par, p_perp))/dp;
   else return (f_p(p_par, p_perp+dp) -f_p(p_par, p_perp))/dp;
@@ -238,6 +248,9 @@ calc_type non_thermal::f_p(calc_type p_par, calc_type p_perp){
 /**\brief Return value of f(p_par, p_perp)
 *
 *Evaluates current specification of f at p_perp, p_par and returns result. If f has multiple components these are summed.
+@param p_par Parallel momentum value
+@param p_perp Perpendicular momentum value
+@return Value of f at location
 */
 
   calc_type ret = 0;
@@ -250,20 +263,51 @@ calc_type non_thermal::f_p(calc_type p_par, calc_type p_perp){
 //These must all take at least 2 parameters. p_par is always the first parameter, p_perp the second
 
 calc_type bimax(calc_type p, calc_type p2, calc_type p_th, calc_type p_th2, calc_type A){
-/** Bimaxwellian (different parallel and perp temperatures)*/
+/** Bimaxwellian (different parallel and perp temperatures)
+*
+@param p First direction momentum
+@param p2 Second direction momentum
+@param p_th First direction thermal momentum
+@param p_th2 Second direction thermal momentum
+@param A Nomalisation constant
+@return Value at p, p2
+*/
   return A*std::exp(-p*p/p_th/p_th - p2*p2/p_th2/p_th2);
 }
 
 calc_type bikappa(calc_type p, calc_type p2, calc_type kappa, calc_type v_kpar, calc_type v_kperp, calc_type A){
-/* Bikappa function*/
+/* Bikappa function
+@param p First direction momentum
+@param p2 Second direction momentum
+@param kappa Kappa index
+@param v_kpar First direction thermal momentum
+@param v_kperp Second direction thermal momentum
+@param A Nomalisation constant
+@return Value at p, p2
+
+*/
   return A*std::pow( 1.0 + (std::pow(p/v_kpar, 2) + std::pow(p2/v_kperp, 2))/kappa , -kappa-1);
 }
 
 calc_type lookup(calc_type p_par, calc_type p_perp, my_type * data, size_t par_sz, size_t perp_sz,calc_type dp_par_ax, calc_type p_par_ax_min, calc_type dp_perp_ax, calc_type p_perp_ax_min){
-
-/** Lookup table returning values assuming LINEAR axes for p_par and perp and doing a weighed linear interpolation. Data is assumed to be 1-d with Fortran ordering, mapping to 2-d. Thus f(i, j) = data[j*par_sz+i] The axes run from p_par_ax_min and p_perp_ax_min up in steps of dp_par_ax and dp_perp_ax respectively. */
-/** NOTE p_par is following Xiao and is NOT actually momentum*/
-/** NB NB we assume 0 density outside lookup as we have no indication how to continue*/
+/** \brief Value of distribution using lookup table
+*
+*Lookup table returning values assuming LINEAR axes for p_par and perp and doing a weighed linear interpolation. Data is assumed to be 1-d with Fortran ordering, mapping to 2-d. Thus f(i, j) = data[j*par_sz+i] The axes run from p_par_ax_min and p_perp_ax_min up in steps of dp_par_ax and dp_perp_ax respectively.
+*
+*NOTE p_par is following Xiao and is NOT actually momentum
+*
+*NB NB we assume 0 density outside lookup as we have no indication how to continue
+@param p_par Parallel momentum
+@param p_perp Perpendicular momentum
+@param data Pointer to lookup data array
+@param par_sz Size of data in parallel (first) direction
+@param perp_sz Size of data in perpendicular (second) direction
+@param dp_par_ax Step size of parallel axis
+@param p_par_ax_min Minimum value of parallel axis
+@param dp_perp_ax Step size of perpendicular axis
+@param p_perp_ax_min Minimum value of perp. axis
+@return Value at p_par, p_perp
+*/
 
   calc_type p_par_ind_decimal, p_perp_ind_decimal;
   long long p_par_ind, p_perp_ind;
@@ -303,7 +347,20 @@ calc_type lookup(calc_type p_par, calc_type p_perp, my_type * data, size_t par_s
 
 calc_type seperable_lookup(calc_type p_par, calc_type p_perp, my_type * data, size_t par_sz, size_t perp_sz,calc_type dp_par_ax, calc_type p_par_ax_min, calc_type dp_perp_ax, calc_type p_perp_ax_min){
 
-/** Lookup table for seperable functions (h(p_par)*g(p_perp)) returning values assuming LINEAR axes for p_par and perp and doing a weighed linear interpolation. Data is assumed to be sucessive 1-d arrays, f then g. Thus f(i, j) = data[i]*data[par_sz+j] The axes run from p_par_ax_min and p_perp_ax_min up in steps of dp_par_ax and dp_perp_ax respectively. */
+/** \brief Value of distribution using lookup table
+*
+*Lookup table for seperable functions (h(p_par)*g(p_perp)) returning values assuming LINEAR axes for p_par and perp and doing a weighed linear interpolation. Data is assumed to be sucessive 1-d arrays, f then g. Thus f(i, j) = data[i]*data[par_sz+j] The axes run from p_par_ax_min and p_perp_ax_min up in steps of dp_par_ax and dp_perp_ax respectively.
+@param p_par Parallel momentum
+@param p_perp Perpendicular momentum
+@param data Pointer to lookup data array
+@param par_sz Size of data in parallel (first) direction
+@param perp_sz Size of data in perpendicular (second) direction
+@param dp_par_ax Step size of parallel axis
+@param p_par_ax_min Minimum value of parallel axis
+@param dp_perp_ax Step size of perpendicular axis
+@param p_perp_ax_min Minimum value of perp. axis
+@return Value at p_par, p_perp
+*/
 
   calc_type p_par_ind_decimal, p_perp_ind_decimal;
   size_t p_par_ind, p_perp_ind;
@@ -334,7 +391,10 @@ std::function<calc_type(calc_type p_par, calc_type p_perp)> configure_lookup(std
 /** Read lookup data from file(s) (supply comma-separated list) and bind lookup function
 *
 *We're going to be simple and require a pre-space averaged distribution. Either one file, in which case we assume f(x, y), or two, when we assume f(x)*g(y). We check for linear axes and store the dp values.
-
+@param file_prefix Prefix of file to read
+@param file Name of file (full path is file_prefix+file)
+@param my_nonth Non-thermal electrons to setup from given file
+@return A function which can be used to lookup the table values found in file
 */
 
   my_print("Configuring lookup from "+file_prefix+file);
@@ -473,6 +533,7 @@ void clean_lookup(non_thermal & my_nonth){
 /** \brief Cleanup lookup configuration
 *
 *Any cleanup from configure_lookup should go here. Currently we free the lookup data pointer in the non_thermal class itself. If configure lookup does anything which allocates memory etc, AND the only references to that memory are in the bound function, then we need to keep some other reference and free it here, or we'll leak.
+@param my_nonth Non-thermal electron object to clean
 */
   if(my_nonth.lookup_data) free(my_nonth.lookup_data);
   

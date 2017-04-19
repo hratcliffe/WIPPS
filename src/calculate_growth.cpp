@@ -33,19 +33,18 @@
   \author Heather Ratcliffe \date 11/02/2016
 
 */
-const char PER_UTIL_HELP_ID = 'w';
+const char PER_UTIL_HELP_ID = 'w';/**<ID to identify help file for this utility*/
 
 const int n_trials = 2000;/**< Number of data points for analytic growth (if no real data supplied)*/
 
 struct g_args{
-
   bool real;/**<Whether to derive real growth from spectra list too*/
   std::string spect_file;/**<File listing spectra if using this option*/
   std::string outfile;/**< Output filename*/
-};
+};/**<Additional command line arguments for this utility*/
 
 
-calc_type * make_momentum_axis(int n_momenta, calc_type v_max_over_c);
+calc_type * make_momentum_axis(int n_mom, calc_type v_max);
 
 calc_type get_growth_rate(plasma * my_plas, non_thermal * my_elec, int n_momenta, calc_type * p_axis, calc_type omega_in);
 g_args g_command_line(int argc, char * argv[]);
@@ -221,6 +220,12 @@ calc_type get_growth_rate(plasma * my_plas, non_thermal * my_elec, int n_momenta
 /** \brief Calculate growth rate
 *
 *Calculates the analytical growth rate at omega_in by integrating on p_axis, using supplied plasma and non_thermal distributions.
+@param my_plas Plasma object to use
+@param my_elec Non-thermal electron object to use
+@param n_momenta Number of elements in p_axis 
+@param p_axis The momentum axis to use for integration
+@param omega_in Frequency to eval. growth rate at
+@return Calculated growth rate
 */
 
   omega_in = std::abs(omega_in);
@@ -303,11 +308,14 @@ calc_type get_growth_rate(plasma * my_plas, non_thermal * my_elec, int n_momenta
 calc_type * make_momentum_axis(int n_mom, calc_type v_max){
 /** \brief Create a momentum axis
 *
-* Creates linear axis from 0 to v_max*v0 with n_mom elements
+* Creates linear axis for momentum starting at 0
+@param n_mom number of elements in resulting axis
+@param v_max Max value of axis, divided by v0
+@return Pointer to start of created axis
 */
 
   //Momentum step size, including gamma
-  calc_type dp = v_max * v0/ (calc_type) (n_mom - 1)/std::sqrt(1.0- v_max*v_max);
+  calc_type dp = v_max * v0/ (calc_type) (n_mom-1)/std::sqrt(1.0 - v_max*v_max);
 
   //Allocate memory
   calc_type * p_axis;
@@ -316,9 +324,9 @@ calc_type * make_momentum_axis(int n_mom, calc_type v_max){
 
   p_axis[0] = 0.0;
   //Set momenta from 0 to v_max.
-  for(int i=1; i< n_mom; ++i) p_axis[i] = p_axis[i-1] + dp;
+  for(int i = 1; i< n_mom; ++i) p_axis[i] = p_axis[i-1] + dp;
   //Check for clipping errors in dp
-  if(std::abs(p_axis[n_mom-1] -  (v_max * v0/ std::sqrt(1.0 - v_max*v_max)))> 1e-3) my_error_print("Momentum axis error of "+mk_str(std::abs(p_axis[n_mom-1] -  (v_max * v0/ std::sqrt(1.0- v_max*v_max)))), mpi_info.rank);
+  if(std::abs(p_axis[n_mom-1] -  (v_max * v0/ std::sqrt(1.0 - v_max*v_max))) > 1e-3) my_error_print("Momentum axis error of "+mk_str(std::abs(p_axis[n_mom-1] -  (v_max * v0/ std::sqrt(1.0 - v_max*v_max)))), mpi_info.rank);
   
   return p_axis;
 
@@ -327,7 +335,8 @@ calc_type * make_momentum_axis(int n_mom, calc_type v_max){
 std::vector<std::string> read_filelist(std::string infile){
 /** Read list from file
 *
-*Reads a list of strings from given infile, omitting blanks
+*Reads a list of strings from given infile, omitting blanks @param infile Complete filepath to read from
+@return Vector of the filenames read
 */
   my_print("Reading "+infile, mpi_info.rank);
   std::ifstream file;
@@ -378,6 +387,12 @@ bool write_growth_closer(std::string in_file, size_t n_momenta, calc_type min_v,
 /** \brief Close growth rate file
 *
 * Write the general parameters to specified file, including the file-location markers.
+@param in_file Input filepath (to write)
+@param n_momenta Number of momenta used in calcs
+@param min_v Minimum particle velocty used in calcs
+@param max_v Maximum particle velocty used in calcs
+@param file Filestream to write to
+@return 0 if writing successful, 1 for error
 */
   
   
@@ -407,6 +422,8 @@ void dump_distrib(non_thermal * my_elec, std::string filename){
 /** \brief Write out non_thermal distribution
 *
 * Write out a table of the current non_thermal distribution. Writes fixed number of elements between fixed bounds. Used for testing
+@param my_elec Non-thermal electrons to dump
+@param filename Full filepath to dump to
 */
   
   size_t x_len = 500, y_len = 500;
@@ -433,6 +450,8 @@ calc_type estimate_spectrum_noise(spectrum & spec_in){
 /** \brief Estimates the "noise" in a given spectrum.
 *
 * There are many ways we might do this, using varying amounts of additional information about the "spectrum". Averaging the end values works poorly. Averaging the largest two values that are greater than something? Fit a straight line to the 0.8 to 1 region?
+@param spec_in Input spectrum
+@return Value of estimated noise for this input spectrum
 */
 /** \todo Find better noise estimate...*/
   calc_type noise_val = (spec_in.get_B_element(6) + spec_in.get_B_element(7))/2.0;

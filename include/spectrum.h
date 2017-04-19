@@ -46,7 +46,7 @@ class spectrum{
   void construct();
   void init();
   explicit spectrum();
-  explicit spectrum(int nx, int n_ang, bool separable);
+  explicit spectrum(int n_om, int n_ang, bool separable);
   explicit spectrum(std::string filename);
   ~spectrum();
 
@@ -60,12 +60,18 @@ class spectrum{
   bool make_angle_distrib(my_type std_dev);
 
 /******** Access helper functions ****/
-  int where_omega(my_type value);
+  int where_omega(my_type omega);
 
 /********Access wrappers ****/
 /** \ingroup spectAcc 
 *@{ */
+  /** Get frequency axis
+  @param[out] len Length of axis
+  @return Pointer to omega axis */
   my_type * get_omega_axis(size_t &len){return B_omega_array.get_axis(0, len);}
+  /** Get angle axis
+  @param[out] len Length of axis
+  @return Pointer to angle axis */
   my_type * get_angle_axis(size_t &len){return g_angle_array.get_axis(1, len);}
 /** @} */
 
@@ -75,13 +81,14 @@ public:
   my_type time[2];/**< Time range over which data are taken*/
   size_t space[2];/**< Space range over which data are taken*/
   int wave_id; /**< ID for which wave mode cutout we're going for. See support.h*/
-  bool get_g_is_angle_only(){return g_is_angle_only;}
+  bool get_g_is_angle_only(){return g_is_angle_only;}/**< Get flag showing if spectrum is separable @return True if g is a function of only angle (and not frequency) false else*/
+
 /********Technical stuff making my_array a proper "object" ****/
   bool operator==(const spectrum &rhs)const;
   bool operator!=(const spectrum &rhs)const{return !(*this == rhs);}/**< See spectrum::operator==()*/
 
 /********Setup helper functions ****/
-  inline bool is_good()const{return (B_omega_array.is_good() && g_angle_array.is_good() && norm_g);}/**<Check if a spectrum is complete and useable*/
+  inline bool is_good()const{return (B_omega_array.is_good() && g_angle_array.is_good() && norm_g);}/**<Check if a spectrum is complete and useable @return Boolean true if good, false else*/
 #ifdef RUN_TESTS_AND_EXIT
   void make_test_spectrum(int angle_type=FUNCTION_DELTA, bool two_sided=false, my_type om_ce=17000.0, my_type std_dev = DEFAULT_SPECTRUM_ANG_STDDEV);
 #endif
@@ -107,7 +114,12 @@ public:
 /********Spectrum operation helpers ****/
   bool calc_norm_B();
   bool calc_norm_g(size_t om_ind);
+  /** Get the normalising constant for B part of spectrum 
+  @return Current value of norm_B*/
   my_type get_norm_B(){return norm_B;}
+  /** Get the normalising constant for g part of spectrum 
+  @param om_ind Frequency index to get from, 0 for separable spectra
+  @return Current value of norm_g at specified location */
   my_type get_norm_g(size_t om_ind){return (om_ind < get_omega_length())? norm_g[om_ind]:0.0;}
   
 /********File IO ****/
@@ -125,29 +137,29 @@ public:
 *Spectrum does not guarantee the internal representation of the B and g parts, so these should be used to get/set the data and axes for B and g parts
 *@{ */
 
-  inline my_type get_B_element(size_t n_om)const{return B_omega_array.get_element(n_om);}
-  inline my_type get_g_element(size_t n_ang)const{return g_angle_array.get_element((size_t) 0, n_ang);}
-  inline my_type get_g_element(size_t n_om, size_t n_ang)const{return g_angle_array.get_element(n_om, n_ang);}
+  inline my_type get_B_element(size_t n_om)const{return B_omega_array.get_element(n_om);}/**< Get B element frequency index n_om*/
+  inline my_type get_g_element(size_t n_ang)const{return g_angle_array.get_element((size_t) 0, n_ang);}/**< Get g element at angle n_ang (separable spectra)*/
+  inline my_type get_g_element(size_t n_om, size_t n_ang)const{return g_angle_array.get_element(n_om, n_ang);}/**<Get g element at frequency n_om, angle n_ang (nonseparable spectra)*/
   
-  inline void set_B_element(size_t n_om, my_type val){B_omega_array.set_element(n_om, val);}
-  inline void set_g_element(size_t n_ang, my_type val){g_angle_array.set_element(0, n_ang, val);}
-  inline void set_g_element(size_t n_om, size_t n_ang, my_type val){g_angle_array.set_element(n_om, n_ang, val);}
+  inline void set_B_element(size_t n_om, my_type val){B_omega_array.set_element(n_om, val);}/**< Set B element frequency index n_om*/
+  inline void set_g_element(size_t n_ang, my_type val){g_angle_array.set_element(0, n_ang, val);}/**< Set g element at angle n_ang (separable spectra)*/
+  inline void set_g_element(size_t n_om, size_t n_ang, my_type val){g_angle_array.set_element(n_om, n_ang, val);}/**<Set g element at frequency n_om, angle n_ang (nonseparable spectra)*/
 
-  inline my_type get_om_axis_element(size_t nx)const{return B_omega_array.get_axis_element(0, nx);}
-  inline my_type get_ang_axis_element(size_t nx)const{return g_angle_array.get_axis_element(1, nx);}
+  inline my_type get_om_axis_element(size_t nx)const{return B_omega_array.get_axis_element(0, nx);}/**< Get frequency axis element at index nx*/
+  inline my_type get_ang_axis_element(size_t nx)const{return g_angle_array.get_axis_element(1, nx);}/**< Get angle axis element at index nx*/
 
-  inline long get_om_axis_index_from_value(my_type omega)const{return B_omega_array.get_axis_index_from_value(0, omega);}
-  inline long get_ang_axis_index_from_value(my_type ang)const{return g_angle_array.get_axis_index_from_value(1, ang);}
+  inline long get_om_axis_index_from_value(my_type omega)const{return B_omega_array.get_axis_index_from_value(0, omega);}/**< Get frequency axis index for value omega*/
+  inline long get_ang_axis_index_from_value(my_type ang)const{return g_angle_array.get_axis_index_from_value(1, ang);}/**< Get angle axis index for value ang*/
 
-  inline void set_om_axis_element(size_t nx, my_type val){B_omega_array.set_axis_element(0, nx, val);g_angle_array.set_axis_element(0, nx, val);}
-  inline void set_ang_axis_element(size_t nx, my_type val){g_angle_array.set_axis_element(1, nx, val);}
+  inline void set_om_axis_element(size_t nx, my_type val){B_omega_array.set_axis_element(0, nx, val);g_angle_array.set_axis_element(0, nx, val);}/**< Set frequency axis index for value omega*/
+  inline void set_ang_axis_element(size_t nx, my_type val){g_angle_array.set_axis_element(1, nx, val);}/**< Set angle axis index for value ang*/
 
-  inline size_t get_g_dims()const{return this->g_angle_array.get_dims();}
-  inline size_t get_g_dims(size_t i)const{return this->g_angle_array.get_dims(i);}
-  inline size_t get_B_dims()const{return this->B_omega_array.get_dims();}
-  inline size_t get_B_dims(size_t i)const{return this->B_omega_array.get_dims(i);}
-  inline size_t get_angle_length()const{return this->g_angle_array.get_dims(1);}
-  inline size_t get_omega_length()const{return this->B_omega_array.get_dims(0);}
+  inline size_t get_g_dims()const{return this->g_angle_array.get_dims();}/**< Get rank of g array*/
+  inline size_t get_g_dims(size_t i)const{return this->g_angle_array.get_dims(i);}/**< Get dimensions of g array*/
+  inline size_t get_B_dims()const{return this->B_omega_array.get_dims();}/**<Get rank of B array */
+  inline size_t get_B_dims(size_t i)const{return this->B_omega_array.get_dims(i);}/**<Get dimensions of B array*/
+  inline size_t get_angle_length()const{return this->g_angle_array.get_dims(1);}/**<Get length of angle axis*/
+  inline size_t get_omega_length()const{return this->B_omega_array.get_dims(0);}/**<Get length of frequency axis*/
   
 /** @} */
 

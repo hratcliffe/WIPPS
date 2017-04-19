@@ -56,6 +56,9 @@ spectrum::spectrum(int n_om, int n_ang, bool separable){
 /** \brief Construct spectrum
 *
 *Constructs a spectrum of the given dimensions, n_om, n_ang. If the B and angle dependences are seperable (separable = true) then this will be of the form B^2(omega) g(theta). Else it will be B^2(omega) g(omega, theta). Both have a B array of size n_om, the former has g of 1 x n_angles, the latter n_om x n_angles
+@param n_om Number of frequency points in spectrum
+@param n_ang Number of angle points
+@param separable Whether g is function of omega
 */
 
   //Set up spectrum and the B data array
@@ -81,6 +84,7 @@ spectrum::spectrum(std::string filename){
 /** \brief Setup a spectrum from a file
 *
 *Reads spectrum from file, written using spectrum::write_to_file() or IDL write routines
+@param filename Full filename to read from
 */
 
 //First we grab the position of close block. Then we attempt to read two arrays. If we reach footer after first we error, or do not after second we warn.
@@ -220,6 +224,8 @@ spectrum & spectrum::operator=(const spectrum& src){
 /** \brief Copy assignment
 *
 *Sets this equal to a (deep) copy of source, i.e duplicates the B and g arrays and all other fields
+@param src Spectrum to copy from
+@return Copy of input spectrum
 */
   
   //Trap self-assign or bad copy before destructing
@@ -246,6 +252,7 @@ spectrum::spectrum(const spectrum &src){
 /** \brief Copy constructor
 *
 *(Deep) copy src to a new instance.
+@param src Spectrum to copy from
 */
 
   //Initialise fields
@@ -268,6 +275,8 @@ bool spectrum::operator==(const spectrum &rhs)const{
 /** \brief Equality operator
 *
 * Check this is equal to rhs. Since copies are always deep, we check values, not data pointers. We ignore the derived things such as smooth and norm_g
+@param rhs Spectrum to compare to
+@return True if equal, false else
 */
 
   if(this->my_controller != rhs.my_controller) return false;
@@ -294,7 +303,9 @@ void spectrum::make_angle_axis(){
 bool spectrum::make_angle_distrib(my_type std_dev){
 /** \brief Generate angle axis and distribution
 *
-*Generates an angle axis linear spaced in tan theta between TAN_MIN and TAN_MAX. Then generates and fills the angular spectrum according to function specified by function_type member variable. Options are in support.h and are FUNCTION_DELTA: delta function with peak at 0 angle. FUNCTION_GAUSS: Gaussian with std-dev SPECTRUM_ANG_STDDEV, centre at 0 angle. FUNCTION_ISO: Isotropic distribution over range considered. The integrals are either 0.5 for 0 to TAN_MAX or 1 for -TAN_MAX to TAN_MAX. Other combinations are not guaranteed
+*Generates an angle axis linear spaced in tan theta between TAN_MIN and TAN_MAX. Then generates and fills the angular spectrum according to function specified by function_type member variable. Options are in support.h and are FUNCTION_DELTA: delta function with peak at 0 angle. FUNCTION_GAUSS: Gaussian with centre at 0 angle. FUNCTION_ISO: Isotropic distribution over range considered. The integrals are either 0.5 for 0 to TAN_MAX or 1 for -TAN_MAX to TAN_MAX. Other combinations are not guaranteed
+@param std_dev Standard deviation of angular spectrum (Gauss only)
+@return 0 (success), 1 (error)
 */
 
 
@@ -348,7 +359,11 @@ bool spectrum::make_angle_distrib(my_type std_dev){
 void spectrum::make_test_spectrum(int angle_type, bool two_sided, my_type om_ce, my_type std_dev){
 /** \brief Generate dummy spectrum
 *
-*Makes a basic spectrum object with suitable number of points, and Gaussian(s) centred at fixed k/freq and x value @param angle_type Function to use for angular distrib @param two_sided Whether to generate symmetric spectrum or one-sided @param om_ce Plasma frequency to use
+*Makes a basic spectrum object with suitable number of points, and Gaussian(s) centred at fixed k/freq and x value 
+@param angle_type Function to use for angular distrib 
+@param two_sided Whether to generate symmetric spectrum or one-sided 
+@param om_ce Plasma frequency to use
+@param std_dev Standard deviation of angular functional form (where applicable)
 */
 
   if(!this->is_good()){
@@ -404,7 +419,14 @@ void spectrum::make_test_spectrum(int angle_type, bool two_sided, my_type om_ce,
 bool spectrum::generate_spectrum(data_array &parent, int om_fuzz, int angle_type, my_type std_dev, data_array * mask){
 /**\brief Generate spectrum from data
 *
-*Takes a parent data array and generates the corresponding spectrum. Windows using the specified wave dispersion and integrates over frequency using om_fuzz percent band. Axes are copied from the parent. If the spectrum is of separable type (g_is_angle_only = true), the angular distribution is generated with functional form specified by angle_type.  IMPORTANT: when using real angular data we roughly fuzz around the correct k values, but this is not uniform! Non-smooth or rapidly varying data may give odd results @param parent Data array to read from. Spectrum will have the same units as this @param om_fuzz Band width around dispersion curve in percent of central frequency @param angle_type Angular distribution functional form @param mask (optional) data_array matching sizes of parent, will be filled with the masking array used for spectrum generation. If nullptr or nothing is supplied, no mask is output. \todo 2-d and 3-d extractions don't quite agree at k=0. factor ~10 and variations near 0
+*Takes a parent data array and generates the corresponding spectrum. Windows using the specified wave dispersion and integrates over frequency using om_fuzz percent band. Axes are copied from the parent. If the spectrum is of separable type (g_is_angle_only = true), the angular distribution is generated with functional form specified by angle_type.  IMPORTANT: when using real angular data we roughly fuzz around the correct k values, but this is not uniform! Non-smooth or rapidly varying data may give odd results 
+@param parent Data array to read from. Spectrum will have the same units as this 
+@param om_fuzz Band width around dispersion curve in percent of central frequency 
+@param angle_type Angular distribution functional form 
+@param std_dev Standard deviation of angular functional form (where applicable)
+@param mask (optional) data_array matching sizes of parent, will be filled with the masking array used for spectrum generation. If nullptr or nothing is supplied, no mask is output. 
+@return 0 for successful calculation, 1 for error
+\todo 2-d and 3-d extractions don't quite agree at k=0. factor ~10 and variations near 0
 */
 
   if(!this->is_good()){
@@ -594,7 +616,14 @@ bool spectrum::generate_spectrum(data_array &parent, int om_fuzz, int angle_type
 void spectrum::set_ids(float time1, float time2, int space1, int space2, int wave_id, char block_id[ID_SIZE], int function_type){
 /**\brief Set id fields
 *
-*Sets the time and space ranges, wave type etc attached to the spectrum. Times should be in terms of file output time. Space in terms of grid points.
+*Sets the time and space ranges, wave type etc attached to this spectrum. Times should be in seconds. Space in terms of grid points.
+@param time1 Initial time of data used
+@param time2 End time of data used
+@param space1 Start index of space range of data used
+@param space2 End index of space range of data used
+@param wave_id Wave type (see support.h)
+@param block_id Name of block used to derive this spectrum
+@param function_type Functional form of spectrum in angle
 */
 
   this->time[0] = time1;
@@ -610,6 +639,7 @@ void spectrum::copy_ids( const data_array & src){
 /**\brief Copy id fields
 *
 *Copies ID fields from src array to this. ID fields are the block_id, and the space and time values. These are attached to the spectrum AND to the B and g arrays it holds. See also spectrum::copy_tags()
+@param src Array to copy ids from
 */
 
   strncpy(this->block_id, src.block_id, ID_SIZE);
@@ -624,6 +654,8 @@ bool spectrum::check_ids(const data_array & src)const{
 /** \brief Check ids match
 *
 *Checks ID fields match src. ID fields are the block_id, and the space and time values. See also spectrum::check_tags()
+@param src Array to check ids against
+@return True if ids are equal, false else
 */
 
   bool err = false;
@@ -639,6 +671,7 @@ void spectrum::copy_tags(const spectrum & src){
 /** \brief Copy tags
 *
 *Copies tag fields from src array to this. Tags are the g_is_angle_only, the function_type and the wave_id. See also spectrum::copy_ids()
+@param src Spectrum to copy tags from
 */
 
   this->g_is_angle_only = src.g_is_angle_only;
@@ -651,6 +684,8 @@ bool spectrum::check_tags(const spectrum & src)const{
 /** \brief Check tags
 *
 *Check tag fields match src. Tags are the g_is_angle_only, the function_type and the wave_id. See also spectrum::check_ids()
+@param src Spectrum to compare tags against
+@return True if equal, false else
 */
 
   bool err = false;
@@ -666,6 +701,8 @@ int spectrum::where_omega(my_type omega){
 /** \brief Find where omega axis exceeds omega
 *
 *Finds where spectrum frequency axis exceeds the value of omega.
+@param omega Value of omega to find
+@return Index where omega axis exceeds given value
 */
   int index;
   size_t len;
@@ -678,16 +715,26 @@ int spectrum::where_omega(my_type omega){
 my_type spectrum::get_omega(my_type k, int wave_type, bool deriv, my_type theta){
 /** \brief Gets omega for given k
 *
-*Uses dispersion relation for given wave_type to convert k to omega. Calls to plasma because approximations for density etc etc should be made there. @param k Wavenumber @param wave_type Wave species @param deriv Return v_g instead @param theta Wave normal angle
+*Uses dispersion relation for given wave_type to convert k to omega. Calls to plasma because approximations for density etc etc should be made there. 
+@param k Wavenumber 
+@param wave_type Wave species 
+@param deriv Return v_g instead 
+@param theta Wave normal angle
+@return Value of omega for given k and wave type etc
 */
   if(my_controller && (my_controller->is_good())) return (my_type) my_controller->get_plasma().get_dispersion(k, wave_type, 0, deriv, theta);
   else return 0.0;
 }
 
 my_type spectrum::get_k(my_type omega, int wave_type, bool deriv, my_type theta) {
-/** \brief Gets omega for given k
+/** \brief Gets k for given omega
 *
-* Uses dispersion relation for given wave_type to convert omega to k. Calls to plasma because approximations for density etc etc should be made there. @param omega Frequency @param wave_type Wave species @param deriv Return v_g instead @param theta Wave normal angle
+* Uses dispersion relation for given wave_type to convert omega to k. Calls to plasma because approximations for density etc etc should be made there.
+@param omega Frequency 
+@param wave_type Wave species 
+@param deriv Return v_g instead 
+@param theta Wave normal angle
+@return Value of k for given omega and wave type etc
 */
   if(my_controller && my_controller->is_good()) return (my_type) my_controller->get_plasma().get_dispersion(omega, wave_type, 1, deriv, theta);
   else return 0.0;
@@ -698,6 +745,7 @@ bool spectrum::calc_norm_B(){
 /** \brief Calculate norming of B(w)
 *
 * Calculate the total square integral of values over range, int_{om_min}^{om_max} B^2(omega) d omega.
+@return 0 (success), 1 (error)
 */
 
   int len = get_omega_length();
@@ -718,6 +766,8 @@ bool spectrum::calc_norm_g(size_t om_ind){
 /** \brief Normalise g_w(x)
 *
 *Calculate the norm of g used in e.g. denom of Albert eq 3 or calc'd in derivations.tex. Contains one value for each omega entry.
+@param om_ind Omega index to calculate norm at 
+@return 0 (success), 1 (error e.g. out of range)
 */
 
   size_t len = get_angle_length();
@@ -782,6 +832,7 @@ void spectrum::smooth_B(int n_pts){
 /** \brief Smooth B
 *
 *Apply a box-car smoothing to B with specified number of pts. Store n_pts in smooth field
+@param n_pts Boxcar smoothing width to apply
 */
 
   this->smooth = n_pts;
@@ -792,6 +843,9 @@ bool spectrum::truncate_om(my_type om_min, my_type om_max){
 /** \brief Truncate omega distribution at om_min and om_max.
 *
 *Zeros all elements outside the range [om_min, om_max]. Zeros are ignored. om_min must be < om_max. Om_min or max out of axis range does nothing on that end. NB B is renormalised after the truncation
+@param om_min Minimum physical omega to truncate at
+@param om_max Maximum physical omega to truncate at
+@return 0 (success), 1 (range error)
 */
 
   if(om_min >= om_max){
@@ -841,7 +895,10 @@ bool spectrum::truncate_om(my_type om_min, my_type om_max){
 bool spectrum::truncate_x(my_type x_min, my_type x_max){
 /** \brief Truncate angle distribution at x_min and x_max.
 *
-*Zeros all elements outside the range [x_min, x_max]. x_min must be < x_max. If x_min or max are out of range, nothing is done at that end.
+*Zeros all elements outside the range [x_min, x_max]. x_min must be < x_max. If x_min or max are out of range, nothing is done at that end
+@param x_min Minimum tan theta to truncate at
+@param x_max Maximum tan theta to truncate at
+@return 0 (success), 1 (range error)
 */
 
   if(x_min >= x_max){
@@ -886,6 +943,7 @@ calc_type spectrum::check_upper(){
 /** \brief Check upper k limit of spectral power
 *
 * Checks the upper bound of region of significant spectral power, i.e. above SPECTRUM_THRESHOLD*peak_power
+@return The physical wavenumber where spectrum drops below threshold
 */
 
   size_t stride = 1;
@@ -928,6 +986,7 @@ calc_type spectrum::get_peak_omega(){
 /** Find position of spectral peak
 *
 *Finds location of highest peak in spectrum.
+@return The physical axis value where the spectral peak occurs
 */
 
   calc_type value = -1.0, tmp;
@@ -949,6 +1008,8 @@ bool spectrum::write_to_file(std::fstream &file){
 /** \brief Write to file
 *
 * Spectra are written by writing out the B array, the g array, and then writing a single closing footer containing the id values again.
+@param file Filestream to write to
+@return 0 (success), 1 (error)
 */
 
   if(!file.is_open() || !this->is_good()) return 1;
@@ -988,6 +1049,8 @@ bool spectrum::read_from_file(std::fstream &file){
 /** \brief Initialise spectrum from file
 *
 *Reads a dump file which is expected to contain two arrays, first B then g, as written by spectrum->write_to_file, and constructs spectrum from data
+@param file Filestream to read from
+@return 0 (success), 1 (error)
 */
 
 //First we grab the position of close block. Then we attempt to read two arrays. If we reach the closing block position after reading the first we error; if we do not after the second we warn. If the arrays in file are the wrong size, we have to quit with an error
@@ -1056,13 +1119,20 @@ bool spectrum::read_from_file(std::fstream &file){
 
 /********Data release (for testing) ****/
 data_array spectrum::copy_out_B(){
-/** \brief Return a copy of B array*/
+/** \brief Return a copy of B array
+*
+* Make a copy of the B part of data
+@return A data array containing a copy of the B data
+*/
   data_array B_copy = this->B_omega_array;
   return B_copy;
 
 }
 data_array spectrum::copy_out_g(){
-/** \brief Return a copy of g array*/
+/** \brief Return a copy of g array
+* Make a copy of the g part of data
+@return A data array containing a copy of the g data
+*/
   
   data_array g_copy = this->g_angle_array;
   return g_copy;
@@ -1074,7 +1144,11 @@ data_array spectrum::copy_out_g(){
 calc_type get_G1(spectrum * my_spect, calc_type omega){
 /** \brief G1 from Albert 2005.
 *
-*Gets the value of B^2(w) (interpolated if necessary) and the normalising constant from norm_B. NB this uses the given spectrum omega range and assumes that beyond this there is "no" wave power. NB NB we omit the \Delta\omega factor since it cancels
+*Gets the value of B^2(w) (interpolated if necessary) and the normalising constant from norm_B. NB NB we omit the \f$ \Delta\omega \f$ factor since it cancels
+\caveat This routine uses the given spectrum's omega range and assumes that beyond this there is "no" wave power. 
+@param my_spect Input spectrum to work on
+@param omega Frequency to eval. at
+@return Normalised abs-square wave power
 */
 
   my_type tmpB2;
@@ -1107,7 +1181,13 @@ calc_type get_G1(spectrum * my_spect, calc_type omega){
 calc_type get_G2(spectrum * my_spect, calc_type omega, calc_type x){
 /** \brief Get G2 from Albert 2005
 *
-* Gets the value of g(w, x) and the normalising constant from norm_g \todo Currently interpolates angle only. Perhaps interpolate on omega too?
+* Gets the value of g(w, x) and the normalising constant from norm_g 
+@param my_spect Input spectrum to work on
+@param omega Frequency to eval. at
+@param x Tan(theta) to eval. at
+@return Normalised angular contribution
+
+\todo Currently interpolates angle only. Perhaps interpolate on omega too?
 */
 
   long om_ind, norm_ind, offset;

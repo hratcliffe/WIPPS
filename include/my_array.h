@@ -53,7 +53,7 @@ public:
   explicit my_array(size_t nx, size_t ny=0, size_t nz=0, size_t nt=0);
   explicit my_array(size_t n_dims, size_t * dims);
   virtual ~my_array();
-  virtual bool is_good()const {return (data && dims);}/**< Check memory allocation etc worked*/
+  virtual bool is_good()const {return (data && dims);}/**< Check memory allocation etc worked @return True if good, false else*/
 
 /********Technical stuff making my_array a proper "object" ****/
   my_array(const my_array &src);
@@ -114,21 +114,26 @@ public:
   my_type partial_maxval(std::vector<std::pair<size_t, size_t> > ranges,std::vector<size_t> &ind);
   void smooth_1d(int n_pts);
 
+  /** Apply a function to each element of array. func must take and return a my_type or type convertible to this 
+  @param func Function to apply */
   void apply(std::function<my_type(my_type arg)> func){
-    /** Apply a function to each element of array. func must take and return a my_type or type convertible to this */
     for(size_t i=0; i< this->get_total_elements(); i++) *(this->data+i) = func(*(this->data+i));
   }
+  /** Apply a function to each element of array. func must take two my_type and return one my_type or type convertible to this
+  @param func Function to apply 
+  @param arg Second argument to function */
   void apply(std::function<my_type(my_type arg, my_type arg2)> func, my_type arg){
-    /** Apply a function to each element of array. func must take two my_type and return one my_type or type convertible to this*/
     for(size_t i=0; i< this->get_total_elements(); i++) *(this->data+i) = func(*(this->data+i), arg);
   }
+  /** Fill one array from another mapping elements using function. func must take and return a my_type or type convertible to this. Each element of the rhs is tranformed with func and placed into this array 
+  @param func Transform function to apply to elements 
+  @param rhs Array to transform*/
   void apply(std::function<my_type(my_type arg)> func, const my_array & rhs){
-    /** Fill one array from another. func must take and return a my_type or type convertible to this. Each element of the rhs is tranformed with func and placed into this array */
     if(this->n_dims != rhs.get_dims() || this->get_total_elements() != rhs.get_total_elements()) return;
     for(size_t i=0; i< this->get_total_elements(); i++) *(this->data+i) = func(*(rhs.data+i));
   }
+  /** Transform one array using another. func must take a pair of my_type and return a my_type or types convertible to this. Func is called with each element of this array and each element of rhs and the result placed back into this. @param func Function to apply @param rhs Second parameters to func*/
   void apply(std::function<my_type(my_type, my_type) > func, const my_array & rhs){
-    /** Fill one array from another. func must take a pair of my_type and return a my_type or types convertible to this. Each element of the rhs is tranformed with func and placed into this array */
     if(this->n_dims != rhs.get_dims() || this->get_total_elements() != rhs.get_total_elements()) return;
     for(size_t i=0; i< this->get_total_elements(); i++) *(this->data+i) = func(*(this->data+i), *(rhs.data+i));
   }

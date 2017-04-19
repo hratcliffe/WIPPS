@@ -21,6 +21,7 @@ controller::controller(std::string file_prefix){
 /** \brief Setup
 *
 * Create plasma object and initialise. A controller without a plasma is not meaningful. Plasma guarantees to be valid after construction, but may contain defaults if the specified file was not found. 
+@param file_prefix The file prefix to prepend to all file reads
 */
 
   my_plas = plasma(file_prefix);
@@ -62,6 +63,8 @@ bool controller::add_spectrum(std::string file){
 /** \brief Add spectrum from file
 *
 *Add spectrum read from a file, created using e.g. data_array::write_to_file or write_data in IDL
+@param file The full path to file to read
+@return 0 for success, 1 for failure
 */
 
   //Read spectrum from file
@@ -78,14 +81,18 @@ bool controller::add_spectrum(std::string file){
   }
 }
 
-bool controller::add_spectrum(int nx, int n_ang, bool separable){
+bool controller::add_spectrum(int n_om, int n_ang, bool separable){
 /** \brief Create and add spectrum
 *
 *Create a spectrum of the specified size and adds to list. See spectrum::spectrum(int n_om, int n_ang, bool separable) for details.
+@param n_om Size of omega dimension of spectrum
+@param n_ang Size of angle dimension of spectrum
+@param separable Flag determining if spectrum is separable, see spectrum class
+@return 0 for success, 1 for failure
 */
   //Create the spectrum
   spectrum * tmp_spect;
-  tmp_spect = new spectrum(nx, n_ang, separable);
+  tmp_spect = new spectrum(n_om, n_ang, separable);
   if(tmp_spect->is_good()){
     //Assign controller and add to list
     tmp_spect->my_controller = this;
@@ -99,14 +106,17 @@ bool controller::add_spectrum(int nx, int n_ang, bool separable){
   }
 }
 
-bool controller::add_d(int nx, int n_angs){
+bool controller::add_d(int n_v, int n_angs){
 /** \brief Create and add diffusion_coefficient
 *
-*Creates a diffusion coefficient of size nx x n_angs, paired with the last spectrum that was added.
+*Creates a diffusion coefficient of size n_v x n_angs, paired with the last spectrum that was added.
+@param n_v Size of velocity dimension of D
+@param n_angs Size of angle dimension of D
+@return 0 for success, 1 for failure
 */
   //Create empty diffusion coefficient
   diffusion_coeff * tmp_d;
-  tmp_d = new diffusion_coeff(nx, n_angs);
+  tmp_d = new diffusion_coeff(n_v, n_angs);
 
   if(!tmp_d->is_good()) return 1;
 
@@ -118,14 +128,16 @@ bool controller::add_d(int nx, int n_angs){
   return 0;
 }
 
-void controller::add_d_special(int nx, int n_angs){
+void controller::add_d_special(int n_v, int n_angs){
 /** \brief Create and add special diffusion_coefficient
 *
 *Creates a diffusion coefficient of size nx x n_angs. Special coefficients do not have a matching spectrum. We use them mainly to hold results of bounce-averaging.
+@param n_v Size of velocity dimension of D
+@param n_angs Size of angle dimension of D
 */
 
   diffusion_coeff * tmp_d;
-  tmp_d = new diffusion_coeff(nx, n_angs);
+  tmp_d = new diffusion_coeff(n_v, n_angs);
   tmp_d->my_controller = this;
   tmp_d->make_velocity_axis();
   tmp_d->make_pitch_axis();
@@ -150,6 +162,7 @@ void controller::get_D_size(size_t dims[2]){
 /** \brief Get the dimensions of D
 *
 *Returns D dimensions in the dims array. Note that all D ought to be created the same size, but this is not guaranteed.
+@param[out] dims The dimensions of D
 */
   dims[0] = spect_D_list[current_pair].second->get_dims(0);
   dims[1] = spect_D_list[current_pair].second->get_dims(1);
@@ -159,7 +172,8 @@ void controller::get_D_size(size_t dims[2]){
 spectrum * controller::get_current_spectrum(){
 /** \brief Return current spectrum
 *
-* Return a pointer to the current (i.e. the latest added) spectrum, or nullptr if list is empty.
+* Get the current (i.e. the latest added) spectrum
+@return Pointer to the spectrum object, nullptr if list empty
 */
   if(!spect_D_list.empty()) return spect_D_list[current_pair].first;
   else return nullptr;
@@ -169,7 +183,9 @@ spectrum * controller::get_current_spectrum(){
 spectrum * controller::get_spectrum_by_num(size_t indx){
 /** \brief Return spectrum by indx
 *
-* Return a pointer to the spectrum indx ago, or nullptr if list is empty or indx is invalid.
+* Get the spectrum indx ago.
+@param indx The index (counting backwards from the latest) of spectrum to return
+@return Pointer to the spectrum object, nullptr if list empty or indx out of range
 */
   if(indx >= spect_D_list.size()) return nullptr;
   if(!spect_D_list.empty()) return spect_D_list[current_pair - indx].first;
@@ -177,29 +193,34 @@ spectrum * controller::get_spectrum_by_num(size_t indx){
 
 }
 
-
 diffusion_coeff * controller::get_current_d(){
 /** \brief Return current D
 *
-* Return a pointer to the current (i.e. the latest added) d_coeff, or nullptr if list is empty.
+* Get the current (i.e. the latest added) d_coeff
+@return Pointer to the diffusion_coeff object, nullptr if list empty
 */
   if(!spect_D_list.empty()) return spect_D_list[current_pair].second;
   else return nullptr;
 }
+
 diffusion_coeff * controller::get_d_by_num(size_t indx){
 /** \brief Return D by indx
 *
-* Return a pointer to the D indx ago, or nullptr if list is empty or indx is invalid.
+* Get the d_coeff indx ago
+@param indx The index (counting backwards from the latest) of D to return
+@return Pointer to the D object, nullptr if list empty or indx out of range
 */
   if(indx >= spect_D_list.size()) return nullptr;
   if(!spect_D_list.empty()) return spect_D_list[current_pair - indx].second;
   else return nullptr;
 
 }
+
 diffusion_coeff * controller::get_special_d(){
 /** \brief Return current special D
 *
-* Return a pointer to the current (i.e. the latest added) special d_coeff, or nullptr if list is empty.
+* Get the current (i.e. the latest added) special d_coeff
+@return Pointer to the diffusion_coeff object, nullptr if list empty
 */
   if(!d_specials_list.empty()) return d_specials_list[current_special_d];
   else return nullptr;
@@ -209,7 +230,8 @@ diffusion_coeff * controller::get_special_d(){
 void controller::bounce_average(bounce_av_data bounce_dat){
 /** \brief Bounce average D
 *
-*Assumes the list contains D in order across space and performs bounce average to create special D. We use bounce_data to inform the field shape etc etc. The end result on each processor should be something which just has to be plain-summed by the mpi part. Calls controller::handle_d_mpi() and various bounce helpers @param bounce_dat The bounce averaging info such as the type info
+*Assumes the list contains D in order across space and performs bounce average to create special D. We use bounce_data to inform the field shape etc etc. The end result on each processor should be something which just has to be plain-summed by the mpi part. Calls controller::handle_d_mpi() and various bounce helpers 
+@param bounce_dat The bounce averaging info such as the type info
 */
 
   if(spect_D_list.size() == 0) return;
@@ -347,7 +369,10 @@ void controller::handle_d_mpi(){
 bool controller::save_spectra(std::string pref){
 /** \brief Save spectra to files (one per chunk)
 *
-* Writes each spectrum object to a file, identified by space range and time. \todo Add logging?
+* Writes each spectrum object to a file, identified by space range and time.
+@param pref File prefix, including path etc
+@return 0 for success, 1 for failure
+\todo Add logging?
 */
 
   std::fstream file;
@@ -367,6 +392,8 @@ bool controller::save_D(std::string pref){
 /** \brief Save D's to files (one per chunk)
 *
 * Writes each spectrum object to a file, identified by space range and time. Note root will also write a bounce averaged file
+@param pref File prefix, including path etc
+@return 0 for success, 1 for failure
 */
 
   std::fstream file;
@@ -399,9 +426,12 @@ bool controller::save_D(std::string pref){
 }
 
 my_type solve_mirror_latitude(my_type alpha_eq, bool print_iters){
-/** \brief Gets the mirror latitude for equatorial pitch angle alpha_eq in RADIANs
+/** \brief Gets the mirror latitude for equatorial pitch angle alpha_eq
 *
 *Solve the mirror latitude polynomial L^6 + (3 L - 4) sin^4 alpha_eq where L = cos^2 lambda_mirror
+@param alpha_eq Equatorial pitch angle in radians
+@param print_iters Flag to print results of all iterations
+@return The value of mirror latitude in radians
 */
   my_type min_alpha = 0.00001;//Minimum pitch angle to attempt solution. Below this we default to pi. Note this is a mirror latitude of over 89.2 degrees
   if(std::abs(alpha_eq) < min_alpha) return pi/2;

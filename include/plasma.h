@@ -16,16 +16,17 @@
 class spectrum;
 class diffusion_coeff;
 
+typedef enum p_state {p_none, p_good, p_default, p_overflow, p_underflow} plasma_state;/**< State of plasma and result of attempted define from file*/
+
 /** \brief Plasma parameters and dispersion
 *
 *Plasma objects contain specifications for a plasma, including density, B field, and species composition. In general we configure them from a file, plasma.conf, and no other constructor is provided. After construction, the plasma will be valid, but if given file is not found or reading fails, default values will be used. Two cyclotron frequencies are available, local and reference. For varying B fields, a reference B field should be given and the local om_ce will match this. The reference value always matches that in the deck_constants struct.
 *We offer functions to solve plasma dispersion "exactly" using the various get_root, get_phi* etc functions, or get_dispersion which uses various analytic approximations, usually high density ones. For the high-density approximations, the FIRST species is assumed to be the electrons. The former functions are modified from file mufunctions3.f90 author  Clare E. J. Watt (18/05/10). From there: Note that mu is calculated using the Appleton-Hartree relation, and the choice of sign is obtained from Albert [2005].
 *An additional function to simultaneously solve the Doppler type resonance condition, and the approximate dispersion relation are provided.
-* Note that no spatial variations in density or ambient B field are included. 
 * @author Heather Ratcliffe  @date 07/10/2015 \ingroup cls
-*/
+* \caveat Note that no spatial variations in density or ambient B field are included in the dispersion calculations here
 
-typedef enum p_state {p_none, p_good, p_default, p_overflow, p_underflow} plasma_state;
+*/
 
 class plasma{
 
@@ -55,13 +56,18 @@ public:
   explicit plasma(std::string file_prefix, my_type Bx_local=-1);
 
 /********Get/set functions ****/
-  bool is_good(){return is_setup != p_none;}/**<Whether everything is setup*/
+  bool is_good(){return is_setup != p_none;}/**<Whether everything is setup @return Boolean true is good, false else*/
   calc_type get_omega_ref(std::string code)const;
-//  void get_density(){;}/**< Density is assumed constant*/
-  calc_type get_B0(){return B0;}/**<B0 can vary in space*/
+  calc_type get_B0(){return B0;}/**<Return B0. This can vary in space @return Value of B0 for this plasma*/
   void set_B0(my_type B0);
 
 /********Dispersion solvers ****/
+  /** \brief Solve plasma dispersion only
+  *
+  * Solve dispersion, omitting extended phi calcs
+  @param w Wave frequency
+  @param psi Wave normal angle 
+  @return mu_dmudom struct containing mu and derivs */
   mu_dmudom get_mu(calc_type w, calc_type psi) const{return get_phi_mu_om(w, psi, 0.0, 0, 1.0, true);}
   mu_dmudom get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int n, calc_type gamma_particle, bool skip_phi = false, bool Righthand=true)const;
   mu_dmudom get_high_dens_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int n, calc_type gamma_particle, bool skip_phi=false, bool Righthand=true)const;

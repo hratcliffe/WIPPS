@@ -90,7 +90,7 @@ class tests{
     void setup_tests();
     void cleanup_tests();
     void create_test_outdir();
-    bool no_clean = false;
+    bool no_clean = false;/**< If true, do not clean up testing output directory*/
     void clean_test_outdir(bool no_clean);
   public:
     std::map<std::string, int> runtime_flags;/**<Strings for runtime control*/

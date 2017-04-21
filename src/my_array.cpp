@@ -1104,6 +1104,8 @@ my_type my_array::minval(size_t offset){
 /** \brief Find minimum value of data
 *
 *Finds the minimum of the array after offset, using linear search through contiguous memory. Offset should be obtained using one of the get_index functions.
+@param offset 1-D array offset to start search from
+@return The minimum value of data
 */
   size_t total_size=get_total_elements();
   if(offset > total_size) return std::numeric_limits<my_type>::min();
@@ -1114,7 +1116,10 @@ my_type my_array::minval(size_t offset){
 my_type my_array::minval(std::vector<size_t> &ind, size_t offset){
 /** \brief Find minimum value of data
 *
-*Finds the minimum of the array after offset, using linear search through contiguous memory. Offset should be obtained using one of the get_index functions. The ind vector returns the indices where the minimum was located.
+*Finds the minimum of the array after offset, using linear search through contiguous memory. Offset should be obtained using one of the get_index functions.
+@param offset 1-D array offset to start search from
+@param[out] ind The indices where min value is located
+@return The minimum value of data
 */
 
   size_t total_size=get_total_elements();
@@ -1130,6 +1135,8 @@ my_type my_array::maxval(size_t offset){
 /** \brief Find maximum value of data
 *
 *Finds the maximum of the array after offset, using linear search through contiguous memory. Offset should be obtained using one of the get_index functions.
+@param offset 1-D array offset to start search from
+@return The maximum value of data
 */
 
   size_t total_size=get_total_elements();
@@ -1141,7 +1148,10 @@ my_type my_array::maxval(size_t offset){
 my_type my_array::maxval(std::vector<size_t> &ind, size_t offset){
 /** \brief Find maximum value of data
 *
-*Finds the maximum of the array after offset, using linear search through contiguous memory. Offset should be obtained using one of the get_index functions. The ind vector returns the indices where the maximum was located.
+*Finds the maximum of the array after offset, using linear search through contiguous memory. Offset should be obtained using one of the get_index functions.
+@param offset 1-D array offset to start search from
+@param[out] ind The indices where max value is located
+@return The maximum value of data
 */
 
   size_t total_size=get_total_elements();
@@ -1179,7 +1189,8 @@ my_type my_array::partial_maxval(std::vector<std::pair<size_t, size_t> > ranges,
 void my_array::smooth_1d(int n_pts){
 /** \brief Smooth a 1-d data_array
 *
-*Smooths the data backing array.
+*Smooths the data backing array. This does strange things for non-1d data at the ends.
+@param n_pts Smoothing width
 */
   if(n_dims !=1) return;
   inplace_boxcar_smooth(data, (int) get_total_elements(), n_pts);

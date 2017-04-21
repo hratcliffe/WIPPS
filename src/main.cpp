@@ -1,10 +1,3 @@
-/** \file main.cpp \brief Main program
-*
-* Calculates a diffusion coefficient from data. Data can be either a range of SDF files or a list of FFT or spectrum files, from e.g. supplied generate_ffts utility. The resulting particle diffusion coefficient are calculated using Lyons 1974 a, b, Albert 2005 and such. Note that this makes no sense for E fields!
-* Depends on the SDF file libraries, the FFTW library, and boost's math for special functions. A set of test arguments is supplied. Call using ./main `<test_pars` to use these. Or try ./main -h for argument help
-  \author Heather Ratcliffe \date 18/09/2015.
-*/
-
 
 #include <math.h>
 #include <cmath>
@@ -32,15 +25,34 @@
 #include "d_coeff.h"
 #include "spectrum.h"
 
+
+/** \defgroup utils Available programs
+*@{ 
+*\brief Top-level programs available
+*
+*Contains programs to perform FFTs, create spectra, calculate growth etc. Build with `make utils` List with `make list_utils` Command line argument help is available using ./{util_name} -h
+*/
+
+/** \defgroup main_prog Info program
+*@{
+\brief Info program
+*
+* This prints information about the code or compiled in test mode it runs the tests and prints results.
+*/
+
 #ifndef RUN_TESTS_AND_EXIT
 const char PER_UTIL_HELP_ID = ' ';/**<ID to identify help file for this utility*/
 #endif
 
-int main(int argc, char *argv[]){
-/**
-*In theory, these classes and functions should be named well enough that the function here is largely clear. Remains to be seen, eh?
+/** \brief Main program
 *
-*/
+* Compiled in test MODE this runs the testing code. Otherwise it prints info.
+  \author Heather Ratcliffe \date 18/09/2015.
+  @param argc Command line argument count
+  @param argv Command line arguments
+  @return System error code */
+
+int main(int argc, char *argv[]){
   
   int ierr = local_MPI_setup(argc, argv);
   if(ierr){
@@ -76,4 +88,5 @@ int main(int argc, char *argv[]){
   
   exit(0);
 }
-
+/**@}*/
+/**@}*/

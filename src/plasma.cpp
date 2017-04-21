@@ -179,7 +179,7 @@ void plasma::set_B0(my_type B0){
 mu_dmudom plasma::get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int n, calc_type gamma_particle, bool skip_phi, bool Righthand)const{
 /** \brief Solve plasma dispersion and extensions
 *
-*Solves Appleton-Hartree plasma dispersion and returns struct containing mu, its derivatives and error code. Also returns the Phi defined by Lyons 1974. I.e. the set of values needed to calculate D See \ref mu_dmudom
+*Solves Appleton-Hartree plasma dispersion and returns struct containing mu, its derivatives and error code. Also returns the Phi defined by Lyons \cite Lyons1974B. I.e. the set of values needed to calculate D See \ref mu_dmudom
 *
 *Duplicated from mufunctions by CEJ Watt
 @param w Wave frequency 
@@ -191,7 +191,7 @@ mu_dmudom plasma::get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int
 @param Righthand True for Righthand wave mode, false for left
 @return mu_dmudom object containing mu info
 *
-*On notation: within this routine we use notation as from mufunctions3.f90. In the return values as defined in support.h we match with Lyons and Albert. Thus in my_mu, we have lat, r, theta, omega for polar coordinate, r, wave normal angle and wave frequency
+*On notation: within this routine we use notation as from mufunctions3.f90. In the return values as defined in support.h we match with Lyons \cite Lyons1974B and Albert \cite Albert2005 . Thus in my_mu, we have lat, r, theta, omega for polar coordinate, r, wave normal angle and wave frequency
  */
  
 #ifdef DEBUG_ALL

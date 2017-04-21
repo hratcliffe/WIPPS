@@ -7,3 +7,11 @@ dl.caveats
         border-left:4px solid;
         border-color: #FF00FF;
 }
+
+/*Extra highlight for inline code blocks*/
+code
+{
+        border: 1px solid #C4CFE5;
+        background-color:#FBFCFD;
+}
+

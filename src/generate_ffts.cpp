@@ -22,14 +22,13 @@
 #include "d_coeff.h"
 #include "spectrum.h"
 
-/** \defgroup utils Utility programs
-*@{ */
+/** \ingroup utils */
 
-/** \defgroup fft_util fft generator utility
+/** \defgroup fft_util FFT generator utility
 *@{ 
 *\brief Utility to read files and perform Fourier transforms
 *
-*Opens files, extracts specified fields, does fft, trims to specified boundaries and writes to file. Can optionally flatten the raw data before ft-ing or the ft-d data before output. This routine can use multiple cores to process seperate spatial blocks.
+*Opens files, extracts specified fields, does FFt, trims to specified boundaries and writes to file. Can optionally flatten the raw data before Ft-ing or the FT-d data before output. This routine can use multiple cores to process seperate spatial blocks.
 \verbinclude help_g.txt
   \author Heather Ratcliffe \date 04/07/2016
 
@@ -43,10 +42,16 @@ struct gen_cmd_line{
   my_type flat_fft_min;/**<Lower band limit for FFT flattening*/
   my_type flat_fft_max;/**<Upper band limit for FFT flattening*/
   std::vector<my_type> limits;/**< Limits to trim output FFT to*/
-};/**<Additional command line arguments for this utility*/
+};/**<\brief Additional command line arguments for FFT generation utility*/
 
 gen_cmd_line special_command_line(int argc, char *argv[]);
 
+/** \brief Main program
+*
+* Generate an FFT
+  @param argc Command line argument count
+  @param argv Command line arguments
+  @return System error code */
 int main(int argc, char *argv[]){
 
   int err;

@@ -11,8 +11,8 @@
 #include "d_coeff.h"
 #include "spectrum.h"
 
-/** \defgroup utils Utility programs
-*@{ */
+/** \ingroup utils
+ */
 
 /** \defgroup cutout_util FFT cutout utility
 *@{ *\brief Utility to trim FFTd data to specified axis limits
@@ -31,9 +31,16 @@ struct cutout_args{
   std::string file_prefix;/**<File path prepended to all filenames*/
   std::vector<my_type> limits;/**<Limits to use for cutout*/
 
-};/**< Command line arguments for this utility*/
+};/**< \brief Command line arguments for FFT cutout utility*/
 
 cutout_args cutout_process_command_line(int argc, char *argv[]);
+
+/** \brief Main program
+*
+* Read an FFT, cutout to limits and print to new file
+  @param argc Command line argument count
+  @param argv Command line arguments
+  @return System error code */
 
 int main(int argc, char *argv[]){
 

@@ -765,7 +765,7 @@ bool spectrum::calc_norm_B(){
 bool spectrum::calc_norm_g(size_t om_ind){
 /** \brief Normalise g_w(x)
 *
-*Calculate the norm of g used in e.g. denom of Albert eq 3 or calc'd in derivations.tex. Contains one value for each omega entry.
+*Calculate the norm of g used in e.g. denom of Albert \cite Albert2005 Eq 3 or calc'd in Derivations.tex \cite Derivations. Contains one value for each omega entry.
 @param om_ind Omega index to calculate norm at 
 @return 0 (success), 1 (error e.g. out of range)
 */
@@ -1142,13 +1142,13 @@ data_array spectrum::copy_out_g(){
 /********Main spectral calculations ****/
 
 calc_type get_G1(spectrum * my_spect, calc_type omega){
-/** \brief G1 from Albert 2005.
+/** \brief G1 from \cite Albert2005
 *
 *Gets the value of B^2(w) (interpolated if necessary) and the normalising constant from norm_B. NB NB we omit the \f$ \Delta\omega \f$ factor since it cancels
-\caveat This routine uses the given spectrum's omega range and assumes that beyond this there is "no" wave power. 
 @param my_spect Input spectrum to work on
 @param omega Frequency to eval. at
 @return Normalised abs-square wave power
+\caveat This routine uses the given spectrum's omega range and assumes that beyond this there is "no" wave power. 
 */
 
   my_type tmpB2;
@@ -1179,7 +1179,7 @@ calc_type get_G1(spectrum * my_spect, calc_type omega){
 }
 
 calc_type get_G2(spectrum * my_spect, calc_type omega, calc_type x){
-/** \brief Get G2 from Albert 2005
+/** \brief Get G2 from \cite Albert2005
 *
 * Gets the value of g(w, x) and the normalising constant from norm_g 
 @param my_spect Input spectrum to work on

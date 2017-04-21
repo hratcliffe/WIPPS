@@ -22,13 +22,20 @@
 
 class plasma;
 
+/** \ingroup tests
+*\defgroup tests_data Calculation tests
+\brief Test physics and calculations
+*
+* Tests for physics modelling and calculation details
+*@{*/
+
 my_type calc_I_omega(my_type omega, spectrum * my_spect, controller * my_contr);
 
 /**Check plasma functions, get_omega and dispersion relation
 */
 class test_entity_plasma : public test_entity{
   private:
-    plasma * plas;
+    plasma * plas;/**< Pointer to plasma object under test*/
     int resonant_freq();
     int high_density();
     int other_modes();
@@ -44,10 +51,10 @@ class test_entity_plasma : public test_entity{
 /** Check spectrum calculations, such as test spectrum derivation etc */
 class test_entity_spectrum : public test_entity{
   private:
-    data_array test_dat_fft;
-    data_array test_spect;
-    controller * test_contr;
-    std::string file_prefix;
+    data_array test_dat_fft;/**< Holds FFTd test data*/
+    data_array test_spect;/**< Holds test spectral data*/
+    controller * test_contr;/**< Controller for testing*/
+    std::string file_prefix;/**< File prefix prepended to all test files*/
     int setup();
     int basic_tests1();
     int basic_tests2();
@@ -63,15 +70,15 @@ class test_entity_spectrum : public test_entity{
 /** Full check of deriving a "level one" FFT and spectrum from the various input data formats */
 class test_entity_levelone: public test_entity{
   private:
-    data_array dat_fft;
-    data_array dat;
-    controller * test_contr;
-    reader * my_reader;
-    std::string file_prefix;
-    size_t time_in[3];
-    size_t space_in[2];
-    char block_id[ID_SIZE];
-    int n_tims;
+    data_array dat_fft;/**< Holds FFTd test data*/
+    data_array dat;/**< Holds raw test data*/
+    controller * test_contr;/**< Controller for testing*/
+    reader * my_reader;/**< File reader for testing*/
+    std::string file_prefix;/**< File prefix prepended to all test files*/
+    size_t time_in[3];/**< Time specs for data to read*/
+    size_t space_in[2];/**< Space specs for data to read*/
+    char block_id[ID_SIZE];/**< Name of block to read*/
+    int n_tims;/**<Number of times to read*/
     int setup();
     int basic_tests(size_t n_dims_in, int flatten_on, bool has_freq, std::string outfile_tag = "", int total_fft = -1, my_type band_min = 0.0, my_type band_max = 0.0);
   public:
@@ -84,8 +91,8 @@ class test_entity_levelone: public test_entity{
 /** Spectrum to D test. Setup sample data in a spectrum with analytic solvable form. Calculate resulting D. Cross check*/
 class test_entity_d : public test_entity{
   private:
-    controller * test_contr;
-    std::string file_prefix;
+    controller * test_contr;/**< Controller for testing*/
+    std::string file_prefix;/**< File prefix prepended to test files*/
     int basic_tests();
     int full_D_tests();
   public:
@@ -97,8 +104,8 @@ class test_entity_d : public test_entity{
 /** Test bounce averaging. Setup dummy D data across multiple blocks and average. Cross check with analytic results*/
 class test_entity_bounce: public test_entity{
   private:
-    controller * test_contr;
-    std::string file_prefix;
+    controller * test_contr;/**< Controller for testing*/
+    std::string file_prefix;/**< File prefix prepended to test files*/
     int bounce_cases(bounce_av_data bounce_dat);
   public:
     test_entity_bounce();
@@ -112,11 +119,12 @@ class test_entity_nonthermal: public test_entity{
     int test_lookup();
   public:
     test_entity_nonthermal();
-    virtual ~test_entity_nonthermal();
+    virtual ~test_entity_nonthermal(){;}
     virtual int run();
 
 };
 
+/** @} */
 
 #endif
 #endif

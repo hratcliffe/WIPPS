@@ -428,7 +428,7 @@ bool controller::save_D(std::string pref){
 my_type solve_mirror_latitude(my_type alpha_eq, bool print_iters){
 /** \brief Gets the mirror latitude for equatorial pitch angle alpha_eq
 *
-*Solve the mirror latitude polynomial L^6 + (3 L - 4) sin^4 alpha_eq where L = cos^2 lambda_mirror
+*Solve the mirror latitude polynomial \f$L^6 + (3 L - 4) \sin^4 \alpha_{eq} =0\f$ where \f$L = \cos^2 \lambda_{mirror} \f$
 @param alpha_eq Equatorial pitch angle in radians
 @param print_iters Flag to print results of all iterations
 @return The value of mirror latitude in radians

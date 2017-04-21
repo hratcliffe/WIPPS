@@ -25,17 +25,28 @@ quasi-particle treatment of whistlers
 
 */
 
+/** \defgroup tests Test code
+\brief Test framework and tests
+*
+* Contains the testing framework and information on all tests
+*@{
+*\defgroup test_bed Test framework
+\brief Test framework and constants
+*
+* Contains test_bed, test entity prototype, constants and testing helper functions
+*@{*/
+
 //--- Error code constants to report given sorts of errors ----
-const int TEST_PASSED = 0;
-const int TEST_WRONG_RESULT = 1;
-const int TEST_NULL_RESULT = 2;
-const int TEST_ASSERT_FAIL = 4;
-const int TEST_USERDEF_ERR1 = 8;
-const int TEST_USERDEF_ERR2 = 16;
-const int TEST_USERDEF_ERR3 = 32;
-const int TEST_USERDEF_ERR4 = 64;
+const int TEST_PASSED = 0;/**< No error */
+const int TEST_WRONG_RESULT = 1;/**< Wrong or unexpected result*/
+const int TEST_NULL_RESULT = 2;/**< Null result, no effect or empty object*/
+const int TEST_ASSERT_FAIL = 4;/**< Assignment failures, thrown exceptions, invalid results */
+const int TEST_USERDEF_ERR1 = 8;/**< Unspecified error, see tests::set_userdef_error()*/
+const int TEST_USERDEF_ERR2 = 16;/**< Unspecified error, see tests::set_userdef_error()*/
+const int TEST_USERDEF_ERR3 = 32;/**< Unspecified error, see tests::set_userdef_error()*/
+const int TEST_USERDEF_ERR4 = 64;/**< Unspecified error, see tests::set_userdef_error()*/
 const int TEST_REMOVE_ERR = 128;/**<Temporary flag turning any other non-fatal errors into warnings only*/
-const int TEST_FATAL_ERR = 256;
+const int TEST_FATAL_ERR = 256;/**< Use in conjunction with a specific error if test cannot continue*/
 const int err_tot = 10;
 const calc_type PRECISION = 1e-10;/**< Constant for equality at normal precision i.e. from rounding errors etc*/
 const calc_type NUM_PRECISION = 1e-6;/**< Constant for equality at good numerical precision, e.g. from numerical integration over 100-1000 pts*/
@@ -55,7 +66,7 @@ class test_entity{
     
     test_entity(){;}
     virtual ~test_entity(){;}
-    virtual int run()=0;/*Pure virtual because we don't want an instances of this template*/
+    virtual int run()=0;/**<Run the test. Pure virtual means this must be defined in any concrete class @return Error code from test, one of err_codes */
 
 };
 
@@ -74,9 +85,10 @@ class test_entity{
 *
 \htmlinclude tests_runtime_flags.txt
 */
-/*To include flags in these docs, include comment line in any functions in the relevant test_entity of the form
-"*Set runtime_flag "flag_name" to <action description>"
+/** To include flags in these docs, include comment line in any functions in the relevant test_entity of the form
+"*Set runtime_flag "flag_name" to <action description>*" noting leading and trailing Doxy breaks (* with newline)
 */
+/** \todo Remember to include some inverse tests to ensure things are actually doing something \todo Create test data for double-precision!*/
 
 class tests{
   private:
@@ -85,7 +97,7 @@ class tests{
     std::vector<test_entity*> test_list;/**< List of tests to run*/
     int verbosity;/**< Verbosity level of output*/
     std::string get_printable_error(int err, int test_id);
-    std::string get_color_escape(char col);
+    std::string get_colour_escape(char col);
     bool is_fatal(int err);
     void setup_tests();
     void cleanup_tests();
@@ -108,6 +120,9 @@ class tests{
 };
 
 extern tests * test_bed; /**< Global testbed, defined in tests.cpp*/
+
+/** @} */
+/** @} */
 
 #endif
 #endif

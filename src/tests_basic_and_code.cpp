@@ -23,6 +23,7 @@
 //Provides Bessel functions, erf, and many more
 
 test_entity_reader::test_entity_reader(){
+/** \brief Setup reader test*/
   name = "reader class";
   char block_id[ID_SIZE]= "run_info";
   test_rdr = new reader("./files/test", block_id);
@@ -30,7 +31,7 @@ test_entity_reader::test_entity_reader(){
   accum_reader = new reader("./files/accum", block_id2);
 }
 test_entity_reader::~test_entity_reader(){
-
+/** \brief Teardown reader test*/
   delete test_rdr;
   delete accum_reader;
 }
@@ -39,6 +40,7 @@ int test_entity_reader::run(){
 /**\brief Reads test data and checks
 *
 *For normal data we just check a test file opens and find the size from the final SDF block and test against on-disk size.  Then we read a distrib block and check it worked etc. For accumulated data we use test data with values corresponding to row in file, and check the values and correctness at each end.
+@return Error code
 */
   int err = TEST_PASSED;
   
@@ -93,12 +95,19 @@ int test_entity_reader::run(){
 
 //----------------------------------------------------------------
 test_entity_data_array::test_entity_data_array(){
+/** \brief Setup data array test*/
   name = "data array class";
-  test_array = data_array(10, 10);
 }
 
 bool compare_2d(data_array const &lhs, data_array const &rhs, bool no_dims_match){
-/**Helper to compare two arrays in 2-d. Will early quit on first difference. If no_dims_match is set, it will compare only the overlap @return 0 for match, 1 for error. NOTE the == op on arrays will only work for same dimensions*/
+/** \brief Compare arrays
+*
+*Helper to compare two arrays in 2-d. Will early quit on first difference. NOTE the == op on arrays will only work for same dimensions
+@param lhs First array
+@param rhs Second array
+@param no_dims_match If set, it will compare only the overlapping part for data
+@return 0 for match, 1 for error
+*/
   if(!no_dims_match){
     if(lhs.get_dims() != rhs.get_dims()) return 1;
     for(size_t i=0; i< lhs.get_dims(); i++) if(lhs.get_dims(i) != rhs.get_dims(i)) return 1;
@@ -118,7 +127,14 @@ bool compare_2d(data_array const &lhs, data_array const &rhs, bool no_dims_match
 
 }
 bool compare_3d(data_array &lhs, data_array &rhs, bool no_dims_match){
-/**Helper to compare two arrays in 3-d. Will early quit on first difference. If no_dims_match is set, it will compare only the overlap @return 0 for match, 1 for error*/
+/** \brief Compare arrays
+*
+*Helper to compare two arrays in 2-d. Will early quit on first difference. NOTE the == op on arrays will only work for same dimensions
+@param lhs First array
+@param rhs Second array
+@param no_dims_match If set, it will compare only the overlapping part for data
+@return 0 for match, 1 for error
+*/
   if(!no_dims_match){
     if(lhs.get_dims() != rhs.get_dims()) return 1;
     for(size_t i=0; i< lhs.get_dims(); i++) if(lhs.get_dims(i) != rhs.get_dims(i)) return 1;
@@ -143,9 +159,10 @@ bool compare_3d(data_array &lhs, data_array &rhs, bool no_dims_match){
 }
 
 int test_entity_data_array::run(){
-/** \brief Puts data into selected elements of a data array and reads back. Checks indexing, and bounds.
+/** \brief Test data arrays
 *
-*
+*Puts data into selected elements of a data array and reads back. Checks indexing, and bounds.
+@return Error code
 */
   int err = TEST_PASSED;
 
@@ -162,46 +179,69 @@ int test_entity_data_array::run(){
   return err;
 }
 
-int test_entity_data_array::set_vals_2d(){
-/**Assign each element and axis element to varying values.*/
+int test_entity_data_array::set_vals_2d_and_sum(data_array &array, my_type &total){
+/** \brief Create 2-d test array
+*
+*Assign each element of test_array and its axis elements to varying values. 
+@param array The array to assign
+@param[out] total Sum of values assigned
+@return Error code
+*/
 
   int err = TEST_PASSED;
   bool tmp_err;
-
-  total_all = 0.0; //Preserve total of all vals
-  for(size_t i=0; i<test_array.get_dims(0); i++){
-    for(size_t j =0; j<test_array.get_dims(1); j++){
-      tmp_err=test_array.set_element(i, j, (i+1)*(2*j+1));
+  if(array.get_dims() != 2) return TEST_ASSERT_FAIL;
+  total = 0.0; //Preserve total of all vals
+  for(size_t i = 0; i < array.get_dims(0); i++){
+    for(size_t j = 0; j < array.get_dims(1); j++){
+      tmp_err = array.set_element(i, j, (i+1)*(2*j+1));
       if(tmp_err) err |= TEST_ASSERT_FAIL;
-      total_all += (i+1)*(2*j+1);
+      total += (i+1)*(2*j+1);
     }
   }
-  for(size_t i=0; i<test_array.get_dims(); i++){
-    for(size_t j =0; j<test_array.get_dims(i); j++){
-      tmp_err=test_array.set_axis_element(i, j, j*(i+1));
+  for(size_t i = 0; i < array.get_dims(); i++){
+    for(size_t j = 0; j < array.get_dims(i); j++){
+      tmp_err = array.set_axis_element(i, j, j*(i+1));
       if(tmp_err) err |= TEST_ASSERT_FAIL;
     }
   }
   return err;
 }
 
-int test_entity_data_array::set_vals_3d(){
-/**Assign each element and axis element to varying values.*/
+int test_entity_data_array::set_vals_2d(data_array &array){
+/** \brief Create 2-d test array
+*
+*Assign each element of test_array and its axis elements to varying values. 
+@param array The array to assign. Should be 2-d of any size
+@return Error code*/
+
+  my_type tmp;
+  return set_vals_2d_and_sum(array, tmp);
+}
+
+int test_entity_data_array::set_vals_3d(data_array &array){
+/** \brief Create 3-d test array
+*
+*Assign each element of test_array and its axis elements to varying values.
+@param array The array to assign. Should be 3-d of any size
+@return Error code
+*/
 
   int err = TEST_PASSED;
   bool tmp_err;
+  if(array.get_dims() != 3) return TEST_ASSERT_FAIL;
 
-  for(size_t i=0; i<test_array.get_dims(0); i++){
-    for(size_t j =0; j<test_array.get_dims(1); j++){
-      for(size_t k =0; k<test_array.get_dims(2); k++){
-        tmp_err=test_array.set_element(i, j, k, (i+1)*(2*j+1)*(4*k+1));
+  for(size_t i = 0; i<array.get_dims(0); i++){
+    for(size_t j = 0; j<array.get_dims(1); j++){
+      for(size_t k = 0; k<array.get_dims(2); k++){
+        tmp_err=array.set_element(i, j, k, (i+1)*(2*j+1)*(4*k+1));
         if(tmp_err) err |= TEST_ASSERT_FAIL;
       }
     }
   }
-  for(size_t i=0; i<test_array.get_dims(); i++){
-    for(size_t j =0; j<test_array.get_dims(i); j++){
-      tmp_err=test_array.set_axis_element(i, j, j*(i+1));
+  for(size_t i = 0; i<array.get_dims(); i++){
+    for(size_t j = 0; j<array.get_dims(i); j++){
+      tmp_err=array.set_axis_element(i, j, j*(i+1));
       if(tmp_err) err |= TEST_ASSERT_FAIL;
     }
   }
@@ -209,20 +249,25 @@ int test_entity_data_array::set_vals_3d(){
 }
 
 int test_entity_data_array::assign(){
-/** Set values and check basic assignment worked*/
+/** \brief Check basic assignments
+*
+*Set values and check basic assignment worked
+@return Error code */
+
   int err = TEST_PASSED;
   my_type val;
-  err |= this->set_vals_2d();
+  data_array test_array = data_array(10, 10);
+  err |= this->set_vals_2d(test_array);
 
   //test assignments worked
-  for(size_t i=0; i<test_array.get_dims(0); i++){
-    for(size_t j =0; j<test_array.get_dims(1); j++){
+  for(size_t i = 0; i<test_array.get_dims(0); i++){
+    for(size_t j = 0; j<test_array.get_dims(1); j++){
       val = test_array.get_element(i,j);
       if(val != (i+1)*(2*j+1)) err |=TEST_WRONG_RESULT;
     }
   }
-  for(size_t i=0; i<test_array.get_dims(); i++){
-    for(size_t j =0; j<test_array.get_dims(i); j++){
+  for(size_t i = 0; i<test_array.get_dims(); i++){
+    for(size_t j = 0; j<test_array.get_dims(i); j++){
       val=test_array.get_axis_element(i, j);
       if(val != (i+1)*j) err |=TEST_WRONG_RESULT;
     }
@@ -232,9 +277,14 @@ int test_entity_data_array::assign(){
 }
 
 int test_entity_data_array::basic_tests(){
-/** Test maxval, total etc etc, resizer, maths*/
+/** \brief test basic array functions
+*
+*Test maxval, total etc etc, resizer, maths
+@return Error code */
 
   int err = TEST_PASSED;
+  data_array test_array = data_array(10, 10);
+  set_vals_2d(test_array);
   if(!test_array.is_good()) return TEST_ASSERT_FAIL;
 
   //test maxval function
@@ -278,12 +328,14 @@ int test_entity_data_array::basic_tests(){
   //Test total and averagers
   //Resize up and refill
   test_array = data_array(10, 10);
-  set_vals_2d();
+  my_type total_all;
+  set_vals_2d_and_sum(test_array, total_all);
+  //Calculate assigned total
   //Total up in both dimensions and compare to stored total
   data_array test_array2 = test_array.total(1);
   test_array2 = test_array2.total(0);
   my_type tot = test_array2.get_element((size_t)0);
-  if(this->total_all != tot){
+  if(total_all != tot){
     err |= TEST_WRONG_RESULT;
     test_bed->report_info("Totaler error", 1);
   }else{
@@ -291,11 +343,11 @@ int test_entity_data_array::basic_tests(){
   }
   
   test_array = data_array(10, 10);
-  set_vals_2d();
+  set_vals_2d_and_sum(test_array, total_all);
   test_array2 = test_array.average(1);
   test_array2 = test_array2.average(0);
   tot = test_array2.get_element((size_t)0);
-  if(this->total_all/100.0 != tot){
+  if(total_all/100.0 != tot){
     err |= TEST_WRONG_RESULT;
     test_bed->report_info("Averager error", 1);
   }else{
@@ -315,7 +367,7 @@ int test_entity_data_array::basic_tests(){
   }
 
   test_array = data_array(10, 10);
-  set_vals_2d();
+  set_vals_2d(test_array);
 
   //Test element-wise apply with simple +1 and log of constant values
   std::function<calc_type(calc_type)> plus1_function = [](calc_type el) -> calc_type { return el+1.0; } ;
@@ -353,7 +405,7 @@ int test_entity_data_array::basic_tests(){
   }
   
   test_array = data_array(10, 10);
-  set_vals_2d();
+  set_vals_2d(test_array);
   
   //Test apply cross array using subtracting
   //Difference identical arrays and compare to 0-array. Also tests zero_data function
@@ -381,12 +433,15 @@ int test_entity_data_array::basic_tests(){
 }
 
 int test_entity_data_array::three_d_and_shift(){
-/** Test 3-d resizer and shift*/
+/** \brief Test 3-d resizer and shift
+*
+* Tests resize in 3-d and shift in 3-d. If latter works, it should work in 2 or 1-d definitely.
+@return Error code */
 
   int err = TEST_PASSED;
   //And now a 3-d version
-  test_array = data_array(10, 10, 10);
-  err |= set_vals_3d();
+  data_array test_array = data_array(10, 10, 10);
+  err |= set_vals_3d(test_array);
   size_t new3 = 5;
   size_t new2 = 6;
 
@@ -448,12 +503,16 @@ int test_entity_data_array::three_d_and_shift(){
 }
 
 int test_entity_data_array::technical_tests(){
-/** Check things like copy constructors
-*/
+/** \brief Technical testing
+*
+*Check things like copy constructors
+@return Error code */
 
   test_bed->report_info("Checking technical aspects", 2);
 
+  //Create empty array
   data_array test_array2 = data_array(10, 10);
+  set_vals_2d(test_array2);
 
   int err = TEST_PASSED;
   data_array dat = test_array2;
@@ -493,14 +552,17 @@ int test_entity_data_array::technical_tests(){
 }
 
 int test_entity_data_array::io_tests(){
-/** Check data_array write to file and then read*/
+/** \brief Check read/write
+*
+*Check data_array write to file and then read
+@return Error code */
 
   test_bed->report_info("Checking file io", 1);
   int err = TEST_PASSED;
   bool err2 = false;
 
-  test_array = data_array(10, 10);
-  set_vals_2d();
+  data_array test_array = data_array(10, 10);
+  set_vals_2d(test_array);
 
   std::string filename = tests_tmp_dir+"test_file.dat";
   std::fstream file;
@@ -531,20 +593,20 @@ int test_entity_data_array::io_tests(){
 //----------------------------------------------------------------
 
 test_entity_get_and_fft::test_entity_get_and_fft(){
+/** \brief Setup FFT testing */
   name = "read and FFT";
-
 }
 
 test_entity_get_and_fft::~test_entity_get_and_fft(){
- 
+/** \brief Teardown FFT testing */
   if(test_rdr) delete test_rdr;
-  
 }
 
 int test_entity_get_and_fft::run(){
 /** \brief Checks full read and fft procedure
 *
 *Reads a test sdf file, stores into data array and runs fft. Test data should be a sine curve with one major frequency which is then checked. Note frequency is hard coded to match that produced by ./files/sin.deck
+@return Error code
 */
 
   int err = TEST_PASSED;
@@ -562,6 +624,12 @@ int test_entity_get_and_fft::run(){
 }
 
 int test_entity_get_and_fft::one_d(){
+/** \brief Checks fft in 1-d
+*
+*Read, fft and check for 1-d data
+@return Error code
+*/
+
   int err = TEST_PASSED;
 
   size_t tim_in[3] = {0, 1, 0};
@@ -610,6 +678,11 @@ int test_entity_get_and_fft::fft_and_check_1d(data_array & dat_in, data_array & 
 /**  \brief Check 1-d FFT frequencies
 *
 * FFTS data_in into data_fft and then hunts for 1 or two maxima, depending on n_maxima, and checks they're at axis values of ± expected_max
+@param dat_in Input array 
+@param dat_fft FFT'd data array
+@param expected_max Expected peak axis value
+@param single_max Whether data has a single maximum freq (e.g. at 0)
+@return Error code
 */
   int err = TEST_PASSED;
   bool tmp_err = fft_array(dat_in, dat_fft);
@@ -660,6 +733,12 @@ int test_entity_get_and_fft::fft_and_check_1d(data_array & dat_in, data_array & 
 }
 
 int test_entity_get_and_fft::two_d(){
+/**  \brief Check 2-d FFT frequencies
+*
+* FFTS data_in into data_fft and then hunts for maxima, and checks against hard coded expected values
+@return Error code
+*/
+
   int err = TEST_PASSED;
 
   size_t tim_in[3] = {0, 3, 100};
@@ -763,15 +842,20 @@ int test_entity_get_and_fft::two_d(){
 //----------------------------------------------------------------
 
 test_entity_basic_maths::test_entity_basic_maths(){
+/** \brief Setup basic maths testing */
   name = "basic maths helpers";
-
 }
 test_entity_basic_maths::~test_entity_basic_maths(){
+/** \brief Teardown basic maths tests*/
   teardown_arrays();
 }
 
 void test_entity_basic_maths::setup_arrays(){
-//Allocate and fill arrays
+/** \brief Allocate and fill test arrays
+*
+*Sets up test arrays with special data for testing
+*/
+
   data_square=(calc_type*)calloc(size,sizeof(calc_type));
   data_positive=(calc_type*)calloc(size,sizeof(calc_type));
   data_tmp=(calc_type*)calloc(size,sizeof(calc_type));
@@ -798,6 +882,10 @@ void test_entity_basic_maths::setup_arrays(){
 
 }
 void test_entity_basic_maths::teardown_arrays(){
+/** \brief Free test arrays
+*
+*Free arrays setup by test_entity_basic_maths::setup_arrays()
+*/
   free(data_square);
   free(data_positive);
   free(data_tmp);
@@ -807,6 +895,11 @@ void test_entity_basic_maths::teardown_arrays(){
 }
 
 int test_entity_basic_maths::run(){
+/** \brief Test basic maths functions
+*
+*Tests functions such as "where" value locator, integrator, smoothing, interpolator, cubic equation solver and data slice flattener
+@return Error code
+*/
 
   int err = TEST_PASSED;
   setup_arrays();
@@ -988,16 +1081,16 @@ int test_entity_basic_maths::run(){
 }
 
 test_entity_extern_maths::test_entity_extern_maths(){
-
+/** \brief Setup test for external maths*/
   name = "external maths routines";
-
-}
-test_entity_extern_maths::~test_entity_extern_maths(){
-
 }
 
 int test_entity_extern_maths::run(){
-
+/** \brief Test external maths
+*
+* Tests bessel functions, and short-cut approximations
+@return Error code
+*/
   //cyl_bessel_j(v, x) = Jv(x)
   //cyl_neumann(v, x) = Yv(x) = Nv(x)
   double bess, arg, bess1, bess2;

@@ -131,7 +131,8 @@ public:
   data_array  copy_out_g();
   
 /********Access wrappers ****/
-/** \defgroup spectAcc Spectrum access wrappers
+/** \ingroup halp
+*\defgroup spectAcc Spectrum access wrappers
 *\brief Accessors for the two parts of spectrum, B and g
 *
 *Spectrum does not guarantee the internal representation of the B and g parts, so these should be used to get/set the data and axes for B and g parts
@@ -162,6 +163,7 @@ public:
   inline size_t get_omega_length()const{return this->B_omega_array.get_dims(0);}/**<Get length of frequency axis*/
   
 /** @} */
+/** @} */
 
 #ifdef RUN_TESTS_AND_EXIT
   //Allow deep testing
@@ -171,7 +173,15 @@ public:
 };
 
 /********Main spectral calculations ****/
+/** \ingroup halp
+*\defgroup spectGs Spectrum calculations
+*\brief Calculate normalised spectra
+*
+*To calculate diffusion coefficients we need the spectrum at a point, with proper normalisation. These calculate the factors called G_1 and G_2 in Albert \cite Albert2005
+*@{ */
+
 calc_type get_G1(spectrum * my_spect, calc_type omega);
 calc_type get_G2(spectrum * my_spect, calc_type omega, calc_type x);
+/** @} */
 
 #endif

@@ -9,8 +9,6 @@
 #ifndef _support_h
 #define _support_h
 
-/** \file support.h */
-
 #include <fstream>
 #include <iostream>
 #include <stdio.h>
@@ -158,20 +156,20 @@ extern mpi_info_struc mpi_info;
 
 /** \brief Reduced refractive index
 *
-*Contains refractive index mu, the two derivative needed for diffusion coefficient calculation, the phi function of e.g. Albert 2005 and error flag
+*Contains refractive index mu, the two derivative needed for diffusion coefficient calculation, the phi function of e.g. Albert \cite Albert2005 and error flag
 */
 struct mu_dmudom{
   calc_type mu; /**< Refractive index */
   calc_type dmudom; /**< d mu / d omega (wave frequency)*/
   calc_type dmudtheta; /**< d mu / d theta (wave normal angle) */
-  calc_type phi;/**< Phi from Albert 2005*/
+  calc_type phi;/**< Phi from Albert \cite Albert2005 */
   int err; /**< 0 if mu found successfully, 1 else*/
 
 };
 
-/** \brief Command line arguments
+/** \brief General command line arguments
 *
-* Processed command line arguments used in main
+* Processed command line arguments used across several programs
 */
 struct setup_args{
   size_t time[3];/**< Start and end dump numbers*/
@@ -188,7 +186,7 @@ struct setup_args{
 
 /** \brief D coefficient report
 *
-*Contains ...
+*Contains information on D calculation such as resonances used
 */
 struct d_report{
   bool error;/**<Whether IO or setup errors occured*/
@@ -205,12 +203,12 @@ struct d_report{
 
 //----------- SPECIFIC HELPER FUNCTIONS -------------
 /** \defgroup halp Helper functions
-*\brief Assorted general functions
+*\brief Groups of helpers of various purpose
 *@{*/
 
 /** \defgroup main Main Helper Functions
 *@{ 
-* \brief Helpers for main code
+* \brief General helpers
 *
 *Contains MPI helpers, argument processing, and some general data handling functions
 */
@@ -301,6 +299,8 @@ template<typename T> T interpolate_nearest(T axis[2], T vals[2], T target);
 
 /********Arithmetic operations ****/
 /** \defgroup aux_fns Auxilliary functions
+*\brief Named free functions
+*
 *These can be used with the various array apply functions to do arithmetic on arrays without having to create lambdas
 *@{ */
 

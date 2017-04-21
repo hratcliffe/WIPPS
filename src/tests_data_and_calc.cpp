@@ -26,12 +26,16 @@
 #include <boost/math/special_functions.hpp>
 
 test_entity_plasma::test_entity_plasma(){
+/** \brief Setup tests for plasma
+*
+*Create plasma object from file
+*/
   name = "plasma";
   plas = new plasma("./files/test");
 
 }
 test_entity_plasma::~test_entity_plasma(){
-
+/** \brief Teardown plasma tests*/
   delete plas;
 }
 
@@ -39,9 +43,10 @@ int test_entity_plasma::run(){
 /** \brief Test resonant frequencies and refractive indices
 *
 *Checks the resonant frequencies obey the equations used to derive them. Checks the dispersion roots for Whistlers match those found using high-density approx. Checks plasma O and X mode dispersion too. Note, first call for issues with these tests is to check returned mu.err on failing tests
+@return Error code
 */
 
-  int err=TEST_PASSED;
+  int err = TEST_PASSED;
   
   err |= analytic_dispersion();
   err |= resonant_freq();
@@ -56,9 +61,10 @@ int test_entity_plasma::analytic_dispersion(){
 /** \brief Check analytic dispersion relations
 *
 *Checks the analytic relations, both ways and including derivatives
+@return Error code
 */
 
-  int err=TEST_PASSED;
+  int err = TEST_PASSED;
 
   calc_type k, om, om_new, d_om, d_k;
   calc_type om_ce = plas->get_omega_ref("ce"), om_pe = plas->get_omega_ref("pe");
@@ -220,7 +226,9 @@ int test_entity_plasma::analytic_dispersion(){
 int test_entity_plasma::resonant_freq(){
 /** \brief Check resonant frequency solver
 *
-*Checks the returned resonant frequency obeys equations used to derive it by solving both for mu. \todo Check for angles with PROPER gamma!!!
+*Checks the returned resonant frequency obeys equations used to derive it by solving both for mu. 
+@return Error code
+\todo Check for angles with PROPER gamma!!!
 */
 
   int err=TEST_PASSED;
@@ -308,6 +316,7 @@ int test_entity_plasma::high_density(){
 /** \brief Tests high density approximation for dispersion relations
 *
 *Test if the mu found by get_root and get_phi_mu_om matches the high density whistler in high dens regime
+@return Error code
 */
 
   int err=TEST_PASSED;
@@ -369,12 +378,16 @@ int test_entity_plasma::high_density(){
 }
 
 int test_entity_plasma::other_modes(){
-/** \brief Test dispersion solver with other wave modes */
+/** \brief Test dispersion solver further
+*
+*Tests dispersion solver for other wave modes, O and X
+@return Error code
+*/
 
-  int err=TEST_PASSED;
+  int err = TEST_PASSED;
 
   calc_type om_ce_local, om_pe_local;
-  calc_type mu_tmp2, gamma_particle =1.0;
+  calc_type mu_tmp2, gamma_particle = 1.0;
 
   om_ce_local = plas->get_omega_ref("ce");
   om_pe_local = plas->get_omega_ref("pe");
@@ -383,7 +396,7 @@ int test_entity_plasma::other_modes(){
   test_bed->report_info("Testing dispersion solver for plasma O mode", 1);
   size_t n_tests = 10;
   mu_dmudom my_mu;
-  /**Try plasma wave modes in solvers, perpendicular propagation*/
+  /*Try plasma wave modes in solvers, perpendicular propagation*/
   calc_type tmp_omega = om_pe_local;
   calc_type tmp_theta = pi/2.0;
   for(size_t i =0; i<n_tests; i++){
@@ -397,7 +410,7 @@ int test_entity_plasma::other_modes(){
       test_bed->report_info("Mu "+mk_str(my_mu.mu)+" difference "+mk_str(my_mu.mu - mu_tmp2)+" relative error "+mk_str((my_mu.mu-mu_tmp2)/my_mu.mu), 2);
     }
   }
-  /**Try left hand X mode too*/
+  /*Try left hand X mode too*/
   test_bed->report_info("Testing dispersion solver for plasma X mode", 1);
 
   calc_type omega_UH = std::sqrt(om_pe_local*om_pe_local + om_ce_local*om_ce_local);
@@ -411,18 +424,17 @@ int test_entity_plasma::other_modes(){
       test_bed->report_info("Mu "+mk_str(my_mu.mu)+" difference "+mk_str(my_mu.mu - mu_tmp2)+" relative error "+mk_str((my_mu.mu-mu_tmp2)/my_mu.mu), 2);
     }
   }
-
   return err;
-
 }
 
 int test_entity_plasma::phi_dom(){
 /** \brief Test other plasma returns
 *
 * Checks the values of mu.dom, mu.dmudtheta and phi against special cases.
+@return Error code
 */
 
-  int err=TEST_PASSED;
+  int err = TEST_PASSED;
   size_t n_tests = 10;
 
   calc_type mu_tmp1, om_ce_local, tmp_phi;
@@ -506,21 +518,20 @@ The reason for using the better dispersion solver is a) to avoid any numerical d
 //----------------------------------------------------------------
 
 test_entity_spectrum::test_entity_spectrum(){
-
+/** \brief Setup spectrum tests*/
   name = "spectrum checks";
   file_prefix = "./files/";
-  
 }
 test_entity_spectrum::~test_entity_spectrum(){
-
+/**\brief Teardown spectrum tests*/
   if(test_contr) delete test_contr;
-
 }
 
 int test_entity_spectrum::run(){
 /** \brief Test spectrum extraction
 *
-* This should test the dispersion relation approximations are OK (plain and vg). Check test spectrum makes sense. Test extraction of a spectrum from data. Note data does not come from files, but from a test file which is already written as a data array using ./files/generate_fftd.pro which makes FFT_data.dat with the FFTd data and spectrum.dat with a derived spectrum to check against.
+* This tests the dispersion relation approximations are OK (plain and vg). Check test spectrum makes sense. Test extraction of a spectrum from data. Note data does not come from files, but from a test file which is already written as a data array using ./files/generate_fftd.pro which makes FFT_data.dat with the FFTd data and spectrum.dat with a derived spectrum to check against.
+@return Error code
 */
 
   int err = TEST_PASSED;
@@ -545,7 +556,8 @@ int test_entity_spectrum::run(){
 int test_entity_spectrum::setup(){
 /** \brief Setup to test spectrum
 *
-* Note strictly this is the test of data array constructor taking a filename too.
+* Read test FFT data from file, and create controller. Note strictly this is the test of data array constructor taking a filename too.
+@return Error code
 */
 
   int err = TEST_PASSED;
@@ -564,6 +576,7 @@ int test_entity_spectrum::basic_tests1(){
 /** \brief Basic tests of spectrum
 *
 *Test test_spectrum and angle generation
+@return Error code
 */
   int err = TEST_PASSED;
 
@@ -629,6 +642,7 @@ int test_entity_spectrum::basic_tests2(){
 /**\brief Test spectrum extraction
 *
 *Compare extracted spectrum from FFT'd data file to test file
+@return Error code
 */
   int err = TEST_PASSED;
 
@@ -681,13 +695,20 @@ int test_entity_spectrum::basic_tests2(){
 
 }
 int test_entity_spectrum::technical_tests(){
+/** \brief Test spectrum object
+*
+*Checks spectrum object copy etc
+@return Error code
+\todo Write this
+*/
   int err = TEST_PASSED;
   return err;
 }
 int test_entity_spectrum::albertGs_tests(){
-/** \brief Tests of the Albert G functions in spectrum. Also tests the normalisations on the way. NOTE: since we're comparing the values of an analytic function with a numerical integral, we can get mismatches at the cutoffs. More points should help this. If that doesn't there may be something wrong.
+/** \brief Tests of the Albert G functions
 *
-*
+*Tests the calculation of G_1 and G_2 in Albert \cite Albert2005 by get_G1 and get_G2. Also tests the normalisations on the way. NOTE: since we're comparing the values of an analytic function with a numerical integral, we can get mismatches at the cutoffs. More points should help this. If that doesn't there may be something wrong.
+@return Error code
 */
   int err = TEST_PASSED;
 
@@ -730,7 +751,7 @@ int test_entity_spectrum::albertGs_tests(){
     //Cover range from small to just below om_ce...
     G1 = get_G1(test_contr->get_current_spectrum(), tmp_omega);
 
-    //Analytic calculations for truncated Gaussians, see Albert 2005
+    //Analytic calculations for truncated Gaussians, Albert
     
     if(tmp_omega > om_min && tmp_omega < om_max){
       G1_analytic = 2.0 / std::sqrt(pi) * std::exp( - std::pow((tmp_omega - om_peak)/width, 2));
@@ -788,7 +809,15 @@ int test_entity_spectrum::albertGs_tests(){
 }
 
 my_type calc_I_omega(my_type omega, spectrum * my_spect, controller * my_contr){
-
+/** \brief Calculate the function I(omega)
+*
+* Calculates I(omega) as in Lyons \cite Lyons1974B directly for a Gaussian g
+@param omega Frequency to calculate at
+@param my_spect Spectrum object to use
+@param my_contr Controller providing plasma
+@return Value of I(omega)
+\todo Add reference links to docs
+*/
   my_type Psi, theta, x, dx, g_x, I_contrib, I_contrib2, I_om = 0.0, om_sq_p_e;
   size_t x_sz = my_spect->get_angle_length();
   my_type om_ce_local = my_contr->get_plasma().get_omega_ref("ce");
@@ -813,7 +842,7 @@ my_type calc_I_omega(my_type omega, spectrum * my_spect, controller * my_contr){
       //Alternate mu using Stix 2.45
       //mu_245_sq = 1.0 - om_pe_local*om_pe_local/(omega*(omega -om_ce_local*cos(theta)));
       
-      //Steal Psi value from mu using Lyons 12
+      //Steal Psi value from mu using Lyons \cite Lyons1974B Eq 12
       Psi = std::pow(om_pe_local/om_ce_local, 2) * (1.0+M)/M / my_mu.mu/my_mu.mu;
       //Psi = std::pow(om_pe_local/om_ce_local, 2) * (1.0+M)/M / mu_245_sq;
       //Normalisation of g cancels once we calc. G2, but factors in the exponential wont. However, this matches our Gaussian g_x exactly
@@ -830,15 +859,16 @@ my_type calc_I_omega(my_type omega, spectrum * my_spect, controller * my_contr){
 //----------------------------------------------------------------
 
 test_entity_levelone::test_entity_levelone(){
-/** \todo Create some lighter weight test files!*/
+/** \brief Setup level-one testing
+\todo Create some lighter weight test files!*/
   name = "level-one derivation";
   
-  test_contr=nullptr;
-  my_reader=nullptr;
+  test_contr = nullptr;
+  my_reader = nullptr;
   
 }
 test_entity_levelone::~test_entity_levelone(){
-
+/** \brief Teardown level-one testing*/
   delete test_contr;
   delete my_reader;
 }
@@ -846,15 +876,14 @@ test_entity_levelone::~test_entity_levelone(){
 int test_entity_levelone::run(){
 /** \brief Test entire level-1 data extraction
 *
+*Tests the full sequence of file reading, FFT and spectrum generation
 *
 Set runtime_flag "no_level_one" to skip a full level-one testing
+*
+@return Error code
 **/
 
   int err = TEST_PASSED;
-
-  //Use a different deck.status file...
-//  if(mpi_info.rank == 0) get_deck_constants(file_prefix);
-//  share_consts();
 
   if(test_bed->runtime_flags.count("no_level_one") == 0){
     strncpy(block_id, "ay", ID_SIZE);
@@ -898,7 +927,8 @@ Set runtime_flag "no_level_one" to skip a full level-one testing
 int test_entity_levelone::setup(){
 /** \brief Setup for "level one" extraction
 *
-*
+*Creates required file reader and controller objects
+@return Error code
 */
 
   int err = TEST_PASSED;
@@ -922,7 +952,16 @@ int test_entity_levelone::setup(){
 int test_entity_levelone::basic_tests(size_t n_dims_in, int flatten_on, bool has_freq, std::string outfile_tag, int total_fft, my_type band_min, my_type band_max){
 /** \brief Basic tests of process to make level-1 data
 *
-* Reads proper data files, produces FFT, and derived spectrum, writes to file. Compares to reference version for regression. @param n_dims_in is spatial dimension expected for input file @param flatten_on Flattening dimension on raw data, negative for no flattening @param has_freq Output array contains frequency as last axis @param outfile_tag Tag for output file if wanted @param total_fft Total fft on this dimension, negative for no totalling @param band_min Minimum of band to total fft on @param band_min Maximum of band to total fft on*/
+* Reads proper data files, produces FFT, and derived spectrum, writes to file. Compares to reference version for regression. 
+@param n_dims_in is spatial dimension expected for input file 
+@param flatten_on Flattening dimension on raw data, negative for no flattening 
+@param has_freq Output array contains frequency as last axis 
+@param outfile_tag Tag for output file if wanted 
+@param total_fft Total fft on this dimension, negative for no totalling 
+@param band_min Minimum of band to total fft on
+@param band_max Maximum of band to total fft on
+@return Error code*/
+
   int err = TEST_PASSED;
 
   size_t n_dims;
@@ -1059,19 +1098,24 @@ int test_entity_levelone::basic_tests(size_t n_dims_in, int flatten_on, bool has
 //----------------------------------------------------------------
 
 test_entity_d::test_entity_d(){
-/**  \todo WRITE d_testing!*/
+/**  \brief Setup tests for dffusion calculation
+\todo WRITE d_testing!*/
   name = "D checks";
   file_prefix = "./files/d_test";
 
 }
 test_entity_d::~test_entity_d(){
-
+/** \brief Teardown tests for diffusion calcs*/
   if(test_contr) delete test_contr;
 }
 
 int test_entity_d::run(){
-/** Testing of D comes in 2 parts. Since a full useful calculation takes quite a while, here we only test that the calculation proceeds and such.
-*Set runtime_flag "full_d" to perform a full sample D calculation*/
+/** \brief Test D calculation
+*
+*A full useful calculation of a test coefficient takes quite a while, so here we just test that the calculation proceeds and there are no obvious problems.
+*Set runtime_flag "full_d" to perform a full sample D calculation
+@return Error code
+*/
 
   int err = TEST_PASSED;
   
@@ -1097,6 +1141,7 @@ int test_entity_d::basic_tests(){
 /** \brief Simple tests of D
 *
 * Does some simple checks that D calc proceeds and some basic things are true. Also does an IO test
+@return Error code
 */
   int err = TEST_PASSED;
   
@@ -1163,6 +1208,11 @@ int test_entity_d::basic_tests(){
 }
 
 int test_entity_d::full_D_tests(){
+/** \brief Calculate a test D
+*
+* Calculate a real diffusion coefficient for useful parameters, and check features against sample data
+@return Error code
+*/
 
   int err = TEST_PASSED;
 
@@ -1198,16 +1248,23 @@ int test_entity_d::full_D_tests(){
 //----------------------------------------------------------------
 
 test_entity_bounce::test_entity_bounce(){
+/** \brief Setup tests for bounce averaging*/
   name = "bounce averaging";
   file_prefix = "./files/";
   test_contr = new controller(file_prefix);
-
 }
 test_entity_bounce::~test_entity_bounce(){
+/** \brief Teardown tests for bounce averaging*/
   if(test_contr) delete test_contr;
 }
 
 int test_entity_bounce::run(){
+/** \brief Test bounce averaging
+*
+* Tests the 4 forms of bounce averaging, simple line-length totalling and the p_p, alpha_p and alpha_alpha forms
+@return Error code
+*/
+
   int err = TEST_PASSED;
 
   //First we do a simple test by rigging up some space-blocked 1x1 D's containing value 1, This should return the length of the line which we calc using Eq 1.01 in Schulz/Lanzerotti and compare
@@ -1269,7 +1326,12 @@ int test_entity_bounce::run(){
 }
 
 int test_entity_bounce::bounce_cases(bounce_av_data bounce_dat){
-/** Setup a D so that the bounce average contains no alpha dependency, only lambda and alpha_eq and eval. For alpha_alpha and p_p diffusion we have analytic forms in these cases, which we check. */
+/** \brief Test bounce averaging
+*
+* Tests the p_p, alpha_p and alpha_alpha bounce averages by setting up a D so that the bounce average contains no alpha dependency, only lambda and alpha_eq and eval. This gives integrals that can be analytically integrated, which we do and check, allowing a "moderate" discrepancy given the small number of space blocks
+@param bounce_dat Bounce averaging data such as type and L-shell
+@return Error code
+*/
   
   int err = TEST_PASSED;
   test_contr->clear_all();
@@ -1345,17 +1407,15 @@ int test_entity_bounce::bounce_cases(bounce_av_data bounce_dat){
 }
 
 test_entity_nonthermal::test_entity_nonthermal(){
+/** \brief Setup non-thermal tests*/
   name = "nonthermal";
-}
-
-test_entity_nonthermal::~test_entity_nonthermal(){
-
 }
 
 int test_entity_nonthermal::run(){
 /** \brief Check nonthermal module
 *
 * Check function binding, df/dp values, lookup table
+@return Error code
 */
   int err = TEST_PASSED;
   
@@ -1413,7 +1473,11 @@ int test_entity_nonthermal::run(){
 }
 
 int test_entity_nonthermal::test_lookup(){
-  /** Check known lookup function against known analytic results. Data generated by generate_lookup in generate_test_data.pro*/
+/** \brief Check lookup table
+*
+*Check known lookup function against known analytic results. Data generated by generate_lookup in generate_test_data.pro
+@return Error code
+*/
   int err = TEST_PASSED;
   
   non_thermal * my_elec_an = new non_thermal("./files/an");

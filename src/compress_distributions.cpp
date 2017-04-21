@@ -9,9 +9,7 @@
 #include "reader.h"
 #include "data_array.h"
 
-/** \defgroup utils Utility programs
-*@{ */
-
+/** \ingroup utils */
 /** \defgroup dist_util Distribution extraction utility
 *@{ 
 *\brief Utility to extract distribution functions from data
@@ -28,10 +26,17 @@ struct dist_cmd_line{
   std::string file_prefix;/**<File path prepended to all files*/
   int dump;/**<Dump number to read*/
   int blocks;/**<Number of space blocks to divide x dimension into*/
-};/**< Command line arguments for this utility*/
+};/**< \brief Command line arguments for distribution utility*/
 
 
 dist_cmd_line special_command_line(int argc, char *argv[]);
+
+/** \brief Main program
+*
+* Extract distributions and space average
+  @param argc Command line argument count
+  @param argv Command line arguments
+  @return System error code */
 
 int main(int argc, char *argv[]){
 

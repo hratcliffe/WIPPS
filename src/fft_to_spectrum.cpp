@@ -13,8 +13,7 @@
 #include "controller.h"
 #include "spectrum.h"
 
-/** \defgroup utils Utility programs
-*@{ */
+/** \ingroup utils */
 
 /** \defgroup spect_util Spectrum generation utility
 *@{ 
@@ -37,10 +36,17 @@ struct fft_spect_args{
   int wave;/**<Wave type ID (see support.h WAVE_* )*/
   int ang;/**< Angular function type (can be FUNCTION_NULL) */
   bool mask;/**< Flag to output spectrum extraction mask to file also*/
-};/**< Command line arguments for this utility*/
+};/**< \brief Command line arguments for spectrum generation utility*/
 
 
 fft_spect_args fft_spect_process_command_line(int argc, char *argv[]);
+
+/** \brief Main program
+*
+* Convert FFT to spectrum and write to file
+  @param argc Command line argument count
+  @param argv Command line arguments
+  @return System error code */
 
 int main(int argc, char *argv[]){
 /** \todo FFT normalisation -> V2.0*/

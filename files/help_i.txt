@@ -19,6 +19,3 @@ mpiexec -n 4 ./calculate_diffusion `<test_pars`
 or:
 ./calculate_diffusion -f ./Run1/ -start 0 -end 100 -block bz -n 5 -d 100 100
 
-WARNING WARNING WARNING
-
-This program is incomplete. It does not yet function fully. See "FAKENUMBERS" tagged lines

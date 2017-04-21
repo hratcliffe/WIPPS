@@ -16,13 +16,7 @@
 #include "non_thermal.h"
 #include "controller.h"
 
-
-/** \defgroup utils Utility programs
-*@{ 
-*\brief Assorted stand alone utilities
-*
-*Contains programs to perform FFTs, create spectra, calculate growth etc. Build with make utils Command line argument help is available using ./{util_name} -h
-*/
+/** \ingroup utils */
 
 /** \defgroup growth_util Growth rate calculation utility
 *@{ 
@@ -41,7 +35,7 @@ struct g_args{
   bool real;/**<Whether to derive real growth from spectra list too*/
   std::string spect_file;/**<File listing spectra if using this option*/
   std::string outfile;/**< Output filename*/
-};/**<Additional command line arguments for this utility*/
+};/**<\brief Additional command line arguments for growth calculation utility*/
 
 
 calc_type * make_momentum_axis(int n_mom, calc_type v_max);
@@ -57,6 +51,13 @@ void dump_distrib(non_thermal * my_elec, std::string filename);
 
 calc_type estimate_spectrum_noise(spectrum & spec_in);
 
+
+/** \brief Main program
+*
+* Calculate linear theory growth rates
+  @param argc Command line argument count
+  @param argv Command line arguments
+  @return System error code */
 int main(int argc, char *argv[]){
 
   int err=0;

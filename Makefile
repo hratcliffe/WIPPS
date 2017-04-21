@@ -191,7 +191,7 @@ WARN_STR = "**************Run make clean before changing MODE or TYPE. Run echo_
 
 #=========================Main rules=================================
 #The main file, main.cpp can be compiled in normal or test mode. Target below for utils also compiles a series of other main programs.
-main : echo_float echo_warning $(OBJS) $(OBJDIR)/main.o $(SDFPATH)/lib/libsdfc.a update_docs
+default : echo_float echo_warning $(OBJS) $(OBJDIR)/main.o $(SDFPATH)/lib/libsdfc.a update_docs
 	$(CC) $(LFLAGS) $(INCLUDE) $(OBJS) $(OBJDIR)/main.o $(LIB) -o main
 	@echo $(WARN_STR)
 
@@ -275,12 +275,15 @@ $(OBJDIR)/%.o:./$(SRCDIR)/%.cpp
 	$(CC) $(CFLAGS)  $< -o $@
 #General rule to build any obj from corresponding cpp
 
-.PHONY : tar tar_built clean veryclean docs list cleandocs
+.PHONY : tar tar_built clean veryclean docs list cleandocs list_utils
 
 list:
 	@$(MAKE) -pRrq -f $(INVOKEDFILE) : 2>/dev/null | awk -v RS= -F: '/^# File/,/^# Finished Make data base/ {if ($$1 !~ "^[#.]") {print $$1}}' | sort | egrep -v -e '^[^[:alnum:]]' -e '^$@$$' -v -e $(OBJDIR)
 #List targets.
 #From http://stackoverflow.com/questions/4219255/how-do-you-get-the-list-of-targets-in-a-makefile and added exclusion for objdir and .o
+
+list_utils:
+	@echo "main" $(UTILS)
 
 #Refresh dependencies before building the tarball
 tar: dependencies.log
@@ -308,5 +311,5 @@ veryclean: cleandocs
 
 docs:
 	@echo Running Doxygen...
-	@if ! [[ `which Doxygen` ]]; then echo "Doxygen not found"; else printf "Options:\nType: ";egrep ' USE_FLOAT' ./Doxyfile >>/dev/null && echo "Float" || echo "Double";printf "Mode: ";egrep '[ \t]+RUN_TESTS_AND_EXIT' ./Doxyfile >>/dev/null && echo "Test"; echo; ./generate_runtime_flags.sh; doxygen Doxyfile &> Doxy.log; echo Processing Doxygen output...; ./redox.sh; echo Running pdftex...; cd latex ; pdflatex --file-line-error --synctex=1 -interaction nonstopmode ./refman.tex &> ../docs.log; cd ..; echo "Docs built. See Doxy.log and docs.log for details"; fi
+	@if ! [[ `which Doxygen` ]]; then echo "Doxygen not found"; else printf "Options:\nType: ";egrep ' USE_FLOAT' ./Doxyfile >>/dev/null && echo "Float" || echo "Double";printf "Mode: ";egrep '[ \t]+RUN_TESTS_AND_EXIT' ./Doxyfile >>/dev/null && echo "Test"; echo; ./generate_runtime_flags.sh; doxygen Doxyfile 1> Doxy.log 2> Doxy.log.tmp; echo "Error Output:" >> Doxy.log; cat Doxy.log.tmp >> Doxy.log; rm Doxy.log.tmp; echo Processing Doxygen output...; ./redox.sh; echo Running pdftex...; cd latex ; make &> ../docs.log; cd ..; echo "Docs built. See Doxy.log and docs.log for details"; fi
 

@@ -18,12 +18,12 @@
 #include "tests_basic_and_code.h"
 #include "tests_data_and_calc.h"
 
-/** \todo Remember to include some inverse tests to ensure things are actually doing something \todo Create test data for double-precision!*/
+tests * test_bed;
 
-tests * test_bed;/**<Global testbed controlling tests*/
-
+/** \ingroup test_bed */
 const int err_codes[err_tot] ={TEST_PASSED, TEST_WRONG_RESULT, TEST_NULL_RESULT, TEST_ASSERT_FAIL, TEST_USERDEF_ERR1, TEST_USERDEF_ERR2, TEST_USERDEF_ERR3, TEST_USERDEF_ERR4, TEST_REMOVE_ERR, TEST_FATAL_ERR};/**< List of error codes available*/
 
+/** \ingroup test_bed */
 std::string err_names[err_tot]={"None", "Wrong result", "Invalid Null result", "Assignment or assertion failed", "{Message 1 here}", "{Message 2 here}", "{Message 3 here}", "{Message 4 here}", "SQUASHED ERRORS", "Fatal error"};/**< Names corresponding to error codes, which are reported in log files*/
 
 void tests::create_test_outdir(){
@@ -43,7 +43,8 @@ void tests::create_test_outdir(){
 void tests::clean_test_outdir(bool no_clean){
 /** \brief Clean the test directory
 *
-* Removes contents and directory tests_tmp_dir, unless the no_clean parameter is set, when nothing is done. NB this writes to log file!
+* Removes contents and directory tests_tmp_dir, unless the no_clean parameter is set, when nothing is done. Note there may be other flags to consider so this is not as stupid as it seems. NB this writes to log file!
+@param no_clean If set, do nothing
 */
   if(!no_clean){
     this->report_info("Removing temporary dir "+tests_tmp_dir, 0);
@@ -56,6 +57,7 @@ void tests::set_verbosity(size_t verb){
 /** \brief Set verbosity
 *
 *Set the verbosity of testing output, from 0 (minimal) to max_verbos cap
+@param verb Verbosity level to set
 */
   this->verbosity = std::min((int)verb, max_verbos);
 }
@@ -64,6 +66,8 @@ void tests::set_runtime_flags(int argc, char *argv[]){
 /** Set the runtime flags
 *
 * Takes the command line args and stores in the runtime flags map. Each flag can be either a -thing or a -thing val where val is an int. Flags may not start with a digit
+@param argc Command line parameter number
+@param argv Command line parameter list
 */
 
   std::string current_flag;
@@ -127,18 +131,29 @@ void tests::setup_tests(){
 }
 
 void tests::add_test(test_entity * test){
-  /** Adds a test to the list to be performed*/
+/** Adds a test to the list to be performed
+@param test Pointer to test object to add. Object will be deleted on completion */
   test_list.push_back(test);
 }
 
 bool tests::is_fatal(int err){
+/** \brief Checks whether error is fatal
+*
+* @param err Error code, one of err_codes
+@return Boolean true if fatal, false else
+*/
 
   if((err & TEST_FATAL_ERR) == TEST_FATAL_ERR) return 1;
   else return 0;
 }
 
 bool tests::check_for_abort(int err){
-
+/**\brief Check for abort condition
+*
+*Checks whether current test has had fatal error
+@param err Error param to check
+@return true if test should abort, false else
+*/
   if(is_fatal(err)){
     set_colour('r');
     set_colour('*');
@@ -153,7 +168,10 @@ bool tests::check_for_abort(int err){
 void tests::report_err(int err, int test_id){
 /** \brief Log error
 *
-* Logs error text corresponding to code err for test defined by test_id. Errors are always recorded.*/
+* Logs error text corresponding to code err for test defined by test_id.
+@param err Error to report
+@param test_id Index of corresponding test
+*/
   if(test_id == -1) test_id = current_test_id;
   if(err ==TEST_PASSED || err == TEST_REMOVE_ERR){
     set_colour('b');
@@ -173,6 +191,8 @@ void tests::report_info(std::string info, int verb_to_print){
 /** \brief Other test info
 *
 *Records string info to the tests.log file and to screen, according to requested verbosity.
+@param info Information to print
+@param verb_to_print Verbosity level above which to print this info
 */
   if(verb_to_print <= this->verbosity){
     my_print(outfile, info, mpi_info.rank);
@@ -186,6 +206,9 @@ std::string tests::get_printable_error(int err, int test_id){
 /** \brief Make an error message
 *
 * Converts error code to printable string, adds code for reference and adds test name. Note code is bitmask and additional errors are appended together
+@param err Error code
+@param test_id Index of current test in list
+@return Error information as printable string
 */
   std::string err_string="";
   int err_remaining = err;
@@ -207,25 +230,27 @@ std::string tests::get_printable_error(int err, int test_id){
 
 }
 
-void tests::set_colour(char col){
-/** \brief Set output text colour
-*
-*Set terminal output colour using std escape sequences. Accepts no argument to return to default, or rgb, cmyk and white to test text colour. NB technically not MPI safe. Use sparingly to highlight important information.
-*/
-  if(isatty(fileno(stdout))) my_print(this->get_color_escape(col), mpi_info.rank, 0, true);
-}
-
 /**
      * @class dummy_colour
      * Available colour codes are RGB, CMYK and W(hite) plus * (bold) _ (underlined) ? (blink, irritating and not supported on some terminals) and $ (reverse foreground and background). A call with no arguments, or with 0 or '0' reset to default.
 */
 
+void tests::set_colour(char col){
+/** \brief Set output text colour
+*
+*Set terminal output colour using std escape sequences. NB technically not MPI safe. Use sparingly to highlight important information. \copydoc dummy_colour
+@param col Colour code, one of rgb cmyk or [w]hite, or format code,*_?$ 0, '0' or blank
+*/
+  if(isatty(fileno(stdout))) my_print(this->get_colour_escape(col), mpi_info.rank, 0, true);
+}
 
-inline std::string tests::get_color_escape(char col){
+inline std::string tests::get_colour_escape(char col){
 /** \brief
 *This returns the terminal escape string to set given colour.
 *
 \copydoc dummy_colour
+@param col The colour code
+@return String giving VT100 escape for colour
 */
   if(col >='A' and col <='Z') col += 32;
   //ASCII upper to lower
@@ -308,7 +333,8 @@ void tests::cleanup_tests(){
 bool tests::run_tests(){
 /** \brief Run scheduled tests
 *
-*Runs each test in list and reports total errors found. @return 0 for no errors, 1 else
+*Runs each test in list and reports total errors found. 
+@return 0 for no errors, 1 else
 */
 
   int total_errs = 0, total_warnings = 0;
@@ -343,7 +369,10 @@ bool tests::run_tests(){
 bool tests::set_userdef_error(int err_code, std::string message){
 /** \brief Set a user-defined error string
 *
-*Sets message associated with err_code to message string. NOTE this affects code associated with past and future use of the err_code string. @return 0 success, 1 for invalid change (trying to change a non-user error)
+*Sets message associated with err_code to message string. NOTE this affects code associated with past and future use of the err_code string. 
+@param err_code Code to set, one of the TEST_USERDEF_ERR[x]
+@param message Message for this error
+@return 0 success, 1 for invalid change (trying to change a non-user error)
 */
 
   //We assume ordering of the USERDEF errors, but nothing more

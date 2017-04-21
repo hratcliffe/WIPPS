@@ -64,11 +64,19 @@ public:
 
 /********Special testing functions ****/
 #ifdef RUN_TESTS_AND_EXIT
+  /** \brief Return parallel thermal velocity
+  @return Real value of velocity, or 0 if none defined \caveat Works only for deck.status files with correct format*/
   calc_type get_v_par(){if(parameters.count("vtherm_par")>0)return parameters["vtherm_par"]; else if(parameters.count("vtherm_parh")>0)return parameters["vtherm_parh"]; else return 0.0;}
+  /** \brief Return perpendicular thermal velocity
+  @return Real value of velocity, or 0 if none defined \caveat Works only for deck.status files with correct format*/
   calc_type get_v_perp(){if(parameters.count("vtherm_perp")>0)return parameters["vtherm_perp"]; else if(parameters.count("vtherm_perph")>0)return parameters["vtherm_perph"]; else return 0.0;}
-  calc_type get_t_par(){/**WORKS FOR SINGLE COMP MAX ONLY*/ if(parameters.count("temp_par")>0)return parameters["temp_par"];else
+  /** \brief Return parallel temperature
+  @return Real value of temperature (K), or 0 if none defined \caveat Works only for deck.status files with correct format, and for single component maxwellians*/
+  calc_type get_t_par(){ if(parameters.count("temp_par")>0)return parameters["temp_par"];else
     return 0.0;}
-  calc_type get_t_perp(){/**WORKS FOR SINGLE COMP MAX ONLY*/ if(parameters.count("temp_perp")>0)return parameters["temp_perp"];else
+  /** \brief Return perpendicular temperature
+  @return Real value of temperature (K), or 0 if none defined \caveat Works only for deck.status files with correct format, and for single component maxwellians*/
+  calc_type get_t_perp(){if(parameters.count("temp_perp")>0)return parameters["temp_perp"];else
   return 0.0;}
 #endif
 

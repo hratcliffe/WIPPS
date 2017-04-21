@@ -17,16 +17,20 @@ class spectrum;
 class diffusion_coeff;
 /*Circular dependencies, don't include headers*/
 
-/** \defgroup bounce Bounce-averaging helpers
+/** 
+\ingroup halp
+*\defgroup bounce Bounce-averaging helpers
 *@{ 
 \brief Helpers for bounce-averaging process
 *
 * Functions to solve for mirror latitude, bounce period etc and various helpers for these. We assume the usual dipole magnetic field.
 */
 
-typedef enum bounce_av_type_specs {plain, alpha_alpha, alpha_p, p_alpha, p_p} bounce_av_type;/**< Specifies "parameters" of D to determine how to bounce average*/
-
-/**Holds the needed stuff for bounce-averaging. Controller should only access B_x via the accessor, which returns the value from the B array. NB NB we don't currently use this B_x, rather an assumed dipole. \todo Consider using B_x rather than assuming a dipole */
+/**\brief Specifies "parameters" of D to determine how to bounce average*/
+typedef enum bounce_av_type_specs {plain, alpha_alpha, alpha_p, p_alpha, p_p} bounce_av_type;
+/**\brief Bounce-averaging data
+*
+*Holds the needed stuff for bounce-averaging. Controller should only access B_x via the accessor, which returns the value from the B array. NB NB we don't currently use this B_x, rather an assumed dipole. \todo Consider using B_x rather than assuming a dipole */
 class bounce_av_data{
   private:
     data_array Bx {data_array(1)};/**< Array holding the ambient B_x field. Note this MUST be 1-D, see accessor functions get_Bx_at and set_Bx*/
@@ -86,7 +90,7 @@ inline my_type Newton_Raphson_iteration(my_type last_guess, my_type s4alpha){
   return last_guess - mirror_poly(last_guess, s4alpha)/d_mirror_poly(last_guess, s4alpha);
 }
 
-/**Bounce time alpha factor from Summers (2007) eq 29 or Glauert/Horne 2005 eq 27
+/**Bounce time alpha factor from Summers Et Al \cite SummersEtAl2007 Eq 29 or Glauert and Horne \cite GlauertHorne2005 Eq 27
 @param alpha_eq Equatorial particle pitch angle
 @return The alpha factor
 */
@@ -94,7 +98,7 @@ inline my_type bounce_period_approx(my_type alpha_eq){
   return 1.30 - 0.56 * sin(alpha_eq);
 }
 
-/** Calculate f as in Summers (2007) Eq 20. 
+/** Calculate f as in Summers Et Al \cite SummersEtAl2007 Eq 20.
 @param lat Latitude in RADIANS
 @return Value of f(lat)
 */
@@ -102,7 +106,7 @@ inline my_type f_latitude(my_type lat){
   return std::sqrt(1.0 + 3.0*std::pow(sin(lat), 2))/std::pow(cos(lat), 6);
 }
 
-/** Calculate alpha at given latitude from alpha_eq Summers (2007) Eq 22. 
+/** Calculate alpha at given latitude from alpha_eq Summers Et Al\cite SummersEtAl2007 Eq 22.
 @param alpha_eq Equatorial pitch angle in radians
 @param lat Latitude in radians
 @return Pitch angle at this latitude
@@ -110,6 +114,7 @@ inline my_type f_latitude(my_type lat){
 inline my_type alpha_from_alpha_eq(my_type alpha_eq, my_type lat){
   return asin(sin(alpha_eq)*std::sqrt(f_latitude(lat)));
 }
+/**@}*/
 /**@}*/
 
 typedef std::pair<spectrum*, diffusion_coeff*> spect_D_pair;/**< Link spectrum and D_coeff as pair*/

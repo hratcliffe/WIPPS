@@ -83,13 +83,11 @@ data_array::data_array(size_t n_dims, size_t * dims) : my_array(n_dims, dims){
   alloc_ax(els);
 }
 
-data_array::data_array(std::string filename, bool no_version_check){
+data_array::data_array(std::string filename){
 /**\brief Create data array from file
 *
 * Create a data array by reading from the named file. If the file does not exist nothing is done and this will be an empty array. Otherwise it reads the dimensions, sets up sizes and populates data and info 
 @param filename Full path of file to read from
-@param no_version_check Flag to omit code version checking
-\todo Swap version checking to just vx.x part
 */
 
   //Initialise empty array
@@ -103,7 +101,7 @@ data_array::data_array(std::string filename, bool no_version_check){
   }
 
   //Read dims from file, unpack and allocate correct memory
-  std::vector<size_t> dims_vec = my_array::read_dims_from_file(infile, no_version_check);
+  std::vector<size_t> dims_vec = my_array::read_dims_from_file(infile);
   size_t n_dims_in = dims_vec.size();
   size_t * dims_in;
 
@@ -120,7 +118,7 @@ data_array::data_array(std::string filename, bool no_version_check){
 
     //Finally, rewind file and read in data and axes using normal routines
     infile.seekg(0, std::ios::beg);
-    bool err= this->read_from_file(infile, no_version_check);
+    bool err= this->read_from_file(infile);
     if(err){
       my_error_print("IO error, could not read", mpi_info.rank);
       //Clean up and reset sizes
@@ -373,7 +371,7 @@ std::vector<size_t> data_array::get_bounds(std::vector<my_type> limits){
   index_limits.resize(n_dims*2);
 
   size_t len;
-  my_type * ax_start;
+  const my_type * ax_start;
   long where_val;
   //Lookup the bounds one dimension at a time.
   for(size_t i=0; i< n_dims; i++){
@@ -429,14 +427,13 @@ bool data_array::set_axis_element(size_t dim, size_t pt, my_type val){
 
 }
 
-my_type * data_array::get_axis(size_t dim, size_t & length){
+const my_type * data_array::get_axis(size_t dim, size_t & length){
 /**  \brief Get pointer to axis
 *
-*Returns pointer to given axis and its length.
+*Returns pointer to given axis and its length. NB do not muck with this pointer. It's provided for ease of using where but is a const my_type * for a reason
 @param dim Dimension of axis to get
 @param[out] length Returns the length of axis
 @return Pointer to start of axis, or nullptr if axis doesn't exist or requested dim is out of range
-\todo Minimise use of this function
 */
 
   if(!axes || (dim >= n_dims)) return nullptr;
@@ -484,9 +481,9 @@ bool data_array::populate_axis(size_t dim, my_type * dat_in, size_t n_tot){
   //Min of n_tot and tot_els
   size_t tot_els = dims[dim];
   if(n_tot < tot_els) tot_els = n_tot;
-
   size_t len = 0;
-  std::copy(dat_in, dat_in + tot_els, this->get_axis(dim, len));
+  my_type * ax_ptr = const_cast<my_type *>(this->get_axis(dim, len));
+  std::copy(dat_in, dat_in + tot_els, ax_ptr);
 
   return 0;
 
@@ -501,11 +498,9 @@ void data_array::make_linear_axis(size_t dim, float res, long offset){
 @param offset Number of grid cells to shift downwards (leftwards) by
 */
 
-  size_t len;
-  my_type * ax_ptr = get_axis(dim, len);
-
-  for(size_t i=0; i<len; i++){
-    *(ax_ptr +i) = ((float) ((long)i - offset)) * res;
+  size_t len = get_dims(dim);
+  for(size_t i = 0; i < len; i++){
+    set_axis_element(dim, i, ((float) ((long)i - offset)) * res);
   }
 }
 
@@ -521,7 +516,6 @@ void data_array::make_linear_axis(size_t dim, float res, long offset){
     * If file is to be closed then we finish with Footer_start, i.e. the position of the start of "Footer" section
     *If multiple arrays are written, we write each without closing and the close the file with a final Block_id tag
 
-  *IMPORTANT: the VERSION specifier links output files to code. If the file output is changed, commit and clean build to correctly specify this
 */
 
 bool data_array::write_to_file(std::fstream &file, bool close_file){
@@ -575,19 +569,18 @@ bool data_array::write_to_file(std::fstream &file, bool close_file){
 
 }
 
-bool data_array::read_from_file(std::fstream &file, bool no_version_check){
+bool data_array::read_from_file(std::fstream &file){
 /** \brief Read data array from file
 *
 *Reads data from file. This array should have already been created in the correct shape, otherwise we return an error. \copydoc dummy_data_file_format
 @param file Filestram to read from
-@param no_version_check Flag to omit version checking
 @return 0 (success), 1 (error)
 */
 
   bool err=false;
 
   //Call my_array for initial reads
-  if(file.good()) err = my_array::read_from_file(file, no_version_check);
+  if(file.good()) err = my_array::read_from_file(file);
   if(err){
     my_error_print("File read failed", mpi_info.rank);
     return err;
@@ -703,7 +696,6 @@ bool data_array::write_closer(std::fstream &file){
 *Writes the final footer into a file 
 @param file Filestream to write to
 @return 0 (success), 1 (error)
-\todo This no longer matches a normal file on reading
 */
 
   if(!file.is_open()) return 1;
@@ -711,8 +703,13 @@ bool data_array::write_closer(std::fstream &file){
 
   size_t ftr_start = (size_t) file.tellg();
   //Start of ftr means where to start reading footer block, i.e. location of the next_location tag
-  size_t next_location = ftr_start+ sizeof(char)*ID_SIZE +sizeof(size_t);
+  size_t next_location = ftr_start + sizeof(my_type)*3 + sizeof(size_t)*2 + sizeof(size_t);
+  file.write((char*) & next_location, sizeof(size_t));
+  file.write((char *)time, sizeof(my_type)*2);
+  file.write((char *)space, sizeof(size_t)*2);
+  file.write((char *) &B_ref, sizeof(my_type));
 
+  next_location += sizeof(char)*ID_SIZE +sizeof(size_t);
   //Position of next section, i.e. of file end val
   file.write((char*) & next_location, sizeof(size_t));
 
@@ -803,7 +800,6 @@ bool data_array::shift(size_t dim, long n_els, bool axis){
 @param n_els Number of elements to shift by 
 @param axis Whether to shift the corresponding axis 
 @return 0 (success), 1 (error)
-\todo Catch std::copy errors in all places they may arise
 */
   if(dim >= n_dims) return 0;
 
@@ -818,7 +814,7 @@ bool data_array::shift(size_t dim, long n_els, bool axis){
     //By now n_els guaranteed >= 0
 
     size_t len=0;
-    my_type * ax = get_axis(dim, len);
+    const my_type * ax = get_axis(dim, len);
     my_type * new_axis = (my_type*)malloc(len*sizeof(my_type));
     if(!new_axis){
       //Since the data shift succeeded, this should never happen in practise
@@ -832,7 +828,8 @@ bool data_array::shift(size_t dim, long n_els, bool axis){
       //This is inefficient but is minimmaly changed from shift for whole array
       actual_shift = (j+n_els >= dims[dim])? (j+n_els-dims[dim]): j+n_els;
       actual_shift += (actual_shift < 0 ? dims[dim]:0);
-      std::copy(new_axis+j, new_axis+(j+1), ax+actual_shift);
+      *(new_axis + j) = *(ax + actual_shift);
+//      std::copy(new_axis+j, new_axis+(j+1), ax+actual_shift);
     }
     //Clean up
     if(new_axis) free(new_axis);
@@ -870,7 +867,7 @@ data_array data_array::total(size_t dim, my_type min, my_type max){
   if(dim >= this->n_dims) return data_array();
 
   size_t len;
-  my_type * ax_start = get_axis(dim, len);
+  const my_type * ax_start = get_axis(dim, len);
   if(ax_start){
     //Start with indices set to ends of axis
     size_t min_ind = 0, max_ind = this->get_dims(dim);
@@ -935,14 +932,13 @@ data_array data_array::total(size_t dim, size_t min_ind, size_t max_ind){
   //Flatten the actual data
   flatten_fortran_slice(this->data, new_array.data, this->n_dims, this->dims, dim, min_ind, max_ind);
   //Copy axes and ids
-  my_type * ax_new;
-  size_t len2, len;
+  size_t len;
   //One element array has no axes
   if(this->n_dims > 1){
-    for(size_t i=0, i2=0; i2< new_n_dims; i++, i2++ ){
+    for(size_t i = 0, i2 = 0; i2 < new_n_dims; i++, i2++ ){
       if(i == dim) i++;
-      ax_new = new_array.get_axis(i2, len);
-      std::copy(this->get_axis(i, len2),this->get_axis(i, len2)+len, ax_new);
+      len = new_array.get_dims(i2);
+      for(size_t el = 0; el < len; el ++) new_array.set_axis_element(i2, el, get_axis_element(i, el));
     }
   }
   new_array.copy_ids(*this);
@@ -980,7 +976,7 @@ data_array data_array::average(size_t dim, my_type min, my_type max){
 
   size_t len, min_ind=0, max_ind = this->get_dims(dim)-1;
   int where_val;
-  my_type * ax_start = get_axis(dim, len);
+  const my_type * ax_start = get_axis(dim, len);
   where_val = where(ax_start, len, min);
   if(where_val != -1) min_ind = where_val;
   where_val = where(ax_start, len, max);
@@ -1098,19 +1094,13 @@ bool fft_array(const data_array &data_in, data_array & data_out){
   ADD_FFTW(free)(result);
   //Destroy stuff we don't need
 
-  my_type * tmp_axis;
   float N2, res;
-  size_t len;
-
-  for(size_t i=0;i<data_out.get_dims();++i){
-  //Loop over the dimensions and construct each axis in place. We KNOW now that data_out has correct dimensions. We checked before getting here. We don't need to check len. It is the same as dims[i] each time. Perhaps we will anyway? :)
-    tmp_axis = data_out.get_axis(i, len);
+  for(size_t i = 0; i < data_out.get_dims(); ++i){
+  //Loop over the dimensions and construct each axis in place. We KNOW now that data_out has correct dimensions. We checked before getting here.
     size_t dim_i = data_out.get_dims(i);
-    if(len != dim_i) return 1;
-
     N2 = ((float) dim_i)/2.0;
     res = data_in.get_res(i);
-    for(size_t j= 0; j< dim_i; j++) *(tmp_axis + j) = pi * ((float)j -N2)/N2/res;
+    for(size_t j = 0; j < dim_i; j++) data_out.set_axis_element(i, j, pi * ((float)j -N2)/N2/res);
   }
 
   return 0;

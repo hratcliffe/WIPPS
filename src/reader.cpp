@@ -141,12 +141,11 @@ int reader::get_file_size(){
 *
 *Reads the final block_end position from file. Acts as basic check of SDF integrity and reading. This should match size on disk.
 @return Size of file in bytes
-\todo Change 0 to ref_file_num
 */
   sdf_file_t * handle;
   sdf_block_t * block;
 
-  std::string file_name = get_full_name(0);
+  std::string file_name = get_full_name(ref_file_num);
   handle = sdf_open(file_name.c_str(), MPI_COMM_WORLD, SDF_READ, 0);
   if(!handle) return 1;
 
@@ -260,7 +259,7 @@ int reader::pre_read(data_array& data_in, int ref_time, bool accumulated, int fl
       i2++;
       continue;
     }
-    ax_ptr = data_in.get_axis(i, len);
+    ax_ptr = const_cast<my_type *>(data_in.get_axis(i, len));
 
     //We assume if the type does not match then it's the other of double or float and convert in the copy
     if(block->datatype != my_sdf_type) std::copy((other_type *) block->grids[i2], (other_type *) block->grids[i2] + len, ax_ptr);
@@ -308,7 +307,7 @@ void reader::read_acc_time(data_array & data_in, sdf_file_t * handle, size_t sta
   sdf_read_data(handle);
 
   size_t len;
-  my_type * ax_ptr = data_in.get_axis(data_in.get_dims()-1, len);
+  my_type * ax_ptr = const_cast<my_type *>(data_in.get_axis(data_in.get_dims()-1, len));
 
   size_t n_grids = ax_block->ndims;
   //Copy time grid from ax_block into dat_in.axes
@@ -589,6 +588,7 @@ bool reader::read_distrib(data_array & my_data_in, std::string dist_id, int dump
 @param dist_id String name of required distrib block
 @param dump_number Number of file to read
 @return 0 (success), 1 else
+\todo Remove const_cast temporary shortcuts
 */
   if(!my_data_in.is_good()){
     my_error_print("Cannot read into invalid array", mpi_info.rank);
@@ -631,7 +631,7 @@ bool reader::read_distrib(data_array & my_data_in, std::string dist_id, int dump
   my_type * ax_ptr;
   size_t len;
   for(size_t i=0; i< my_data_in.get_dims(); i++){
-    ax_ptr = my_data_in.get_axis(i, len);
+    ax_ptr = const_cast<my_type *>(my_data_in.get_axis(i, len));
     //Copy axes, converting if necessary
     if(block->datatype != my_sdf_type) std::copy((other_type *) block->grids[i], (other_type *) block->grids[i] + len, ax_ptr);
     else std::copy((my_type *) block->grids[i], (my_type *) block->grids[i] + len, ax_ptr);

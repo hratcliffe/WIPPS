@@ -65,14 +65,18 @@ class spectrum{
 /********Access wrappers ****/
 /** \ingroup spectAcc 
 *@{ */
-  /** Get frequency axis
+  /** \brief Get frequency axis 
+  *
+  *NB do not muck with this pointer. It's provided for ease of using where but is a const my_type * for a reason
   @param[out] len Length of axis
   @return Pointer to omega axis */
-  my_type * get_omega_axis(size_t &len){return B_omega_array.get_axis(0, len);}
-  /** Get angle axis
+  const my_type * get_omega_axis(size_t &len){return B_omega_array.get_axis(0, len);}
+  /** \brief Get angle axis 
+  *
+  *NB do not muck with this pointer. It's provided for ease of using where but is a const my_type * for a reason
   @param[out] len Length of axis
   @return Pointer to angle axis */
-  my_type * get_angle_axis(size_t &len){return g_angle_array.get_axis(1, len);}
+  const my_type * get_angle_axis(size_t &len){return g_angle_array.get_axis(1, len);}
 /** @} */
 
 public:

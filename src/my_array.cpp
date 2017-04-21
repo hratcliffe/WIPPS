@@ -663,7 +663,7 @@ bool my_array::populate_complex_slice(my_type * dat_in, size_t n_dims_in, size_t
     * sizeof(size_t) sizeof(my_type) io_verification_code Version string
     *Next_block n_dims dims[n_dims]
     *Next_block data
-  *IMPORTANT: the VERSION specifier links output files to code. If the file output is changed, commit and clean build to correctly specify this
+  *IMPORTANT: the VERSION specifier links output files to code. If the file output is changed, commit and clean build with a bumped major version number tag to correctly specify this
 */
 bool my_array::write_to_file(std::fstream &file){
 /** \brief Write array to file
@@ -809,18 +809,17 @@ bool my_array::write_section_to_file(std::fstream &file, std::vector<size_t> bou
 
 }
 
-bool my_array::read_from_file(std::fstream &file, bool no_version_check){
+bool my_array::read_from_file(std::fstream &file){
 /** \brief Read array from file
 *
 *Reads data from file. This array should have already been created in the correct shape, otherwise we return an error.
   \copydoc dummy_file_format
 @param file Filestream to read from
-@param no_version_check Flag to disable version checking
 @return 0 (success), 1 else
 */
 
   //Read the dimensions from file and check they match this array
-  std::vector<size_t> dims_vec = read_dims_from_file(file, no_version_check);
+  std::vector<size_t> dims_vec = read_dims_from_file(file);
   if(dims_vec.size() !=n_dims){
     my_error_print("Dimensions do not match, aborting read", mpi_info.rank);
     return 1;
@@ -843,12 +842,11 @@ bool my_array::read_from_file(std::fstream &file, bool no_version_check){
 
 }
 
-std::vector<size_t> my_array::read_dims_from_file(std::fstream &file, bool no_version_check){
+std::vector<size_t> my_array::read_dims_from_file(std::fstream &file){
 /** \brief Read dimensions from array file
 *
 *Reads dims from file into vector. Returns empty vector on read error \copydoc dummy_file_format
 @param file Filestream to read from
-@param no_version_check Flag to disable version checking
 @return Vector of dimensions
 */
   std::vector<size_t> dims_vec;
@@ -878,12 +876,12 @@ std::vector<size_t> my_array::read_dims_from_file(std::fstream &file, bool no_ve
   //equality even though floats as should be identical
     //If we have a read error and the versions don't match, that might be the problem...
     my_error_print("File read error", mpi_info.rank);
-    if(strcmp(tmp_vers, VERSION) !=0 && strcmp(tmp_vers, "IDL data write")!= 0 ) my_error_print("Incompatible code version or file", mpi_info.rank);
+    if(!compare_as_version_string(tmp_vers, VERSION, true) && !compare_as_version_string(tmp_vers, "IDL data write")) my_error_print("Incompatible code version or file", mpi_info.rank);
     return dims_vec;
   }else{
-    //Otherwise we report on verson mismatch according to no_version_check parameter
-    if(!no_version_check && strcmp(tmp_vers, VERSION) !=0){
-       my_print("WARNING: A different code version was used to write this data. Proceed with caution. Fields may not align correctly.", mpi_info.rank);
+    //Otherwise we report on verson mismatch according to considering major only
+    if(!compare_as_version_string(tmp_vers) && !compare_as_version_string(tmp_vers, "IDL data write")){
+       my_print("WARNING: A different code version was used to write this data. Proceed with caution. Fields may not align correctly and data may differ", mpi_info.rank);
       std::string tmp = tmp_vers;
       my_print(tmp, mpi_info.rank);
       tmp = VERSION;

@@ -58,6 +58,12 @@
  *
  * test, profile and debug modes are also available, and are invoked with `make MODE=[test,profile,debug]` after a clean. More details on testing are below.
  *
+ \subsection Versioning
+ *Version numbers follow the usual major-minor numbering. So in general any change to file-io, data normalisation etc which may break compatibility should bump the major number, and any substantive change to how things are done bumps the minor. For example, adding a new field to data files, or changing the FFT normalisation by 2!pi is a major change. Tweaking spectrum extraction to be different but equally correct is a minor. Internal-only changes change neither number. 
+ *
+ *Version number is derived using a git tag, so to set one do something like `git tag -a vx.y -m "Messsage here"` before commit and make sure to push tags
+ *
+ *Generally only some utilities will be broken by changes, so we don't necessarily quit on mismatch. It's probably easiest to write a small file-converter to update old files and solve errors that way. 
  *\section test Integrated Testing
  * All significant parts of the code should be covered by inbuilt tests. These are defined in tests.cpp, tests_basic_and_code.cpp and tests_data_and_calc.cpp and cover a mixture of unit testing, science testing and library integration tests. To run the tests, clean build with `make clean && make MODE=test` and run `./main`. Errors and outcomes are written to stderr, information to stdout. Thus `./main 1> /dev/null` will show only the former, etc. A logfile is produced, by default named tests.log. Temporary testing files are written into tests::tests_tmp_dir.
 * Some tests are rather heavy so are only run if flags are set. See \ref tests in the Test Docs for these. 

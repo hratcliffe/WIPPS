@@ -88,6 +88,12 @@ WHILE(~EOF(filenum) AND (next_block NE end_pos) ) DO BEGIN
   i=i+1
 END
 
+;Skip values in footer, just read the last bit
+readu, filenum, next_block
+;If it seems to be a valid position, use it
+IF next_block GT end_pos AND next_block LT tmp.size THEN BEGIN
+  POINT_LUN, filenum, next_block
+END
 readu, filenum, next_block
 id_in = id_type
 readu, filenum, id_in

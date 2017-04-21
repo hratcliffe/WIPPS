@@ -65,7 +65,7 @@ public:
   int read_data(data_array & my_data_in, size_t time_range[3], size_t space_range[2], int flatten_on = -1);
   
   bool read_distrib(data_array & my_data_in, std::string dist_id,int dump_number);
-  
+
 };
 
 #endif

@@ -28,7 +28,7 @@
 *@{ 
 *\brief Utility to read files and perform Fourier transforms
 *
-*Opens files, extracts specified fields, does FFt, trims to specified boundaries and writes to file. Can optionally flatten the raw data before Ft-ing or the FT-d data before output. This routine can use multiple cores to process seperate spatial blocks.
+*Opens files, extracts specified fields, does FFT, trims to specified boundaries and writes to file. Can optionally flatten the raw data before Ft-ing or the FT-d data before output. This routine can use multiple cores to process seperate spatial blocks.
 \verbinclude help_g.txt
   \author Heather Ratcliffe \date 04/07/2016
 

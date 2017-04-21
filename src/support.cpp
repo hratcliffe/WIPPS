@@ -13,6 +13,7 @@
 #include <boost/math/special_functions.hpp>
 #include <map>
 #include <cstdlib>
+#include <regex>
 
 #include "support.h"
 #include "data_array.h"
@@ -523,7 +524,7 @@ Think of the array as being 3-D. The dim we;re flattening is dim-1. All the less
   
 }
 
-int where(my_type * ax_ptr, int len, my_type target){
+int where(const my_type * ax_ptr, int len, my_type target){
 /** \brief Find where ax_ptr exceeds target
 *
 *Checks bounds and calls locally scoped recursive whereb to do the search. Special case if target equals bottom end
@@ -532,7 +533,7 @@ int where(my_type * ax_ptr, int len, my_type target){
 @param target Target value to find
 @return Index of target in axis
 */
-  int whereb(my_type * ax_ptr, int len, my_type target, int &cut,int sign); //Recursive function to do the finding
+  int whereb(const my_type * ax_ptr, int len, my_type target, int &cut,int sign); //Recursive function to do the finding
 
   int sign = 1.0;
   int cut = 0;
@@ -542,7 +543,7 @@ int where(my_type * ax_ptr, int len, my_type target){
 
 }
 
-int whereb(my_type * ax_ptr, int len, my_type target,int &cut, int sign){
+int whereb(const my_type * ax_ptr, int len, my_type target,int &cut, int sign){
 /**\brief Recursive binary bisection find. 
 *
 *First index where ax_ptr exceeds target. If sign ==-1 it should do < but as yet untested....
@@ -575,6 +576,44 @@ int whereb(my_type * ax_ptr, int len, my_type target,int &cut, int sign){
 //----------- HELPER TYPE FUNCTION DECLARATIONS -------------
 
 /********IO helpers ****/
+std::string read_wipps_version_string(std::string filename){
+/** \brief Read code version from file
+*
+*Reads the version string of code used to write the file given by (full path) filename
+@param filename File to read
+@return String containing code version
+*/
+
+  std::fstream infile;
+  infile.open(filename, std::ios::in|std::ios::binary);
+  if(!infile.good()){
+    my_error_print("File open or access error");
+    return "";
+  }
+  char tmp_vers[GIT_VERSION_SIZE];
+  //Skip past the 3 numbers before string
+  infile.seekg(2*sizeof(int)+sizeof(my_type), std::ios::beg);
+  infile.read((char*) &tmp_vers, sizeof(char)*GIT_VERSION_SIZE);
+  infile.close();
+  return std::string(tmp_vers);
+}
+
+bool check_wipps_version(std::string filename){
+/** \brief Check wipps versioning
+*
+*Reads version from specified file and compares, printing error and returning result.
+@param filename File to read
+@return 1 if match, 0 else
+*/
+
+  std::string wipps_version = read_wipps_version_string(filename);
+  if(!compare_as_version_string(wipps_version)){
+    my_error_print("Warning, a different code version was used to write this file. Data may be incompatible");
+    return 0;
+  }
+  return 1;
+}
+
 void my_print(std::string text, int rank, int rank_to_write, bool noreturn){
 /** \brief Write output
 *
@@ -765,6 +804,43 @@ bool parse_name_val(std::string in, std::string &name, std::string &val){
     val = in.substr(pos+1, in.size());
     trim_string(val);
     return 0;
+  }
+}
+
+bool compare_as_version_string(std::string str, std::string vers_str, bool minor){
+/** \brief Check str against version code
+*
+*Checks string against git version code VERSION. Version strings are vx.y if present at all. By default check just the x, if minor is true, check y also. If either string doesn't match expected format we try comparing as just strings. This maintains behaviour from before I used version tags where just commit-id was checked
+@param str String to check
+@param vers_str String to check against, defaults to VERSION
+@param minor Flag to check minor version number too
+@return True if equal, false else
+*/
+
+  std::string major_v="0", minor_v="0", major_in="0", minor_in="0";
+  std::regex re("v([0-9]+).([0-9]+)");
+  std::smatch matches;
+  bool bad_version=false, bad_input=false;
+  if(std::regex_search(vers_str, matches, re) && matches.size() > 2){
+    major_v = matches[1];
+    minor_v = matches[2];
+  }else{
+    bad_version = true;
+  }
+  if(std::regex_search(str, matches, re) && matches.size() > 2){
+    major_in = matches[1];
+    minor_in = matches[2];
+  }else{
+    bad_input = true;
+  }
+  if(bad_version || bad_input){
+    //Try comparing as just strings.
+    return str == vers_str;
+  }
+  if(!minor){
+    return major_v == major_in;
+  }else{
+    return (major_v == major_in) && (minor_v == minor_in);
   }
 }
 

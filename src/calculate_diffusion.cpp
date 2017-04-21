@@ -30,7 +30,7 @@
 *@{
 *\brief Utility to calculate a particle diffusion coefficient
 *
-*Calculates a particle diffusion coefficient from given data, in the form of sdf files, ffts or spectrum files. The latter can be created by the generate_ffts and FFT_to_spectrum utils. The resulting particle diffusion coefficient are calculated using \cite Lyons1974A \cite Lyons1974B, \cite Albert2005 and such. Note that this makes no sense for E fields!
+*Calculates a particle diffusion coefficient from given data, in the form of sdf files, ffts or spectrum files. The latter can be created by the generate_ffts and FFT_to_spectrum utils. Note that cross-version compatibility is not guaranteed, but most normalisation changes etc will cancel. The resulting particle diffusion coefficient are calculated using \cite Lyons1974A \cite Lyons1974B, \cite Albert2005 and such. Note that this makes no sense for E fields!
 * Depends on the SDF file libraries, the FFTW library, and boost's math for special functions. A set of test arguments is supplied. Call using ./calculate_diffusion `<test_pars` to use these. Or try ./calculate_diffusion -h for argument help
 \verbinclude help_i.txt
   \author Heather Ratcliffe \date 17/02/2017
@@ -151,6 +151,11 @@ int main(int argc, char *argv[]){
       std::string filename;
       if(cmd_line_args.per_proc*mpi_info.rank + block_num < file_list.size()){
         filename = file_list[cmd_line_args.per_proc*mpi_info.rank + block_num];
+
+        //Check version compatibility.
+        if(!check_wipps_version(filename)){
+          //If breaking changes made, add an exit at this point.
+        }
         dat_fft = data_array(filename);
  
       }else{
@@ -169,6 +174,11 @@ int main(int argc, char *argv[]){
       std::string filename;
       if(cmd_line_args.per_proc*mpi_info.rank + block_num < file_list.size()){
         filename = file_list[cmd_line_args.per_proc*mpi_info.rank + block_num];
+
+        //Check version compatibility.
+        if(!check_wipps_version(filename)){
+          //If breaking changes made, add an exit at this point.
+        }
         contr.add_spectrum(filename);
 
       }else{

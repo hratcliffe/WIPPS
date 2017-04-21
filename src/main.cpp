@@ -62,7 +62,7 @@ int main(int argc, char *argv[]){
 
   my_print(std::string("Code Version: ")+ VERSION, mpi_info.rank);
   my_print("Code is running on "+mk_str(mpi_info.n_procs)+" processing elements.", mpi_info.rank);
-  
+    
   MPI_Barrier(MPI_COMM_WORLD);
 
 #ifdef RUN_TESTS_AND_EXIT

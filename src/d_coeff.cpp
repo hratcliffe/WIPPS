@@ -92,20 +92,22 @@ bool diffusion_coeff::read_from_file(std::fstream &file){
 * Reads file dump of a diffusion coefficient. D should have been created to the correct size already
 @param file Filestream to read from
 @return 0 for success, 1 for failure (file access problem)
-\todo Pass through result of data_array::read
 */
+
 
   if(!file.is_open()) return 1;
   
-  data_array::read_from_file(file);
-
-  //Grab wave id
-  file.read((char*) &wave_id, sizeof(int));
-  //Grab tag
-  char buffer[10]="";//Initialise to empty
-  file.read(buffer, sizeof(char)*10);
-  this->tag = buffer;
-  return 0;
+  bool err = data_array::read_from_file(file);
+  //If error we very likely can't continue, so don't try
+  if(!err){
+    //Grab wave id
+    file.read((char*) &wave_id, sizeof(int));
+    //Grab tag
+    char buffer[10]="";//Initialise to empty
+    file.read(buffer, sizeof(char)*10);
+    this->tag = buffer;
+  }
+  return err;
 
 }
 
@@ -354,7 +356,7 @@ Get D element by values of p and alpha by looking up those values in the axes an
   size_t len_a = 0, len_p = 0;
   long alpha_ind, p_ind;
 
-  my_type * d_axis = this->get_axis(0, len_p);
+  const my_type * d_axis = this->get_axis(0, len_p);
   p_ind = where(d_axis, len_p, p);
   d_axis = this->get_axis(1, len_a);
   alpha_ind = where(d_axis, len_a, angle_to_stored_angle(alpha));

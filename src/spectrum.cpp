@@ -375,36 +375,35 @@ void spectrum::make_test_spectrum(int angle_type, bool two_sided, my_type om_ce,
   this->set_ids(0, 1, 0, 1, WAVE_WHISTLER, id, angle_type);
   
   //Setup axes and required angular distrib
-  size_t len0;
-  my_type * ax_ptr = get_omega_axis(len0);
+  size_t len0 = get_omega_length();
   //res to cover range from either 0 or -max to max in len0 steps
   my_type res = om_ce*(1.0+(my_type)two_sided)/(my_type)len0;
   //Generate axes for one or two-sided
-  for(size_t i=0; i<len0; i++) *(ax_ptr+i) = res*((my_type)i - (my_type)two_sided *(my_type)len0/2.);
+  for(size_t i = 0; i < len0; i++) set_om_axis_element(i, res*((my_type)i - (my_type)two_sided *(my_type)len0/2.));
   make_angle_distrib(std_dev);
 
   //Set values to match our test spectrum data
   my_type centre, width, background = 0.0;
   centre = om_ce*14.0/17.0, width=0.1*centre;
   
-  my_type * data_tmp, *ax_tmp;
-  my_type * data_ptr;
+  my_type * data_tmp, * data_ptr;
   data_ptr = (my_type *) malloc(len0*sizeof(my_type));
   data_tmp = data_ptr;
-  ax_tmp = ax_ptr;
-
+  my_type ax_val = 0.0;
   if(two_sided){
     //Fill a two-sided spectrum with peaks where specified
-    for(size_t i=0; i<=len0/2; i++, ax_tmp++, data_tmp++){
-      *(data_tmp) = exp(-pow((*(ax_tmp) + centre), 2)/width/width) + background;
+    for(size_t i=0; i<=len0/2; i++, data_tmp++){
+      ax_val = get_om_axis_element(i);
+      *(data_tmp) = exp(-pow((ax_val + centre), 2)/width/width) + background;
     }
     data_tmp--;
     //we've gone one past our termination condition...
-    for(size_t i=1; i<len0/2; i++) *(data_tmp + i) = *(data_tmp - i);
+    for(size_t i = 1; i < len0/2; i++) *(data_tmp + i) = *(data_tmp - i);
   }else{
   
-    for(size_t i=0; i<len0; i++, ax_tmp++, data_tmp++){
-      *(data_tmp) = exp(-pow((*(ax_tmp) - centre), 2)/width/width) + background;
+    for(size_t i = 0; i < len0; i++, data_tmp++){
+      ax_val = get_om_axis_element(i);
+      *(data_tmp) = exp(-pow((ax_val - centre), 2)/width/width) + background;
     }
   }
   //Copy the data into B
@@ -446,7 +445,7 @@ bool spectrum::generate_spectrum(data_array &parent, int om_fuzz, int angle_type
     this->function_type = angle_type;
     //...and omega axis
     size_t len;
-    my_type * om_ax = parent.get_axis(1, len);
+    const my_type * om_ax = parent.get_axis(1, len);
 
     //Now we loop across x, calculate the wave cutout bounds, and total, putting result into data
 
@@ -458,7 +457,7 @@ bool spectrum::generate_spectrum(data_array &parent, int om_fuzz, int angle_type
 
     calc_type sgn;
     //One sided axis (runs 0 to max) rather than -max to max. These are the only options
-    bool one_sided = (std::abs(om_ax[0]) < std::abs(om_ax[len/2]));
+    bool one_sided = (std::abs(parent.get_axis_element(1,0)) < std::abs(parent.get_axis_element(1,len/2)));
 
     for(size_t i = 0; i < get_omega_length(); ++i){
       //Convert parent k-axis value to omega, preserving sign
@@ -475,8 +474,8 @@ bool spectrum::generate_spectrum(data_array &parent, int om_fuzz, int angle_type
       
       //Adjust for low off bottom or high off top
       //Low off top or high off bottom will still be caught and skipped
-      if(low_bnd < 0 && om_disp *(1.0-sgn*tolerance) < om_ax[0]) low_bnd = 0;
-      if(high_bnd < 0 && om_disp *(1.0+sgn*tolerance) > om_ax[len-1]) high_bnd = len-1;
+      if(low_bnd < 0 && om_disp *(1.0-sgn*tolerance) < parent.get_axis_element(1,0)) low_bnd = 0;
+      if(high_bnd < 0 && om_disp *(1.0+sgn*tolerance) > parent.get_axis_element(1,len-1)) high_bnd = len-1;
 
       if(low_bnd < 0 || high_bnd< 0){
         set_B_element(i,0.0);
@@ -504,9 +503,9 @@ bool spectrum::generate_spectrum(data_array &parent, int om_fuzz, int angle_type
 
     //Get the k_x and k_y axes for lookup
     size_t len_x, len_y, len_om;
-    my_type * kx_ax = parent.get_axis(0, len_x);
-    my_type * ky_ax = parent.get_axis(1, len_y);
-    my_type * om_ax = parent.get_axis(2, len_om);
+    const my_type * kx_ax = parent.get_axis(0, len_x);
+    const my_type * ky_ax = parent.get_axis(1, len_y);
+    const my_type * om_ax = parent.get_axis(2, len_om);
     
     //One sided axis (runs 0 to max) rather than -max to max. These are the only options
     bool one_sided = (std::abs(om_ax[0]) < std::abs(om_ax[len_om/2]));
@@ -706,7 +705,7 @@ int spectrum::where_omega(my_type omega){
 */
   int index;
   size_t len;
-  my_type * om_axis = get_omega_axis(len);
+  const my_type * om_axis = get_omega_axis(len);
   index = where(om_axis, len, omega);
   return index;
 

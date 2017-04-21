@@ -19,7 +19,7 @@
 *@{ 
 *\brief Utility to generate a spectrum from Fourier transformed data
 *
-*Requires an input directory and an input fft'd data file. The output is either specified, or is the input file with _spectrum appended before the extension. The "wave" option specifies the wave mode by single-character key (w, p, o) and defaults to Whistler. A "fuzz" parameter controlling how tight a band around the dispersion curve can be supplied as a percentage, default is 10%. Spectra contain both frequency and angle data, the n_ang, ang and extra flags control this. 
+*Requires an input directory and an input fft'd data file. The output is either specified, or is the input file with _spectrum appended before the extension. The "wave" option specifies the wave mode by single-character key (w, p, o) and defaults to Whistler. A "fuzz" parameter controlling how tight a band around the dispersion curve can be supplied as a percentage, default is 10%. Spectra contain both frequency and angle data, the n_ang, ang and extra flags control this. FFTs may not stay compatible cross-code version, so we do a version check first.
 \verbinclude help_f.txt
 \author Heather Ratcliffe \date 12/08/2016
 */
@@ -49,7 +49,7 @@ fft_spect_args fft_spect_process_command_line(int argc, char *argv[]);
   @return System error code */
 
 int main(int argc, char *argv[]){
-/** \todo FFT normalisation -> V2.0*/
+/** \todo FFT normalisation -> V2.0. Create file converter if so*/
 //We don't need MPI here but SDF does
 
   my_print(std::string("Code Version: ")+ VERSION, mpi_info.rank);
@@ -64,7 +64,13 @@ int main(int argc, char *argv[]){
 
   controller contr = controller(my_args.file_prefix);
     //For spectrum we need a plasma to dictate dispersion, so we go via controller
-  data_array data_in = data_array(my_args.file_prefix+my_args.file_in, 0);
+
+  //Check version compatibility.
+  if(!check_wipps_version(my_args.file_prefix+my_args.file_in)){
+    //If breaking changes made, add an exit at this point.
+  }
+  
+  data_array data_in = data_array(my_args.file_prefix+my_args.file_in);
 
   if(!data_in.is_good()){
       my_error_print("Data array allocation failed. Aborting.");

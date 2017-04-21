@@ -233,7 +233,7 @@ my_type get_ref_Bx(std::string file_prefix, size_t space_in[2], size_t time_0, b
 data_array get_Bx(std::string file_prefix, size_t space_in[2], size_t time_0, bool is_acc=false);
 bool flatten_fortran_slice(my_type * src_ptr, my_type* dest_ptr, size_t n_dims_in, size_t * dims_in, size_t flatten_on_dim,size_t flat_start=0, size_t flat_stop=-1);//I know -1 will overflow, that is what I want
 
-int where(my_type * ax_ptr, int len, my_type target);
+int where(const my_type * ax_ptr, int len, my_type target);
 
 /** Relativistic gamma from velocity
 @param v Particle velocity
@@ -253,6 +253,9 @@ inline calc_type gamma_rel(calc_type v){
 */
 
 /********IO helpers ****/
+std::string read_wipps_version_string(std::string filename);
+bool check_wipps_version(std::string filename);
+
 void my_print(std::string text, int rank=0, int rank_to_write=0, bool noreturn=false);
 void my_print(std::fstream * handle, std::string text, int rank=0, int rank_to_write=0, bool noreturn=false);
 void my_error_print(std::string text, int rank=0, int rank_to_write=0, bool noreturn=false);
@@ -287,6 +290,8 @@ inline std::string str_to_lower(std::string str){
   }
   return str;
 }
+
+bool compare_as_version_string(std::string str, std::string vers_str=VERSION, bool minor=false);
 
 /********Maths helpers ****/
 template<typename T> T integrator(T * start, int len, T * increment);

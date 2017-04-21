@@ -17,7 +17,7 @@
 /** \defgroup cutout_util FFT cutout utility
 *@{ *\brief Utility to trim FFTd data to specified axis limits
 *
-*Reads array from given file, cuts out to supplied limits and saves to given output file. deck.status file is read from file_prefix+deck.status and allows to specify frequency cuts in w_ce. Wavenumber cuts are in m^-1. If no output file is given, output will be in [inputfile]_trim
+*Reads array from given file, cuts out to supplied limits and saves to given output file. deck.status file is read from file_prefix+deck.status and allows to specify frequency cuts in w_ce. Wavenumber cuts are in m^-1. If no output file is given, output will be in [inputfile]_trim. Output file gains current version number, so we enforce strict checking
 \verbinclude help_c.txt
 \author Heather Ratcliffe \date 11/08/2016
 
@@ -62,6 +62,13 @@ int main(int argc, char *argv[]){
   if(mpi_info.rank == 0){
 
     get_deck_constants(my_args.file_prefix);
+    
+
+    //Check version compatibility.
+    if(!check_wipps_version(my_args.file_prefix+my_args.file_in)){
+      //Exit at this point, since output file will inherit new version specifier but probably wont be right
+      exit(1);
+    }
     
     data_array FFT_in = data_array(my_args.file_prefix+my_args.file_in);
     //Set cutout limits on FFT

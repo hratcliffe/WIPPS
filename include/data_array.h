@@ -47,11 +47,7 @@ public:
   explicit data_array();
   explicit data_array(size_t nx, size_t ny=0, size_t nz=0, size_t nt=0);
   explicit data_array(size_t n_dims, size_t * dims);
-#ifdef DEFAULT_NOVERS
-  explicit data_array(std::string filename, bool no_version_check = true);
-#else
-  explicit data_array(std::string filename, bool no_version_check = false);
-#endif
+  explicit data_array(std::string filename);
   virtual ~data_array();
   virtual bool is_good()const{return my_array::is_good() && axes;}/**< Whether array is useable @return Boolean true for good state, false for bad*/
 
@@ -75,7 +71,7 @@ public:
 /********Indexers, getters and setters ****/
   my_type get_axis_element(size_t dim, size_t pt)const;
   bool set_axis_element(size_t dim, size_t pt, my_type val);
-  my_type * get_axis(size_t dim, size_t & length);
+  const my_type * get_axis(size_t dim, size_t & length);
   float get_res(size_t i)const;
   long get_axis_index_from_value(size_t dim, my_type value)const;
 
@@ -84,11 +80,7 @@ public:
   void make_linear_axis(size_t dim, float res, long offset=0);
 
   bool write_to_file(std::fstream &file, bool close_file=true);
-#ifdef DEFAULT_NOVERS
-  bool read_from_file(std::fstream &file, bool no_version_check=true);
-#else
-  bool read_from_file(std::fstream &file, bool no_version_check=false);
-#endif
+  bool read_from_file(std::fstream &file);
   bool write_section_to_file(std::fstream &file, std::vector<my_type> limits, bool close_file=true);
   bool write_raw_section_to_file(std::fstream &file, std::vector<size_t> index_limits, bool close_file=true);
   bool write_closer(std::fstream &file);

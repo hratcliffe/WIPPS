@@ -1,2 +1,2 @@
 In class test_entity_d:<p>A full useful calculation of a test coefficient takes quite a while, so here we just test that the calculation proceeds and there are no obvious problems. Set runtime_flag "full_d" to perform a full sample D calculation </p>
-In class test_entity_levelone:<p>Set runtime_flag "no_level_one" to skip a full level-one testing </p>
+In class test_entity_levelone:<p>Set runtime_flag "no_level_one" to skip a full level-one testing</p>

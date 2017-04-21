@@ -95,8 +95,14 @@ int main(int argc, char *argv[]){
     my_print("Processing spectrum files", mpi_info.rank);
     std::vector<std::string> filelist;
     filelist = read_filelist(cmd_line_args.file_prefix+extra_args.spect_file);
+    std::string filename = cmd_line_args.file_prefix+ filelist[0];
     if(filelist.size() >= 1){
-      contr->add_spectrum(cmd_line_args.file_prefix+ filelist[0]);
+      //Check version compatibility.
+      if(!check_wipps_version(filename)){
+        //If breaking changes made, add an exit at this point.
+        //Note that spectra are normed, so changed norming is not breaking here
+      }
+      contr->add_spectrum(filename);
       spectrum * my_spect = contr->get_current_spectrum();
       if(my_spect->get_B_dims() < 1){
       //Wrap in quotes so we highlight stray trailing whitespace etc
@@ -114,7 +120,12 @@ int main(int argc, char *argv[]){
         if(i > 0) my_print("Differencing "+filelist[i-1]+" and "+filelist[i]);
         else my_print("Differencing noise estimate and "+filelist[i]);
         contr->delete_current_spectrum();
-        contr->add_spectrum(cmd_line_args.file_prefix+ filelist[i]);
+        filename = cmd_line_args.file_prefix+ filelist[i];
+        //Check version compatibility.
+        if(!check_wipps_version(filename)){
+          //If breaking changes made, add an exit at this point.
+        }
+        contr->add_spectrum(filename);
         if(my_spect->get_B_dims() < 1){
           my_error_print("Invalid or missing spectrum file '"+cmd_line_args.file_prefix+filelist[i]+"'");
           continue;

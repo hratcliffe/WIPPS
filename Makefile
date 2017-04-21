@@ -44,9 +44,6 @@ endif
 #Path for FFTW libraries. Leave empty to use system install
 FFTW_PATH = ~/FFTW_testdir/fftw-3.3.4/
 
-#Don't check data file versions against code by default
-CFLAGS += -DDEFAULT_NOVERS
-
 DEBUG = -O0 -g -W -Wall -pedantic -D_GLIBCXX_DEBUG -Wextra
 #Comment/uncomment these to hide specific errors...
 #DEBUG+= -Wno-sign-compare -Wno-unused-parameter

@@ -93,13 +93,8 @@ public:
   bool populate_complex_slice(my_type * dat_in, size_t n_dims, size_t * offsets, size_t* sizes);
 
   bool write_to_file(std::fstream &file);
-#ifdef DEFAULT_NOVERS
-  bool read_from_file(std::fstream &file, bool no_version_check=true);
-  std::vector<size_t> read_dims_from_file(std::fstream &file, bool no_version_check=true);
-#else
-  bool read_from_file(std::fstream &file, bool no_version_check=false);
-  std::vector<size_t> read_dims_from_file(std::fstream &file, bool no_version_check=false);
-#endif
+  bool read_from_file(std::fstream &file);
+  std::vector<size_t> read_dims_from_file(std::fstream &file);
   
   bool write_section_to_file(std::fstream &file, std::vector<size_t> bounds);
 

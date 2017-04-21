@@ -562,7 +562,7 @@ int test_entity_spectrum::setup(){
 
   int err = TEST_PASSED;
 
-  test_dat_fft = data_array(file_prefix + "FFT_data.dat", true);
+  test_dat_fft = data_array(file_prefix + "FFT_data.dat");
   if(!test_dat_fft.is_good()){
     err |= TEST_ASSERT_FAIL;
     err |= TEST_FATAL_ERR;
@@ -651,10 +651,10 @@ int test_entity_spectrum::basic_tests2(){
   my_type total_error = 0.0;
   test_contr->get_current_spectrum()->generate_spectrum(test_dat_fft ,10, FUNCTION_GAUSS);
 
-  test_spect = data_array(file_prefix + "spectrum.dat", true);
+  test_spect = data_array(file_prefix + "spectrum.dat");
   if(test_spect.is_good()){
     //We ignore frequencies below say 0.05 om_ce
-    my_type * ax = test_spect.get_axis(0, len);
+    const my_type * ax = test_spect.get_axis(0, len);
     int min_ind = 0;
     if(ax) min_ind = where(ax+len/2, len/2, 17588.200*0.05);
     /**Hard code min freq to match the IDL file with test data generation...*/
@@ -816,7 +816,6 @@ my_type calc_I_omega(my_type omega, spectrum * my_spect, controller * my_contr){
 @param my_spect Spectrum object to use
 @param my_contr Controller providing plasma
 @return Value of I(omega)
-\todo Add reference links to docs
 */
   my_type Psi, theta, x, dx, g_x, I_contrib, I_contrib2, I_om = 0.0, om_sq_p_e;
   size_t x_sz = my_spect->get_angle_length();

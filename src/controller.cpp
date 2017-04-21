@@ -372,7 +372,6 @@ bool controller::save_spectra(std::string pref){
 * Writes each spectrum object to a file, identified by space range and time.
 @param pref File prefix, including path etc
 @return 0 for success, 1 for failure
-\todo Add logging?
 */
 
   std::fstream file;
@@ -391,7 +390,7 @@ bool controller::save_spectra(std::string pref){
 bool controller::save_D(std::string pref){
 /** \brief Save D's to files (one per chunk)
 *
-* Writes each spectrum object to a file, identified by space range and time. Note root will also write a bounce averaged file
+* Writes each D object to a file, identified by space range and time. Note root will also write a bounce averaged file
 @param pref File prefix, including path etc
 @return 0 for success, 1 for failure
 */

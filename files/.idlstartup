@@ -1,6 +1,0 @@
-!PATH=!PATH+':'+Expand_Path('../SDF/IDL')
-@'../SDF/IDL/Start.pro'
-.r './plot_helpers.pro'
-.r './read_deck.pro'
-define_consts
-ON_ERROR, 1

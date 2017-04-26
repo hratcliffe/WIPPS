@@ -51,7 +51,8 @@
 *
 * Once the code has been built, `make tar_built` to produce a tarball Runnable.tgz of utilities and necessary files that can be copied elsewhere and run.
 *\section idl IDL routines
- *Some IDL helpers are provided for reading the output files, reading the deck.status file etc. To enable those which depend on SDF library IO, use the .idlstartup file in the files subdirectory, like, for example, `IDL> pref_set, 'IDL_STARTUP', '/path/to/.idlstartup',/commit`
+ *Some IDL helpers are provided for reading the output files, reading the deck.status file etc. The simple way to use these is to copy the enclosed .idlstartup file to the directory you run analysis from and set this as a startup file like, for example, `IDL> pref_set, 'IDL_STARTUP', '/path/to/.idlstartup',/commit` Then set a `WIPPS_PATH` environment variable giving the location of the wipps code. Start idl, and you should see a series of "% Compiled module:" lines. Try `IDL> v_to_kev(0.5)
+       79.051798621061963` to test
 
  * \section mod Modifying the Code
   *Any changes to code include files or addition of files will change dependencies. In this case run `make echo_deps` before a clean build to regenerate the makefile listing of included headers.
@@ -111,5 +112,6 @@ Some of the core code uses these, none of the stuff in use should.
 *The major classes we use, dealing with data, physics etc
 @}
 
+\todo .idlstartup find out how to use env var to get relative path to ./files
 */
 

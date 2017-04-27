@@ -48,14 +48,15 @@ int test_entity_reader::run(){
   if(sz != size) err |= TEST_WRONG_RESULT;
   size_t n_dims;
   std::vector<size_t> dims;
-
-  data_array distrib = data_array(4096, 500);
+  test_rdr->read_dims(n_dims, dims, "x_px/Background");
+  //In test data this distrib is 2-D
+  data_array distrib = data_array(dims[0], dims[1]);
   int tmp_err = test_rdr->read_distrib(distrib, "x_px/Background", 0);
   if(tmp_err || distrib.maxval() == distrib.minval()){
     err |= TEST_WRONG_RESULT;
     test_bed->report_info("Error reading distribs", 1);
   }
-
+  dims.clear();
   int rd_err = accum_reader->read_dims(n_dims, dims);
   if(rd_err){
     //Nothing else to do now

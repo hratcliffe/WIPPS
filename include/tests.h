@@ -81,6 +81,8 @@ class test_entity{
 *
 *To report the errors by code, call test_bed->report_err(err); To report other salient information use test_bed->report_info(info, verbosity) where the second parameter is an integer describing the verbosity setting at which to print this info (0 = always, larger means more and more detail. 1 is given as default parameter for this function).
 *
+* Remember to also test whether things that "ought" to fail, do, and give suitable messages, cleanup etc. 
+*
 *To allow conditional running of tests etc, there is a map of runtime_flags which holds all command line arguments. These are assumed to be either a -flag_name or a pair -flag_name integer_flag_value. Available flags are:
 *
 \htmlinclude tests_runtime_flags.txt
@@ -88,7 +90,7 @@ class test_entity{
 /** To include flags in these docs, include comment line in any functions in the relevant test_entity of the form
 "*Set runtime_flag "flag_name" to <action description>*" noting leading and trailing Doxy breaks (* with newline)
 */
-/** \todo Remember to include some inverse tests to ensure things are actually doing something \todo Create test data for double-precision!*/
+/**\todo Create test data for double-precision!*/
 
 class tests{
   private:

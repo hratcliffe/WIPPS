@@ -17,6 +17,8 @@
 *Extracts distributions from SDF files and optionally compresses their spatial dimension. 
 \verbinclude help_d.txt
 \author Heather Ratcliffe \date 09/09/2016
+\caveat This utility only works for 2-D distributions right now.
+\todo Fix to work for 1, 2, or 3-d? Remember all distribs are 3-d with absent dims of size 1
 */
 
 const char PER_UTIL_HELP_ID = 'd';/**<ID to identify help file for this utility*/

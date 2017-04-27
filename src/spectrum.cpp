@@ -85,6 +85,7 @@ spectrum::spectrum(std::string filename){
 *
 *Reads spectrum from file, written using spectrum::write_to_file() or IDL write routines
 @param filename Full filename to read from
+\todo Try and handle trailing newline gracefully because editors like vim tend to add them
 */
 
 //First we grab the position of close block. Then we attempt to read two arrays. If we reach footer after first we error, or do not after second we warn.

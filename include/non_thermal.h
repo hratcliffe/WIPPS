@@ -31,6 +31,8 @@ end:
 *To add new functional forms, create a function such as bimax, below, and create the binding in non_thermal::configure_from_file under "Binding function free parameters to create f_p"
 
 *\ingroup cls
+\caveat This is written for the input.deck files I used, so assumes, for example, that the term called "dens" in deck.status is the cold plasma density. The names of deck constants for additional species etc are set using the conf files. 
+\todo Consider using .conf to set background params too
 */
 
 class non_thermal{

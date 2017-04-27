@@ -195,7 +195,7 @@ struct d_report{
   size_t n_av;/**< Average n_max used for calc*/
   size_t n_max;/**< Max n_max used in calcs*/
   size_t n_min;/**< Min n_min used in calcs. Not '-' is omitted*/
-
+  bool single_n;/**<Flag showing that a single resonance, n_av, was used*/
 };
 /** @} */
 //-----------END STRUCTURES ---------------------------------

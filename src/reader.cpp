@@ -41,6 +41,7 @@ reader::reader(std::string file_prefix_in,  char * block_id_in, int ref_file_num
 @param file_prefix_in File prefix to prepend to all file names
 @param block_id_in String containing desired block id (e.g. ex)
 @param ref_file_num_in Reference file number to use for reading dimensions etc
+\todo Something seems to be going wrong when file can't be opened with n_z
 */
   //Set up some generic things
   time_range[0]=0; time_range[1]=0; time_range[2]=0;

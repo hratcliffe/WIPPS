@@ -33,6 +33,8 @@ private:
 
   int n_thetas; /**< Number of wave normal angles to consider for integrals*/
   int n_n; /**< Max number of resonances to consider */
+  bool single_n;/**< Flag to force considering only a single resonance, mostly for test purposes*/
+  int n_used;/**< The resonance to consider if single_n is set, mostly for test purposes*/
   controller * my_controller;/**< Owning controller which gives access to plasma and spectrum*/
   friend class controller;
   explicit diffusion_coeff(int n_momenta, int n_angs);
@@ -51,7 +53,10 @@ public:
   int wave_id;/**< ID of wave mode considered*/
   std::string tag; /**<Identifies as local, averaged etc*/
   void set_ids(float time1, float time2, int space1, int space2, int wave_id, char block_id[ID_SIZE]);
-
+  /** \brief Set single resonance to consider*/
+  void set_single_n(int n){single_n = true; n_used = n;}
+  /** \brief Set max/min resonant number to consider*/
+  void set_max_n(int n){n_n = n;}
   bool write_to_file(std::fstream &file);
   bool read_from_file(std::fstream &file);
 

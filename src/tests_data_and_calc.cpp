@@ -232,7 +232,7 @@ int test_entity_plasma::resonant_freq(){
 */
 
   int err=TEST_PASSED;
-  int n_tests = 5;
+  int n_tests = 10;
   std::vector<calc_type> results;
   mu_dmudom my_mu;
   int err_count = 0;
@@ -859,7 +859,7 @@ my_type calc_I_omega(my_type omega, spectrum * my_spect, controller * my_contr){
 
 test_entity_levelone::test_entity_levelone(){
 /** \brief Setup level-one testing
-\todo Create some lighter weight test files!*/
+\todo Create some lighter weight test files!, perhaps SDF filter??*/
   name = "level-one derivation";
   
   test_contr = nullptr;
@@ -1218,7 +1218,12 @@ int test_entity_d::full_D_tests(){
   bool err2 = test_contr->add_spectrum(file_prefix + "spectrum.dat");
   if(!err2){
     test_bed->report_info("Calculating full D... This may take a (very) long time!\nEnsure optimisation is on during compile!", mpi_info.rank);
-    test_contr->add_d(500, 500);
+    test_contr->add_d(100, 100);
+    if(test_bed->runtime_flags.count("n") != 0){
+      test_contr->get_current_d()->set_single_n(test_bed->runtime_flags["n"]);
+    }else{
+      test_contr->get_current_d()->set_max_n(5);
+    }
     d_report report = test_contr->get_current_d()->calculate();
     if(report.error){
       test_bed->report_info("Error calculating full D", mpi_info.rank);

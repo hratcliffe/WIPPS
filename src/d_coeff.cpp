@@ -21,6 +21,8 @@ diffusion_coeff::diffusion_coeff(int n_momenta, int n_angs):data_array(n_momenta
 
   n_thetas = 100;
   n_n = 15;
+  single_n = false;
+  n_used = 0;
   wave_id = WAVE_WHISTLER;
   latitude = 0; //Doesn't do anything "yet"
   tag="";
@@ -46,13 +48,13 @@ void diffusion_coeff::set_ids(float time1, float time2, int space1, int space2, 
   this->wave_id = wave_id;
 }
 
-
 bool diffusion_coeff::write_to_file(std::fstream &file){
 /** \brief Write diffusion coeff to file
 *
 * Writes file dump of a diffusion coefficient. NB the file passed in must be opened for input and output.
 @param file Filestream to write to
 @return 0 for success, 1 for failure (usually file access)
+/todo Write n_info or perhaps whole report?
 */
 
   if(!file.is_open()) return 1;
@@ -151,6 +153,7 @@ d_report diffusion_coeff::calculate(D_type_spec type_of_D, bool quiet){
   report.n_av = 0;
   report.n_max = 0;
   report.n_min = 0;
+  report.single_n = false;
   
 //----- Get the plasma and spectrum bits
   plasma plas;
@@ -213,7 +216,11 @@ d_report diffusion_coeff::calculate(D_type_spec type_of_D, bool quiet){
     if(!quiet){
       my_print("Velocity "+mk_str(mod_v/v0, true)+" c", mpi_info.rank);
       if((v_ind - last_report) >= report_interval){
-        my_print("i "+mk_str(v_ind)+" (n_max, n_min "+mk_str(report.n_max)+' '+mk_str(report.n_min)+")", mpi_info.rank);
+        if(single_n){
+          my_print("i "+mk_str(v_ind)+" (n "+mk_str(n_used)+")", mpi_info.rank);
+        }else{
+          my_print("i "+mk_str(v_ind)+" (n_max, n_min "+mk_str(report.n_max)+' '+mk_str(report.n_min)+")", mpi_info.rank);
+        }
         last_report = v_ind;
       }
     }
@@ -222,22 +229,25 @@ d_report diffusion_coeff::calculate(D_type_spec type_of_D, bool quiet){
       alpha = get_axis_element_ang(part_pitch_ind);
       cos_alpha = cos(alpha);
       s2alpha = std::pow(std::sin(alpha), 2);
-
-      //Get limits on n for this velocity and angle
-      n_min = get_min_n(mod_v, cos_alpha, k_thresh, om_ce_ref);
-      n_max = get_max_n(mod_v, cos_alpha, k_thresh, om_ce_ref);
-      n_av += n_max;//Track the average n_max over all iterations
-      report.n_max = std::max(report.n_max, (size_t)n_max);//Track the extreme n_max and n_min
-      report.n_min = std::max(report.n_min, (size_t) -n_min);
-
+      if(single_n){
+        //Use only the single selected resonance
+        n_min = n_used;
+        n_max = n_min;
+      }else{
+        //Get limits on n for this velocity and angle
+        n_min = get_min_n(mod_v, cos_alpha, k_thresh, om_ce_ref);
+        n_max = get_max_n(mod_v, cos_alpha, k_thresh, om_ce_ref);
+        n_av += n_max;//Track the average n_max over all iterations
+        report.n_max = std::max(report.n_max, (size_t)n_max);//Track the extreme n_max and n_min
+        report.n_min = std::max(report.n_min, (size_t) -n_min);
+      }
       for(int wave_ang_ind = 0; wave_ang_ind < n_thetas; wave_ang_ind++){
       //theta loop for wave angle or x=tan theta
         theta = atan(x[wave_ang_ind]);
         c2th = std::pow(cos(theta), 2);
         D_part_n_sum = 0.0;
 
-        for(int n = n_min; n < n_max; ++n){
-//          {int n = 0;
+        for(int n = n_min; n <= n_max; ++n){
           // n is resonant number
           omega_calc = plas.get_resonant_omega(x[wave_ang_ind], mod_v*cos_alpha, gamma_particle, (calc_type) n);
           omega_n = (calc_type) n * om_ce_ref;
@@ -287,6 +297,12 @@ d_report diffusion_coeff::calculate(D_type_spec type_of_D, bool quiet){
   report.n_fails = non_counter;
   report.error = false;
   report.n_av = n_av/dims[0]/dims[1];
+  if(single_n){
+    report.n_av = n_used;
+    report.n_max = 0;
+    report.n_min = 0;
+    report.single_n = true;
+  }
   my_print(mk_str(counter) + " solutions vs "+ mk_str(non_counter), mpi_info.rank);
   
   return report;
@@ -302,7 +318,7 @@ int diffusion_coeff::get_min_n(calc_type mod_v, calc_type cos_alpha,  my_type k_
 @param k_thresh Maximum wavevector where spectrum has non-nelgible power
 @param om_ce Reference cyclotron frequency
 @return Maximum resonant number, bounded as < -1
-
+\todo returning n-1 is meaning we're not obeying requested n_min exactly, ditto in max_n
 */
 
   calc_type gamma = gamma_rel(mod_v);

@@ -48,11 +48,11 @@ int test_entity_plasma::run(){
 
   int err = TEST_PASSED;
   
- // err |= analytic_dispersion();
-  //err |= high_density();
+  err |= analytic_dispersion();
+  err |= high_density();
   err |= resonant_freq();
-  //err |= other_modes();
-  //err |= phi_dom();
+  err |= other_modes();
+  err |= phi_dom();
 
   return err;
 }
@@ -282,7 +282,6 @@ int test_entity_plasma::resonant_freq(){
         results = plas->get_resonant_omega(x, v_par, gamma, n);
         /**Now check each element of the resonant frequency solution set satisfies Stix 2.45 and the resonance condition together*/
         for(size_t i=0; i<results.size(); ++i){
-  //std::cout<<results[i]<<'\n';
           omega_solution = results[i];
 
           //Solve Res condition for mu^2 = (kc/om)^2
@@ -301,9 +300,9 @@ int test_entity_plasma::resonant_freq(){
             err_count++;
           }
           //This should match approx, approx'ly
-          if(std::abs((my_mu.mu*my_mu.mu - mu_tmp1)/mu_tmp1) > LOW_PRECISION){
+          /** \todo I have no idea how closesly these should match*/
+          if(std::abs((my_mu.mu*my_mu.mu - mu_tmp1)/mu_tmp1) > 0.025){
             err|=TEST_WRONG_RESULT;
-          std::cout<< my_mu.mu<<' '<<(my_mu.mu*my_mu.mu - mu_tmp1)/mu_tmp1<<'\n';
             test_bed->report_info("Mismatched full mu solution for resonant frequency", 2);
           }
         }

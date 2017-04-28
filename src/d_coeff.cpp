@@ -217,9 +217,9 @@ d_report diffusion_coeff::calculate(D_type_spec type_of_D, bool quiet){
       my_print("Velocity "+mk_str(mod_v/v0, true)+" c", mpi_info.rank);
       if((v_ind - last_report) >= report_interval){
         if(single_n){
-          my_print("i "+mk_str(v_ind)+" (n "+mk_str(n_used)+")", mpi_info.rank);
+          my_print("iter. "+mk_str(v_ind)+" (n "+mk_str(n_used)+")", mpi_info.rank);
         }else{
-          my_print("i "+mk_str(v_ind)+" (n_max, n_min "+mk_str(report.n_max)+' '+mk_str(report.n_min)+")", mpi_info.rank);
+          my_print("iter. "+mk_str(v_ind)+" (n_max, n_min "+mk_str(report.n_max)+' '+mk_str(report.n_min)+")", mpi_info.rank);
         }
         last_report = v_ind;
       }
@@ -227,7 +227,7 @@ d_report diffusion_coeff::calculate(D_type_spec type_of_D, bool quiet){
     for(size_t part_pitch_ind = 0; part_pitch_ind < dims[1]; part_pitch_ind++){
       //particle pitch angle
       alpha = get_axis_element_ang(part_pitch_ind);
-      cos_alpha = cos(alpha);
+      cos_alpha = std::cos(alpha);
       s2alpha = std::pow(std::sin(alpha), 2);
       if(single_n){
         //Use only the single selected resonance
@@ -258,19 +258,20 @@ d_report diffusion_coeff::calculate(D_type_spec type_of_D, bool quiet){
               //Loop over solutions
               //Ignore sign info for now. This might lead to double or quad counting, that can be resolved later
               /** \todo Check for double counting*/
-              omega_solution = std::abs(omega_calc[om_solution_num]);
-              
+              omega_solution = omega_calc[om_solution_num];
               my_mu = plas.get_high_dens_phi_mu_om(omega_solution, theta, alpha, n, gamma_particle);
 
               my_mu.err ? non_counter++ : counter++;
               //If err is true, then once angle is included we found no solution. Keep track for final report
-
+      /** \todo Why would anything be lost here? Probably from when we had v_par*/
               Eq6 = omega_solution/(omega_solution - omega_n)* my_mu.mu/(my_mu.mu + omega_solution * my_mu.dmudom);
               numerator = std::pow( -s2alpha + omega_n/omega_solution, 2);
               D_conversion_factor = sin(alpha)*cos(alpha)/(-s2alpha + omega_n/omega_solution);
               //Get the part of D summed over n. Note additional factors below
               //NB NB get_G_1 precancels the \Delta\omega and B_wave factors
-              D_part_n_sum += numerator * my_mu.phi / std::abs(1.0 - Eq6) * get_G1(spect, omega_solution) * get_G2(spect, omega_solution, x[wave_ang_ind]);
+              /** \todo Have G1 and G2 handle -ve omega */
+              D_part_n_sum += numerator * my_mu.phi / std::abs(1.0 - Eq6) * get_G1(spect, std::abs(omega_solution)) * get_G2(spect, std::abs(omega_solution), x[wave_ang_ind]);
+              
               //Convert alpha_alpha to requested D type
               D_part_n_sum = (is_mixed ? D_part_n_sum*D_conversion_factor : D_part_n_sum);
               D_part_n_sum = (is_pp ? D_part_n_sum*D_conversion_factor*D_conversion_factor : D_part_n_sum);
@@ -282,7 +283,7 @@ d_report diffusion_coeff::calculate(D_type_spec type_of_D, bool quiet){
       }
       //now integrate in x = tan theta, restore the velocity factor and save
       D_final_without_consts = integrator(D_theta, n_thetas, dx);
-      D_final_without_consts /= mod_v*std::pow(cos_alpha, 3) / (gamma_particle*gamma_particle - 1.0);
+      D_final_without_consts /= mod_v*std::pow(cos_alpha, 3) * (gamma_particle*gamma_particle - 1.0);
       set_element(v_ind, part_pitch_ind, D_final_without_consts*D_consts);
     }
   }

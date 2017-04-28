@@ -199,12 +199,10 @@ mu_dmudom plasma::get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int
   if(psi < 0 || psi >= pi) my_error_print("!!!!!!!!Error in get_phi_mu_om, pitch angle (psi="+mk_str(psi)+") out of range!!!!!!", 0);
   if(alpha < 0 || alpha >= pi) my_error_print("!!!!!!!!Error in get_phi_mu_om, particle pitch angle (alpha="+mk_str(alpha)+") out of range!!!!!!", 0);
   if(gamma_particle < 1) my_error_print("!!!!!!!!Error in get_phi_mu_om, particle gamma (gamma_particle="+mk_str(gamma_particle)+") out of range!!!!!!", 0);
-  //I don't think there's an upper or lower bound on w we need to enforce, only positivity. We'll take abs below and succeed, but in debug mode also warn
-  if(w < 0) my_error_print("!!!!!!Error in get_phi_mu_om, wave frequency (w="+mk_str(w)+") is negative!!!!!!", 0);
+  //I don't think there's an upper or lower bound on w we need to enforce
   //Nor any actual bounds on n
 #endif
 
-  w = std::abs(w);
   calc_type w2 = w*w;
   
   calc_type R=1.0, L=1.0, P=1.0;
@@ -246,12 +244,10 @@ mu_dmudom plasma::get_high_dens_phi_mu_om(calc_type w, calc_type psi, calc_type 
   if(psi < 0 || psi >= pi) my_error_print("!!!!!!!!Error in get_high_dens_phi_mu_om, pitch angle (psi="+mk_str(psi)+") out of range!!!!!!", 0);
   if(alpha < 0 || alpha >= pi) my_error_print("!!!!!!!!Error in get_high_dens_phi_mu_om, particle pitch angle (alpha="+mk_str(alpha)+") out of range!!!!!!", 0);
   if(gamma_particle < 1) my_error_print("!!!!!!!!Error in get_high_dens_phi_mu_om, particle gamma (gamma_particle="+mk_str(gamma_particle)+") out of range!!!!!!", 0);
-  //I don't think there's an upper or lower bound on w we need to enforce. Only positivity. We'll take abs below and succeed, but in debug mode also warn
-  if(w < 0) my_error_print("!!!!!!Error in get_high_dens_phi_mu_om, wave frequency (w="+mk_str(w)+") is negative!!!!!!", 0);
+  //I don't think there's an upper or lower bound on w we need to enforce.
   //Nor any bounds on n
 #endif
 
-  w = std::abs(w);
   calc_type w2 = w*w;
   
   calc_type R=1.0, L=1.0, P=1.0;
@@ -290,7 +286,6 @@ mu_dmudom plasma::get_phi_mu_from_stix(calc_type w, calc_type psi, calc_type alp
 */
 
   calc_type w2, w3;
-  w = std::abs(w);
   w2 = w*w;
   w3 = w2*w;
   
@@ -330,7 +325,6 @@ mu_dmudom plasma::get_phi_mu_from_stix(calc_type w, calc_type psi, calc_type alp
   C = P*R*L;
   J = std::sqrt(B*B - 4.0*A*C);
 
-
   mua2 = 1.0 - 2.0*(A - B + C)/(2.0*A - B + J);
   mub2 = 1.0 - 2.0*(A - B + C)/(2.0*A - B - J);
 
@@ -340,14 +334,28 @@ mu_dmudom plasma::get_phi_mu_from_stix(calc_type w, calc_type psi, calc_type alp
   my_mu.dmudom = 0.0;
   my_mu.dmudtheta = 0.0;
   my_mu.err = 1;
+  my_mu.phi = 0;
+  smu = 0;
+  mu2 = 0;
 
   if( (mua2 > 0.0) || (mub2 > 0.0) ){
+    //see Albert [2005] or Stix [1972] for mode selection
     if(Righthand){//Select Mode
-      if(D < 0.0 ){ smu = 1.0; mu2 = mua2;} //see Albert [2005]
-      else{smu = -1.0; mu2 = mub2;}
+      if(w > 0){
+        if(D < 0.0){ smu = 1.0; mu2 = mua2;}
+        else{smu = -1.0; mu2 = mub2;}
+      }else{
+        if(D < 0.0){smu = -1.0; mu2 = mub2;}
+        else{smu = 1.0; mu2 = mua2;}
+      }
     }else{
-      if(D < 0.0 ){ smu = -1.0; mu2 = mub2;}
-      else{smu = 1.0; mu2 = mua2;}
+      if(w > 0){
+        if(D > 0.0){ smu = 1.0; mu2 = mua2;}
+        else{smu = -1.0; mu2 = mub2;}
+      }else{
+        if(D > 0.0){smu = -1.0; mu2 = mub2;}
+        else{smu = 1.0; mu2 = mua2;}
+      }
     }
 
     my_mu.mu = std::sqrt(mu2);
@@ -417,17 +425,16 @@ mu_dmudom plasma::get_phi_mu_from_stix(calc_type w, calc_type psi, calc_type alp
       
       bessel_arg = tan(psi)*tan(alpha) * (w - omega_n)/omega_n_slash_n;// n x tan alpha (om - om_n)/om_n, but allowing n/n = 1 even when n = 0
 
-      tmp_besp = boost::math::cyl_bessel_j(abs(n)+1, bessel_arg);
-      tmp_besm = boost::math::cyl_bessel_j(abs(n)-1, bessel_arg);
+      tmp_besp = boost::math::cyl_bessel_j(n+1, bessel_arg);
+      tmp_besm = boost::math::cyl_bessel_j(n-1, bessel_arg);
 
-      term2 = (1.0 + D_mu2S)*tmp_besp;
+      term2  = (1.0 + D_mu2S)*tmp_besp;
       term2 += (1.0 - D_mu2S)*tmp_besm;
       
-      //tmp_bes = boost::math::cyl_bessel_j(abs(n), bessel_arg);
       if(n != 0) tmp_bes = 0.5*bessel_arg *(tmp_besp + tmp_besm)/calc_n;
-      else tmp_bes = boost::math::cyl_bessel_j(abs(n), bessel_arg);
+      else tmp_bes = boost::math::cyl_bessel_j(0, bessel_arg);
       //Use bessel identity to save time.
-      // J_(n-1) + J_(n+1) = (2 n / arg) J_n
+      // J_(n-1) + J_(n+1) = (2 n / arg) J_n, n!=0
       term3 = scpsi*tmp_bes/std::tan(alpha);
 
       my_mu.phi = std::pow((0.5*term1*term2 + term3), 2)/denom;
@@ -448,6 +455,7 @@ std::vector<calc_type> plasma::get_resonant_omega(calc_type x, calc_type v_par, 
 @param gamma_particle Relativistic gamma for resonant particle
 @param n Resonance number
 @return Vector of solutions for resonant omega, or empty vector if no solutions are found
+\todo This should take theta like various get_mu* do
 */
 
 #ifdef DEBUG_ALL
@@ -490,11 +498,10 @@ std::vector<calc_type> plasma::get_resonant_omega(calc_type x, calc_type v_par, 
   d = -n*n*std::pow(om_ce/om_ce_ref, 3)*cos_th;
   //Note: for n=0, d is 0. We covered v_par being zero above, so either omega = 0 and k_par = 0 or we have a normal solution, but with redundancy. We assume omega = 0 is an unhelpful solution to return. And for simplicity we don't do a special quadratic solution but just continue anyway
 
-  
   an = b/a;
   bn = c/a;
   cn = d/a;
-  
+
   ret_vec = cubic_solve(an, bn, cn);
 
   //Restore om_ce_ref factor and delete any entries > om_ce as these aren't whistler modes. Also delete answers which are "zero"

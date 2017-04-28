@@ -374,6 +374,16 @@ FOR THE $m^2$ note that the duplicate of Lyons in Glauert/Horne doesn't have the
 
 NB NB I think this is because they use $g(\theta)$ vs $g(\tan(\theta))$ respectively!!
 
+\section{Evauluation of resonant frequencies}
+
+\begin{verbatim}
+  a = (vel_cos - 1.0) * gamma_sq;
+  b = (vel_cos*cos_th*gamma_sq + 2.0*gamma_particle*n - gamma_sq*cos_th)*om_ce/om_ce_ref;
+  c = ((2.0 * gamma_particle * n * cos_th - n * n)* std::pow(om_ce/om_ce_ref, 2) - 
+         std::pow(om_pe_loc/om_ce_ref, 2)*vel_cos*gamma_sq);
+  d = -n*n*std::pow(om_ce/om_ce_ref, 3)*cos_th;
+\end{verbatim}
+
 \section{Calculation of D}
 \subsection{Breakdown of terms}
 Since D is evaluated at each $p, \alpha$ and to do so requires integrating over wave angle and totalling over both $n$ and the resonant omegas we have 4 or 5 nested loops unavoidably. Therefore we break the calculation down and hoist everything as high as possible. Taking
@@ -417,8 +427,10 @@ In both Lyons and Albert $D$ is given without arguments specified, so one probab
 \subsection{Arguments of Bessel functions in Phi}
 In Lyons (between Eq 3 and 4) we have that the Bessel function args Big-Theta or Phi are
 \[ k_\perp v_\perp / \Omega_l\]
-Albert converts these to 
-\[ n x \tan \alpha (\omega -\omega_n)/\omega_n\] which DOES NOT WORK for $n = 0$. The conversion is done using the resonance condition to get $k_\parallel v_\parallel = \omega -\omega_n$ along with $k_\perp = k_\parallel x$ and $v_\perp = v_\parallel \tan\alpha$ and finally replacing $\Omega_l = s \Omega_c = \omega_n \gamma / n$. So we can simply cancel the $n$.
+Relativistically, this becomes
+\[ \frac{k_\perp p_\perp}{m \Omega_l}\] and note that $p= \gamma m v$
+Note $\Omega_l$ is signed!. Albert converts these to 
+\[ n x \tan \alpha (\omega -\omega_n)/\omega_n\] which DOES NOT WORK for $n = 0$. The conversion is done using the resonance condition to get $k_\parallel v_\parallel = \omega -\omega_n$ along with $k_\perp = k_\parallel x$ and $v_\perp = v_\parallel \tan\alpha$ and finally replacing $\Omega_l = s \Omega_c = \omega_n \gamma / n$. So we can simply cancel the $n$. 
 \\However we note there might be some subtlety for Landau $n=0$ resonance. 
 
 \subsection{Sign of cyclotron frequency}

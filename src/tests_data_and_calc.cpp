@@ -48,11 +48,11 @@ int test_entity_plasma::run(){
 
   int err = TEST_PASSED;
   
-  err |= analytic_dispersion();
+ // err |= analytic_dispersion();
+  //err |= high_density();
   err |= resonant_freq();
-  err |= high_density();
-  err |= other_modes();
-  err |= phi_dom();
+  //err |= other_modes();
+  //err |= phi_dom();
 
   return err;
 }
@@ -240,7 +240,6 @@ int test_entity_plasma::resonant_freq(){
   om_ce_local = plas->get_omega_ref("ce");
   om_pe_local = plas->get_omega_ref("pe");
 
-
   calc_type cos_theta, mu_tmp1, mu_tmp2;
   calc_type gamma, gamma2;
 
@@ -254,7 +253,7 @@ int test_entity_plasma::resonant_freq(){
     err |= TEST_WRONG_RESULT;
   }
   
-  calc_type expected_result =  0.50, corresponding_v =  0.162251 * v0, omega_solution, sgn_solution;
+  calc_type expected_result =  0.50, corresponding_v =  0.162251 * v0, omega_solution;
   gamma = gamma_rel(corresponding_v);
   results = plas->get_resonant_omega(0.0, corresponding_v, gamma, -1);
   //Insert a known result here from the IDL code, with one root
@@ -283,25 +282,29 @@ int test_entity_plasma::resonant_freq(){
         results = plas->get_resonant_omega(x, v_par, gamma, n);
         /**Now check each element of the resonant frequency solution set satisfies Stix 2.45 and the resonance condition together*/
         for(size_t i=0; i<results.size(); ++i){
-
-          omega_solution = std::abs(results[i]);
-          sgn_solution = results[i]/omega_solution;
+  //std::cout<<results[i]<<'\n';
+          omega_solution = results[i];
 
           //Solve Res condition for mu^2 = (kc/om)^2
-          mu_tmp1 = std::pow(v0 * (gamma * sgn_solution*omega_solution - n*om_ce_local)/(gamma * sgn_solution * omega_solution * v_par *cos_theta), 2);
-          
-          mu_tmp2 = (1.0 - (std::pow(om_pe_local,2)/(sgn_solution * omega_solution *(sgn_solution * omega_solution + om_ce_local*cos_theta))));
+          mu_tmp1 = std::pow(v0 * (gamma * omega_solution - n*om_ce_local)/(gamma * omega_solution * v_par *cos_theta), 2);
+          mu_tmp2 = (1.0 - (std::pow(om_pe_local,2)/(omega_solution *(omega_solution + om_ce_local*cos_theta))));
           if(std::abs((mu_tmp1 - mu_tmp2)/mu_tmp1) > NUM_PRECISION){
             err|=TEST_WRONG_RESULT;
             test_bed->report_info("Refractive index mismatch of "+mk_str((int)(std::abs((mu_tmp1-mu_tmp2))/mu_tmp1)*100) +'%', 2);
           }
-        
+
           //Also check there is a valid full mu solution
-          my_mu = plas->get_high_dens_phi_mu_om(omega_solution, std::atan(x), 0.0, 0, gamma);
+          my_mu = plas->get_high_dens_phi_mu_om(omega_solution, std::atan(x), 0.0, n, gamma);
           if(my_mu.err){
             err|=TEST_WRONG_RESULT;
             test_bed->report_info("No full mu solution for resonant frequency", 2);
             err_count++;
+          }
+          //This should match approx, approx'ly
+          if(std::abs((my_mu.mu*my_mu.mu - mu_tmp1)/mu_tmp1) > LOW_PRECISION){
+            err|=TEST_WRONG_RESULT;
+          std::cout<< my_mu.mu<<' '<<(my_mu.mu*my_mu.mu - mu_tmp1)/mu_tmp1<<'\n';
+            test_bed->report_info("Mismatched full mu solution for resonant frequency", 2);
           }
         }
       }
@@ -875,7 +878,7 @@ test_entity_levelone::~test_entity_levelone(){
 int test_entity_levelone::run(){
 /** \brief Test entire level-1 data extraction
 *
-*Tests the full sequence of file reading, FFT and spectrum generation
+*Tests the full sequence of file reading, FFT and spectrum generation. Effectively a regression test as we check against previously generated files
 *
 Set runtime_flag "no_level_one" to skip a full level-one testing
 *
@@ -1189,19 +1192,32 @@ int test_entity_d::basic_tests(){
   test_contr->get_current_d()->read_from_file(outfile);
   //Check equality
 
-  bool D_is_eq = true;
+  bool D_is_eq = true;//Flag for equality of written and read D
+  bool D_is_bad = false;//Flag for if written D contains NaN elements
+  bool D_bad_element = false;
   for(int i=0; i< 5; i++){
     for(int j=0; j< 5; j++){
-      if(test_contr->get_d_by_num(1)->get_element(i, j) != test_contr->get_current_d()->get_element(i, j)) D_is_eq = false;
+      if(test_contr->get_d_by_num(1)->get_element(i, j) != test_contr->get_d_by_num(1)->get_element(i, j)){
+         D_bad_element = true;//Element is NaN in written array
+         D_is_bad = true;
+      }
+      if(!D_bad_element && test_contr->get_d_by_num(1)->get_element(i, j) != test_contr->get_current_d()->get_element(i, j)) D_is_eq = false;
+        //We wrote a NaN element so will never be equal
+      D_bad_element = false;
     }
   }
   if(test_contr->get_d_by_num(1)->wave_id != test_contr->get_current_d()->wave_id) D_is_eq = false;
   //Note tag gets truncated to ten chars in writing
   if(test_contr->get_d_by_num(1)->tag.substr(0, 10) != test_contr->get_current_d()->tag.substr(0, 10)) D_is_eq = false;
+
+  if(D_is_bad){
+    test_bed->report_info("D contains NaN!");
+    err |= TEST_WRONG_RESULT;
+  }
   
   if(!D_is_eq){
     test_bed->report_info("Error reading D from file");
-    err |= TEST_WRONG_RESULT;
+    err |= TEST_USERDEF_ERR1;
   }
   return err;
 }

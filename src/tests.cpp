@@ -85,55 +85,46 @@ void tests::set_runtime_flags(int argc, char *argv[]){
   }
 }
 
-void tests::setup_tests(){
-/** \brief Setup test bed
-*
-*Opens reporting file, creates temporary dir. Then instantiates all the test objects and adds them into the test_list
-*/
-  set_verbosity(1);
-
-  outfile = new std::fstream();
-  outfile->open(filename.c_str(), std::ios::out);
-  if(!outfile->is_open()){
-    my_error_print("Error opening "+filename, mpi_info.rank);
-    //can't log so return with empty test list
-    return;
-  }
-
-  create_test_outdir();
-
-  test_entity * test_obj;
-
-  test_obj = new test_entity_reader();
-  add_test(test_obj);
-  //these two lines are needed for each test you want to do.
-  test_obj = new test_entity_data_array();
-  add_test(test_obj);
-  test_obj = new test_entity_get_and_fft();
-  add_test(test_obj);
-  test_obj = new test_entity_basic_maths();
-  add_test(test_obj);
-  test_obj = new test_entity_extern_maths();
-  add_test(test_obj);
-  test_obj = new test_entity_plasma();
-  add_test(test_obj);
-  test_obj = new test_entity_spectrum();
-  add_test(test_obj);
-  test_obj = new test_entity_levelone();
-  add_test(test_obj);
-  test_obj = new test_entity_d();
-  add_test(test_obj);
-  test_obj = new test_entity_nonthermal();
-  add_test(test_obj);
-  test_obj = new test_entity_bounce();
-  add_test(test_obj);
-
-}
-
 void tests::add_test(test_entity * test){
 /** Adds a test to the list to be performed
 @param test Pointer to test object to add. Object will be deleted on completion */
   test_list.push_back(test);
+}
+
+bool tests::run_tests(){
+/** \brief Run scheduled tests
+*
+*Runs each test in list and reports total errors found. 
+@return 0 for no errors, 1 else
+*/
+
+  int total_errs = 0, total_warnings = 0;
+  for(current_test_id=0; current_test_id< (int)test_list.size(); current_test_id++){
+    int err = test_list[current_test_id]->run();
+    report_err(err);
+    if(err != TEST_PASSED && err != TEST_REMOVE_ERR){
+      if((err & TEST_REMOVE_ERR) != TEST_REMOVE_ERR) total_errs++;
+      else total_warnings ++;
+    }
+    //Add one if any error was returned
+  }
+  this->set_colour('*');
+  if(total_errs > 0){
+    this->set_colour('r');
+  }else if(total_warnings > 0){
+    this->set_colour('y');
+  }else{
+    this->set_colour('b');
+  }
+  my_error_print(mk_str(total_errs)+" failed tests", mpi_info.rank);
+  
+  if(total_warnings > 0){
+    this->set_colour('y');
+    my_error_print(mk_str(total_warnings)+" tests with squashed errors", mpi_info.rank);
+  }
+  this->set_colour();
+  return total_errs > 0;
+
 }
 
 bool tests::is_fatal(int err){
@@ -306,6 +297,55 @@ inline std::string tests::get_colour_escape(char col){
 
 }
 
+/* Add tests here!*/
+void tests::setup_tests(){
+/** \brief Setup test bed
+*
+*Opens reporting file, creates temporary dir. Then instantiates all the test objects and adds them into the test_list
+*/
+  set_verbosity(1);
+
+  outfile = new std::fstream();
+  outfile->open(filename.c_str(), std::ios::out);
+  if(!outfile->is_open()){
+    my_error_print("Error opening "+filename, mpi_info.rank);
+    //can't log so return with empty test list
+    return;
+  }
+
+  create_test_outdir();
+
+  test_entity * test_obj;
+
+  //Assign first user-def error to be "File IO fail"
+  set_userdef_error(TEST_USERDEF_ERR1, "File IO failed");
+
+  test_obj = new test_entity_reader();
+  add_test(test_obj);
+  //these two lines are needed for each test you want to do.
+  test_obj = new test_entity_data_array();
+  add_test(test_obj);
+  test_obj = new test_entity_get_and_fft();
+  add_test(test_obj);
+  test_obj = new test_entity_basic_maths();
+  add_test(test_obj);
+  test_obj = new test_entity_extern_maths();
+  add_test(test_obj);
+  test_obj = new test_entity_plasma();
+  add_test(test_obj);
+  test_obj = new test_entity_spectrum();
+  add_test(test_obj);
+  test_obj = new test_entity_levelone();
+  add_test(test_obj);
+  test_obj = new test_entity_d();
+  add_test(test_obj);
+  test_obj = new test_entity_nonthermal();
+  add_test(test_obj);
+  test_obj = new test_entity_bounce();
+  add_test(test_obj);
+
+}
+
 void tests::cleanup_tests(){
 /** \brief Clean up after testing
 *
@@ -328,42 +368,6 @@ void tests::cleanup_tests(){
     delete test_list[current_test_id];
     test_list[current_test_id] = nullptr;
   }
-}
-
-bool tests::run_tests(){
-/** \brief Run scheduled tests
-*
-*Runs each test in list and reports total errors found. 
-@return 0 for no errors, 1 else
-*/
-
-  int total_errs = 0, total_warnings = 0;
-  for(current_test_id=0; current_test_id< (int)test_list.size(); current_test_id++){
-    int err = test_list[current_test_id]->run();
-    report_err(err);
-    if(err != TEST_PASSED && err != TEST_REMOVE_ERR){
-      if((err & TEST_REMOVE_ERR) != TEST_REMOVE_ERR) total_errs++;
-      else total_warnings ++;
-    }
-    //Add one if any error was returned
-  }
-  this->set_colour('*');
-  if(total_errs > 0){
-    this->set_colour('r');
-  }else if(total_warnings > 0){
-    this->set_colour('y');
-  }else{
-    this->set_colour('b');
-  }
-  my_error_print(mk_str(total_errs)+" failed tests", mpi_info.rank);
-  
-  if(total_warnings > 0){
-    this->set_colour('y');
-    my_error_print(mk_str(total_warnings)+" tests with squashed errors", mpi_info.rank);
-  }
-  this->set_colour();
-  return total_errs > 0;
-
 }
 
 bool tests::set_userdef_error(int err_code, std::string message){

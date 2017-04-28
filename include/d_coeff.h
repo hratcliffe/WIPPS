@@ -23,6 +23,14 @@ class controller;
 
 enum class D_type_spec {alpha_alpha, alpha_p, p_alpha, p_p};
 
+/** \brief Progress info structure*/
+struct running_report{
+  size_t last_report;
+  size_t report_interval;
+  bool quiet;
+};
+  
+
 /** \brief Diffusion coefficient object
 *
 * Specialised data_array containing the calculated coefficient plus relevant ids. Can be made/destroyed only by controller object. In general should be a 2-D array with first axis momentum, second pitch-angle
@@ -46,6 +54,8 @@ private:
   void make_velocity_axis();
   void make_pitch_axis();
   void copy_ids(spectrum * src);
+  void first_running_report(size_t total_its, running_report &rept, bool quiet);
+  void do_running_report(size_t v_ind, calc_type mod_v, size_t min_n, size_t max_n, running_report &rept);
 
 public:
 

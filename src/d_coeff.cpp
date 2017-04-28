@@ -134,6 +134,33 @@ void diffusion_coeff::make_pitch_axis(){
   make_linear_axis(1, res, offset);
 }
 
+void diffusion_coeff::first_running_report(size_t total_its, running_report &rept, bool quiet){
+/** \brief Initialise progress info*/
+
+  size_t report_interval = total_its/10;
+  if(report_interval > 20) report_interval = 20;
+  if(report_interval < 1) report_interval = 1;
+  rept.last_report = 0;
+  rept.report_interval = report_interval;
+  rept.quiet = quiet;
+}
+
+void diffusion_coeff::do_running_report(size_t v_ind, calc_type mod_v, size_t n_min, size_t n_max, running_report &rept){
+/** \brief Print progress info*/
+
+  if(!rept.quiet){
+    my_print("Velocity "+mk_str(mod_v/v0, true)+" c", mpi_info.rank);
+    if((v_ind - rept.last_report) >= rept.report_interval){
+      if(single_n){
+        my_print("Calculating velocity number "+mk_str(v_ind)+" (n "+mk_str(n_used)+")", mpi_info.rank);
+      }else{
+        my_print("Calculating velocity number "+mk_str(v_ind)+" (n_max, n_min "+mk_str(n_max)+' '+mk_str(n_min)+")", mpi_info.rank);
+      }
+      rept.last_report = v_ind;
+    }
+  }
+}
+
 d_report diffusion_coeff::calculate(D_type_spec type_of_D, bool quiet){
 /** \brief Calculate D from wave spectrum and plasma
 *
@@ -146,14 +173,7 @@ d_report diffusion_coeff::calculate(D_type_spec type_of_D, bool quiet){
 */
 
 //----Initialise d_report --------
-  d_report report;
-  report.n_solutions = 0;
-  report.n_fails = 0;
-  report.error = true;
-  report.n_av = 0;
-  report.n_max = 0;
-  report.n_min = 0;
-  report.single_n = false;
+  d_report report = {true, 0, 0, 0, false};
   
 //----- Get the plasma and spectrum bits
   plasma plas;
@@ -195,14 +215,10 @@ d_report diffusion_coeff::calculate(D_type_spec type_of_D, bool quiet){
   for(int i = 0; i < n_thetas - 1; ++i) dx[i] = x[i+1] - x[i];
   
 
-//-------- Some reporting info --------
-  size_t last_report = 0;
-  size_t report_interval = dims[0]/10; //10 prints per round
-  if(report_interval > 20) report_interval = 20;
-  if(report_interval < 1) report_interval = 1;
-
-  int counter = 0, non_counter = 0;
-  size_t n_av = 0, n_omega=0;
+//-------- Initialise reporting info --------
+  running_report running_rept = {0, 0, false};
+  first_running_report(dims[0], running_rept, quiet);
+  size_t n_av = 0, n_omega = 0;
 
 //-------------------Main loops here----------------------------
 //We have deep nested loops. Move ANYTHING that can be as far up tree as possible
@@ -212,18 +228,8 @@ d_report diffusion_coeff::calculate(D_type_spec type_of_D, bool quiet){
     mod_v = get_axis_element(0, v_ind);
     gamma_particle = gamma_rel(mod_v);
     if(std::abs(mod_v) < 1.0) continue;//Skip if velocity is tiny
-    
-    if(!quiet){
-      my_print("Velocity "+mk_str(mod_v/v0, true)+" c", mpi_info.rank);
-      if((v_ind - last_report) >= report_interval){
-        if(single_n){
-          my_print("iter. "+mk_str(v_ind)+" (n "+mk_str(n_used)+")", mpi_info.rank);
-        }else{
-          my_print("iter. "+mk_str(v_ind)+" (n_max, n_min "+mk_str(report.n_max)+' '+mk_str(report.n_min)+")", mpi_info.rank);
-        }
-        last_report = v_ind;
-      }
-    }
+    do_running_report(v_ind, mod_v, report.n_min, report.n_max, running_rept);
+
     for(size_t part_pitch_ind = 0; part_pitch_ind < dims[1]; part_pitch_ind++){
       //particle pitch angle
       alpha = get_axis_element_ang(part_pitch_ind);
@@ -232,7 +238,7 @@ d_report diffusion_coeff::calculate(D_type_spec type_of_D, bool quiet){
       if(single_n){
         //Use only the single selected resonance
         n_min = n_used;
-        n_max = n_min;
+        n_max = n_used;
       }else{
         //Get limits on n for this velocity and angle
         n_min = get_min_n(mod_v, cos_alpha, k_thresh, om_ce_ref);
@@ -252,30 +258,23 @@ d_report diffusion_coeff::calculate(D_type_spec type_of_D, bool quiet){
           omega_calc = plas.get_resonant_omega(x[wave_ang_ind], mod_v*cos_alpha, gamma_particle, (calc_type) n);
           omega_n = (calc_type) n * om_ce_ref;
           n_omega = omega_calc.size();
-          if(n_omega > 0){
-          //With loop if is redundant but we might want to log the failure
-            for(size_t om_solution_num = 0; om_solution_num < n_omega; ++om_solution_num){
-              //Loop over solutions
-              //Ignore sign info for now. This might lead to double or quad counting, that can be resolved later
-              /** \todo Check for double counting*/
-              omega_solution = omega_calc[om_solution_num];
-              my_mu = plas.get_high_dens_phi_mu_om(omega_solution, theta, alpha, n, gamma_particle);
+          for(size_t om_solution_num = 0; om_solution_num < n_omega; ++om_solution_num){
+            //Loop over solutions
+            /** \todo Check for double counting*/
+            omega_solution = omega_calc[om_solution_num];
+            my_mu = plas.get_high_dens_phi_mu_om(omega_solution, theta, alpha, n, gamma_particle);
 
-              my_mu.err ? non_counter++ : counter++;
-              //If err is true, then once angle is included we found no solution. Keep track for final report
-      /** \todo Why would anything be lost here? Probably from when we had v_par*/
-              Eq6 = omega_solution/(omega_solution - omega_n)* my_mu.mu/(my_mu.mu + omega_solution * my_mu.dmudom);
-              numerator = std::pow( -s2alpha + omega_n/omega_solution, 2);
-              D_conversion_factor = sin(alpha)*cos(alpha)/(-s2alpha + omega_n/omega_solution);
-              //Get the part of D summed over n. Note additional factors below
-              //NB NB get_G_1 precancels the \Delta\omega and B_wave factors
-              /** \todo Have G1 and G2 handle -ve omega */
-              D_part_n_sum += numerator * my_mu.phi / std::abs(1.0 - Eq6) * get_G1(spect, std::abs(omega_solution)) * get_G2(spect, std::abs(omega_solution), x[wave_ang_ind]);
-              
-              //Convert alpha_alpha to requested D type
-              D_part_n_sum = (is_mixed ? D_part_n_sum*D_conversion_factor : D_part_n_sum);
-              D_part_n_sum = (is_pp ? D_part_n_sum*D_conversion_factor*D_conversion_factor : D_part_n_sum);
-            }
+            Eq6 = omega_solution/(omega_solution - omega_n)* my_mu.mu/(my_mu.mu + omega_solution * my_mu.dmudom);
+            numerator = std::pow( -s2alpha + omega_n/omega_solution, 2);
+            D_conversion_factor = sin(alpha)*cos(alpha)/(-s2alpha + omega_n/omega_solution);
+            //Get the part of D summed over n. Note additional factors below
+            //NB NB get_G_1 precancels the \Delta\omega and B_wave factors
+            /** \todo Have G1 and G2 handle -ve omega */
+            D_part_n_sum += numerator * my_mu.phi / std::abs(1.0 - Eq6) * get_G1(spect, std::abs(omega_solution)) * get_G2(spect, std::abs(omega_solution), x[wave_ang_ind]);
+            
+            //Convert alpha_alpha to requested D type
+            D_part_n_sum = (is_mixed ? D_part_n_sum*D_conversion_factor : D_part_n_sum);
+            D_part_n_sum = (is_pp ? D_part_n_sum*D_conversion_factor*D_conversion_factor : D_part_n_sum);
           }
         }
         //Store into temporary theta array
@@ -294,8 +293,6 @@ d_report diffusion_coeff::calculate(D_type_spec type_of_D, bool quiet){
   free(D_theta);
   
 //----Assemble the final report -----------------------------
-  report.n_solutions = counter;
-  report.n_fails = non_counter;
   report.error = false;
   report.n_av = n_av/dims[0]/dims[1];
   if(single_n){
@@ -304,8 +301,7 @@ d_report diffusion_coeff::calculate(D_type_spec type_of_D, bool quiet){
     report.n_min = 0;
     report.single_n = true;
   }
-  my_print(mk_str(counter) + " solutions vs "+ mk_str(non_counter), mpi_info.rank);
-  
+
   return report;
   
 }
@@ -319,12 +315,11 @@ int diffusion_coeff::get_min_n(calc_type mod_v, calc_type cos_alpha,  my_type k_
 @param k_thresh Maximum wavevector where spectrum has non-nelgible power
 @param om_ce Reference cyclotron frequency
 @return Maximum resonant number, bounded as < -1
-\todo returning n-1 is meaning we're not obeying requested n_min exactly, ditto in max_n
 */
 
   calc_type gamma = gamma_rel(mod_v);
   int n = std::max(-(int)(gamma * k_thresh * std::abs(mod_v*cos_alpha / om_ce)), -n_n);
-  return std::min(-1, n-1);
+  return std::min(-1, n);
 }
 
 int diffusion_coeff::get_max_n(calc_type mod_v, calc_type cos_alpha, my_type k_thresh, calc_type om_ce){
@@ -341,7 +336,7 @@ int diffusion_coeff::get_max_n(calc_type mod_v, calc_type cos_alpha, my_type k_t
   calc_type gamma = gamma_rel(mod_v);
 
   int n = std::min((int)(gamma * k_thresh * std::abs(mod_v*cos_alpha / om_ce)), n_n);
-  return std::max(1, n+1);
+  return std::max(1, n);
 }
 
 void diffusion_coeff::copy_ids( spectrum * src){

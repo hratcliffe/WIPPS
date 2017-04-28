@@ -1162,11 +1162,6 @@ int test_entity_d::basic_tests(){
       test_bed->report_info("Error calculating D", mpi_info.rank);
       err |= TEST_ASSERT_FAIL;
     }
-    //Only a "small fraction" of solutions should be lost to the angle inclusion
-    if(report.n_fails > report.n_solutions/20.0){
-      test_bed->report_info("Unexpected number of failed solutions in D");
-      err |= TEST_WRONG_RESULT;
-    }
 
   }else{
     err |= TEST_ASSERT_FAIL;
@@ -1245,7 +1240,7 @@ int test_entity_d::full_D_tests(){
       err |= TEST_ASSERT_FAIL;
     }
     test_bed->report_info("Average resonant number "+mk_str(report.n_av), 2);//Num resonances is 2* this +1 
-    test_bed->report_info("Max resonant number "+mk_str(report.n_max), 2);
+    if(!report.single_n) test_bed->report_info("Max resonant number "+mk_str(report.n_max), 2);
     
     test_bed->report_info("Writing test file", mpi_info.rank);
     std::fstream file;

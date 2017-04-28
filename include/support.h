@@ -190,8 +190,6 @@ struct setup_args{
 */
 struct d_report{
   bool error;/**<Whether IO or setup errors occured*/
-  size_t n_solutions;/**< How many mu calculations had solutions*/
-  size_t n_fails;/**< How many mu calculations had no solution*/
   size_t n_av;/**< Average n_max used for calc*/
   size_t n_max;/**< Max n_max used in calcs*/
   size_t n_min;/**< Min n_min used in calcs. Not '-' is omitted*/

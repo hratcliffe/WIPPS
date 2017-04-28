@@ -24,7 +24,7 @@ class data_array;
 */
 class reader{
 
-  int n_z; /**<Number of characters in filename's dump number*/
+  int n_z; /**<Number of characters in filename's dump number \todo Rename given changed purpose*/
   int ref_file_num;/**< Number of a file which exists to test dimensions, get reference B value etc*/
 
 /********Filename and file manipulators ****/

@@ -41,7 +41,6 @@ reader::reader(std::string file_prefix_in,  char * block_id_in, int ref_file_num
 @param file_prefix_in File prefix to prepend to all file names
 @param block_id_in String containing desired block id (e.g. ex)
 @param ref_file_num_in Reference file number to use for reading dimensions etc
-\todo Something seems to be going wrong when file can't be opened with n_z
 */
   //Set up some generic things
   time_range[0]=0; time_range[1]=0; time_range[2]=0;
@@ -88,10 +87,16 @@ int reader::get_filename_n_z(int file_num){
   file_num = check_file_num(file_num);
   std::string file_ref = mk_str(file_num);
   //Pad to minimum size of 4
+  int digits_for_ref_num = file_ref.size();
   if(file_ref.size() < 4) file_ref = std::string(4-file_ref.size(), '0') + file_ref;
   int n_z = file_ref.size();
 
-  //Attempt to read files, inserting '0' padding until one can be opened or we reach MAX_FILENAME_DIGITS
+  //Attempt to read files, inserting '0' padding until one can be opened or we reach MAX_FILENAME_DIGITS - digits_to_print_ref_num
+  if(digits_for_ref_num >= MAX_FILENAME_DIGITS){
+    n_z = MAX_FILENAME_DIGITS;
+    my_error_print("Reference file number too long, max digits "+mk_str(MAX_FILENAME_DIGITS), mpi_info.rank);
+    return n_z;
+  }
   std::string name = file_prefix + file_ref+".sdf";
   std::ifstream file;
   file.open(name);
@@ -99,7 +104,7 @@ int reader::get_filename_n_z(int file_num){
     name.insert(file_prefix.size(), "0");
     file.open(name);
     n_z ++;
-    if(n_z > MAX_FILENAME_DIGITS) break;
+    if(n_z >= MAX_FILENAME_DIGITS - digits_for_ref_num) break;
   }
   //Max one file can have been opened so we close it
   file.close();
@@ -116,12 +121,13 @@ std::string reader::get_full_name(int file_num){
 
   //Create proper format string to zero pad filenumber
   //We know n_z is at most MAX_FILENAME_DIGITS, so 2 chars is enough for it
-  char fmt[5];
+  char fmt[3+MAX_FILENAME_PLACES+1];
+  int file_num_digits = (mk_str(file_num)).size();
   sprintf(fmt,"%s%d%c" , "%0", n_z, 'd');
-
   //Create the number string
   char file_num_str[MAX_FILENAME_DIGITS+1];
-  snprintf(file_num_str, MAX_FILENAME_DIGITS, fmt, file_num);
+  
+  snprintf(file_num_str, MAX_FILENAME_DIGITS+1, fmt, file_num);
   return file_prefix + file_num_str +".sdf";
 }
 
@@ -338,6 +344,7 @@ bool reader::read_dims(size_t &n_dims, std::vector<size_t> &dims, std::string b_
 */
 
   //Open file
+  std::cout<<ref_file_num<<'\n';
   std::string file_name = get_full_name(ref_file_num);
   my_print("Getting dimensions", mpi_info.rank);
   sdf_file_t *handle = sdf_open(file_name.c_str(), MPI_COMM_WORLD, SDF_READ, 0);

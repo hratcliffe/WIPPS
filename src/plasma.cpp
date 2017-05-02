@@ -444,18 +444,17 @@ mu_dmudom plasma::get_phi_mu_from_stix(calc_type w, calc_type psi, calc_type alp
   return my_mu;
 }
 
-std::vector<calc_type> plasma::get_resonant_omega(calc_type x, calc_type v_par, calc_type gamma_particle, int n)const{
+std::vector<calc_type> plasma::get_resonant_omega(calc_type theta, calc_type v_par, calc_type gamma_particle, int n)const{
 /** \brief Solve plasma dispersion and doppler resonance simultaneously
 *
 *Obtains solutions of the Doppler resonance condition omega - k_par v_par = -n Omega_ce and a high-density approximation to the Whistler mode dispersion relation simultaneously. Assumes pure electron-proton plasma and uses cubic_solve. ONLY solutions between -om_ce_local and om_ce_local, excluding omega = 0, are considered. "Zero" solutions are those less than the GEN_PRECISION constant in support.h.
 *
 *Note that since k_parallel and v_parallel in resonant condition are signed, we will get multiple entries of ± omega for the corresponding ±k and ±n. These should be handled by the calling code, as k may or may not be handled with both signs
-@param x Wave normal angle 
+@param theta Wave normal angle 
 @param v_par Particle velocity to solve with 
 @param gamma_particle Relativistic gamma for resonant particle
 @param n Resonance number
 @return Vector of solutions for resonant omega, or empty vector if no solutions are found
-\todo This should take theta like various get_mu* do
 */
 
 #ifdef DEBUG_ALL
@@ -468,7 +467,6 @@ std::vector<calc_type> plasma::get_resonant_omega(calc_type x, calc_type v_par, 
   calc_type om_ce = this->get_omega_ref("ce");
   calc_type om_pe_loc = this->get_omega_ref("pe");
   calc_type om_ce_ref = this->get_omega_ref("c0");
-
   //Special case when v=0 and we can save time
   if(std::abs(v_par) < tiny_calc_type){
     if( n == 1 || n == -1 ) ret_vec.push_back(om_ce*n);
@@ -483,7 +481,7 @@ std::vector<calc_type> plasma::get_resonant_omega(calc_type x, calc_type v_par, 
 
   calc_type a, b, c, d;
   calc_type an, bn, cn;
-  calc_type cos_th = std::cos(std::atan(x));
+  calc_type cos_th = std::cos(theta);
   calc_type vel = v_par / v0;
   //For clarity
   calc_type vel_cos = std::pow(vel * cos_th, 2);//Product of the two, for simplicity in expressions. But note is not meaningful, theta is the wave angle

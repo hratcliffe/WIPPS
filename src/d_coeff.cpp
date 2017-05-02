@@ -124,9 +124,9 @@ void diffusion_coeff::make_velocity_axis(){
 }
 
 void diffusion_coeff::make_pitch_axis(){
-/**\brief Set pitch angle axis (tan theta? alpha???)
+/**\brief Set particle pitch angle axis
 *
-*Makes linear axis between ANG_MIN and ANG_MAX
+*Makes linear axis between ANG_MIN and ANG_MAX. In equations this is usally called alpha
 */
 
   calc_type res = (ANG_MAX - ANG_MIN)/this->get_dims(1); //To cover range from Min to Max
@@ -169,7 +169,7 @@ d_report diffusion_coeff::calculate(D_type_spec type_of_D, bool quiet){
 @param quiet True to suppress display of progress
 @return d_report structure containing info on calcs
 \caveat We re-range the D calculation so what is actually calculated is D/p^2
-\caveat We currently use plasma::get_high_dens_phi_mu_om which uses the high-density approximation to the plasma dispersion, as does the resonant frequency solver plasma::get_resonant_omega
+\caveat We currently use plasma::get_high_dens_phi_mu_om which uses the high-density approximation to the plasma dispersion, as does the resonant frequency solver plasma::get_resonant_omega. This missed some solutions for smaller om_pe/om_ce. Above 3 or so seems to be alright
 */
 
 //----Initialise d_report --------
@@ -191,16 +191,23 @@ d_report diffusion_coeff::calculate(D_type_spec type_of_D, bool quiet){
   my_print("Using omega upper threshold of "+ mk_str(plas.get_dispersion(k_thresh, WAVE_WHISTLER)/plas.get_omega_ref("ce")), 1);
 
 //---- Set type of D to calculate
-  bool is_mixed=false, is_pp=false;
+  bool is_mixed = false, is_pp = false;
   if(type_of_D == D_type_spec::alpha_p || type_of_D == D_type_spec::p_alpha) is_mixed = true;
   else if(type_of_D == D_type_spec::p_p) is_pp = true;
 
 //----- Major definitions------------------
-  calc_type theta, omega_n = 0.0, D_part_n_sum, D_final_without_consts;
-  calc_type alpha, mod_v, c2th, s2alpha, cos_alpha;
-  calc_type Eq6, numerator, gamma_particle, D_conversion_factor;
-  int n_min, n_max;
+  //Velocity and angle temporaries
+  calc_type tan_theta, theta, c2th, mod_v, gamma_particle, alpha, s2alpha, cos_alpha;
+  //Temporaries for steps of D calculation
+  calc_type D_part_n_sum, D_final_without_consts, D_conversion_factor;
+  //More temporaries for parts of D
+  calc_type Eq6, numerator;
+  //Resonant freq and array of all frequency solutions
+  calc_type omega_n = 0.0;
   std::vector<calc_type> omega_calc;
+  //Resonant numbers
+  int n_min, n_max;
+  //Plasma dispersion
   mu_dmudom my_mu;
 
   calc_type om_ce_ref = plas.get_omega_ref("ce"), omega_solution;
@@ -214,13 +221,12 @@ d_report diffusion_coeff::calculate(D_type_spec type_of_D, bool quiet){
   for(int i = 0; i < n_thetas; ++i) x[i] = i* TAN_MAX/n_thetas;
   for(int i = 0; i < n_thetas - 1; ++i) dx[i] = x[i+1] - x[i];
   
-
 //-------- Initialise reporting info --------
   running_report running_rept = {0, 0, false};
   first_running_report(dims[0], running_rept, quiet);
   size_t n_av = 0, n_omega = 0;
 
-//-------------------Main loops here----------------------------
+//------------------Main loops here-------------------------
 //We have deep nested loops. Move ANYTHING that can be as far up tree as possible
 
   for(size_t v_ind = 0; v_ind < dims[0]; v_ind++){
@@ -228,6 +234,7 @@ d_report diffusion_coeff::calculate(D_type_spec type_of_D, bool quiet){
     mod_v = get_axis_element(0, v_ind);
     gamma_particle = gamma_rel(mod_v);
     if(std::abs(mod_v) < 1.0) continue;//Skip if velocity is tiny
+    //Print the progress info
     do_running_report(v_ind, mod_v, report.n_min, report.n_max, running_rept);
 
     for(size_t part_pitch_ind = 0; part_pitch_ind < dims[1]; part_pitch_ind++){
@@ -249,13 +256,14 @@ d_report diffusion_coeff::calculate(D_type_spec type_of_D, bool quiet){
       }
       for(int wave_ang_ind = 0; wave_ang_ind < n_thetas; wave_ang_ind++){
       //theta loop for wave angle or x=tan theta
-        theta = atan(x[wave_ang_ind]);
+        tan_theta = x[wave_ang_ind];
+        theta = atan(tan_theta);
         c2th = std::pow(cos(theta), 2);
         D_part_n_sum = 0.0;
 
         for(int n = n_min; n <= n_max; ++n){
           // n is resonant number
-          omega_calc = plas.get_resonant_omega(x[wave_ang_ind], mod_v*cos_alpha, gamma_particle, (calc_type) n);
+          omega_calc = plas.get_resonant_omega(theta, mod_v*cos_alpha, gamma_particle, (calc_type) n);
           omega_n = (calc_type) n * om_ce_ref;
           n_omega = omega_calc.size();
           for(size_t om_solution_num = 0; om_solution_num < n_omega; ++om_solution_num){
@@ -270,7 +278,7 @@ d_report diffusion_coeff::calculate(D_type_spec type_of_D, bool quiet){
             //Get the part of D summed over n. Note additional factors below
             //NB NB get_G_1 precancels the \Delta\omega and B_wave factors
             /** \todo Have G1 and G2 handle -ve omega */
-            D_part_n_sum += numerator * my_mu.phi / std::abs(1.0 - Eq6) * get_G1(spect, std::abs(omega_solution)) * get_G2(spect, std::abs(omega_solution), x[wave_ang_ind]);
+            D_part_n_sum += numerator * my_mu.phi / std::abs(1.0 - Eq6) * get_G1(spect, std::abs(omega_solution)) * get_G2(spect, std::abs(omega_solution), tan_theta);
             
             //Convert alpha_alpha to requested D type
             D_part_n_sum = (is_mixed ? D_part_n_sum*D_conversion_factor : D_part_n_sum);
@@ -278,7 +286,7 @@ d_report diffusion_coeff::calculate(D_type_spec type_of_D, bool quiet){
           }
         }
         //Store into temporary theta array
-        D_theta[wave_ang_ind] = D_part_n_sum * c2th * x[wave_ang_ind];
+        D_theta[wave_ang_ind] = D_part_n_sum * c2th * tan_theta;
       }
       //now integrate in x = tan theta, restore the velocity factor and save
       D_final_without_consts = integrator(D_theta, n_thetas, dx);

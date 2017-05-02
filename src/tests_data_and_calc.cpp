@@ -265,12 +265,14 @@ int test_entity_plasma::resonant_freq(){
   
   //Check over the range of other cases
   //Loop over particle velocity, assuming propagation at alpha = pi/8 say
+  calc_type theta;
   for(int ii=0; ii<n_tests; ii++){
     v_par = (0.01 + 0.5*(float)ii/ (float)(n_tests+1))* v0;
     //Loop over angles
     for(int j=0; j< n_tests; j++){
       x = 4.0 * (float) j / (float)(n_tests+1);
-      cos_theta = std::cos(std::atan(x));
+      theta = std::atan(x);
+      cos_theta = std::cos(theta);
       //Loop over n
       for(int k=0; k< n_tests; k++){
         n = -n_tests/2 + k*n_tests/2;
@@ -279,7 +281,7 @@ int test_entity_plasma::resonant_freq(){
         
         gamma = std::sqrt(gamma2);
         
-        results = plas->get_resonant_omega(x, v_par, gamma, n);
+        results = plas->get_resonant_omega(theta, v_par, gamma, n);
         /**Now check each element of the resonant frequency solution set satisfies Stix 2.45 and the resonance condition together*/
         for(size_t i=0; i<results.size(); ++i){
           omega_solution = results[i];

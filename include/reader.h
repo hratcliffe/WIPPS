@@ -24,12 +24,12 @@ class data_array;
 */
 class reader{
 
-  int n_z; /**<Number of characters in filename's dump number \todo Rename given changed purpose*/
+  int n_chars; /**<Number of characters in filename's dump number*/
   int ref_file_num;/**< Number of a file which exists to test dimensions, get reference B value etc*/
 
 /********Filename and file manipulators ****/
   int check_file_num(int file_num);
-  int get_filename_n_z(int file_num);
+  int get_filename_n_chars(int file_num);
   std::string get_full_name(int file_num);
 
 /********Block manipulators ****/

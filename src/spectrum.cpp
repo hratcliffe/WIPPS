@@ -1144,12 +1144,15 @@ data_array spectrum::copy_out_g(){
 calc_type get_G1(spectrum * my_spect, calc_type omega){
 /** \brief G1 from \cite Albert2005
 *
-*Gets the value of B^2(w) (interpolated if necessary) and the normalising constant from norm_B. NB NB we omit the \f$ \Delta\omega \f$ factor since it cancels
+*Gets the value of B^2(w) (interpolated if necessary) and the normalising constant from norm_B. NB NB we omit the \f$ \Delta\omega \f$ factor since it cancels in the D calc
 @param my_spect Input spectrum to work on
 @param omega Frequency to eval. at
 @return Normalised abs-square wave power
 \caveat This routine uses the given spectrum's omega range and assumes that beyond this there is "no" wave power. 
+\caveat We assume omega symmetry here and just take abs(omega). If this is changed, best to add a omega_symm flag to spectra and select based on that
 */
+
+  omega = std::abs(omega);//Assume symmetric in omega
 
   my_type tmpB2;
   if(my_spect->get_norm_B() == 0.0) my_spect->calc_norm_B();
@@ -1186,9 +1189,12 @@ calc_type get_G2(spectrum * my_spect, calc_type omega, calc_type x){
 @param omega Frequency to eval. at
 @param x Tan(theta) to eval. at
 @return Normalised angular contribution
+\caveat We assume omega symmetry here and just take abs(omega). See get_G1 for more
 
 \todo Currently interpolates angle only. Perhaps interpolate on omega too?
 */
+
+  omega = std::abs(omega);//Assume symmetric in omega
 
   long om_ind, norm_ind, offset;
   size_t len = my_spect->get_omega_length();

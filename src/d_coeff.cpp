@@ -277,8 +277,7 @@ d_report diffusion_coeff::calculate(D_type_spec type_of_D, bool quiet){
             D_conversion_factor = sin(alpha)*cos(alpha)/(-s2alpha + omega_n/omega_solution);
             //Get the part of D summed over n. Note additional factors below
             //NB NB get_G_1 precancels the \Delta\omega and B_wave factors
-            /** \todo Have G1 and G2 handle -ve omega */
-            D_part_n_sum += numerator * my_mu.phi / std::abs(1.0 - Eq6) * get_G1(spect, std::abs(omega_solution)) * get_G2(spect, std::abs(omega_solution), tan_theta);
+            D_part_n_sum += numerator * my_mu.phi / std::abs(1.0 - Eq6) * get_G1(spect, omega_solution) * get_G2(spect, omega_solution, tan_theta);
             
             //Convert alpha_alpha to requested D type
             D_part_n_sum = (is_mixed ? D_part_n_sum*D_conversion_factor : D_part_n_sum);

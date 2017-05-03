@@ -228,7 +228,6 @@ int test_entity_plasma::resonant_freq(){
 *
 *Checks the returned resonant frequency obeys equations used to derive it by solving both for mu. 
 @return Error code
-\todo Check for angles with PROPER gamma!!!
 */
 
   int err=TEST_PASSED;
@@ -256,7 +255,7 @@ int test_entity_plasma::resonant_freq(){
   calc_type expected_result =  0.50, corresponding_v =  0.162251 * v0, omega_solution;
   gamma = gamma_rel(corresponding_v);
   results = plas->get_resonant_omega(0.0, corresponding_v, gamma, -1);
-  //Insert a known result here from the IDL code, with one root
+  //Insert a known result here from the IDL code, with one root at 0 angle
   //Since we're using a sample like this, only expect a few sf of equality as the IDL uses quite different process
   if(results.size() != 1 || std::abs(std::abs(results[0]/om_ce_local)-expected_result) > LOW_PRECISION){
     test_bed->report_info("Erroneous solution for example case in resonant frequency solver", 2);
@@ -301,8 +300,8 @@ int test_entity_plasma::resonant_freq(){
             test_bed->report_info("No full mu solution for resonant frequency", 2);
             err_count++;
           }
-          //This should match approx, approx'ly
-          /** \todo I have no idea how closesly these should match*/
+          //This should match the high-density my solution, approx'ly
+          //This is just an arbitrary but "decent" mismatch which is sort of tuned to these parameters
           if(std::abs((my_mu.mu*my_mu.mu - mu_tmp1)/mu_tmp1) > 0.025){
             err|=TEST_WRONG_RESULT;
             test_bed->report_info("Mismatched full mu solution for resonant frequency", 2);
@@ -713,7 +712,7 @@ int test_entity_spectrum::albertGs_tests(){
 *
 *Tests the calculation of G_1 and G_2 in Albert \cite Albert2005 by get_G1 and get_G2. Also tests the normalisations on the way.
 @return Error code
-\caveat The I(omega) calc below uses a splunged version of Lyons \cite Lyons1974b A7 which is half cold, half warm plasma. Since we're only after a sanity check here, we just use restrictive angles (where cold approx is "better") and allow 10% mismatch.
+\caveat The I(omega) calc below uses a splunged version of Lyons \cite Lyons1974b A7 which is half cold, half warm plasma. Since we're only after a sanity check here, we just use restrictive angles (where cold approx performs "better") and allow 10% mismatch.
 */
   int err = TEST_PASSED;
 
@@ -726,7 +725,7 @@ int test_entity_spectrum::albertGs_tests(){
   size_t n_tests = 30;
   calc_type tmp_omega = 0.0, tmp_x;
 
-  test_contr->add_spectrum(4096, DEFAULT_N_ANG*2, true);
+  test_contr->add_spectrum(2048, DEFAULT_N_ANG, true);
 
   if(!test_contr->get_current_spectrum()->is_good()){
     my_error_print("Spectrum in invalid state. Aborting", mpi_info.rank);
@@ -751,7 +750,7 @@ int test_entity_spectrum::albertGs_tests(){
   om_peak = test_contr->get_current_spectrum()->get_peak_omega();
 
   //Now we have a test spectrum. Need to know what its normalisations should be. And what the Albert functions should resolve to.
-  
+  std::cout<<om_peak/om_ce_local<<' '<<om_ce_local<<'\n';
   my_type width = 0.1*om_peak;
   
   for(size_t i = 0; i < n_tests; i++){
@@ -769,7 +768,8 @@ int test_entity_spectrum::albertGs_tests(){
       G1_analytic = 0.0;
     }
     G1_tracker += G1_analytic;//Keep sum to check we're not hitting zero everywhere
-    if( G1_analytic > 0.0 && ((G1 != 0.0 && std::abs(G1-G1_analytic)/(G1) > LOW_PRECISION)|| (G1 == 0.0 && G1_analytic != 0.0))){
+    //Arbitrary precision, slightly tuned to current parameters
+    if( G1_analytic > 0.0 && ((G1 != 0.0 && std::abs(G1-G1_analytic)/(G1) > 0.02)|| (G1 == 0.0 && G1_analytic != 0.0))){
       err |= TEST_WRONG_RESULT;
       test_bed->report_info("G1 does not match analytic calc, relative error = "+mk_str((std::abs(G1/G1_analytic)-1.0)*100, true)+"% at "+mk_str(tmp_omega, true), mpi_info.rank);
     }

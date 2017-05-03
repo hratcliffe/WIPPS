@@ -711,8 +711,9 @@ int test_entity_spectrum::technical_tests(){
 int test_entity_spectrum::albertGs_tests(){
 /** \brief Tests of the Albert G functions
 *
-*Tests the calculation of G_1 and G_2 in Albert \cite Albert2005 by get_G1 and get_G2. Also tests the normalisations on the way. NOTE: since we're comparing the values of an analytic function with a numerical integral, we can get mismatches at the cutoffs. More points should help this. If that doesn't there may be something wrong.
+*Tests the calculation of G_1 and G_2 in Albert \cite Albert2005 by get_G1 and get_G2. Also tests the normalisations on the way.
 @return Error code
+\caveat The I(omega) calc below uses a splunged version of Lyons \cite Lyons1974b A7 which is half cold, half warm plasma. Since we're only after a sanity check here, we just use restrictive angles (where cold approx is "better") and allow 10% mismatch.
 */
   int err = TEST_PASSED;
 
@@ -722,10 +723,10 @@ int test_entity_spectrum::albertGs_tests(){
 
   calc_type mass_ratio = 1.0/1836.2;
 
-  size_t n_tests = 10;
+  size_t n_tests = 30;
   calc_type tmp_omega = 0.0, tmp_x;
 
-  test_contr->add_spectrum(4096, DEFAULT_N_ANG, true);
+  test_contr->add_spectrum(4096, DEFAULT_N_ANG*2, true);
 
   if(!test_contr->get_current_spectrum()->is_good()){
     my_error_print("Spectrum in invalid state. Aborting", mpi_info.rank);
@@ -737,15 +738,18 @@ int test_entity_spectrum::albertGs_tests(){
   test_contr->get_current_spectrum()->make_test_spectrum(FUNCTION_GAUSS);
     
   my_type om_min, om_max, x_min, x_max, om_peak;
-  om_min = 500.0;
+  om_min = 2000.0;
   om_max = 16500.0;
   //make sure this is lower than the test spectrum axis range
   x_min = 0.0;
-  x_max = 3.0;
+  x_max = 0.4;
+  //Because I(omega) uses COLD plasma dispersion it really doesn't work well at "large" angles, above say 30 deg. So we cut off really harshly here
+  //This might be a bit delicate with respect to the degree of mismatch, but I think the problem is just because of the cold vs warm approx and is enough for a sanity check
   
   test_contr->get_current_spectrum()->truncate_om(om_min, om_max);
   test_contr->get_current_spectrum()->truncate_x(x_min, x_max);
   om_peak = test_contr->get_current_spectrum()->get_peak_omega();
+
   //Now we have a test spectrum. Need to know what its normalisations should be. And what the Albert functions should resolve to.
   
   my_type width = 0.1*om_peak;
@@ -776,33 +780,37 @@ int test_entity_spectrum::albertGs_tests(){
   }
 
   size_t ang_sz = test_contr->get_current_spectrum()->get_angle_length();
-  my_type norm = 1.0/ (std::sqrt(2.0*pi) * DEFAULT_SPECTRUM_ANG_STDDEV);
+  calc_type I_om = 0.0;
+  size_t counter = 0, none_counter = 0;
   for(size_t j = 1; j < n_tests; j++){
     tmp_omega = (float) j/(float) (n_tests) * std::abs(om_ce_local);
-    for(size_t i=0; i< ang_sz;i++){
+    I_om = calc_I_omega(tmp_omega, test_contr->get_current_spectrum(), test_contr);
+
+    for(size_t i = 0; i < ang_sz;i++){
+      counter++;
       tmp_x = test_contr->get_current_spectrum()->get_ang_axis_element(i);
 
       G2 = get_G2(test_contr->get_current_spectrum(), tmp_omega, tmp_x);
-      G2_analytic = std::pow((( mass_ratio / (1.0 + mass_ratio))*om_ce_local*om_ce_local/om_pe_local/om_pe_local), 1.5);
-      //Same g in num and denom so don't need to normalise, but we do anyway
-      G2_analytic *= norm*exp(-0.5* std::pow( (tmp_x - 0.0)/DEFAULT_SPECTRUM_ANG_STDDEV, 2));
-      G2_analytic /= calc_I_omega(tmp_omega, test_contr->get_current_spectrum(), test_contr);
-      /** \todo Trace this 2...*/
-      G2_analytic *= 2.0;
-      //These limits are arbitrary but currently pass...
-      /** \todo Find remaining discrepancy*/
-      if(G2_analytic > 1e-40 && std::abs(G2/G2_analytic - 1.0) > 0.01){
-        //Squash errors below 8% mismatch
-        if(std::abs(G2/G2_analytic - 1.0) < 0.08){
-          err |= TEST_REMOVE_ERR;
-        }else{
-          test_bed->report_info("G2 does not match analytic calc, relative error = "+mk_str((std::abs(G2/G2_analytic)-1.0)*100, true)+"% at omega="+mk_str(tmp_omega, true)+" and x="+mk_str(tmp_x, true), mpi_info.rank);
-        }
+      G2_analytic = 0.0;
+      if((tmp_omega > om_min && tmp_omega < om_max && tmp_x > x_min && tmp_x < x_max)){
+        G2_analytic = std::pow((( mass_ratio / (1.0 + mass_ratio))*om_ce_local*om_ce_local/om_pe_local/om_pe_local), 1.5);
+        //Same g in num and denom so don't need to normalise
+        G2_analytic *= test_contr->get_current_spectrum()->get_g_element(i);
+        G2_analytic /= I_om;
+        /** \todo Trace this 2!*/
+        G2_analytic *= 2.0;
+      }else{
+        G2_analytic = 0.0;
+      }
+      //Both should be "non-zero" and we allow rather large mismatch. See caveat above.
+      if(G2_analytic > 1e-30 && G2 > 1e-30 && std::abs(G2/G2_analytic - 1.0) > 0.1){
+        none_counter++;
+        test_bed->report_info("G2 does not match analytic calc, relative error = "+mk_str((std::abs(G2/G2_analytic)-1.0)*100, true)+"% at omega="+mk_str(tmp_omega/om_ce_local, true)+" and x="+mk_str(tmp_x, true), mpi_info.rank);
         err |= TEST_WRONG_RESULT;
       }
     }
   }
-
+  std::cout<<"Tested "<<counter<<" and got "<<none_counter<<" errors\n";
   std::fstream outfile;
   outfile.open(tests_tmp_dir + "spect_truncated.dat", std::ios::out|std::ios::binary);
   test_contr->get_current_spectrum()->write_to_file(outfile);
@@ -815,44 +823,45 @@ int test_entity_spectrum::albertGs_tests(){
 my_type calc_I_omega(my_type omega, spectrum * my_spect, controller * my_contr){
 /** \brief Calculate the function I(omega)
 *
-* Calculates I(omega) as in Lyons \cite Lyons1974B directly for a Gaussian g
+* Calculates I(omega) as in Lyons \cite Lyons1974B directly for a Gaussian g. Note I am mixing cold and warm plasma theory, so this is only a broad sanity check.
 @param omega Frequency to calculate at
 @param my_spect Spectrum object to use
 @param my_contr Controller providing plasma
 @return Value of I(omega)
 */
-  my_type Psi, theta, x, dx, g_x, I_contrib, I_contrib2, I_om = 0.0, om_sq_p_e;
+  my_type Psi, Psi2, theta, x, dx, g_x, I_contrib, I_contrib2, I_om = 0.0, om_sq_p_e;
   size_t x_sz = my_spect->get_angle_length();
+
   my_type om_ce_local = my_contr->get_plasma().get_omega_ref("ce");
   my_type om_pe_local = my_contr->get_plasma().get_omega_ref("pe");
   calc_type M = 1.0/1836.2;//m_e/m_p
   my_type om_cp = om_ce_local*M;
   om_sq_p_e = omega*omega/om_ce_local/om_cp;
-  my_type norm = 1.0/ (std::sqrt(2.0*pi) * DEFAULT_SPECTRUM_ANG_STDDEV);
   mu_dmudom my_mu;
   plasma my_plas = my_contr->get_plasma();
-
+  I_om = 0.0;
   for(size_t i = 1; i < x_sz; i++){
-    x = my_spect->get_ang_axis_element(i);
-    dx = std::abs( x - my_spect->get_ang_axis_element(i-1));
-    theta = atan(x);
+    x = TAN_MAX * (float)i/ (float)x_sz;
+    dx = TAN_MAX/(float)x_sz;
+    theta = std::atan(x);
+
     my_mu = my_plas.get_mu(omega, theta);
-    if(std::abs(omega) < std::abs(om_ce_local*cos(theta))){
-      //Mu has no solutions where omega exceeds Om_ce*cos(theta)
+    
+    if(!my_mu.err && std::abs(omega) < std::abs(om_ce_local*cos(theta))){
+      //Mu has no solutions where omega exceeds Om_ce*cos(theta), or when there's an err
       //NB sign selected for Whistler branch
-      Psi = 1.0 - om_sq_p_e - std::pow(sin(theta), 2)/2.0 + std::sqrt(std::pow(sin(theta), 4)/4.0 + std::pow(omega/om_cp*(1.0 - M)*cos(theta), 2));
-      
-      //Alternate mu using Stix 2.45
-      //mu_245_sq = 1.0 - om_pe_local*om_pe_local/(omega*(omega -om_ce_local*cos(theta)));
+      //Psi from cold plasma theory
+      Psi2 = 1.0 - om_sq_p_e - std::pow(std::sin(theta), 2)/2.0 + std::sqrt(std::pow(std::sin(theta), 4)/4.0 + std::pow(omega/om_cp*(1.0 - M)*cos(theta), 2));
       
       //Steal Psi value from mu using Lyons \cite Lyons1974B Eq 12
+      //Psi from "warm" theory, high dens, see mu assignment
       Psi = std::pow(om_pe_local/om_ce_local, 2) * (1.0+M)/M / my_mu.mu/my_mu.mu;
-      //Psi = std::pow(om_pe_local/om_ce_local, 2) * (1.0+M)/M / mu_245_sq;
-      //Normalisation of g cancels once we calc. G2, but factors in the exponential wont. However, this matches our Gaussian g_x exactly
-      g_x = norm*exp(-0.5* std::pow( (x - 0.0)/DEFAULT_SPECTRUM_ANG_STDDEV, 2));
+
+      g_x = my_spect->get_g_element(i);
+
       I_contrib = x * std::pow( (1.0 + x*x)*Psi, -1.5);
       I_contrib2 = 1.0 + 1.0/Psi * (om_sq_p_e - 0.5 * std::pow(omega/om_pe_local*(1.0-M), 2)/(( 1.0+ x*x)*(Psi - 1.0 + om_sq_p_e ) + 0.5*x*x ) );
-      
+
       I_om += g_x * I_contrib * I_contrib2 * dx;
     }
   }

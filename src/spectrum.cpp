@@ -371,6 +371,11 @@ void spectrum::make_test_spectrum(int angle_type, bool two_sided, my_type om_ce,
     my_error_print("Spectrum object invalid, returning", mpi_info.rank);
     return;
   }
+  if(!this->g_is_angle_only){
+    my_error_print("Test spectrum must be separable", mpi_info.rank);
+    return;
+  }
+
   //Setup the ID fields
   char id[ID_SIZE] = "ex";
   this->set_ids(0, 1, 0, 1, WAVE_WHISTLER, id, angle_type);
@@ -413,6 +418,8 @@ void spectrum::make_test_spectrum(int angle_type, bool two_sided, my_type om_ce,
 
   max_power = 1.0;
   //Store value of maximum
+  this->init();
+
 }
 #endif
 
@@ -608,6 +615,7 @@ bool spectrum::generate_spectrum(data_array &parent, int om_fuzz, int angle_type
   }else{
     return 1;
   }
+  this->init();
 
   return 0;
 
@@ -812,10 +820,11 @@ bool spectrum::calc_norm_g(size_t om_ind){
   //Soften so can never be zero. Should only approach this if g_om(theta) is everywhere zero, so set simply to something tiny
   if(norm_g_tmp < std::numeric_limits<my_type>::min()){
 #ifdef DEBUG_ALL
-    if(omega > 0){
+/*    if(omega > 0){
       my_error_print("Zero norm for g", mpi_info.rank);
       throw std::domain_error("Zero norm for g");
-    }
+    }*/
+    //After truncation we have a lot of potential zero norms because g is 0
     //0 norm when omega is zero is ok
 #endif
     norm_g_tmp = std::numeric_limits<my_type>::min();
@@ -888,6 +897,10 @@ bool spectrum::truncate_om(my_type om_min, my_type om_max){
   }
 
   calc_norm_B();
+  for(size_t i = 0; i< get_omega_length(); i++){
+    calc_norm_g(i);
+  }
+
   //Re-do normalisation
   return 0;
 }

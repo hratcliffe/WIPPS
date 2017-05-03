@@ -819,14 +819,6 @@ bool spectrum::calc_norm_g(size_t om_ind){
 
   //Soften so can never be zero. Should only approach this if g_om(theta) is everywhere zero, so set simply to something tiny
   if(norm_g_tmp < std::numeric_limits<my_type>::min()){
-#ifdef DEBUG_ALL
-/*    if(omega > 0){
-      my_error_print("Zero norm for g", mpi_info.rank);
-      throw std::domain_error("Zero norm for g");
-    }*/
-    //After truncation we have a lot of potential zero norms because g is 0
-    //0 norm when omega is zero is ok
-#endif
     norm_g_tmp = std::numeric_limits<my_type>::min();
   }
   

@@ -7,6 +7,15 @@ dl.caveats
         border-left:4px solid;
         border-color: #FF00FF;
 }
+dl.exts
+{
+/*Styles \ext inline sections*/
+        margin-left:-7px;
+        padding-left: 3px;
+        border-left:4px solid;
+        border-color: #32CD32;
+}
+
 
 /*Extra highlight for inline code blocks*/
 code

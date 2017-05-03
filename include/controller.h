@@ -30,7 +30,7 @@ class diffusion_coeff;
 typedef enum bounce_av_type_specs {plain, alpha_alpha, alpha_p, p_alpha, p_p} bounce_av_type;
 /**\brief Bounce-averaging data
 *
-*Holds the needed stuff for bounce-averaging. Controller should only access B_x via the accessor, which returns the value from the B array. NB NB we don't currently use this B_x, rather an assumed dipole. \todo Consider using B_x rather than assuming a dipole */
+*Holds the needed stuff for bounce-averaging. Controller should only access B_x via the accessor, which returns the value from the B array. NB NB we don't currently use this B_x, rather an assumed dipole. \ext Consider using B_x rather than assuming a dipole */
 class bounce_av_data{
   private:
     data_array Bx {data_array(1)};/**< Array holding the ambient B_x field. Note this MUST be 1-D, see accessor functions get_Bx_at and set_Bx*/

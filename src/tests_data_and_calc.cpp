@@ -797,7 +797,7 @@ int test_entity_spectrum::albertGs_tests(){
         //Same g in num and denom so don't need to normalise
         G2_analytic *= test_contr->get_current_spectrum()->get_g_element(i);
         G2_analytic /= I_om;
-        /** \todo Trace this 2!*/
+        /** \todo Trace this 2! I suspect it's from the 2 I can't reproduce in Lyons A7*/
         G2_analytic *= 2.0;
       }else{
         G2_analytic = 0.0;
@@ -810,7 +810,7 @@ int test_entity_spectrum::albertGs_tests(){
       }
     }
   }
-  std::cout<<"Tested "<<counter<<" and got "<<none_counter<<" errors\n";
+  if(none_counter > 0) my_error_print("Tested "+mk_str(counter)+" and got "+mk_str(none_counter)+" errors", mpi_info.rank);
   std::fstream outfile;
   outfile.open(tests_tmp_dir + "spect_truncated.dat", std::ios::out|std::ios::binary);
   test_contr->get_current_spectrum()->write_to_file(outfile);

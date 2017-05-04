@@ -24,6 +24,7 @@
 
 #include <math.h>
 #include <boost/math/special_functions.hpp>
+#include "valgrind.h"
 
 test_entity_plasma::test_entity_plasma(){
 /** \brief Setup tests for plasma
@@ -1114,6 +1115,7 @@ test_entity_d::test_entity_d(){
 \todo WRITE d_testing!*/
   name = "D checks";
   file_prefix = "./files/d_test";
+  test_contr = nullptr;
 
 }
 test_entity_d::~test_entity_d(){
@@ -1130,6 +1132,13 @@ int test_entity_d::run(){
 */
 
   int err = TEST_PASSED;
+#ifdef RUNNING_ON_VALGRIND
+  if(RUNNING_ON_VALGRIND){
+    my_error_print("Detected valgrind. There is an extended precision bug so boost::math::Bessel doesn't work correctly. D tests will be skipped", mpi_info.rank);
+    return err;
+  }
+//Valgrind doesn't support extended precision, so the boost::math definition of a "tiny" to protect against divide by zero is equal 0 resulting in NaN. This is a known "bug" so we just skip the D tests if valgrind is in use.
+#endif
   
   deck_constants const_tmp = my_const;
   if(mpi_info.rank == 0) get_deck_constants(file_prefix);

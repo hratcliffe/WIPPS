@@ -215,7 +215,7 @@ d_report diffusion_coeff::calculate(D_type_spec type_of_D, bool quiet){
 
 //-------- Wave angle temporaries -----------------
   //D has to be integrated over x, so we need a temporary and the axis
-  calc_type *D_theta = (calc_type *) calloc(n_thetas, sizeof(calc_type));
+  calc_type *D_tan_theta = (calc_type *) calloc(n_thetas, sizeof(calc_type));
   calc_type *x = (calc_type *) calloc(n_thetas, sizeof(calc_type));
   calc_type *dx = (calc_type *) calloc(n_thetas, sizeof(calc_type));
   for(int i = 0; i < n_thetas; ++i) x[i] = i* TAN_MAX/n_thetas;
@@ -241,7 +241,7 @@ d_report diffusion_coeff::calculate(D_type_spec type_of_D, bool quiet){
       //particle pitch angle
       alpha = get_axis_element_ang(part_pitch_ind);
       cos_alpha = std::cos(alpha);
-      s2alpha = std::pow(std::sin(alpha), 2);
+      s2alpha = 1.0 - std::pow(cos_alpha, 2);//s^2 + c^2 = 1
       if(single_n){
         //Use only the single selected resonance
         n_min = n_used;
@@ -257,7 +257,7 @@ d_report diffusion_coeff::calculate(D_type_spec type_of_D, bool quiet){
       for(int wave_ang_ind = 0; wave_ang_ind < n_thetas; wave_ang_ind++){
       //theta loop for wave angle or x=tan theta
         tan_theta = x[wave_ang_ind];
-        theta = atan(tan_theta);
+        theta = std::atan(tan_theta);
         c2th = std::pow(cos(theta), 2);
         D_part_n_sum = 0.0;
 
@@ -285,19 +285,20 @@ d_report diffusion_coeff::calculate(D_type_spec type_of_D, bool quiet){
           }
         }
         //Store into temporary theta array
-        D_theta[wave_ang_ind] = D_part_n_sum * c2th * tan_theta;
+        D_tan_theta[wave_ang_ind] = D_part_n_sum * c2th * tan_theta;
       }
       //now integrate in x = tan theta, restore the velocity factor and save
-      D_final_without_consts = integrator(D_theta, n_thetas, dx);
+      D_final_without_consts = integrator(D_tan_theta, n_thetas, dx);
+      
       D_final_without_consts /= mod_v*std::pow(cos_alpha, 3) * (gamma_particle*gamma_particle - 1.0);
       set_element(v_ind, part_pitch_ind, D_final_without_consts*D_consts);
     }
   }
-//------------End main loops-----------------------------------
+//------------End main loops---------------------------------
 
   free(dx);
   free(x);
-  free(D_theta);
+  free(D_tan_theta);
   
 //----Assemble the final report -----------------------------
   report.error = false;

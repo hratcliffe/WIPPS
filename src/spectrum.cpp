@@ -1153,8 +1153,7 @@ calc_type get_G1(spectrum * my_spect, calc_type omega){
 @param my_spect Input spectrum to work on
 @param omega Frequency to eval. at
 @return Normalised abs-square wave power
-\caveat This routine uses the given spectrum's omega range and assumes that beyond this there is "no" wave power. 
-\caveat We assume omega symmetry here and just take abs(omega). If this is changed, best to add a omega_symm flag to spectra and select based on that
+\caveat We assume omega symmetry here and just take abs(omega). If this is changed, best to add a omega_symm flag to spectra and select based on that. Note also that this routine uses the given spectrums omega range and assumes that beyond this there is no wave power
 */
 
   omega = std::abs(omega);//Assume symmetric in omega

@@ -120,13 +120,14 @@ std::string reader::get_full_name(int file_num){
 */
 
   //Create proper format string to zero pad filenumber
-  //We know n_chars is at most MAX_FILENAME_DIGITS, so 2 chars is enough for it
-  char fmt[3+MAX_FILENAME_PLACES+1];
+  const int max_filename_places = (mk_str(MAX_FILENAME_DIGITS)).size();
+  char *fmt = new char[3+max_filename_places+1];
   sprintf(fmt,"%s%d%c" , "%0", n_chars, 'd');
   //Create the number string
   char file_num_str[MAX_FILENAME_DIGITS+1];
   
   snprintf(file_num_str, MAX_FILENAME_DIGITS+1, fmt, file_num);
+  free(fmt);
   return file_prefix + file_num_str +".sdf";
 }
 

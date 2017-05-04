@@ -25,9 +25,9 @@ enum class D_type_spec {alpha_alpha, alpha_p, p_alpha, p_p};
 
 /** \brief Progress info structure*/
 struct running_report{
-  size_t last_report;
-  size_t report_interval;
-  bool quiet;
+  size_t last_report;/**< Index of last report printed*/
+  size_t report_interval;/**< Interval to print reports at*/
+  bool quiet;/**< Flag set to disable report printing*/
 };
   
 

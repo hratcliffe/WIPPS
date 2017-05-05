@@ -236,10 +236,10 @@ int test_entity_plasma::resonant_freq(){
   std::vector<calc_type> results;
   mu_dmudom my_mu;
   int err_count = 0;
-  calc_type x, v_par, n, om_ce_local, om_pe_local;
+  calc_type x, v_par, n, om_ce_local, om_pe_local, om_ce_signed;
   om_ce_local = plas->get_omega_ref("ce");
   om_pe_local = plas->get_omega_ref("pe");
-
+  om_ce_signed = - std::abs(om_ce_local);
   calc_type cos_theta, mu_tmp1, mu_tmp2;
   calc_type gamma, gamma2;
 
@@ -262,7 +262,7 @@ int test_entity_plasma::resonant_freq(){
     test_bed->report_info("Erroneous solution for example case in resonant frequency solver", 2);
     err |= TEST_WRONG_RESULT;
   }
-  
+return err;
   //Check over the range of other cases
   //Loop over particle velocity, assuming propagation at alpha = pi/8 say
   calc_type theta;
@@ -277,9 +277,8 @@ int test_entity_plasma::resonant_freq(){
       for(int k=0; k< n_tests; k++){
         n = -n_tests/2 + k*n_tests/2;
         
-        gamma2 = 1.0/( 1.0 - std::pow(v_par/cos(pi/8.0)/v0, 2));
-        
-        gamma = std::sqrt(gamma2);
+        gamma = gamma_rel(v_par/cos(pi/8.0));
+        gamma2 = gamma*gamma;
         
         results = plas->get_resonant_omega(theta, v_par, gamma, n);
         /**Now check each element of the resonant frequency solution set satisfies Stix 2.45 and the resonance condition together*/
@@ -287,25 +286,24 @@ int test_entity_plasma::resonant_freq(){
           omega_solution = results[i];
 
           //Solve Res condition for mu^2 = (kc/om)^2
-          mu_tmp1 = std::pow(v0 * (gamma * omega_solution - n*om_ce_local)/(gamma * omega_solution * v_par *cos_theta), 2);
-          mu_tmp2 = (1.0 - (std::pow(om_pe_local,2)/(omega_solution *(omega_solution + om_ce_local*cos_theta))));
+          mu_tmp1 = std::pow(v0 * (gamma * omega_solution - n*om_ce_signed)/(gamma * omega_solution * v_par *cos_theta), 2);
+          mu_tmp2 = (1.0 - (std::pow(om_pe_local,2)/(omega_solution *(omega_solution + om_ce_signed*cos_theta))));
           if(std::abs((mu_tmp1 - mu_tmp2)/mu_tmp1) > NUM_PRECISION){
             err|=TEST_WRONG_RESULT;
             test_bed->report_info("Refractive index mismatch of "+mk_str((int)(std::abs((mu_tmp1-mu_tmp2))/mu_tmp1)*100) +'%', 2);
           }
 
           //Also check there is a valid full mu solution
-          my_mu = plas->get_high_dens_phi_mu_om(omega_solution, std::atan(x), 0.0, n, gamma);
+          my_mu = plas->get_high_dens_phi_mu_om(omega_solution, std::atan(x), pi/8.0, n, gamma);
           if(my_mu.err){
             err|=TEST_WRONG_RESULT;
             test_bed->report_info("No full mu solution for resonant frequency", 2);
             err_count++;
           }
-          //This should match the high-density my solution, approx'ly
-          //This is just an arbitrary but "decent" mismatch which is sort of tuned to these parameters
-          if(std::abs((my_mu.mu*my_mu.mu - mu_tmp1)/mu_tmp1) > 0.025){
+          //This should match the high-density mu solution exactly
+          if(std::abs((my_mu.mu - std::sqrt(mu_tmp2))/std::sqrt(mu_tmp2)) > NUM_PRECISION){
             err|=TEST_WRONG_RESULT;
-            test_bed->report_info("Mismatched full mu solution for resonant frequency", 2);
+            test_bed->report_info("Mismatched full mu solution for resonant frequency " + mk_str(std::abs(my_mu.mu-std::sqrt(mu_tmp2))/std::sqrt(mu_tmp2)*100.0, true)+'%', 2);
           }
         }
       }

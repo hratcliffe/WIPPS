@@ -154,7 +154,7 @@ void diffusion_coeff::do_running_report(size_t v_ind, calc_type mod_v, size_t n_
       if(single_n){
         my_print("Calculating velocity number "+mk_str(v_ind)+" (n "+mk_str(n_used)+")", mpi_info.rank);
       }else{
-        my_print("Calculating velocity number "+mk_str(v_ind)+" (n_max, n_min "+mk_str(n_max)+' '+mk_str(n_min)+")", mpi_info.rank);
+        my_print("Calculating velocity number "+mk_str(v_ind)+" (current n_max, n_min "+mk_str(n_max)+' '+mk_str(n_min)+")", mpi_info.rank);
       }
       rept.last_report = v_ind;
     }
@@ -199,7 +199,7 @@ d_report diffusion_coeff::calculate(D_type_spec type_of_D, bool quiet){
   //Velocity and angle temporaries
   calc_type tan_theta, theta, c2th, mod_v, gamma_particle, alpha, s2alpha, cos_alpha;
   //Temporaries for steps of D calculation
-  calc_type D_part_n_sum, D_final_without_consts, D_conversion_factor;
+  calc_type D_part_n_sum, D_final_without_consts, D_conversion_factor, D_part_n_contrib;
   //More temporaries for parts of D
   calc_type Eq6, numerator;
   //Resonant freq and array of all frequency solutions
@@ -210,7 +210,9 @@ d_report diffusion_coeff::calculate(D_type_spec type_of_D, bool quiet){
   //Plasma dispersion
   mu_dmudom my_mu;
 
-  calc_type om_ce_ref = plas.get_omega_ref("ce"), omega_solution;
+  calc_type om_ce_ref = std::abs(plas.get_omega_ref("ce")), omega_solution;
+  calc_type om_pe_ref = plas.get_omega_ref("pe");
+
   calc_type D_consts = 0.5* pi*om_ce_ref*om_ce_ref*v0 * std::pow(1.0/plas.get_B0(), 2) * spect->get_norm_B();//Constant part of D ( pi/2 Om_ce*c^3) * m^2 / B_0^2. But we then divide by (m^2 c^2) so that we get D/p^2 by just dividing by (gamma^2 - 1) which is done in the last step
 
 //-------- Wave angle temporaries -----------------
@@ -224,7 +226,7 @@ d_report diffusion_coeff::calculate(D_type_spec type_of_D, bool quiet){
 //-------- Initialise reporting info --------
   running_report running_rept = {0, 0, false};
   first_running_report(dims[0], running_rept, quiet);
-  size_t n_av = 0, n_omega = 0;
+  size_t n_av = 0, n_omega_solutions = 0;
 
 //------------------Main loops here-------------------------
 //We have deep nested loops. Move ANYTHING that can be as far up tree as possible
@@ -258,30 +260,40 @@ d_report diffusion_coeff::calculate(D_type_spec type_of_D, bool quiet){
       //theta loop for wave angle or x=tan theta
         tan_theta = x[wave_ang_ind];
         theta = std::atan(tan_theta);
-        c2th = std::pow(cos(theta), 2);
+        c2th = std::pow(std::cos(theta), 2);
         D_part_n_sum = 0.0;
 
         for(int n = n_min; n <= n_max; ++n){
           // n is resonant number
           omega_calc = plas.get_resonant_omega(theta, mod_v*cos_alpha, gamma_particle, (calc_type) n);
-          omega_n = (calc_type) n * om_ce_ref;
-          n_omega = omega_calc.size();
-          for(size_t om_solution_num = 0; om_solution_num < n_omega; ++om_solution_num){
+          omega_n = - (calc_type) n * om_ce_ref/gamma_particle;
+          n_omega_solutions = omega_calc.size();
+
+           for(size_t om_solution_num = 0; om_solution_num < n_omega_solutions; ++om_solution_num){
             //Loop over solutions
             /** \todo Check for double counting*/
             omega_solution = omega_calc[om_solution_num];
             my_mu = plas.get_high_dens_phi_mu_om(omega_solution, theta, alpha, n, gamma_particle);
-
+#ifdef DEBUG_ALL
+          //Sanity checking...
+          if(my_mu.cone_ang < theta){
+            my_error_print("Solution outside expected resonance cone, error! ");
+            throw std::domain_error("Solution outside resonance cone");
+            continue;
+        }
+#endif
             Eq6 = omega_solution/(omega_solution - omega_n)* my_mu.mu/(my_mu.mu + omega_solution * my_mu.dmudom);
             numerator = std::pow( -s2alpha + omega_n/omega_solution, 2);
             D_conversion_factor = sin(alpha)*cos(alpha)/(-s2alpha + omega_n/omega_solution);
             //Get the part of D summed over n. Note additional factors below
             //NB NB get_G_1 precancels the \Delta\omega and B_wave factors
-            D_part_n_sum += numerator * my_mu.phi / std::abs(1.0 - Eq6) * get_G1(spect, omega_solution) * get_G2(spect, omega_solution, tan_theta);
+            D_part_n_contrib = numerator * my_mu.phi / std::abs(1.0 - Eq6) * get_G1(spect, omega_solution) * get_G2(spect, omega_solution, tan_theta);
             
             //Convert alpha_alpha to requested D type
-            D_part_n_sum = (is_mixed ? D_part_n_sum*D_conversion_factor : D_part_n_sum);
-            D_part_n_sum = (is_pp ? D_part_n_sum*D_conversion_factor*D_conversion_factor : D_part_n_sum);
+            D_part_n_contrib = (is_mixed ? D_part_n_contrib*D_conversion_factor : D_part_n_contrib);
+            D_part_n_contrib = (is_pp ? D_part_n_contrib*D_conversion_factor*D_conversion_factor : D_part_n_contrib);
+            
+            D_part_n_sum += D_part_n_contrib;
           }
         }
         //Store into temporary theta array

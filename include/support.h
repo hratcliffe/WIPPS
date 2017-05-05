@@ -165,7 +165,7 @@ struct mu_dmudom{
   calc_type dmudtheta; /**< d mu / d theta (wave normal angle) */
   calc_type phi;/**< Phi from Albert \cite Albert2005 */
   int err; /**< 0 if mu found successfully, 1 else*/
-
+  calc_type cone_ang;/**<Resonance cone angle*/
 };
 
 /** \brief General command line arguments

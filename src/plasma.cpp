@@ -335,6 +335,7 @@ mu_dmudom plasma::get_phi_mu_from_stix(calc_type w, calc_type psi, calc_type alp
   my_mu.dmudtheta = 0.0;
   my_mu.err = 1;
   my_mu.phi = 0;
+  my_mu.cone_ang = pi;
   smu = 0;
   mu2 = 0;
 
@@ -409,21 +410,22 @@ mu_dmudom plasma::get_phi_mu_from_stix(calc_type w, calc_type psi, calc_type alp
     for(int i=0; i<ncomps; i++) dmudw += dmudX[i]*dXdw[i] + dmudY[i]*dYdw[i];
     
     my_mu.dmudom = dmudw;
+    my_mu.cone_ang = std::atan(std::sqrt(-P/S));
 
     if(!skip_phi){
       calc_type term1, term2, term3, denom, tmp_bes, tmp_besp, tmp_besm, bessel_arg, D_mu2S, omega_n;
 
       D_mu2S = D / (mu2 - S);
       calc_type calc_n = (calc_type) n;
-      omega_n = -1.0 * calc_n * my_const.omega_ce/gamma_particle;
-      calc_type omega_n_slash_n = -1.0 * my_const.omega_ce/gamma_particle;
+      omega_n = -1.0 * calc_n * std::abs(get_omega_ref("ce"))/gamma_particle;
+      calc_type omega_n_slash_n = -1.0 * std::abs(get_omega_ref("ce"))/gamma_particle;
       //temporaries for simplicity
 
       term1 = (mu2* s2psi - P)/(mu2);
       
-      denom = pow(D_mu2S*term1, 2) + c2psi*pow((P/mu2), 2);
+      denom = std::pow(D_mu2S*term1, 2) + c2psi*std::pow((P/mu2), 2);
       
-      bessel_arg = tan(psi)*tan(alpha) * (w - omega_n)/omega_n_slash_n;// n x tan alpha (om - om_n)/om_n, but allowing n/n = 1 even when n = 0
+      bessel_arg = std::tan(psi)*std::tan(alpha) * (w - omega_n)/omega_n_slash_n;// n x tan alpha (om - om_n)/om_n, but allowing n/n = 1 even when n = 0
 
       tmp_besp = boost::math::cyl_bessel_j(n+1, bessel_arg);
       tmp_besm = boost::math::cyl_bessel_j(n-1, bessel_arg);
@@ -467,6 +469,7 @@ std::vector<calc_type> plasma::get_resonant_omega(calc_type theta, calc_type v_p
   calc_type om_ce = this->get_omega_ref("ce");
   calc_type om_pe_loc = this->get_omega_ref("pe");
   calc_type om_ce_ref = this->get_omega_ref("c0");
+  calc_type signed_om_ce_slash_ref = - std::abs(om_ce/om_ce_ref);//Contains sign of electron charge
   //Special case when v=0 and we can save time
   if(std::abs(v_par) < tiny_calc_type){
     if( n == 1 || n == -1 ) ret_vec.push_back(om_ce*n);
@@ -483,6 +486,7 @@ std::vector<calc_type> plasma::get_resonant_omega(calc_type theta, calc_type v_p
   calc_type an, bn, cn;
   calc_type cos_th = std::cos(theta);
   calc_type vel = v_par / v0;
+  calc_type calc_n = (calc_type) n;
   //For clarity
   calc_type vel_cos = std::pow(vel * cos_th, 2);//Product of the two, for simplicity in expressions. But note is not meaningful, theta is the wave angle
 
@@ -491,9 +495,12 @@ std::vector<calc_type> plasma::get_resonant_omega(calc_type theta, calc_type v_p
   //Calculate coefficients
   //To maintain best precision we solve for x = omega/omega_ce_ref so x ~ 1
   a = (vel_cos - 1.0) * gamma_sq;
-  b = (vel_cos*cos_th*gamma_sq + 2.0*gamma_particle*n - gamma_sq*cos_th)*om_ce/om_ce_ref;
-  c = ((2.0 * gamma_particle * n * cos_th - n * n)* std::pow(om_ce/om_ce_ref, 2) - std::pow(om_pe_loc/om_ce_ref, 2)*vel_cos*gamma_sq);
-  d = -n*n*std::pow(om_ce/om_ce_ref, 3)*cos_th;
+
+  b = (vel_cos*cos_th*gamma_sq + 2.0*gamma_particle* calc_n - gamma_sq*cos_th)*signed_om_ce_slash_ref;
+
+  c = (2.0 * gamma_particle * calc_n * cos_th - calc_n * calc_n)* std::pow(signed_om_ce_slash_ref, 2) - std::pow(om_pe_loc/om_ce_ref, 2)*vel_cos*gamma_sq;
+
+  d = -calc_n*calc_n*std::pow(signed_om_ce_slash_ref, 3)*cos_th;
   //Note: for n=0, d is 0. We covered v_par being zero above, so either omega = 0 and k_par = 0 or we have a normal solution, but with redundancy. We assume omega = 0 is an unhelpful solution to return. And for simplicity we don't do a special quadratic solution but just continue anyway
 
   an = b/a;

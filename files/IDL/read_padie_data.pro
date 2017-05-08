@@ -3,7 +3,10 @@ function read_padie_data, dir, file_start = file_start, n = n
 COMPILE_OPT IDL2
 ;force long ints and proper brackets
 
-IF(N_ELEMENTS(dir) EQ 0) THEN dir = './'
+common consts, q0, m0, v0, kb, mu0, epsilon0, h_planck
+common extra_consts, global_file_dir
+
+IF(N_ELEMENTS(dir) EQ 0) THEN dir = global_file_dir
 IF(N_ELEMENTS(file_start) EQ 0) THEN file_start = "Figure_2_fpefce_2.5"
 n_part = ""
 IF(N_ELEMENTS(n) NE 0) THEN BEGIN

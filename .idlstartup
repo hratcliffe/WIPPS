@@ -6,4 +6,7 @@ IF(wipps_dir EQ "") THEN wipps_dir = "./"
 .r plot_helpers.pro
 .r read_deck.pro
 define_consts
+common extra_consts, global_file_dir
+global_file_dir = wipps_dir+'/files/'
 ON_ERROR, 1
+;Path to files dir from IDL files location

@@ -262,10 +262,9 @@ int test_entity_plasma::resonant_freq(){
     test_bed->report_info("Erroneous solution for example case in resonant frequency solver", 2);
     err |= TEST_WRONG_RESULT;
   }
-return err;
   //Check over the range of other cases
   //Loop over particle velocity, assuming propagation at alpha = pi/8 say
-  calc_type theta;
+  calc_type theta, test_angle = pi/8.0;
   for(int ii=0; ii<n_tests; ii++){
     v_par = (0.01 + 0.5*(float)ii/ (float)(n_tests+1))* v0;
     //Loop over angles
@@ -277,7 +276,7 @@ return err;
       for(int k=0; k< n_tests; k++){
         n = -n_tests/2 + k*n_tests/2;
         
-        gamma = gamma_rel(v_par/cos(pi/8.0));
+        gamma = gamma_rel(v_par/cos(test_angle));
         gamma2 = gamma*gamma;
         
         results = plas->get_resonant_omega(theta, v_par, gamma, n);
@@ -288,22 +287,24 @@ return err;
           //Solve Res condition for mu^2 = (kc/om)^2
           mu_tmp1 = std::pow(v0 * (gamma * omega_solution - n*om_ce_signed)/(gamma * omega_solution * v_par *cos_theta), 2);
           mu_tmp2 = (1.0 - (std::pow(om_pe_local,2)/(omega_solution *(omega_solution + om_ce_signed*cos_theta))));
-          if(std::abs((mu_tmp1 - mu_tmp2)/mu_tmp1) > NUM_PRECISION){
+          //Since we're solving a cubic, expect roundoff error to be exacerbated, so we bump the threshold to roughly (5e-16)^(1/3) (cube root epsilon) and I've tightened by a factor 10 also since I'm doing fractional
+          if(std::abs((mu_tmp1 - mu_tmp2)/mu_tmp1) > 2.5*NUM_PRECISION){
             err|=TEST_WRONG_RESULT;
-            test_bed->report_info("Refractive index mismatch of "+mk_str((int)(std::abs((mu_tmp1-mu_tmp2))/mu_tmp1)*100) +'%', 2);
+            test_bed->report_info("Refractive index mismatch of "+mk_str((std::abs((mu_tmp1-mu_tmp2))/mu_tmp1)*100) +'%', 2);
           }
 
-          //Also check there is a valid full mu solution
-          my_mu = plas->get_high_dens_phi_mu_om(omega_solution, std::atan(x), pi/8.0, n, gamma);
+          //Also check against the full-mu solution
+          my_mu = plas->get_high_dens_mu(omega_solution, theta);
           if(my_mu.err){
             err|=TEST_WRONG_RESULT;
             test_bed->report_info("No full mu solution for resonant frequency", 2);
             err_count++;
-          }
-          //This should match the high-density mu solution exactly
-          if(std::abs((my_mu.mu - std::sqrt(mu_tmp2))/std::sqrt(mu_tmp2)) > NUM_PRECISION){
-            err|=TEST_WRONG_RESULT;
-            test_bed->report_info("Mismatched full mu solution for resonant frequency " + mk_str(std::abs(my_mu.mu-std::sqrt(mu_tmp2))/std::sqrt(mu_tmp2)*100.0, true)+'%', 2);
+          }else{
+            //This should match the high-density mu solution almost exactly, once we remove the leading 1.0
+            if(std::abs(my_mu.mu - std::sqrt(mu_tmp2 - 1.0))/std::sqrt(mu_tmp2 - 1.0) > NUM_PRECISION){
+              err|=TEST_WRONG_RESULT;
+              test_bed->report_info("Mismatched full mu solution  in resonant solver, error " + mk_str(std::abs(my_mu.mu-std::sqrt(mu_tmp2-1.0))/std::sqrt(mu_tmp2-1.0)*100.0, true)+'%', 2);
+            }
           }
         }
       }
@@ -749,7 +750,6 @@ int test_entity_spectrum::albertGs_tests(){
   om_peak = test_contr->get_current_spectrum()->get_peak_omega();
 
   //Now we have a test spectrum. Need to know what its normalisations should be. And what the Albert functions should resolve to.
-  std::cout<<om_peak/om_ce_local<<' '<<om_ce_local<<'\n';
   my_type width = 0.1*om_peak;
   
   for(size_t i = 0; i < n_tests; i++){
@@ -1242,13 +1242,18 @@ int test_entity_d::full_D_tests(){
 */
 
   int err = TEST_PASSED;
+  bool single_n = false;
+  int n = 0;
 
   bool err2 = test_contr->add_spectrum(file_prefix + "spectrum.dat");
   if(!err2){
     test_bed->report_info("Calculating full D... This may take a (very) long time!\nEnsure optimisation is on during compile!", mpi_info.rank);
     test_contr->add_d(100, 100);
+    
     if(test_bed->runtime_flags.count("n") != 0){
-      test_contr->get_current_d()->set_single_n(test_bed->runtime_flags["n"]);
+      single_n = true;
+      n  = test_bed->runtime_flags["n"];
+      test_contr->get_current_d()->set_single_n(n);
     }else{
       test_contr->get_current_d()->set_max_n(5);
     }
@@ -1266,8 +1271,22 @@ int test_entity_d::full_D_tests(){
     if(file) test_contr->get_current_d()->write_to_file(file);
     file.close();
     
-    //Now we should read a file containing sample D info and compare some features. Perhaps the Landau peak? General comparison of values across frequency and electron energy etc
+    data_array padie_data = read_padie_data(single_n, n);
+    //Now we should read a file containing sample D info and compare some features. Perhaps the Landau peak?
+    //Check axes match. Remember D has first velocity, padie is just 1-d of angle
     
+    //Find energy bin to use. Padie is at 1 MeV, so 0.941c
+    size_t v_ind = test_contr->get_current_d()->get_axis_index_from_value(0, 0.941*v0);
+    calc_type local_diff, running_diff = 0.0, running_total = 0.0;
+    //Calculate the ~L^2 difference
+    for(size_t i = 0; i < padie_data.get_dims(0); i++){
+      local_diff = std::pow(padie_data.get_element(i) - test_contr->get_current_d()->get_element(v_ind, i), 2);
+      running_diff += local_diff;
+      running_total += std::pow(padie_data.get_element(i), 2);
+    }
+    test_bed->report_info("Calculated D has L2 mismatch of " + mk_str((int)(std::sqrt(running_diff/running_total)*100 ))+'%');
+    //Very relaxed error condition
+    if(std::sqrt(running_diff/running_total)*100 > 50) err |= TEST_WRONG_RESULT;
     
   }else{
     err |= TEST_ASSERT_FAIL;
@@ -1275,6 +1294,25 @@ int test_entity_d::full_D_tests(){
 
 
   return err;
+}
+
+data_array test_entity_d::read_padie_data(bool single_n, int n){
+
+  int err =  TEST_PASSED;
+  std::string padie_dir = "./files/PadieTestData/";
+  std::string filestart = "Data";
+  std::string fileend = "", filename;
+
+  if(single_n){
+    fileend = "_";
+//    if(n < 0) fileend += "-";
+    fileend += mk_str(n);
+  }
+  filename = padie_dir + filestart + fileend + ".dat";
+  test_bed->report_info("Reading " + filename);
+  data_array data = data_array(filename);
+  
+  return data;
 }
 
 //----------------------------------------------------------------

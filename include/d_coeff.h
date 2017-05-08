@@ -33,7 +33,7 @@ struct running_report{
 
 /** \brief Diffusion coefficient object
 *
-* Specialised data_array containing the calculated coefficient plus relevant ids. Can be made/destroyed only by controller object. In general should be a 2-D array with first axis momentum, second pitch-angle
+* Specialised data_array containing the calculated coefficient plus relevant ids. Can be made/destroyed only by controller object. In general should be a 2-D array with first axis momentum/velocity, second pitch-angle
 @author Heather Ratcliffe @date 23/09/2015 \ingroup cls
 */
 class diffusion_coeff: public data_array{

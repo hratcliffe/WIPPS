@@ -66,7 +66,7 @@ int main(int argc, char *argv[]){
   MPI_Barrier(MPI_COMM_WORLD);
 
 #ifdef RUN_TESTS_AND_EXIT
-  my_print("Running basic tests", mpi_info.rank);
+  my_print("Running tests", mpi_info.rank);
 
   if(mpi_info.rank == 0) get_deck_constants("./files/test");
   share_consts();

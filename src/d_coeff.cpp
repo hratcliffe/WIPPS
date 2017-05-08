@@ -213,7 +213,8 @@ d_report diffusion_coeff::calculate(D_type_spec type_of_D, bool quiet){
   calc_type om_ce_ref = std::abs(plas.get_omega_ref("ce")), omega_solution;
   calc_type om_pe_ref = plas.get_omega_ref("pe");
 
-  calc_type D_consts = 0.5* pi*om_ce_ref*om_ce_ref*v0 * std::pow(1.0/plas.get_B0(), 2) * spect->get_norm_B();//Constant part of D ( pi/2 Om_ce*c^3) * m^2 / B_0^2. But we then divide by (m^2 c^2) so that we get D/p^2 by just dividing by (gamma^2 - 1) which is done in the last step
+  calc_type D_consts = 0.25* pi*om_ce_ref*om_ce_ref*v0 * std::pow(1.0/plas.get_B0(), 2) * spect->get_norm_B();//Constant part of D ( pi/2 Om_ce*c^3) * m^2 / B_0^2. But we then divide by (m^2 c^2) so that we get D/p^2 by just dividing by (gamma^2 - 1) which is done in the last step
+  //Extra half I can't quite explain, but matches the sample data
 
 //-------- Wave angle temporaries -----------------
   //D has to be integrated over x, so we need a temporary and the axis

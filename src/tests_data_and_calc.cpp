@@ -889,14 +889,14 @@ int test_entity_levelone::run(){
 *
 *Tests the full sequence of file reading, FFT and spectrum generation. Effectively a regression test as we check against previously generated files
 *
-Set runtime_flag "no_level_one" to skip a full level-one testing
+Set runtime_flag "level_one" to perform full level-one testing
 *
 @return Error code
 **/
 
   int err = TEST_PASSED;
 
-  if(test_bed->runtime_flags.count("no_level_one") == 0){
+  if(test_bed->runtime_flags.count("level_one") != 0){
     strncpy(block_id, "ay", ID_SIZE);
     file_prefix = "./files/l1/l1";
     space_in[0] = 0;
@@ -930,7 +930,7 @@ Set runtime_flag "no_level_one" to skip a full level-one testing
       if(!test_bed->check_for_abort(err)) err |= basic_tests(2, -1, false, "_space", 2, 0.01f*my_const.omega_ce, 1.5f*my_const.omega_ce);
     }
   }else{
-    test_bed->report_info("Skipping level-one tests due to flag -no_level_one", 0);
+    test_bed->report_info("Skipping level-one tests, flag -level_one not set", 0);
   }
   return err;
 }
@@ -1110,7 +1110,7 @@ int test_entity_levelone::basic_tests(size_t n_dims_in, int flatten_on, bool has
 
 test_entity_d::test_entity_d(){
 /**  \brief Setup tests for dffusion calculation
-\todo WRITE d_testing!*/
+*/
   name = "D checks";
   file_prefix = "./files/d_test";
   test_contr = nullptr;
@@ -1132,7 +1132,7 @@ int test_entity_d::run(){
   int err = TEST_PASSED;
 #ifdef RUNNING_ON_VALGRIND
   if(RUNNING_ON_VALGRIND){
-    my_error_print("Detected valgrind. There is an extended precision bug so boost::math::Bessel doesn't work correctly. D tests will be skipped", mpi_info.rank);
+    my_error_print("Detected valgrind. There is an extended precision bug so boost::math bessel functions don't work correctly. D tests will be skipped", mpi_info.rank);
     return err;
   }
 //Valgrind doesn't support extended precision, so the boost::math definition of a "tiny" to protect against divide by zero is equal 0 resulting in NaN. This is a known "bug" so we just skip the D tests if valgrind is in use.

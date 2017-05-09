@@ -51,7 +51,7 @@
 *
 * Once the code has been built, `make tar_built` to produce a tarball Runnable.tgz of utilities and necessary files that can be copied elsewhere and run.
 *\section idl IDL routines
- *Some IDL helpers are provided for reading the output files, reading the deck.status file etc. The simple way to use these is to copy the enclosed .idlstartup file to the directory you run analysis from and set this as a startup file like, for example, `IDL> pref_set, 'IDL_STARTUP', '/path/to/.idlstartup',/commit` Then set a `WIPPS_PATH` environment variable giving the location of the wipps code. Start idl, and you should see a series of "% Compiled module:" lines. Try `IDL> v_to_kev(0.5)
+ *Some IDL helpers are provided for reading the output files, reading the deck.status file etc. The simple way to use these is to copy the enclosed .idlstartup file to the directory you run analysis from and set this as a startup file like, for example, `pref_set, "IDL_STARTUP", "/path/to/.idlstartup",/commit` Then set a `WIPPS_PATH` environment variable giving the location of the wipps code. Start idl, and you should see a series of "% Compiled module:" lines. Try `IDL> v_to_kev(0.5)
        79.051798621061963` to test
 
  * \section mod Modifying the Code
@@ -59,6 +59,7 @@
  *
  * test, profile and debug modes are also available, and are invoked with `make MODE=[test,profile,debug]` after a clean. More details on testing are below.
  *
+ * See the \ref todo and \ref exts pages for tasks and extensions.
  \subsection Versioning
  *Version numbers follow the usual major-minor numbering. So in general any change to file-io, data normalisation etc which may break compatibility should bump the major number, and any substantive change to how things are done bumps the minor. For example, adding a new field to data files, or changing the FFT normalisation by 2!pi is a major change. Tweaking spectrum extraction to be different but equally correct is a minor. Internal-only changes change neither number. 
  *

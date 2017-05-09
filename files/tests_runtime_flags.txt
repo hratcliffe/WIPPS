@@ -1,2 +1,3 @@
+In class test_entity_d:<p>Calculate a real diffusion coefficient for useful parameters, and check features against sample data Set runtime_flag "n" to a value to calculate a single n Set runtime_flag "d_pp" to calculate D_pp rather than alpha_alpha by default</p>
 In class test_entity_d:<p>A full useful calculation of a test coefficient takes quite a while, so here we just test that the calculation proceeds and there are no obvious problems. Set runtime_flag "full_d" to perform a full sample D calculation </p>
-In class test_entity_levelone:<p>Set runtime_flag "no_level_one" to skip a full level-one testing</p>
+In class test_entity_levelone:<p>Set runtime_flag "level_one" to perform full level-one testing</p>

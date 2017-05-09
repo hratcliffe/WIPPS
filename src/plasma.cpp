@@ -457,6 +457,7 @@ std::vector<calc_type> plasma::get_resonant_omega(calc_type theta, calc_type v_p
 @param gamma_particle Relativistic gamma for resonant particle
 @param n Resonance number
 @return Vector of solutions for resonant omega, or empty vector if no solutions are found
+\ext Extend this to use full solution rather than the high density approx
 */
 
 #ifdef DEBUG_ALL

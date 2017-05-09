@@ -95,7 +95,7 @@ class test_entity_d : public test_entity{
     std::string file_prefix;/**< File prefix prepended to test files*/
     int basic_tests();
     int full_D_tests();
-    data_array read_padie_data(bool single_n, int n);
+    data_array read_padie_data(bool single_n, int n, bool use_d_pp);
   public:
     test_entity_d();
     virtual ~test_entity_d();

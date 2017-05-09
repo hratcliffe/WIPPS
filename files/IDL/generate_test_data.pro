@@ -218,15 +218,19 @@ common extra_consts, global_file_dir
   data = read_padie_data(padie_dir)
   outfile_name = "Data.dat"
   err = write_data(padie_dir + outfile_name, float(data.daa), list(float(data.axis)))
+  outfile_name = "Data_p.dat"
+  err = write_data(padie_dir + outfile_name, float(data.dpp), list(float(data.axis)))
 
   FOR i = -2, 2 DO BEGIN
     outfile_name = "Data_"
     if i LT 0 THEN outfile_name = outfile_name + "-"
-    outfile_name = outfile_name + string(format="(I1)", abs(i), /print) + ".dat"
-
+    outfile_name = outfile_name + string(format="(I1)", abs(i), /print)
     data = read_padie_data(padie_dir, n=i)
     print, "Writing " + outfile_name
-    err = write_data(padie_dir + outfile_name, float(data.daa), list(float(data.axis)))
+    err = write_data(padie_dir + outfile_name + ".dat", float(data.daa), list(float(data.axis)))
+
+    err = write_data(padie_dir + outfile_name + "_p.dat", float(data.dpp), list(float(data.axis)))
+
 
   END
 

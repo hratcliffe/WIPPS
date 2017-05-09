@@ -1238,6 +1238,9 @@ int test_entity_d::full_D_tests(){
 /** \brief Calculate a test D
 *
 * Calculate a real diffusion coefficient for useful parameters, and check features against sample data
+*Set runtime_flag "n" to a value to calculate a single n
+*Set runtime_flag "d_pp" to calculate D_pp rather than alpha_alpha by default
+
 @return Error code
 */
 
@@ -1257,7 +1260,11 @@ int test_entity_d::full_D_tests(){
     }else{
       test_contr->get_current_d()->set_max_n(5);
     }
-    d_report report = test_contr->get_current_d()->calculate();
+    D_type_spec D_type = D_type_spec::alpha_alpha;
+    if(test_bed->runtime_flags.count("d_pp") != 0){
+      D_type = D_type_spec::p_p;
+    }
+    d_report report = test_contr->get_current_d()->calculate(D_type);
     if(report.error){
       test_bed->report_info("Error calculating full D", mpi_info.rank);
       err |= TEST_ASSERT_FAIL;
@@ -1270,8 +1277,8 @@ int test_entity_d::full_D_tests(){
     file.open("test_d.dat", std::ios::binary|std::ios::trunc|std::ios::out|std::ios::in);
     if(file) test_contr->get_current_d()->write_to_file(file);
     file.close();
-    
-    data_array padie_data = read_padie_data(single_n, n);
+
+    data_array padie_data = read_padie_data(single_n, n, (D_type == D_type_spec::p_p));
     //Now we should read a file containing sample D info and compare some features. Perhaps the Landau peak?
     //Check axes match. Remember D has first velocity, padie is just 1-d of angle
     
@@ -1296,7 +1303,7 @@ int test_entity_d::full_D_tests(){
   return err;
 }
 
-data_array test_entity_d::read_padie_data(bool single_n, int n){
+data_array test_entity_d::read_padie_data(bool single_n, int n, bool use_d_pp){
 
   int err =  TEST_PASSED;
   std::string padie_dir = "./files/PadieTestData/";
@@ -1305,10 +1312,11 @@ data_array test_entity_d::read_padie_data(bool single_n, int n){
 
   if(single_n){
     fileend = "_";
-//    if(n < 0) fileend += "-";
     fileend += mk_str(n);
   }
-  filename = padie_dir + filestart + fileend + ".dat";
+  filename = padie_dir + filestart + fileend;
+  if(use_d_pp) filename += "_p.dat";
+  else filename += ".dat";
   test_bed->report_info("Reading " + filename);
   data_array data = data_array(filename);
   

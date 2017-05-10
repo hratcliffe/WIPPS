@@ -1114,6 +1114,7 @@ test_entity_d::test_entity_d(){
   name = "D checks";
   file_prefix = "./files/d_test";
   test_contr = nullptr;
+  partial_disable_for_valgrind = false;
 
 }
 test_entity_d::~test_entity_d(){
@@ -1132,10 +1133,10 @@ int test_entity_d::run(){
   int err = TEST_PASSED;
 #ifdef RUNNING_ON_VALGRIND
   if(RUNNING_ON_VALGRIND){
-    my_error_print("Detected valgrind. There is an extended precision bug so boost::math bessel functions don't work correctly. D tests will be skipped", mpi_info.rank);
-    return err;
+    my_error_print("Detected valgrind.\n There is an extended precision bug so boost::math bessel functions don't work correctly.\n        Some D tests will not be performed", mpi_info.rank);
+    partial_disable_for_valgrind = true;
   }
-//Valgrind doesn't support extended precision, so the boost::math definition of a "tiny" to protect against divide by zero is equal 0 resulting in NaN. This is a known "bug" so we just skip the D tests if valgrind is in use.
+//Valgrind doesn't support extended precision, so the boost::math definition of a "tiny" to protect against divide by zero is equal 0 resulting in NaN. This is a known "bug" so we just skip certain D tests if valgrind is in use, as they will fail
 #endif
   
   deck_constants const_tmp = my_const;
@@ -1222,7 +1223,8 @@ int test_entity_d::basic_tests(){
   //Note tag gets truncated to ten chars in writing
   if(test_contr->get_d_by_num(1)->tag.substr(0, 10) != test_contr->get_current_d()->tag.substr(0, 10)) D_is_eq = false;
 
-  if(D_is_bad){
+  if(D_is_bad && !partial_disable_for_valgrind){
+    //Due to valgrind issue described in ::run(), D might be NaN but this is not our fault...
     test_bed->report_info("D contains NaN!");
     err |= TEST_WRONG_RESULT;
   }

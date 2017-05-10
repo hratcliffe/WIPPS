@@ -96,6 +96,7 @@ class test_entity_d : public test_entity{
     int basic_tests();
     int full_D_tests();
     data_array read_padie_data(bool single_n, int n, bool use_d_pp);
+    bool partial_disable_for_valgrind;
   public:
     test_entity_d();
     virtual ~test_entity_d();

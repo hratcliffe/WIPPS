@@ -14,11 +14,10 @@
 *@{ 
 *\brief Utility to extract distribution functions from data
 *
-*Extracts distributions from SDF files and optionally compresses their spatial dimension. 
+*Extracts distributions from SDF files and optionally compresses their (first) spatial dimension.
 \verbinclude help_d.txt
 \author Heather Ratcliffe \date 09/09/2016
 \caveat This utility only works for 2-D distributions right now.
-\todo Fix to work for 1, 2, or 3-d? Remember all distribs are 3-d with absent dims of size 1
 */
 
 const char PER_UTIL_HELP_ID = 'd';/**<ID to identify help file for this utility*/
@@ -74,17 +73,20 @@ int main(int argc, char *argv[]){
   data_array dat;
   size_t n_dims;
   std::vector<size_t> dims;
-  size_t dims_arr[2];
-  for(size_t i=0; i< dist_blocks.size(); i++){
+  size_t dims_arr[3], n_dims_act;
+  for(size_t i = 0; i < dist_blocks.size(); i++){
     my_reader.read_dims(n_dims, dims, dist_blocks[i].second);
-    for(size_t j=0; j<2; j++) dims_arr[j] = dims[j];
-    dat = data_array((size_t)2, dims_arr);
+    for(size_t j = 0; j < n_dims; j++){
+      dims_arr[j] = dims[j];
+      if(dims[j] > 1) n_dims_act = j+1;
+      //The distribs are always 3-d, with absent dims of size 1, so we can check the actual dimension like this
+    }
+    dat = data_array(n_dims_act, dims_arr);
     if(!dat.is_good()){
       my_error_print("Error allocating array for "+dist_blocks[i].second+", skipping");
       continue;
     }
     
-    //The distribs are always 3-d, with absent dims of size 1. Ours should be 2-d initially
     err = my_reader.read_distrib(dat, dist_blocks[i].second, my_args.dump);
     if(err){
       my_error_print("Error reading distrib "+dist_blocks[i].second);

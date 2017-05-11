@@ -335,7 +335,6 @@ void log_code_constants(std::string file_prefix){
 *
 *Records ID codes etc as name value pairs
 @param file_prefix File path to write to
-\todo Updates?
 */
   std::ofstream file;
   std::string filename = file_prefix +"constants.dump";
@@ -353,6 +352,8 @@ void log_code_constants(std::string file_prefix){
     file<<"V_MAX "<<V_MAX<<'\n';
     file<<"ANG_MIN "<<ANG_MIN<<'\n';
     file<<"ANG_MAX "<<ANG_MAX<<'\n';
+    file<<"TAN_MIN "<<TAN_MIN<<'\n';
+    file<<"TAN_MAX "<<TAN_MAX<<'\n';
     file<<"DEFAULT_SPECTRUM_ANG_STDDEV "<<DEFAULT_SPECTRUM_ANG_STDDEV<<'\n';
     file<<"SPECTRUM_THRESHOLD "<<SPECTRUM_THRESHOLD<<'\n';
 

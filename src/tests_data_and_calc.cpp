@@ -241,7 +241,7 @@ int test_entity_plasma::resonant_freq(){
   om_pe_local = plas->get_omega_ref("pe");
   om_ce_signed = - std::abs(om_ce_local);
   calc_type cos_theta, mu_tmp1, mu_tmp2;
-  calc_type gamma, gamma2;
+  calc_type gamma;
 
   test_bed->report_info("Testing resonant frequency solver", 1);
 
@@ -277,7 +277,6 @@ int test_entity_plasma::resonant_freq(){
         n = -n_tests/2 + k*n_tests/2;
         
         gamma = gamma_rel(v_par/cos(test_angle));
-        gamma2 = gamma*gamma;
         
         results = plas->get_resonant_omega(theta, v_par, gamma, n);
         /**Now check each element of the resonant frequency solution set satisfies Stix 2.45 and the resonance condition together*/
@@ -639,7 +638,6 @@ int test_entity_spectrum::basic_tests1(){
   outfile.close();
   if(err == TEST_PASSED) test_bed->report_info("Test spectrum OK");
   
-  /** Now make the real spectrum from data and check the result matches the plain text test file*/
   return err;
 }
 int test_entity_spectrum::basic_tests2(){
@@ -1355,7 +1353,6 @@ int test_entity_d::full_D_tests(){
 
 data_array test_entity_d::read_padie_data(bool single_n, int n, bool use_d_pp){
 
-  int err =  TEST_PASSED;
   std::string padie_dir = "./files/PadieTestData/";
   std::string filestart = "Data";
   std::string fileend = "", filename;
@@ -1526,7 +1523,6 @@ int test_entity_bounce::bounce_cases(bounce_av_data bounce_dat){
     }
     if(std::abs(current_val/expected_val -1.0) > 0.05){
       //Moderate discrep allowed here
-//      std::cout<<j<<' '<<current_val<<' '<<expected_val<<' '<<std::abs(current_val/expected_val -1.0)<<'\n';
       err |= TEST_WRONG_RESULT;
       if((err & TEST_REMOVE_ERR) != TEST_REMOVE_ERR) test_bed->report_info("Erroneous bounce average in "+err_string+" mismatch "+mk_str((int)(std::abs(current_val/expected_val -1.0)*100))+'%', 2);
     }

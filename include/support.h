@@ -57,6 +57,8 @@ const my_type tiny_my_type=1e-60; /**< Value below which we assume 0*/
 /** \defgroup const Constants
 *@{ 
 \brief Code and physical constants
+*
+*The subset of these which might change should be logged by each main program on each run using log_code_constants(std::string). They have to be added manually. 
 */
 //----------- CONSTANTS ---------------------------------
 const size_t MAX_SIZE = 100000;/**< Maximum per-dim array size allowed (per processor if MPI in use) */

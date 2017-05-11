@@ -70,6 +70,7 @@ int main(int argc, char *argv[]){
 
   if(mpi_info.rank == 0) get_deck_constants("./files/test");
   share_consts();
+  log_code_constants("./files/test");
 
   test_bed = new tests();
   test_bed->set_verbosity(2);

@@ -76,6 +76,9 @@ int main(int argc, char *argv[]){
   share_consts();
   /* Get constants from deck and share to other procs*/
 
+  log_code_constants(cmd_line_args.file_prefix);
+  /* Do this so we have the spectrum wavetype and angle codes*/
+
   my_print("Processing "+mk_str(cmd_line_args.per_proc)+" blocks per core", mpi_info.rank);
   my_print("Input "+cmd_line_args.file_prefix, mpi_info.rank);
 

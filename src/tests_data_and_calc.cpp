@@ -1283,19 +1283,22 @@ int test_entity_d::full_D_tests(){
     data_array padie_data = read_padie_data(single_n, n, (D_type == D_type_spec::p_p));
     //Now we should read a file containing sample D info and compare some features. Perhaps the Landau peak?
     //Check axes match. Remember D has first velocity, padie is just 1-d of angle
-    
-    //Find energy bin to use. Padie is at 1 MeV, so 0.941c
-    size_t v_ind = test_contr->get_current_d()->get_axis_index_from_value(0, 0.941*v0);
-    calc_type local_diff, running_diff = 0.0, running_total = 0.0;
-    //Calculate the ~L^2 difference
-    for(size_t i = 0; i < padie_data.get_dims(0); i++){
-      local_diff = std::pow(padie_data.get_element(i) - test_contr->get_current_d()->get_element(v_ind, i), 2);
-      running_diff += local_diff;
-      running_total += std::pow(padie_data.get_element(i), 2);
+    if(padie_data.is_good()){
+      //Find energy bin to use. Padie is at 1 MeV, so 0.941c
+      size_t v_ind = test_contr->get_current_d()->get_axis_index_from_value(0, 0.941*v0);
+      calc_type local_diff, running_diff = 0.0, running_total = 0.0;
+      //Calculate the ~L^2 difference
+      for(size_t i = 0; i < padie_data.get_dims(0); i++){
+        local_diff = std::pow(padie_data.get_element(i) - test_contr->get_current_d()->get_element(v_ind, i), 2);
+        running_diff += local_diff;
+        running_total += std::pow(padie_data.get_element(i), 2);
+      }
+      test_bed->report_info("Calculated D has L2 mismatch of " + mk_str((int)(std::sqrt(running_diff/running_total)*100 ))+'%');
+      //Very relaxed error condition
+      if(std::sqrt(running_diff/running_total)*100 > 50) err |= TEST_WRONG_RESULT;
+    }else{
+      err |= TEST_ASSERT_FAIL;
     }
-    test_bed->report_info("Calculated D has L2 mismatch of " + mk_str((int)(std::sqrt(running_diff/running_total)*100 ))+'%');
-    //Very relaxed error condition
-    if(std::sqrt(running_diff/running_total)*100 > 50) err |= TEST_WRONG_RESULT;
     
   }else{
     err |= TEST_ASSERT_FAIL;

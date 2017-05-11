@@ -1221,7 +1221,7 @@ int test_entity_d::basic_tests(){
   }
   if(test_contr->get_d_by_num(1)->wave_id != test_contr->get_current_d()->wave_id) D_is_eq = false;
   //Note tag gets truncated to ten chars in writing
-  if(test_contr->get_d_by_num(1)->tag.substr(0, 10) != test_contr->get_current_d()->tag.substr(0, 10)) D_is_eq = false;
+  if(test_contr->get_d_by_num(1)->tag.substr(0, 9) != test_contr->get_current_d()->tag.substr(0, 9)) D_is_eq = false;
 
   if(D_is_bad && !partial_disable_for_valgrind){
     //Due to valgrind issue described in ::run(), D might be NaN but this is not our fault...

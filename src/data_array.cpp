@@ -709,7 +709,7 @@ bool data_array::write_closer(std::fstream &file){
   file.write((char *)space, sizeof(size_t)*2);
   file.write((char *) &B_ref, sizeof(my_type));
 
-  next_location += sizeof(char)*ID_SIZE +sizeof(size_t);
+  next_location += sizeof(char)*ID_SIZE +2*sizeof(size_t);
   //Position of next section, i.e. of file end val
   file.write((char*) & next_location, sizeof(size_t));
 

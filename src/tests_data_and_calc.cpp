@@ -547,6 +547,7 @@ int test_entity_spectrum::run(){
   err|= setup();
   if(!test_bed->check_for_abort(err)) err|= basic_tests1();
   if(!test_bed->check_for_abort(err)) err|= basic_tests2();
+  if(!test_bed->check_for_abort(err)) err|= technical_tests();
   if(!test_bed->check_for_abort(err)) err|= albertGs_tests();
   
   my_const = const_tmp;
@@ -697,16 +698,60 @@ int test_entity_spectrum::basic_tests2(){
   return err;
 
 }
+
+void test_entity_spectrum::set_vals(spectrum& spect){
+
+  if(!spect.get_g_is_angle_only()) return;
+
+  size_t om_sz = spect.get_omega_length();
+  size_t ang_sz = spect.get_angle_length();
+  
+  for(size_t i = 0; i < om_sz; i++){
+    spect.set_B_element(i, i);
+  }
+  for(size_t i = 0; i < ang_sz; i++){
+    spect.set_g_element(i, i*2);
+  }
+
+}
+
 int test_entity_spectrum::technical_tests(){
 /** \brief Test spectrum object
 *
 *Checks spectrum object copy etc
 @return Error code
-\todo Write this
 */
   int err = TEST_PASSED;
+
+  test_bed->report_info("Checking technical aspects", 2);
+
+  //Create empty spectrum
+  spectrum test_spect = spectrum(10, 10, true);
+  set_vals(test_spect);
+
+  spectrum test_spect2 = test_spect;
+
+  if(test_spect2 != test_spect){
+    err |= TEST_WRONG_RESULT;
+    test_bed->report_info("Copy or equality problem", 1);
+  }
+  try{
+    std::vector<spectrum> my_vec;
+    my_vec.push_back(test_spect2);
+    my_vec.push_back(test_spect2);
+    if(my_vec[0] != test_spect2) err|= TEST_WRONG_RESULT;
+  }catch(const std::exception& e){
+    //Swallow and continue if possible,
+    std::string message = e.what();
+    test_bed->report_info("Exception message " +message, 1);
+    err |= TEST_ASSERT_FAIL;
+  }
+  
+  if(err == TEST_PASSED) test_bed->report_info("Technical aspects OK", 1);
   return err;
+
 }
+
 int test_entity_spectrum::albertGs_tests(){
 /** \brief Tests of the Albert G functions
 *

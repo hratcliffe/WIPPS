@@ -27,6 +27,11 @@ class controller;
   \author Heather Ratcliffe \date 24/09/2015 \ingroup cls
 */
 class spectrum{
+#ifdef RUN_TESTS_AND_EXIT
+  //Allow deep testing
+  friend class test_entity_spectrum;
+#endif
+
   friend class controller;/**<Controllers can create/destroy spectra and access their internals*/
   controller * my_controller;/**< Links this to a plasma object*/
 
@@ -48,12 +53,6 @@ class spectrum{
   explicit spectrum();
   explicit spectrum(int n_om, int n_ang, bool separable);
   explicit spectrum(std::string filename);
-  ~spectrum();
-
-/********Technical stuff making my_array a proper "object" ****/
-  spectrum & operator=(const spectrum& src);
-  spectrum(const spectrum &src);
-  spectrum(spectrum && src) = default;/**<Move a spectrum object*/
 
 /********Setup helper functions ****/
   void make_angle_axis();
@@ -88,6 +87,11 @@ public:
   bool get_g_is_angle_only(){return g_is_angle_only;}/**< Get flag showing if spectrum is separable @return True if g is a function of only angle (and not frequency) false else*/
 
 /********Technical stuff making my_array a proper "object" ****/
+  spectrum & operator=(const spectrum& src);
+  spectrum(const spectrum &src);
+  spectrum(spectrum && src) = default;/**<Move a spectrum object*/
+  ~spectrum();
+
   bool operator==(const spectrum &rhs)const;
   bool operator!=(const spectrum &rhs)const{return !(*this == rhs);}/**< See spectrum::operator==()*/
 
@@ -168,11 +172,6 @@ public:
   
 /** @} */
 /** @} */
-
-#ifdef RUN_TESTS_AND_EXIT
-  //Allow deep testing
-  friend class test_entity_spectrum;
-#endif
   
 };
 

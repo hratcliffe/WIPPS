@@ -60,7 +60,7 @@ class test_entity_spectrum : public test_entity{
     int basic_tests2();
     int albertGs_tests();
     int technical_tests();
-
+    void set_vals(spectrum& spect);
   public:
     test_entity_spectrum();
     virtual ~test_entity_spectrum();

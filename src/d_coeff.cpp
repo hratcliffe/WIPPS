@@ -73,7 +73,7 @@ bool diffusion_coeff::write_to_file(std::fstream &file){
 
   char buffer[10]="";//Initialise to empty
 
-  size_t n_char = std::min((size_t)10, tag.size());
+  size_t n_char = std::min((size_t)9, tag.size());
   strncpy(buffer, tag.c_str(), n_char);
   file.write(buffer, 10*sizeof(char));
 
@@ -106,7 +106,7 @@ bool diffusion_coeff::read_from_file(std::fstream &file){
     file.read((char*) &wave_id, sizeof(int));
     //Grab tag
     char buffer[10]="";//Initialise to empty
-    file.read(buffer, sizeof(char)*10);
+    file.read(buffer, sizeof(char)*9);
     this->tag = buffer;
   }
   return err;

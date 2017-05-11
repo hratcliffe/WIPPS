@@ -127,7 +127,7 @@ std::string reader::get_full_name(int file_num){
   char file_num_str[MAX_FILENAME_DIGITS+1];
   
   snprintf(file_num_str, MAX_FILENAME_DIGITS+1, fmt, file_num);
-  free(fmt);
+  delete [] fmt;
   return file_prefix + file_num_str +".sdf";
 }
 

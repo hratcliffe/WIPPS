@@ -95,8 +95,15 @@ IF next_block GT end_pos AND next_block LT tmp.size THEN BEGIN
   POINT_LUN, filenum, next_block
 END
 readu, filenum, next_block
-id_in = id_type
-readu, filenum, id_in
+POINT_LUN, -filenum, next_block
+;Final ID may or may not be there
+IF(next_block LT tmp.size) THEN BEGIN
+  id_in = id_type
+  readu, filenum, id_in
+ENDIF ELSE BEGIN
+  id_in =""
+  IF((size(all_data))[1] GT 0) THEN id_in = all_data[0].block
+ENDELSE
 print, "Read " + string(format='(I3)', i, /print)+ " blocks of "+id_in
 FREE_LUN, filenum
 

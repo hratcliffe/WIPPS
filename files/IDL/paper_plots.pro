@@ -199,7 +199,7 @@ pro plot_growth_with_zoom, filenames, colours=colours, outfile=outfile, _extra=e
   a=plot_logger(outfile+'(zoom).eps', {inputs:filenames ,colors:colours})
 END
 
-pro plot_growth_lin_scale, growths, colours=colours, outfile=outfile, _extra=extr
+pro plot_growth_lin_scale, growths, colours=colours, outfile=outfile, zero_line=zero_line, _extra=extr
 ;Plot some specific growth rates
   common consts, q0, m0, v0, kb, mu0, epsilon0, h_planck
   common omega_share, om_ce, om_pe
@@ -214,7 +214,7 @@ pro plot_growth_lin_scale, growths, colours=colours, outfile=outfile, _extra=ext
 
   plot, growths[0].axes.x/om_ce, growths[0].data/om_ce, /nodata, xrange=[0.1, 1.0], /xsty, yrange=[-0.02, 0.06], /ysty,xtitle='!4x/x!3!Dce!N', ytitle='!4c/x!3!Dce!N', _extra =extr
   FOR i=0, n_lines -1 DO oplot, growths[i].axes.x/om_ce, growths[i].data/om_ce, color=colours[i], line=styles[i]
-
+  IF(KEYWORD_SET(zero_line)) THEN oplot, [growths[0].axes.x[0]/om_ce, growths[0].axes.x[-1]/om_ce], [0, 0], line=1
   device, /close
  
   set_plot, 'X'
@@ -226,10 +226,11 @@ pro plot_growth_lin_scale, growths, colours=colours, outfile=outfile, _extra=ext
 
 END
 
-pro plot_pancake_distribs, distribs, nrm=nrm, line_vals=line_vals, line_cols=line_cols, outfile=outfile, _extra=extr
+pro plot_pancake_distribs, distribs, nrm=nrm, line_vals=line_vals, line_cols=line_cols, outfile=outfile, colorbar=colorbar,  _extra=_extra
   ;Plot 4 time distributions with overlaid pancake lines
   common consts, q0, m0, v0, kb, mu0, epsilon0, h_planck
   common omega_share, om_ce, om_pe
+  common extra_consts, global_file_dir
   ;These make sure everything is compiled because IDL is IDL
   RESOLVE_ROUTINE, 'pancake_functions', /IS_FUNCTION, /COMPILE_FULL_FILE
   FORWARD_FUNCTION pancake_curves
@@ -239,13 +240,17 @@ pro plot_pancake_distribs, distribs, nrm=nrm, line_vals=line_vals, line_cols=lin
   IF(N_ELEMENTS(line_vals) EQ 0) THEN add_lines = 0 ELSE add_lines = 1
   IF(N_ELEMENTS(line_cols) EQ 0) THEN line_cols = findgen(n_lines-1)/(n_lines-1) * 200 + 40
   IF((size(size(distribs)))[1] GT 3) THEN n_distribs = (size(distribs))[1] else n_distribs = 1
-  loadct,41,file='colors1.tbl' ;Rainbow from white
+  loadct,41,file=global_file_dir+'/IDL/colors1.tbl' ;Rainbow from white
   SET_PLOT, 'PS'
   !p.charsize=1.2
   device, filename=outfile+'.eps', xsize=20, ysize=20, bits_per_pixel=64, /encaps, /color
   !p.multi=[0, 2, 2]
+  zran = [-3, 0]
+  norm_to_one = 1
   FOR j =0, n_distribs-1 DO BEGIN
-    contour, alog10(distribs[j].data/nrm), distribs[j].axes.x/m0/v0, distribs[j].axes.y/m0/v0, /iso, nlev=40, /fi, xrange=[-0.5, 0.5], yrange=[-0.6, 0.6], /xsty, /ysty, xtitle='p!Dx!N/(mc)', ytitle='p!Dy!N/(mc)', title='t = '+string(format='(f6.3)', distribs[j].time[0], /print)+' s', color=0, zrange=[-8, -4], /zsty
+    ax_nrm = abs(distribs[j].axes.x[1]-distribs[j].axes.x[0])/m0*abs(distribs[j].axes.y[1]-distribs[j].axes.y[0])/m0
+    IF( j EQ 0) THEN norm_to_one = max(distribs[j].data)
+    contour, alog10(distribs[j].data/norm_to_one), distribs[j].axes.x/m0/v0, distribs[j].axes.y/m0/v0, /iso, nlev=40, /fi, xrange=[-0.5, 0.5], yrange=[-0.6, 0.6], /xsty, /ysty, xtitle='p!Dx!N/(mc)', ytitle='p!Dy!N/(mc)', title='t = '+string(format='(f6.3)', distribs[j].time[0], /print)+' s', color=0, zrange=zran, /zsty, _extra=_extra
     IF(add_lines && j GT 0) THEN BEGIN
       FOR i=0, n_lines -1 DO BEGIN
         line = pancake_curves(om_ce/om_pe, line_vals[i])
@@ -256,6 +261,7 @@ pro plot_pancake_distribs, distribs, nrm=nrm, line_vals=line_vals, line_cols=lin
       END 
     END
   END
+  if(KEYWORD_SET(colorbar)) THEN colorbar2, /vertical, /right, color=0, position=[0.5, 0.35, 0.52, 0.65], range=zran, divisions=3, title='log(f(p!Dx!N, p!Dy!N))', format='(F4.1)', charsize=0.8
 
   device, /close
   !p.charsize=1.5
@@ -269,7 +275,7 @@ pro plot_pancake_distribs, distribs, nrm=nrm, line_vals=line_vals, line_cols=lin
 
 END
 
-pro df_dp_eps, dist_arr, _extra=_extra, smth=smth, yspan=yspan, outfile=outfile, nrm=nrm, colours=colours, om_ax=om_ax
+pro df_dp_eps, dist_arr, _extra=_extra, smth=smth, yspan=yspan, outfile=outfile, nrm=nrm, colours=colours, om_ax=om_ax, styles=styles
 ;Plot deriv of distribution functions
 ;Expects array of data arrays each a distribution in X only...
 
@@ -288,12 +294,13 @@ pro df_dp_eps, dist_arr, _extra=_extra, smth=smth, yspan=yspan, outfile=outfile,
   device, filename=outfile+'.eps', xsize=16, ysize=12, bits_per_pixel=64, /encaps, /color
  
   IF(N_ELEMENTS(colours) EQ 0) THEN cols=findgen(dist_sz)/dist_sz*(255-80) + 80 ELSE cols=colours
+  IF(N_ELEMENTS(styles) EQ 0) THEN styles = intarr(dist_sz)
   ;Unpack xrange for later
   xran=[0, 0.5]
   IF(ISA(_extra, 'struct') && (where(TAG_NAMES(_extra) EQ 'XRANGE') NE -1)) THEN xran = _extra.xrange
   IF(KEYWORD_SET(om_ax)) THEN ymargin = [!y.margin[0], !y.margin[1]+1] ELSE ymargin = !y.margin
   plot, dist_arr[0].axes.x/m0/v0, abs(smooth(deriv(dist_arr[0].axes.x/m0/v0, dist_arr[0].data), smth)), /ylog, xrange=xran, /xsty, yrange=[10.0^(max_y-yspan), 10.0^max_y], /ysty,ytitle='df/d(p!Dx!N/m!D0!Nc)', xtitle='p!Dx!N/(m!D0!Nc)', /nodata, _extra=_extra, ytickformat='Exponent_axis', ymargin=ymargin
-  FOR i=0, dist_sz-1 DO oplot, dist_arr[i].axes.x/m0/v0, abs(smooth(deriv(dist_arr[i].axes.x/m0/v0, dist_arr[i].data/nrm), smth)), color=cols[i]
+  FOR i=0, dist_sz-1 DO oplot, dist_arr[i].axes.x/m0/v0, abs(smooth(deriv(dist_arr[i].axes.x/m0/v0, dist_arr[i].data/nrm), smth)), color=cols[i], line=styles[i]
   xtikn = ceil((xran[1]-xran[0])*10)+1
   IF(ISA(_extra, 'struct') && (where(TAG_NAMES(_extra) EQ 'OM_TICKS') NE -1)) THEN xtikn = _extra.om_ticks
   xtiks = findgen(xtikn)*(xran[1]-xran[0])/(xtikn-1)

@@ -236,7 +236,6 @@ int reader::pre_read(data_array& data_in, int ref_time, bool accumulated, int fl
 
   sdf_file_t * handle;
   sdf_block_t * block;
-  my_type * ax_ptr;
   size_t len;
 
   std::string file_name = get_full_name(ref_time);
@@ -266,11 +265,19 @@ int reader::pre_read(data_array& data_in, int ref_time, bool accumulated, int fl
       i2++;
       continue;
     }
-    ax_ptr = const_cast<my_type *>(data_in.get_axis(i, len));
-
-    //We assume if the type does not match then it's the other of double or float and convert in the copy
-    if(block->datatype != my_sdf_type) std::copy((other_type *) block->grids[i2], (other_type *) block->grids[i2] + len, ax_ptr);
-    else std::copy((my_type *) block->grids[i2], (my_type *) block->grids[i2] + len, ax_ptr);
+    len = data_in.get_dims(i);
+    if(block->datatype != my_sdf_type){
+      //Start of grid for this dimension, mapped to correct type
+      other_type * grid_start = (other_type *) block->grids[i2];
+      for(size_t j = 0; j < len; j++){
+        data_in.set_axis_element(i, j, grid_start[j]);
+      }
+    }else{
+      my_type * grid_start = (my_type *) block->grids[i2];
+      for(size_t j = 0; j < len; j++){
+        data_in.set_axis_element(i, j, grid_start[j]);
+      }
+    }
   }
 
   //Now we get the *spatial* input sizes
@@ -313,14 +320,21 @@ void reader::read_acc_time(data_array & data_in, sdf_file_t * handle, size_t sta
   handle->current_block = ax_block;
   sdf_read_data(handle);
 
-  size_t len;
-  my_type * ax_ptr = const_cast<my_type *>(data_in.get_axis(data_in.get_dims()-1, len));
-
-  size_t n_grids = ax_block->ndims;
+  size_t time_dim = data_in.get_dims()-1, n_grids = ax_block->ndims;
   //Copy time grid from ax_block into dat_in.axes
-  if(ax_ptr){
-    if(ax_block->datatype != my_sdf_type) std::copy((other_type *) ax_block->grids[n_grids-1], (other_type *) ax_block->grids[n_grids-1] + n_times, ax_ptr+start_pos);
-    else std::copy((my_type *) ax_block->grids[n_grids-1], (my_type *) ax_block->grids[n_grids-1] + n_times, ax_ptr+start_pos);
+  if(data_in.is_good()){
+    if(ax_block->datatype != my_sdf_type){
+      //Start of grid for this dimension, mapped to correct type
+      other_type * grid_start = (other_type *) ax_block->grids[n_grids-1];
+      for(size_t j = 0; j < n_times; j++){
+        data_in.set_axis_element(time_dim, start_pos+j, grid_start[j]);
+      }
+    }else{
+      my_type * grid_start = (my_type *) ax_block->grids[n_grids-1];
+      for(size_t j = 0; j < n_times; j++){
+        data_in.set_axis_element(time_dim, start_pos+j, grid_start[j]);
+      }
+    }
   }
 }
 
@@ -595,7 +609,6 @@ bool reader::read_distrib(data_array & my_data_in, std::string dist_id, int dump
 @param dist_id String name of required distrib block
 @param dump_number Number of file to read
 @return 0 (success), 1 else
-\todo Remove const_cast temporary shortcuts
 */
   if(!my_data_in.is_good()){
     my_error_print("Cannot read into invalid array", mpi_info.rank);
@@ -635,13 +648,21 @@ bool reader::read_distrib(data_array & my_data_in, std::string dist_id, int dump
   handle->current_block = block;
   sdf_read_data(handle);
 
-  my_type * ax_ptr;
   size_t len;
   for(size_t i=0; i< my_data_in.get_dims(); i++){
-    ax_ptr = const_cast<my_type *>(my_data_in.get_axis(i, len));
-    //Copy axes, converting if necessary
-    if(block->datatype != my_sdf_type) std::copy((other_type *) block->grids[i], (other_type *) block->grids[i] + len, ax_ptr);
-    else std::copy((my_type *) block->grids[i], (my_type *) block->grids[i] + len, ax_ptr);
+    len = my_data_in.get_dims(i);
+    if(block->datatype != my_sdf_type){
+      //Start of grid for this dimension, mapped to correct type
+      other_type * grid_start = (other_type *) block->grids[i];
+      for(size_t j = 0; j < len; j++){
+        my_data_in.set_axis_element(i, j, grid_start[j]);
+      }
+    }else{
+      my_type * grid_start = (my_type *) block->grids[i];
+      for(size_t j = 0; j < len; j++){
+        my_data_in.set_axis_element(i, j, grid_start[j]);
+      }
+    }
   }
   
   return 0;

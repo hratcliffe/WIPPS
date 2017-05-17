@@ -41,6 +41,7 @@ int test_entity_reader::run(){
 *
 *For normal data we just check a test file opens and find the size from the final SDF block and test against on-disk size.  Then we read a distrib block and check it worked etc. For accumulated data we use test data with values corresponding to row in file, and check the values and correctness at each end.
 @return Error code
+\todo Investigate accumulator time being Inf in first bin
 */
   int err = TEST_PASSED;
   
@@ -83,6 +84,16 @@ int test_entity_reader::run(){
         tot_errs += (dat.get_element(i, j) != row_vals[j]);
       }
     }
+    //Check axis values, first space
+    for(size_t i = 0; i < dat.get_dims(0); i++){
+      tot_errs += (dat.get_axis_element(0, i) != 1250*i);
+    }
+    //Now time, using known values
+    float time_vals[13] = {0, 1.98054e-06, 0.000154482 ,0.000305003, 0.000455523, 0.000606044, 0.000756565, 0.000907086, 0.00105761, 0.00120813, 0.00135865,0.00150917, 0.00165969};
+    for(size_t i = 1; i < 12; i++){
+      if(std::abs(dat.get_axis_element(1, i) - time_vals[i]) > GEN_PRECISION) tot_errs++;
+    }
+    
     if(tot_errs != 0){
       err |=TEST_WRONG_RESULT;
       test_bed->report_info("Error reading accumulated data", 1);

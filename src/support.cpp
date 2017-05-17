@@ -422,7 +422,7 @@ void divide_domain(std::vector<size_t> dims, size_t space[2], int per_proc, int 
 
 }
 
-my_type get_ref_Bx(std::string file_prefix, size_t space_in[2], size_t time_0, bool is_acc){
+my_type get_ref_Bx(std::string file_prefix, size_t space_in[2], size_t time_0){
 /** Read reference B_x from the specfied file prefix as given, dump number time_0
 @param file_prefix File path
 @param space_in Limits on x-dimension to slice out
@@ -430,29 +430,28 @@ my_type get_ref_Bx(std::string file_prefix, size_t space_in[2], size_t time_0, b
 @param is_acc Whether these files use the accumulation extension to EPOCH
 @return Average bx over specified space range at given time
 */
-  data_array bx = get_Bx(file_prefix, space_in, time_0, is_acc);
+  data_array bx = get_Bx(file_prefix, space_in, time_0);
   if(bx.is_good()) return avval(bx);
   else return 0.0;
 }
 
-data_array get_Bx(std::string file_prefix, size_t space_in[2], size_t time_0, bool is_acc){
+data_array get_Bx(std::string file_prefix, size_t space_in[2], size_t time_0){
 /** Read reference B_x from file at path file_prefix, dump number time_0. If space_in is not [-1, -1], only the slice it dictates is read
 @param file_prefix File path
 @param space_in Limits on x-dimension to slice out
 @param time_0 The dump time to read
 @param is_acc Whether these files use the accumulation extension to EPOCH
 @return data_array containing bx data
+\ext Add 3-D space handling!
 */
   my_print("Getting ref B");
-  char block_id[ID_SIZE];
-  if(!is_acc) strcpy(block_id, "bx");
-  else strcpy(block_id, "abx");
   
-  reader bx_reader = reader(file_prefix, block_id);
+  reader bx_reader = reader(file_prefix);
   //We use this to get the local average B field
   size_t bx_times[3] = {time_0, time_0+1, 1};
   //use specified file and read one row
   bx_reader.update_ref_filenum(time_0);
+  bx_reader.change_block_id("bx");
 
   size_t n_dims;
   std::vector<size_t> dims;

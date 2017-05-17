@@ -203,7 +203,7 @@ int main(int argc, char *argv[]){
   //Set up our bounce-averaging params and do the average
   //Accumulated property is for every file in a directory
   bounce_dat.set_Bx_size(my_space[1]);
-  bounce_dat.set_Bx(get_Bx(cmd_line_args.file_prefix, my_space, cmd_line_args.time[0], my_reader.current_block_is_accum()));
+  bounce_dat.set_Bx(get_Bx(cmd_line_args.file_prefix, my_space, cmd_line_args.time[0]));
   bounce_dat.max_latitude = 90.0;
   bounce_dat.L_shell = 4.5;
   contr.bounce_average(bounce_dat);

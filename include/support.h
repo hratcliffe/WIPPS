@@ -230,8 +230,8 @@ std::vector<std::string> process_filelist(int argc, char *argv[]);
 class data_array;
 /********Data helpers ****/
 void divide_domain(std::vector<size_t> dims, size_t space[2], int per_proc, int block_num);
-my_type get_ref_Bx(std::string file_prefix, size_t space_in[2], size_t time_0, bool is_acc=false);
-data_array get_Bx(std::string file_prefix, size_t space_in[2], size_t time_0, bool is_acc=false);
+my_type get_ref_Bx(std::string file_prefix, size_t space_in[2], size_t time_0);
+data_array get_Bx(std::string file_prefix, size_t space_in[2], size_t time_0);
 bool flatten_fortran_slice(my_type * src_ptr, my_type* dest_ptr, size_t n_dims_in, size_t * dims_in, size_t flatten_on_dim,size_t flat_start=0, size_t flat_stop=-1);//I know -1 will overflow, that is what I want
 
 int where(const my_type * ax_ptr, int len, my_type target);

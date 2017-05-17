@@ -34,6 +34,7 @@ class reader{
 
 /********Block manipulators ****/
   bool is_accum(std::string block_id);
+  bool is_field_block(std::string block_id);
 
 /********File read routines ****/
   int pre_read(data_array& data_in, int ref_time, bool accumulated, int flatten_on, size_t &n_dims, size_t * &source_sizes);
@@ -48,15 +49,17 @@ public:
 
 /********Basic setup and allocation functions ****/
   explicit reader();
-  explicit reader(std::string file_prefix_in,  char * block_id_in, int ref_file_num_in=0);
+  explicit reader(std::string file_prefix_in,  char * block_id_in=nullptr, int ref_file_num_in=0);
   
 /********Filename and file manipulators ****/
   void update_ref_filenum(int num);
   int get_file_size();
   
 /********Block manipulators ****/
+  bool change_block_id(std::string new_id);
   std::vector<std::pair<std::string, std::string> > list_blocks();
   bool current_block_is_accum();
+  bool has_accum_data();
 
 /********File read routines ****/
   bool read_dims(size_t &n_dims, std::vector<size_t> &dims);

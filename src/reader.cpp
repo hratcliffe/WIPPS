@@ -48,7 +48,13 @@ reader::reader(std::string file_prefix_in,  char * block_id_in, int ref_file_num
   memset((void *) block_id, 0, ID_SIZE*sizeof(char));
 
   //Setup the specifics
-  strncpy(this->block_id, block_id_in, ID_SIZE);
+  if(block_id_in){
+    if(is_field_block(std::string(block_id_in))){
+      strncpy(this->block_id, block_id_in, ID_SIZE);
+    }else{
+      my_error_print("Warning! Block name "+std::string(block_id_in)+" is not a field", mpi_info.rank);
+    }
+  }
   this->file_prefix = file_prefix_in;
   
   //Make sure reference filenum is in valid range and setup n_chars
@@ -165,6 +171,17 @@ int reader::get_file_size(){
 }
 
 /********Block manipulators ****/
+
+bool reader::change_block_id(std::string new_id){
+
+  if(is_field_block(new_id)){
+    strncpy(this->block_id, new_id.c_str(), ID_SIZE);
+    return true;
+  }else{
+    return false;
+  }
+}
+
 std::vector<std::pair<std::string, std::string> > reader::list_blocks(){
 /** \brief List blocks in reference file
 *
@@ -197,6 +214,33 @@ std::vector<std::pair<std::string, std::string> > reader::list_blocks(){
   return list;
 }
 
+bool reader::has_accum_data(){
+/** \brief Check file for accumulated data
+*
+*Check if reference file contains accumulated blocks (named a[x/y/z] or ab[x/y/z]
+*/
+
+  std::string file_name = get_full_name(ref_file_num);
+  my_print("Checking for accumulated variables", mpi_info.rank);
+  sdf_file_t *handle = sdf_open(file_name.c_str(), MPI_COMM_WORLD, SDF_READ, 0);
+
+  bool has_accum = false;
+  //Step through blocks, checking each using is_accum function
+  if(handle){
+    sdf_read_blocklist(handle);
+    sdf_block_t * next = handle->current_block;
+    for(int i = 0; i < handle->nblocks; i++){
+      if(is_accum(std::string(next->id))){
+        has_accum = true;
+        break;
+      }
+      next = next->next;
+    }
+    sdf_close(handle);
+  }
+  return has_accum;
+}
+
 bool reader::current_block_is_accum(){
 /** \brief Check if current block is accumulated
 *
@@ -204,6 +248,19 @@ bool reader::current_block_is_accum(){
 @return Boolean true if accumulated, false else
 */
   return is_accum(this->block_id);
+}
+
+bool reader::is_field_block(std::string block_id){
+/** \brief Checks for field blocks by name
+*
+* Checks named block is a field, either plain or accumulated. See also is_accum(std::string)
+@param block_id Name of block to check
+@return Boolean true if a field, false else
+*/
+
+  if(block_id == "ex" || block_id =="ey" || block_id =="ez" || block_id =="bx" || block_id =="by" || block_id =="bz") return true;
+  if(is_accum(block_id)) return true;
+  return false;
 }
 
 bool reader::is_accum(std::string block_id){
@@ -368,6 +425,10 @@ bool reader::read_dims(size_t &n_dims, std::vector<size_t> &dims, std::string b_
     my_error_print("File open error "+file_name, mpi_info.rank);
     return 1;
   }
+  if(b_id ==""){
+    my_error_print("No block name specified", mpi_info.rank);
+    return 1;
+  }
   
   //Attempt to locate block
   bool err=sdf_read_blocklist(handle);
@@ -410,7 +471,11 @@ int reader::read_data(data_array &my_data_in, size_t time_range[3], size_t space
     my_error_print("Cannot read into invalid array", mpi_info.rank);
     return 1;
   }
-  
+  if(block_id[0] ==' '){
+    my_error_print("Invalid or no block name specified", mpi_info.rank);
+    return 1;
+  }
+
   //Set block id
   strcpy(my_data_in.block_id, block_id);
 

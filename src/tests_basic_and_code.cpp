@@ -75,6 +75,10 @@ int test_entity_reader::run(){
   rd_err = accum_reader->read_data(dat, time, space);
   test_bed->report_info("Reader returned "+mk_str(rd_err), 2);
   //rd_err of 2 means early stop but that is not a problem here
+  if(!accum_reader->has_accum_data()){
+    test_bed->report_info("Accumulated data check incorrect", 2);
+    err |= TEST_ASSERT_FAIL;
+  }
   if(rd_err!=1){
     //Test data should have row0=0, row1=2 (generation procedure does this, row3=1, 4=2 through to 9, then begin again at 1 through 10, 1 through 10.
     int row_vals[22] = {0, 2, 1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 1};

@@ -225,6 +225,8 @@ setup_args process_command_line(int argc, char *argv[]);
 void process_command_line_help_arg(int argc, char *argv[], char help_id);
 void print_help(char code=0);
 void log_code_constants(std::string file_prefix);
+int extract_num_time_part(std::string name);
+std::pair<int, int> extract_space_part(std::string name);
 std::vector<std::string> process_filelist(int argc, char *argv[]);
 
 class data_array;

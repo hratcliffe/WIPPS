@@ -1007,6 +1007,27 @@ calc_type spectrum::get_peak_omega(){
 
 }
 
+/********Spectrum mutation helpers ****/
+
+void spectrum::apply(spectrum::part subarr, std::function<my_type(my_type arg)> func){
+/** Apply a function to each element of selected spectrum part. func must take and return a my_type or type convertible to this
+@param func Function to apply */
+
+  if(subarr == spectrum::part::B) B_omega_array.apply(func);
+  else if(subarr == spectrum::part::ang) g_angle_array.apply(func);
+  this->renormalise();
+}
+
+void spectrum::apply(spectrum::part subarr, std::function<my_type(my_type arg, my_type arg2)> func, my_type arg){
+/** Apply a function to each element of selected spectrum part. func must take two my_type and return one my_type or type convertible to this
+@param func Function to apply 
+@param arg Second argument to function */
+
+  if(subarr == spectrum::part::B) B_omega_array.apply(func, arg);
+  else if(subarr == spectrum::part::ang) g_angle_array.apply(func, arg);
+  this->renormalise();
+}
+
 /********File IO ****/
 bool spectrum::write_to_file(std::fstream &file){
 /** \brief Write to file

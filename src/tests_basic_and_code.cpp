@@ -623,17 +623,18 @@ int test_entity_get_and_fft::run(){
 *
 *Reads a test sdf file, stores into data array and runs fft. Test data should be a sine curve with one major frequency which is then checked. Note frequency is hard coded to match that produced by ./files/sin.deck
 @return Error code
+\todo Diagnose segfault in one_d when block is not found in file
 */
 
   int err = TEST_PASSED;
   
-  char block_id[ID_SIZE]= "ex";
-  test_rdr = new reader("./files/sin", block_id);
+  std::string block = "ex";
+  test_rdr = new reader("./files/sin", block.c_str());
   err |= one_d();
 
   if(test_rdr) delete test_rdr;
-  strcpy(block_id, "ax");
-  test_rdr = new reader("./files/sinAcc", block_id);
+  block = "ax";
+  test_rdr = new reader("./files/sinAcc", block.c_str());
   err |= two_d();
 
   return err;

@@ -49,7 +49,7 @@ public:
 
 /********Basic setup and allocation functions ****/
   explicit reader();
-  explicit reader(std::string file_prefix_in,  char * block_id_in=nullptr, int ref_file_num_in=0);
+  explicit reader(std::string file_prefix_in,  const char * block_id_in=nullptr, int ref_file_num_in=0);
   
 /********Filename and file manipulators ****/
   void update_ref_filenum(int num);

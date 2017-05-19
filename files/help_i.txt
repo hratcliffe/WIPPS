@@ -1,21 +1,25 @@
 Command line options:
 -h Show help
 -f <string> Prefix for all input files, including directory
+-d <int int> Dimension of D to generate
+-ref <int> Reference SDF file number giving Bx, default 0
 
--start <int> Starting dump number
--end <int> Ending dump number
--rows <int> For accumulated blocks, read no more than this many rows To get an exact number of rows set -end larger than required and set this. No effect for plain blocks
--block <string> Block id string
--n <int> Number of space blocks to divide into. This should be divisible by the number of processors used or it will be reduced to be so. If the total number of space points do not divide perfectly, blocks will overlap
--space <int int> Process one space block between int and int (use with single core only)
+Supply one and only one of:
+-Finput <string ...> Start from [list of] FFT files
+-Sinput <string ...> Start from [list of] spectrum files
+If one filename is supplied, no bounce averaging is done. A list of files with names ending in [timebins]_[space0]_[space1].dat can be given, and are sorted by space0 for bounce averaging
 
--d <int int> Dimension of D to generate (if applicable)
--Finput <string ...> Start from list of FFT files. Names must end in space0_space1.dat and will be sorted by space0
--Sinput <string ...> Start from list of spectrum files, see -Finput
+If supplying FFTS with -Finput the following args can be given:
+-wave <char> Identifies wave mode, *W*histler, *P*lasma, *O*rdinary EM (Default whistler)
+-om <int> Percent "fuzz" around dispersion curve (default 10%)
+-n_ang <int> Number of angles to use (default set in support.h)
+-ang <int> Angular function to generate *D*elta, *G*auss, *I*so (default Delta) N-D data (N, space dims, >1) is then flattened in other dims
+-extr Extract angles from Data (N>1) only. Flatten data to 2 spatial dims and extract angular dependence. Overrides -ang
+-smooth <int> Smooth the intermediate B spectrum using this boxcar width
 
 Sample usage:
 make TYPE=double
 mpiexec -n 4 ./calculate_diffusion `<test_pars`
 or:
-./calculate_diffusion -f ./Run1/ -start 0 -end 100 -block bz -n 5 -d 100 100
+./calculate_diffusion -f ./Run1/ -ref 0 -d 100 100
 

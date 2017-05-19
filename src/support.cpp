@@ -178,10 +178,6 @@ setup_args process_command_line(int argc, char *argv[]){
   values.use_row_time = false;
   values.file_prefix = "./files/";
   values.block = "ex";
-  values.d[0] = 10;
-  values.d[1] = 10;
-  values.is_list = false;
-  values.is_spect = false;
 
   for(int i=1; i< argc; i++){
     if(strcmp(argv[i], "-f")==0 && i < argc-1){
@@ -233,30 +229,6 @@ setup_args process_command_line(int argc, char *argv[]){
       }
       i+=2;
     }
-    else if(strcmp(argv[i], "-d")==0 && i < argc-2){
-      if(atoi(argv[i+1]) >= 0 && atoi(argv[i+2]) >= 0){
-        values.d[0] = atoi(argv[i+1]);
-        values.d[1] = atoi(argv[i+2]);
-      }else{
-        my_error_print("D cannot be negative!!!!!");
-      }
-      i+=2;
-    }
-    else if(((strcmp(argv[i], "-Finput")==0)||(strcmp(argv[i], "-Sinput")==0)) && i < argc-1){
-      values.is_list=true;
-      //Now hunt for next arg..., we assume no '-' starting filenames
-      int tmp = i;
-      while(i<argc-1 && argv[i+1][0]!= '-') i++;
-      if(tmp -i >= 1 ) i--;
-      //Go back one so that loop advance leaves us in correct place, but not if we didn't skip on at all or we'd infinite loop
-    }
-    else if((strcmp(argv[i], "-Sinput")==0) && i < argc-1){
-      values.is_spect = true;
-      //Now hunt for next arg..., we assume no '-' starting filenames
-      int tmp = i;
-      while(i<argc-1 && argv[i+1][0]!= '-') i++;
-      if(tmp -i >= 1 ) i--;
-    }
     else if(!((strlen(argv[i]) > 0) && argv[i][0] == HANDLED_ARG[0])){
       my_print("UNKNOWN OPTION "+mk_str(argv[i]), 0);
     }
@@ -281,15 +253,6 @@ setup_args process_command_line(int argc, char *argv[]){
 
   if(values.time[1] < values.time[0]) values.time[1] = values.time[0] + 1;
   //If unspecified use 1 row per file
-  if(values.d[0] >MAX_SIZE){
-    values.d[0] = MAX_SIZE;
-    my_error_print("WARNING: Requested size exceeds MAXSIZE", mpi_info.rank);
-  }
-  if(values.d[1] >MAX_SIZE){
-    values.d[1] = MAX_SIZE;
-    my_error_print("WARNING: Requested size exceeds MAXSIZE", mpi_info.rank);
-  }
-  //Protect from invalid user input
   
   return values;
 }

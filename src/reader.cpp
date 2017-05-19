@@ -34,13 +34,14 @@ reader::reader(){
   
 }
 
-reader::reader(std::string file_prefix_in,  char * block_id_in, int ref_file_num_in){
+reader::reader(std::string file_prefix_in,  const char * block_id_in, int ref_file_num_in){
 /** \brief Create reader
 *
-*Sets up ids, sets n_chars etc. NOTE n_chars must be correctly set before any reads are done. Either by supplying reference filenumber (any sdf file which exists) here or using update_ref_filenum later.
+*Sets up ids, sets n_chars etc. NOTE block_id_in and n_chars must be correctly set before any reads are done. Use update_ref_filenum(int num) and change_block_id(std::string new_id) to set these after construction.
 @param file_prefix_in File prefix to prepend to all file names
 @param block_id_in String containing desired block id (e.g. ex)
 @param ref_file_num_in Reference file number to use for reading dimensions etc
+\todo Move to string arg?
 */
   //Set up some generic things
   time_range[0]=0; time_range[1]=0; time_range[2]=0;

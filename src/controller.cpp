@@ -65,6 +65,7 @@ bool controller::add_spectrum(std::string file){
 *Add spectrum read from a file, created using e.g. data_array::write_to_file or write_data in IDL
 @param file The full path to file to read
 @return 0 for success, 1 for failure
+\todo Perhaps this should append the file_prefix to file??
 */
 
   //Read spectrum from file

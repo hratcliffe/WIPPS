@@ -361,10 +361,41 @@ void log_code_constants(std::string file_prefix){
   file.close();
 }
 
+std::pair<int, int> extract_space_part(std::string name){
+/** \brief Extract text from name
+*
+* Assumes name is of the form [stuff]_space0_space1.[extension] and extracts the two integers space0 and space1
+*/
+  int space0, space1;
+  size_t posa, posb, posc;
+
+  posb = name.find_last_of('_');
+  posa = (name.substr(0, posb)).find_last_of('_');
+  posc = name.find_last_of('.');
+  space0 = atoi((name.substr(posa+1, posb-posa-1)).c_str());
+  space1 = atoi((name.substr(posb+1, name.size()-posc)).c_str());
+  return std::make_pair(space0, space1);
+}
+
+int extract_num_time_part(std::string name){
+/** \brief Extract text from name
+*
+* Assumes name is of the form [stuff]_ntimes_space0_space1.[extension] and extracts the integer ntimes
+*/
+  size_t posa, posb;
+
+  posb = name.find_last_of('_');
+  posa = (name.substr(0, posb)).find_last_of('_');
+  posb = (name.substr(0, posa)).find_last_of('_');
+
+  return atoi((name.substr(posb+1, posb-posa-1)).c_str());
+}
+
 std::vector<std::string> process_filelist(int argc, char *argv[]){
 /** \brief Extracts files from list
 *
-*  Returns vector of filename strings. Assumed to be in form [stuff]_space0_space1.dat and will be ordered on space0
+*  Returns vector of filename strings. If one argument is supplied it is used. If multiple, they're assumed to be in form [stuff]_space0_space1.dat and will be ordered on space0
+\todo Write sort rather than using map shortcut
 */
 
   std::vector<std::string> names;
@@ -377,19 +408,19 @@ std::vector<std::string> process_filelist(int argc, char *argv[]){
       }
     }
   }
+  extract_space_part(names[0]);
 
-  //Now we have vector of names. Extract space0 from them and plop into a map
+  if(names.size() <= 1) return names;
+
+  //Now we have vector of names. Extract space0 from them and put into a map
   std::map<int, std::string> name_map;
-  int num;
-  size_t posa, posb;
+  std::pair<int, int> posns;
   for(size_t i = 0; i< names.size(); i++){
-    posb = names[i].find_last_of('_');
-    posa = (names[i].substr(0, posb)).find_last_of('_');
-    num = atoi((names[i].substr(posa+1, posb-posa-1)).c_str());
-    name_map[num] = names[i];
+    posns = extract_space_part(names[i]);
+    name_map[posns.first] = names[i];
   }
   names.clear();
-  //Now we plop the map back into the vector
+  //Now we put the map back into the vector
   for(auto it=name_map.begin(); it!=name_map.end(); it++){
     names.push_back(it->second);
   }

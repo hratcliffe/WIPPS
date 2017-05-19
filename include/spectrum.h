@@ -79,7 +79,7 @@ class spectrum{
 /** @} */
 
 public:
-
+  enum class part{B, ang};
   char block_id[ID_SIZE]; /**< The field name id from SDF file*/
   my_type time[2];/**< Time range over which data are taken*/
   size_t space[2];/**< Space range over which data are taken*/
@@ -129,6 +129,13 @@ public:
   @param om_ind Frequency index to get from, 0 for separable spectra
   @return Current value of norm_g at specified location */
   my_type get_norm_g(size_t om_ind){return (om_ind < get_omega_length())? norm_g[om_ind]:0.0;}
+
+/********Spectrum mutation helpers ****/
+
+  void apply(spectrum::part subarr, std::function<my_type(my_type arg)> func);
+  void apply(spectrum::part subarr, std::function<my_type(my_type arg, my_type arg2)> func, my_type arg);
+  
+  void renormalise(){this->init();}
   
 /********File IO ****/
   bool write_to_file(std::fstream &file);

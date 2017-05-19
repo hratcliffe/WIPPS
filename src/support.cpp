@@ -607,7 +607,7 @@ bool check_wipps_version(std::string filename){
 */
 
   std::string wipps_version = read_wipps_version_string(filename);
-  if(!compare_as_version_string(wipps_version)){
+  if(compare_as_version_string(wipps_version) != 0){
     my_error_print("Warning, a different code version was used to write this file. Data may be incompatible");
     return 0;
   }
@@ -807,14 +807,14 @@ bool parse_name_val(std::string in, std::string &name, std::string &val){
   }
 }
 
-bool compare_as_version_string(std::string str, std::string vers_str, bool minor){
+int compare_as_version_string(std::string str, std::string vers_str, bool minor){
 /** \brief Check str against version code
 *
 *Checks string against git version code VERSION. Version strings are vx.y if present at all. By default check just the x, if minor is true, check y also. If either string doesn't match expected format we try comparing as just strings. This maintains behaviour from before I used version tags where just commit-id was checked
 @param str String to check
 @param vers_str String to check against, defaults to VERSION
 @param minor Flag to check minor version number too
-@return True if equal, false else
+@return 0 if equal, -1 if str is before vers_str, 1 if str is after vers_str
 */
 
   std::string major_v="0", minor_v="0", major_in="0", minor_in="0";

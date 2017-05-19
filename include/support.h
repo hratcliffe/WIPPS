@@ -292,7 +292,7 @@ inline std::string str_to_lower(std::string str){
   return str;
 }
 
-bool compare_as_version_string(std::string str, std::string vers_str=VERSION, bool minor=false);
+int compare_as_version_string(std::string str, std::string vers_str=VERSION, bool minor=false);
 
 /********Maths helpers ****/
 template<typename T> T integrator(T * start, int len, T * increment);

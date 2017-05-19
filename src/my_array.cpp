@@ -876,11 +876,11 @@ std::vector<size_t> my_array::read_dims_from_file(std::fstream &file){
   //equality even though floats as should be identical
     //If we have a read error and the versions don't match, that might be the problem...
     my_error_print("File read error", mpi_info.rank);
-    if(!compare_as_version_string(tmp_vers, VERSION, true) && !compare_as_version_string(tmp_vers, "IDL data write")) my_error_print("Incompatible code version or file", mpi_info.rank);
+    if(compare_as_version_string(tmp_vers, VERSION, true) != 0  && compare_as_version_string(tmp_vers, "IDL data write") != 0) my_error_print("Incompatible code version or file", mpi_info.rank);
     return dims_vec;
   }else{
     //Otherwise we report on verson mismatch according to considering major only
-    if(!compare_as_version_string(tmp_vers) && !compare_as_version_string(tmp_vers, "IDL data write")){
+    if(compare_as_version_string(tmp_vers) != 0 && compare_as_version_string(tmp_vers, "IDL data write") != 0){
        my_print("WARNING: A different code version was used to write this data. Proceed with caution. Fields may not align correctly and data may differ", mpi_info.rank);
       std::string tmp = tmp_vers;
       my_print(tmp, mpi_info.rank);

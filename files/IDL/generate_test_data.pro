@@ -79,51 +79,92 @@ err = write_data(spectrum_file, spectrum, list(dispersion), id="spect", TIME=[0,
 
 end
 
+pro generate_fitted_spect
+;Creates a spectrum fitted to 2DDualMatch data at first time
+
+om_info = {mid:0.53, delta:0.06, min:0.2, max:0.8, n_pts:1024, norm:1.5e-19}
+x_info = {mid:0, delta:tan(!pi/6), min:0, max:1, n_pts:100}
+
+inputdir = '/Volumes/Seagate Backup Plus Drive/DiracWhistlers/2DDualMatch/'
+const = read_deck(dir = inputdir)
+
+generate_mock_spect, om_info, x_info, const, outfile=inputdir+"match_spectrum.dat"
+
+end
+
+pro generate_intermediate_spect
+;Creates a spectrum intermediate to the Albert and fitted
+
+om_info = {mid:0.45, delta:0.1, min:0.2, max:0.7, n_pts:1024, norm:1.5e-19}
+x_info = {mid:0, delta:tan(!pi/6), min:0, max:1, n_pts:100}
+
+inputdir = '/Volumes/Seagate Backup Plus Drive/DiracWhistlers/2DDualMatch/'
+const = read_deck(dir = inputdir)
+
+generate_mock_spect, om_info, x_info, const, outfile=inputdir+"inter_spectrum.dat"
+
+end
+
+
 pro generate_Albert_spect
 ;Creates mock spectrum as used in Albert for example D calcs
 ;Truncated Gaussians in B and angle
 
-common consts, q0, m0, v0, kb, mu0, epsilon0, h_planck
-common extra_consts, global_file_dir
-
 ;Changeable params
-om_mid = 0.35
-delta_om = 0.15
-om_min = 0.05
-om_max = 0.65
-delta_x = tan(!pi/6)
-x_min = 0
-x_mid = 0
-x_max = 1
+om_info = {mid:0.35, delta:0.15, min:0.05, max:0.65, n_pts:1024, norm:(1e-10)^2}
+;100pT field, so if int B d omega is normed to 1 this will be correct
 
-n_pts_om = 1024
-n_pts_x = 100
+x_info = {mid:0, delta:tan(!pi/6), min:0, max:1, n_pts:100}
+;om_mid = 0.35
+;delta_om = 0.15
+;om_min = 0.05
+;om_max = 0.65
+;delta_x = tan(!pi/6)
+;x_min = 0
+;x_mid = 0
+;x_max = 1
 
-spectrum_file = "d_testspectrum.dat"
+;n_pts_om = 1024
+;n_pts_x = 100
+
 deck_file_prefix = "d_test"
 
 const = read_deck(dir = global_file_dir, pref = deck_file_prefix)
 
+generate_mock_spect, om_info, x_info, const, outfile="d_testspectrum.dat"
+
+end
+
+pro generate_mock_spect, om, x, const, outfile=outfile
+;Creates mock spectrum of truncated Gaussians in B and angle
+;Takes two structs each containing mid, delta, min, max, n_pts and (for omega only) norm one for omega, one for x, and a deck-constants structure
+;Optionally also takes an output file path
+
+common consts, q0, m0, v0, kb, mu0, epsilon0, h_planck
+common extra_consts, global_file_dir
+
+IF(N_ELEMENTS(outfile) GT 0) THEN spectrum_file = outfile ELSE spectrum_file = "mock_spectrum.dat"
+
 om_ce = const.wce
 om_pe = const.wpe
-desired_norm_B_sq = (1e-10)^2 ;100pT field, so if int B d omega is normed to 1 this will be correct
+desired_norm_B_sq = om.norm
 norm_B = 1
 
 ;Make the axes
 
-om_ax = findgen(n_pts_om)*om_max*1.2/n_pts_om
-x_ax = findgen(n_pts_x)*x_max*1.2/n_pts_x
+om_ax = findgen(om.n_pts)*om.max*1.2/om.n_pts
+x_ax = findgen(x.n_pts)*x.max*1.2/x.n_pts
 
-B_arr = exp(- (om_ax - om_mid)^2/delta_om^2)
-B_arr(where(om_ax LT om_min)) = 0.0
-B_arr(where(om_ax GT om_max)) = 0.0
+B_arr = exp(- (om_ax - om.mid)^2/om.delta^2)
+B_arr(where(om_ax LT om.min)) = 0.0
+B_arr(where(om_ax GT om.max)) = 0.0
 norm_B = float(total(B_arr)*abs(om_ax[1]-om_ax[0])*om_ce)
 B_arr = desired_norm_B_sq*B_arr/norm_B
 
 
-ang_arr = transpose(exp(-(x_ax - x_mid)^2/delta_x))
-ang_arr(where(x_ax LT x_min)) = 0.0
-ang_arr(where(x_ax GT x_max)) = 0.0
+ang_arr = transpose(exp(-(x_ax - x.mid)^2/x.delta))
+ang_arr(where(x_ax LT x.min)) = 0.0
+ang_arr(where(x_ax GT x.max)) = 0.0
 
 B = {data:B_arr, axes:{x:om_ax*float(const.wce)}, space:[0, 1], time:[0.0, 1.0], B_ref: 1.0}
 ang = {data:ang_arr, axes:{x:[1.0], y:x_ax}, space:[0, 1], time:[0.0, 1.0], B_ref: 1.0}

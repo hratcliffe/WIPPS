@@ -25,12 +25,17 @@
 #include "d_coeff.h"
 #include "spectrum.h"
 
+/**
+\todo Makefile doc creation into script
+\todo Create scrips directory with useful stuff
+\todo Allow private or not docs
+*/
 
 /** \defgroup utils Available programs
 *@{ 
 *\brief Top-level programs available
 *
-*Contains programs to perform FFTs, create spectra, calculate growth etc. Build with `make utils` List with `make list_utils` Command line argument help is available using ./{util_name} -h
+*Contains programs to perform FFTs, create spectra, calculate growth etc. Build with `make utils` List with `make list_utils` Command line argument help is available using `./{util_name} -h`
 */
 
 /** \defgroup main_prog Info program

@@ -47,9 +47,6 @@ extractor_args extractor_process_command_line(int argc, char *argv[]);
 
 int main(int argc, char ** argv){
 
-
-//Use common cmd line args for gen ffts etc
-
   int ierr = local_MPI_setup(argc, argv);
   if(ierr){
     std::cout<< "Error initialising MPI. ABORTING!";

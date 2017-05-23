@@ -87,7 +87,6 @@ int main(int argc, char *argv[]){
     }
     //If we've got a deck.status, we assume last 2 limits are in terms of omega_ce
     
-    //Construct filename. Since the MPI is using block-wise domain decomposition, different processors can't overlap on blocks
     std::fstream file;
     file.open((my_args.file_prefix + my_args.file_out).c_str(),std::ios::out|std::ios::binary);
     if(file.is_open()){

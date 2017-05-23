@@ -69,6 +69,12 @@ public:
   @param psi Wave normal angle 
   @return mu_dmudom struct containing mu and derivs */
   mu_dmudom get_mu(calc_type w, calc_type psi) const{return get_phi_mu_om(w, psi, 0.0, 0, 1.0, true);}
+  /** \brief Solve plasma dispersion only
+  *
+  * Solve dispersion, omitting extended phi calcs, using high_dens approximation
+  @param w Wave frequency
+  @param psi Wave normal angle 
+  @return mu_dmudom struct containing mu and derivs */
   mu_dmudom get_high_dens_mu(calc_type w, calc_type psi) const{return get_high_dens_phi_mu_om(w, psi, 0.0, 0, 1.0, true);}
   mu_dmudom get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int n, calc_type gamma_particle, bool skip_phi = false, bool Righthand=true)const;
   mu_dmudom get_high_dens_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int n, calc_type gamma_particle, bool skip_phi=false, bool Righthand=true)const;

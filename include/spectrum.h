@@ -23,7 +23,7 @@ class controller;
 
 /** \brief A spectrum in omega and angle
 *
-*Holds data on the omega and angle distributions. If fed an FFTd data array this will be X^2(omega, theta) where X is E or B. The latter can depend on omega! Can be created/destroyed only by controllers, so has no public constructor/destructors. IMPORTANT: because we are working with FFT data, we assume the angle/frequency axis either covers some small cutout in +ve domain, or is symmetrical in positive and negative values. A few of the specific routines here use this to simplify things. The sign of omega is simply copied from the sign of k. The "angle" axis is stored as tan(theta) for theta the wave normal angle. Access to elements should use the wrappers at the bottom of spectrum.h, described in \ref spectAcc because internal layout could change in future
+*Holds data on the omega and angle distributions. If fed an FFTd data array this will be X^2(omega, theta) where X is E or B. The latter can depend on omega! Can be created/destroyed only by controllers, so has no public constructor/destructors. IMPORTANT: because we are working with FFT data, we assume the angle/frequency axis either covers some small cutout in +ve domain, or is symmetrical in positive and negative values. A few of the specific routines here use this to simplify things. The sign of omega is simply copied from the sign of k. The "angle" axis is stored as tan(theta) for theta the wave normal angle. Access to elements should use the wrappers at the bottom of spectrum.h, described in \ref spectAcc because internal layout could change in future. Note that prior to v1.1 the wave power was the TOTAL of the B^2 array, for v1.1 and later it is the INTEGRAL
   \author Heather Ratcliffe \date 24/09/2015 \ingroup cls
 */
 class spectrum{
@@ -68,13 +68,17 @@ class spectrum{
   *
   *NB do not muck with this pointer. It's provided for ease of using where but is a const my_type * for a reason
   @param[out] len Length of axis
-  @return Pointer to omega axis */
+  @return Pointer to omega axis 
+  \todo Remove
+  */
   const my_type * get_omega_axis(size_t &len){return B_omega_array.get_axis(0, len);}
   /** \brief Get angle axis 
   *
   *NB do not muck with this pointer. It's provided for ease of using where but is a const my_type * for a reason
   @param[out] len Length of axis
-  @return Pointer to angle axis */
+  @return Pointer to angle axis 
+  \todo Replace with where_angle function
+  */
   const my_type * get_angle_axis(size_t &len){return g_angle_array.get_axis(1, len);}
 /** @} */
 

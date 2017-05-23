@@ -89,6 +89,14 @@
  dat.set_element(5, 5, 2.0); //Set element 5, 5 to 2.0
  my_type element = dat.get_element(5, 5); //element = 2.0 \endcode
 *
+*\subsection default Default arguments
+* Function definitions can set default values for arguments which will be used if nothing is explicitly given. For example, 
+\code int add(int a, int b = 1){return a+b;}
+cout<< add(1, 2)<<endl; //Prints 3
+cout<< add(5)<<endl; //Prints 6
+\endcode
+With two arguments this prints their sum, but if only one if given, b is set to a value of 1.
+*
 *\subsection pointer Pointers * and ->
 *Some classes get rather large, for instance if they hold a lot of data internally. In this case, you might want to pass them about not by value (copying everything) but just by getting a pointer to where they are. Pointer variables are defined like
 class * my_pointer with an asterix. This variable holds only the address. Conversions between pointer and instance are:
@@ -104,7 +112,7 @@ Some of the core code uses these, none of the stuff in use should.
 *& in a function means that you may pass an instance, but a copy will not be made, the function will just be given the address. For instance the function to read data into an array dat is \code my_reader.read_data(dat, time, space);\endcode But a copy of dat is not made.
 
 *\subsection colon The double colons ::
-* The :: appears either with something like std:: or boost::math:: or with a class name, and means that this refers to the function X in that library, class etc. So there might be a function abs() in the standard std library and in a math library and one must distinguish between them. Or both my_array and data_array have a function called is_good() and the definitions must state which they refer to.
+* The :: appears either with something like std:: or boost::math:: or with a class name, and means that this refers to the function X in that library, class etc (i.e. the function in the given namespace). So there might be a function abs() in the standard std library and in a math library and one must distinguish between them. Or both my_array and data_array have a function called is_good() and the definitions must state which they refer to.
 
 \defgroup cls Main Classes
 *@{

@@ -291,6 +291,9 @@ tar: dependencies.log
 tar_built: utils
 	tar --no-recursion -cvzf Runnable.tgz $(UTILS) ./main ./files/help*.txt test_pars ./files/.idlstartup ./files/*.pro ./SDF/IDL/*
 
+tar_docs:
+	tar -cvzf Docs.tgz ./html/* ./latex/refman.pdf Derivations.pdf
+
 clean:
 	@rm -f main $(UTILS) $(OBJS) $(MAINOBJS) $(UTILSOBJS)
 

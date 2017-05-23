@@ -5,6 +5,7 @@ IF(wipps_dir EQ "") THEN wipps_dir = "./"
 @ Start.pro
 .r plot_helpers.pro
 .r read_deck.pro
+.r wipps_versioning.pro
 define_consts
 common extra_consts, global_file_dir
 global_file_dir = wipps_dir+'/files/'

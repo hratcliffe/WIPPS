@@ -808,11 +808,7 @@ int compare_as_version_string(std::string str, std::string vers_str, bool minor)
 @param str String to check
 @param vers_str String to check against, defaults to VERSION
 @param minor Flag to check minor version number too
-<<<<<<< HEAD
 @return 0 if equal, -1 if str is before vers_str, 1 if str is after vers_str unless strings don't have numeric version parts in which case return 0 for equal, 1 for unequal
-=======
-@return 0 if equal, -1 if str is before vers_str, 1 if str is after vers_str
->>>>>>> 4dd2ca68f0b61cbce197a7cd986fee1696fc017c
 */
 
   std::string major_v="0", minor_v="0", major_in="0", minor_in="0";

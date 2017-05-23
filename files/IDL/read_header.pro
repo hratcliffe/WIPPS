@@ -58,6 +58,7 @@ next_block = hdr_info.block_type
 readu, filenum, io_in
 readu, filenum, commit_in
 IF(KEYWORD_SET(report)) THEN print, io_in," ",  commit_in
+hdr_info =create_struct(hdr_info,{version:commit_in})
 
 IF(io_in NE io_check) THEN BEGIN
   print, "File read error!"

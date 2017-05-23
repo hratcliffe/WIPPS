@@ -1,0 +1,12 @@
+Command line options:
+-h Show help
+-f <string> Prefix for all input files, including directory
+
+-start <int> Dump number to read
+-block <string> Block id string
+-flatten <int>  Flatten the data on specified dimension before output (0 to n_dims-1)
+-out <string> Output file name (-f arg will be prepended)
+
+Sample usage:
+make TYPE=float
+./extract_field -f ./Run1/ -start 0 -block bx -out Bx_ref.dat

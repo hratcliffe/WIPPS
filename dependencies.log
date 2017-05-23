@@ -17,9 +17,9 @@ src/d_coeff.cpp\
   include/d_coeff.h\
   include/controller.h\
   include/plasma.h\
-  include/spectrum.h\
-  include/my_array.h\
   include/data_array.h\
+  include/my_array.h\
+  include/spectrum.h\
   include/tests.h\
 
 obj/spectrum.o:\
@@ -28,8 +28,8 @@ include/plasma.h\
 include/support.h\
   include/spectrum.h\
   include/controller.h\
-  include/my_array.h\
   include/data_array.h\
+  include/my_array.h\
   include/tests.h\
 
 obj/plasma.o:\
@@ -49,10 +49,10 @@ src/controller.cpp\
   include/controller.h\
   include/support.h\
   include/plasma.h\
+  include/data_array.h\
   include/my_array.h\
   include/d_coeff.h\
   include/spectrum.h\
-  include/data_array.h\
   include/tests.h\
 
 obj/non_thermal.o:\
@@ -78,6 +78,8 @@ src/tests.cpp\
   include/my_array.h\
   include/reader.h\
   include/tests_data_and_calc.h\
+  include/controller.h\
+  include/plasma.h\
 
 obj/tests_basic_and_code.o:\
 src/tests_basic_and_code.cpp\
@@ -96,11 +98,12 @@ src/tests_data_and_calc.cpp\
   include/data_array.h\
   include/my_array.h\
   include/reader.h\
-  include/plasma.h\
   include/controller.h\
+  include/plasma.h\
   include/spectrum.h\
   include/d_coeff.h\
   include/non_thermal.h\
+  include/valgrind.h\
 
 obj/main.o:\
 src/main.cpp\
@@ -109,14 +112,14 @@ src/main.cpp\
   include/reader.h\
   include/controller.h\
   include/plasma.h\
+  include/data_array.h\
   include/my_array.h\
   include/d_coeff.h\
   include/spectrum.h\
-  include/data_array.h\
   include/tests.h\
 
-obj/cutout.o:\
-src/cutout.cpp\
+obj/cutout_fft.o:\
+src/cutout_fft.cpp\
   include/main.h\
   include/support.h\
   include/reader.h\
@@ -128,8 +131,8 @@ src/cutout.cpp\
   include/spectrum.h\
   include/tests.h\
 
-obj/FFT_to_spectrum.o:\
-src/FFT_to_spectrum.cpp\
+obj/fft_to_spectrum.o:\
+src/fft_to_spectrum.cpp\
 include/support.h\
   include/data_array.h\
   include/my_array.h\
@@ -163,11 +166,18 @@ src/calculate_diffusion.cpp\
   include/reader.h\
   include/controller.h\
   include/plasma.h\
+  include/data_array.h\
   include/my_array.h\
   include/d_coeff.h\
   include/spectrum.h\
-  include/data_array.h\
   include/tests.h\
+
+obj/extract_field.o:\
+src/extract_field.cpp\
+  include/support.h\
+  include/reader.h\
+  include/data_array.h\
+  include/my_array.h\
 
 obj/generate_ffts.o:\
 src/generate_ffts.cpp\

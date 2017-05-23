@@ -40,6 +40,7 @@ struct diff_cmd_line{
   bool is_list;/**< Use FFT or spectrum list input*/
   bool is_spect;/**< Use spectrum list*/
   size_t ref;/**< Reference sdf file number to get Bx info from*/
+  std::string ref_name;/**< Reference file name to use for Bx info*/
   std::vector<std::string> file_list;
   int fuzz;/**<Fuzz for spectral cutout*/
   int smth;/**<Smoothing width for output spectrum*/
@@ -49,6 +50,7 @@ struct diff_cmd_line{
 };/**< \brief Command line arguments for diffusion calculation utility*/
 
 diff_cmd_line special_command_line(int argc, char *argv[]);
+bool is_filenumber(char * str);
 
 /** \brief Main program
 *
@@ -88,12 +90,17 @@ int main(int argc, char *argv[]){
 
   my_print("Processing "+mk_str(per_proc)+" blocks per core", mpi_info.rank);
 
-  reader my_reader = reader(cmd_line_args.file_prefix);
-  my_reader.update_ref_filenum(cmd_line_args.ref);
-  size_t my_space[2];
-  my_space[0] = extract_space_part(cmd_line_args.file_list[0]).first;
-  my_space[1] = extract_space_part(cmd_line_args.file_list[cmd_line_args.file_list.size()-1]).second;
-  data_array Bx = get_Bx(cmd_line_args.file_prefix, my_space, cmd_line_args.ref);
+  data_array Bx;
+  if(cmd_line_args.ref_name ==""){
+    reader my_reader = reader(cmd_line_args.file_prefix);
+    my_reader.update_ref_filenum(cmd_line_args.ref);
+    size_t my_space[2];
+    my_space[0] = extract_space_part(cmd_line_args.file_list[0]).first;
+    my_space[1] = extract_space_part(cmd_line_args.file_list[cmd_line_args.file_list.size()-1]).second;
+    Bx = get_Bx(cmd_line_args.file_prefix, my_space, cmd_line_args.ref);
+  }else{
+    Bx = data_array(cmd_line_args.file_prefix +cmd_line_args.ref_name);
+  }
 
   controller contr = controller(cmd_line_args.file_prefix);
 
@@ -110,17 +117,19 @@ int main(int argc, char *argv[]){
       if(!check_wipps_version(filename)){
         //If breaking changes made, add an exit at this point.
       }
+      size_t n_tims = extract_num_time_part(filename);
       if(!cmd_line_args.is_spect){
         dat_fft = data_array(filename);
         //Have an FFT, need a spectrum
         contr.set_plasma_B0(dat_fft.B_ref);
         //Match spectrum omega size to FFT omega size
         size_t spec_sz = dat_fft.get_dims(0);
-/** \todo generate_spectrum goes wrong if spec_sz != k_sz*/
+/** \todo generate_spectrum goes wrong if spec_sz != k_sz Note we have to rebin if we change to work*/
         contr.add_spectrum(spec_sz, cmd_line_args.n_ang, (cmd_line_args.ang != FUNCTION_NULL));
 
         //Renorm. FFT
-        spec_norm = 0.5 * dat_fft.space[1]*dat_fft.space[1]*extract_num_time_part(filename);
+        if(dat_fft.space[1] > 1) spec_norm = 0.5 * dat_fft.space[1]*dat_fft.space[1];
+        if(n_tims > 0) spec_norm *= n_tims;
         //Spectrum is actually B^2 so we square the FFT norming factor
         spec_norm *= spec_norm;
         //2D data and want to use angle function, so squash in k_y
@@ -131,13 +140,19 @@ int main(int argc, char *argv[]){
       }else{
         //Read spectrum file
         contr.add_spectrum(filename);
-        spec_norm = 0.5 * std::pow(contr.get_current_spectrum()->space[1], 2)*extract_num_time_part(filename);
+        if(contr.get_current_spectrum()->space[1] > 1) spec_norm = 0.5 * std::pow(contr.get_current_spectrum()->space[1], 2);
+        if(n_tims > 0) spec_norm *= n_tims;
+      /** \todo We have to do the time bins better than this! */
+
         spec_norm *= spec_norm;
       }
       calc_type om_ce = contr.get_plasma().get_omega_ref("ce");
     /** \todo Add truncation limits from cmd line */
-
-      contr.get_current_spectrum()->apply(spectrum::part::B, divide, spec_norm);
+      if(spec_norm > 0){
+        contr.get_current_spectrum()->apply(spectrum::part::B, divide, spec_norm);
+      }else{
+        my_error_print("Erroneous spectrum normalisation constant. Proceeeding unnormalised");
+      }
     }else{
       continue;
       //We've run out of files, must have been non-integer decomposition
@@ -170,6 +185,15 @@ int main(int argc, char *argv[]){
   exit(0);
 }
 
+bool is_filenumber(char * str){
+//Filenumber would be positive int without any leading spaces
+
+  for(size_t i=0; i< strlen(str); i++){
+    if(str[i] < 0 || str[i] > 9) return false;
+  }
+  return true;
+}
+
 diff_cmd_line special_command_line(int argc, char *argv[]){
 /** \brief Process commandline arguments
 *
@@ -181,6 +205,7 @@ diff_cmd_line special_command_line(int argc, char *argv[]){
   //Default values
   values.file_prefix = "./files/";
   values.ref = 0;
+  values.ref_name = "";
   values.d[0] = 50;
   values.d[1] = 50;
   values.is_list = false;
@@ -209,7 +234,8 @@ diff_cmd_line special_command_line(int argc, char *argv[]){
       i+=2;
     }
     else if(strcmp(argv[i], "-ref")==0 && i < argc-1){
-      values.ref = atoi(argv[i+1]);
+      if(is_filenumber(argv[i+1])) values.ref = atoi(argv[i+1]);
+      else values.ref_name = argv[i+1];
       i++;
     }
     else if(((strcmp(argv[i], "-Finput")==0)||(strcmp(argv[i], "-Sinput")==0)) && i < argc-1){

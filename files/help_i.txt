@@ -2,7 +2,7 @@ Command line options:
 -h Show help
 -f <string> Prefix for all input files, including directory
 -d <int int> Dimension of D to generate
--ref <int> Reference SDF file number giving Bx, default 0
+-ref <int/string> EITHER a reference SDF file number (default 0) giving an sdf file containing Bx data or a WIPPS filename default (Bx) containing an array of Bx data. -f argument is prepended as usual
 
 Supply one and only one of:
 -Finput <string ...> Start from [list of] FFT files

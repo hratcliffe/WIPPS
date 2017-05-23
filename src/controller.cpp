@@ -415,7 +415,7 @@ bool controller::save_D(std::string pref){
 
   //Save global D from root only
   int d_global = d_specials_list.size()-1;
-  if(mpi_info.rank == 0 ){
+  if(d_global > -1 && mpi_info.rank == 0){
     filename = pref+"D_"+tmp +"_"+mk_str(d_specials_list[d_global]->time[0]) + "_"+mk_str(d_specials_list[d_global]->time[1])+"_global.dat";
     file.open(filename.c_str(),std::ios::out|std::ios::binary|std::ios::in|std::ios::trunc);
     if(file.is_open()) d_specials_list[d_global]->write_to_file(file);

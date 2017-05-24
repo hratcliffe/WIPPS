@@ -61,6 +61,9 @@ class spectrum{
 /******** Access helper functions ****/
   int where_omega(my_type omega);
 
+/********Spectrum operation helpers ****/
+  void convert_FFT_to_integral();
+
 /********Access wrappers ****/
 /** \ingroup spectAcc 
 *@{ */

@@ -206,7 +206,14 @@ spectrum::spectrum(std::string filename){
     B_omega_array = data_array();
     //Return to size-less state
   }
-  this->init();
+  
+  if(cont){
+    //Before version v1.1 spectra were so that the total was the total power. For D etc we want rather the integral to be the power, so we convert files on read
+    if(compare_as_version_string(read_wipps_version_string(filename), "v1.1", true) < 0){
+      this->convert_FFT_to_integral();
+    }
+    this->init();
+  }
   return;
 
 }
@@ -615,6 +622,11 @@ bool spectrum::generate_spectrum(data_array &parent, int om_fuzz, int angle_type
   }else{
     return 1;
   }
+  
+  //Correct the spectrum to be properly X^2(omega) dOmega which is what we ultimately want
+  this->convert_FFT_to_integral();
+
+  //Calc and store normalising info etc
   this->init();
 
   return 0;
@@ -761,6 +773,25 @@ my_type spectrum::get_k(my_type omega, int wave_type, bool deriv, my_type theta)
 }
 
 /********Spectrum operation helpers ****/
+
+void spectrum::convert_FFT_to_integral(){
+/** \brief Convert B data to integral form
+*
+* Converts the data in B^2 so that its integral is power, assuming the source is an FFT. FFT's give the power at a frequency, so we have to divide by d_omega
+*/
+
+  my_type d_om;
+  if(get_omega_length() >= 2){
+    d_om = std::abs(get_om_axis_element(1) - get_om_axis_element(0));
+    set_B_element(0, get_B_element(0)/d_om/d_om);
+  }
+  for(size_t i = 1; i < get_omega_length(); i++){
+    d_om = std::abs(get_om_axis_element(i) - get_om_axis_element(i - 1));
+    set_B_element(i, get_B_element(i)/d_om/d_om);
+  }
+
+}
+
 bool spectrum::calc_norm_B(){
 /** \brief Calculate norming of B(w)
 *

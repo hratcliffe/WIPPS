@@ -29,7 +29,6 @@
 * Depends on the SDF file libraries, the FFTW library, and boost's math for special functions. A set of test arguments is supplied. Call using ./calculate_diffusion `<test_pars` to use these. Or try ./calculate_diffusion -h for argument help
 \verbinclude help_i.txt
   \author Heather Ratcliffe \date 17/02/2017
-\todo Adress segfault if input file not found
 */
 
 const char PER_UTIL_HELP_ID = 'i';/**<ID to identify help file for this utility*/
@@ -61,7 +60,7 @@ bool is_filenumber(char * str);
 
 int main(int argc, char *argv[]){
 
-  int err;
+  bool err;
   size_t per_proc = 1;
   
   int ierr = local_MPI_setup(argc, argv);
@@ -119,6 +118,10 @@ int main(int argc, char *argv[]){
       size_t n_tims = extract_num_time_part(filename);
       if(!cmd_line_args.is_spect){
         dat_fft = data_array(filename);
+        if(!dat_fft.is_good()){
+          my_error_print("Failed to read "+filename);
+          continue;
+        }
         //Have an FFT, need a spectrum
         contr.set_plasma_B0(dat_fft.B_ref);
         //Match spectrum omega size to FFT omega size
@@ -138,7 +141,11 @@ int main(int argc, char *argv[]){
         contr.get_current_spectrum()->generate_spectrum(dat_fft, cmd_line_args.fuzz, cmd_line_args.ang);
       }else{
         //Read spectrum file
-        contr.add_spectrum(filename);
+        err = contr.add_spectrum(filename);
+        if(err){
+          my_error_print("Failed to read "+filename);
+          continue;
+        }
         if(contr.get_current_spectrum()->space[1] > 1) spec_norm = 0.5 * std::pow(contr.get_current_spectrum()->space[1], 2);
         if(n_tims > 0) spec_norm *= n_tims;
       /** \todo We have to do the time bins better than this! */

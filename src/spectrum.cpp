@@ -449,7 +449,7 @@ bool spectrum::generate_spectrum(data_array &parent, int om_fuzz, int angle_type
 
     //First we read ids from parent
     this->copy_ids(parent);
-    this->function_type = angle_type;
+    this->set_extra_ids(WAVE_WHISTLER, angle_type);
     //...and omega axis
     size_t len;
     const my_type * om_ax = parent.get_axis(1, len);
@@ -504,6 +504,7 @@ bool spectrum::generate_spectrum(data_array &parent, int om_fuzz, int angle_type
   //This will do a rough integral around the correct omega. Note it is not a neat sampling of the domain, so may give odd results for non-smooth cases
   
     this->copy_ids(parent);
+    this->set_extra_ids(WAVE_WHISTLER, FUNCTION_NULL);
 
     //Convert om_fuzz from percentage to fraction
     my_type tolerance = om_fuzz/100.0;
@@ -638,6 +639,18 @@ void spectrum::set_ids(float time1, float time2, int space1, int space2, int wav
   this->space[0] = space1;
   this->space[1] = space2;
   strncpy(this->block_id, block_id, ID_SIZE);
+  this->wave_id = wave_id;
+  this->function_type = function_type;
+}
+
+void spectrum::set_extra_ids(int wave_id, int function_type){
+/**\brief Set id fields
+*
+*Sets the wave type and angle type attached to spectra (i.e. the ids that can't be inherited from parent data)
+@param wave_id Wave type (see support.h)
+@param function_type Functional form of spectrum in angle
+*/
+
   this->wave_id = wave_id;
   this->function_type = function_type;
 }

@@ -257,6 +257,73 @@ setup_args process_command_line(int argc, char *argv[]){
   return values;
 }
 
+spect_args spect_process_command_line(int argc, char *argv[]){
+/** \brief Process command line args for spectra
+*
+*Process the spectrum specific args, setting those consumed to HANDLED_ARG
+*/
+
+  spect_args values;
+  //Default values if nothing supplied
+  values.fuzz = 10;
+  values.smth = 0;
+  values.mask = false;
+  values.n_ang = DEFAULT_N_ANG;
+  values.wave = WAVE_WHISTLER;
+  values.ang = FUNCTION_DELTA;
+  
+  bool extr = false;
+  
+  for(int i=1; i< argc; i++){
+    if(strcmp(argv[i], "-om")==0 && i < argc-1){
+      values.fuzz = atoi(argv[i+1]);
+      strcpy(argv[i], HANDLED_ARG);
+      strcpy(argv[i+1], HANDLED_ARG);
+      i++;
+    }
+    else if(strcmp(argv[i], "-n_ang")==0 && i < argc-1){
+      values.n_ang = atoi(argv[i+1]);
+      strcpy(argv[i], HANDLED_ARG);
+      strcpy(argv[i+1], HANDLED_ARG);
+      i++;
+    }
+    else if(strcmp(argv[i], "-wave")==0 && i < argc-1){
+      if(argv[i+1][0] == 'w' || argv[i+1][0] == 'W') values.wave=WAVE_WHISTLER;
+      else if(argv[i+1][0] == 'p' || argv[i+1][0] == 'P') values.wave=WAVE_PLASMA;
+      else if(argv[i+1][0] == 'o' || argv[i+1][0] == 'O') values.wave=WAVE_O;
+      strcpy(argv[i], HANDLED_ARG);
+      strcpy(argv[i+1], HANDLED_ARG);
+      i++;
+    }
+    else if(strcmp(argv[i], "-ang")==0 && i < argc-1 && !extr){
+      if(argv[i+1][0] == 'd' || argv[i+1][0] == 'D') values.ang=FUNCTION_DELTA;
+      else if(argv[i+1][0] == 'g' || argv[i+1][0] == 'G') values.ang=FUNCTION_GAUSS;
+      else if(argv[i+1][0] == 'i' || argv[i+1][0] == 'I') values.ang=FUNCTION_ISO;
+      strcpy(argv[i], HANDLED_ARG);
+      strcpy(argv[i+1], HANDLED_ARG);
+      i++;
+    }
+    else if(strcmp(argv[i], "-extr")==0){
+      values.ang = FUNCTION_NULL;
+      extr = true;
+      strcpy(argv[i], HANDLED_ARG);
+      //This _overrides_ -ang
+    }
+    else if(strcmp(argv[i], "-mask")==0){
+      values.mask = true;
+      strcpy(argv[i], HANDLED_ARG);
+    }
+    else if(strcmp(argv[i], "-smooth")==0 && i < argc-1){
+      values.smth = atoi(argv[i+1]);
+      strcpy(argv[i], HANDLED_ARG);
+      strcpy(argv[i+1], HANDLED_ARG);
+      i++;
+    }
+  }
+  if(values.smth < 0) values.smth = 0;
+  return values;
+}
+
 void process_command_line_help_arg(int argc, char *argv[], char help_id){
 /** \brief Handle help request at command line
 *
@@ -364,7 +431,7 @@ std::vector<std::string> process_filelist(int argc, char *argv[]){
   std::vector<std::string> names;
   for(int i=0; i< argc; i++){
     if(((strcmp(argv[i], "-Finput")==0)||(strcmp(argv[i], "-Sinput")==0)) && i < argc-1){
-      while(i<argc-1 && argv[i+1][0]!= '-'){
+      while(i<argc-1 && argv[i+1][0]!= '-' && argv[i+1][0] != HANDLED_ARG[0]){
         //Checks if next argument is a new flag
         names.push_back(argv[i+1]);
         i++;

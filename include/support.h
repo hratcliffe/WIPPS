@@ -184,6 +184,19 @@ struct setup_args{
   size_t per_proc;/**< Resulting number of space blocks per proc*/
 };
 
+/** \brief Command line arguments for spectra
+*
+* Processed command line arguments for spectra used across several programs
+*/
+struct spect_args{
+  int fuzz;/**<Fuzz for spectral cutout*/
+  int smth;/**<Smoothing width for output spectrum*/
+  size_t n_ang;/**<Number of angles for output spectrum*/
+  int wave;/**<Wave type ID (see support.h WAVE_* )*/
+  int ang;/**< Angular function type (can be FUNCTION_NULL) */
+  bool mask;/**< Flag to output spectrum extraction mask to file also*/
+};
+
 /** \brief D coefficient report
 *
 *Contains information on D calculation such as resonances used
@@ -219,6 +232,7 @@ void share_consts();
 /********IO helpers ****/
 void get_deck_constants(std::string file_prefix);
 setup_args process_command_line(int argc, char *argv[]);
+spect_args spect_process_command_line(int argc, char *argv[]);
 void process_command_line_help_arg(int argc, char *argv[], char help_id);
 void print_help(char code=0);
 void log_code_constants(std::string file_prefix);

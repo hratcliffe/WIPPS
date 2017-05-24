@@ -29,7 +29,7 @@
 * Depends on the SDF file libraries, the FFTW library, and boost's math for special functions. A set of test arguments is supplied. Call using ./calculate_diffusion `<test_pars` to use these. Or try ./calculate_diffusion -h for argument help
 \verbinclude help_i.txt
   \author Heather Ratcliffe \date 17/02/2017
-  \todo Finish and check!
+\todo Adress segfault if input file not found
 */
 
 const char PER_UTIL_HELP_ID = 'i';/**<ID to identify help file for this utility*/
@@ -106,7 +106,6 @@ int main(int argc, char *argv[]){
 
   //---------------- Now we loop over blocks per proc-------
   for(size_t block_num = 0; block_num < per_proc; block_num++){
-    
     data_array dat_fft;
     calc_type spec_norm = 1.0;
     std::string filename;
@@ -197,8 +196,7 @@ bool is_filenumber(char * str){
 diff_cmd_line special_command_line(int argc, char *argv[]){
 /** \brief Process commandline arguments
 *
-* This handles all command line arguments to this utility, so expects no arguments not listed below
-\todo Recombine shared args between this and generate_ffts
+* This handles all command line arguments to this utility, so expects no arguments not listed below or in spect_process_command_line
 */
 
   diff_cmd_line values;
@@ -211,13 +209,13 @@ diff_cmd_line special_command_line(int argc, char *argv[]){
   values.is_list = false;
   values.is_spect = false;
   values.file_list.clear();
-  values.fuzz = 10;
-  values.smth = 0;
-  values.n_ang = DEFAULT_N_ANG;
-  values.wave = WAVE_WHISTLER;
-  values.ang = FUNCTION_DELTA;
 
-  bool extr = false;
+  spect_args spec_vals = spect_process_command_line(argc, argv);
+  values.fuzz = spec_vals.fuzz;
+  values.smth = spec_vals.smth;
+  values.n_ang = spec_vals.n_ang;
+  values.wave = spec_vals.wave;
+  values.ang = spec_vals.ang;
 
   for(int i = 1; i < argc; i++){
     if(strcmp(argv[i], "-f")==0 && i < argc-1){
@@ -241,40 +239,14 @@ diff_cmd_line special_command_line(int argc, char *argv[]){
     else if(((strcmp(argv[i], "-Finput")==0)||(strcmp(argv[i], "-Sinput")==0)) && i < argc-1){
       values.is_list=true;
       if((strcmp(argv[i], "-Sinput")==0)) values.is_spect = true;
-      //Now hunt for next arg..., we assume no '-' starting filenames
+      //Now hunt for next arg..., we assume no '-' starting filenames. The filenames will be extracted later
       int tmp = i;
-      while(i<argc-1 && argv[i+1][0]!= '-') i++;
+      while(i<argc-1 && argv[i+1][0]!= '-' && argv[i+1][0]!=HANDLED_ARG[0]) i++;
       if(tmp -i >= 1 ) i--;
       //Go back one so that loop advance leaves us in correct place, but not if we didn't skip on at all or we'd infinite loop
-    }else if(strcmp(argv[i], "-om")==0 && i < argc-1){
-      values.fuzz = atoi(argv[i+1]);
-      i++;
+    }else if(!((strlen(argv[i]) > 0) && argv[i][0] == HANDLED_ARG[0])){
+      std::cout<<"UNKNOWN OPTION " <<argv[i]<<'\n';
     }
-    else if(strcmp(argv[i], "-n_ang")==0 && i < argc-1){
-      values.n_ang = atoi(argv[i+1]);
-      i++;
-    }
-    else if(strcmp(argv[i], "-wave")==0 && i < argc-1){
-      if(argv[i+1][0] == 'w' || argv[i+1][0] == 'W') values.wave=WAVE_WHISTLER;
-      else if(argv[i+1][0] == 'p' || argv[i+1][0] == 'P') values.wave=WAVE_PLASMA;
-      else if(argv[i+1][0] == 'o' || argv[i+1][0] == 'O') values.wave=WAVE_O;
-      i++;
-    }
-    else if(strcmp(argv[i], "-ang")==0 && i < argc-1 && !extr){
-      if(argv[i+1][0] == 'd' || argv[i+1][0] == 'D') values.ang=FUNCTION_DELTA;
-      else if(argv[i+1][0] == 'g' || argv[i+1][0] == 'G') values.ang=FUNCTION_GAUSS;
-      else if(argv[i+1][0] == 'i' || argv[i+1][0] == 'I') values.ang=FUNCTION_ISO;
-      i++;
-    }
-    else if(strcmp(argv[i], "-extr")==0){
-      values.ang = FUNCTION_NULL;
-      extr = true;
-      //This _overrides_ -ang
-    }
-    else if(strcmp(argv[i], "-smooth")==0 && i < argc-1){
-      values.smth = atoi(argv[i+1]);
-      i++;
-    }else my_error_print(std::string("UNKNOWN OPTION ")+argv[i]);
   }
   if(values.d[0] >MAX_SIZE){
     values.d[0] = MAX_SIZE;

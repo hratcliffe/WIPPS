@@ -107,6 +107,7 @@ public:
   bool generate_spectrum(data_array& parent, int om_fuzz=10, int angle_type=FUNCTION_DELTA, my_type std_dev = DEFAULT_SPECTRUM_ANG_STDDEV, data_array * mask=nullptr);
 
   void set_ids(float time1, float time2, int space1, int space2, int wave_id, char block_id[10], int function_type=FUNCTION_DELTA);
+  void set_extra_ids(int wave_id, int function_type=FUNCTION_DELTA);
   void copy_ids(const data_array & src);
   bool check_ids(const data_array & src)const;
   void copy_tags(const spectrum & src);
@@ -126,7 +127,7 @@ public:
 /********Spectrum operation helpers ****/
   bool calc_norm_B();
   bool calc_norm_g(size_t om_ind);
-  /** Get the normalising constant for B part of spectrum 
+  /** Get the normalising constant for B part of spectrum
   @return Current value of norm_B*/
   my_type get_norm_B(){return norm_B;}
   /** Get the normalising constant for g part of spectrum 

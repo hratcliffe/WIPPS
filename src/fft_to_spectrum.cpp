@@ -135,14 +135,14 @@ fft_spect_args fft_spect_process_command_line(int argc, char *argv[]){
   values.file_prefix = "./files/";
   values.file_in = "";
   values.file_out = "";
-  values.fuzz = 10;
-  values.smth = 0;
-  values.mask = false;
-  values.n_ang = DEFAULT_N_ANG;
-  values.wave = WAVE_WHISTLER;
-  values.ang = FUNCTION_DELTA;
-  
-  bool extr = false;
+ 
+  spect_args spec_vals = spect_process_command_line(argc, argv);
+  values.fuzz = spec_vals.fuzz;
+  values.smth = spec_vals.smth;
+  values.mask = spec_vals.mask;
+  values.n_ang = spec_vals.n_ang;
+  values.wave = spec_vals.wave;
+  values.ang = spec_vals.ang;
   
   for(int i=1; i< argc; i++){
     if(strcmp(argv[i], "-f")==0 && i < argc-1){
@@ -156,46 +156,13 @@ fft_spect_args fft_spect_process_command_line(int argc, char *argv[]){
     else if(strcmp(argv[i], "-out")==0 && i < argc-1){
       values.file_out = argv[i+1];
       i++;
-    }
-    else if(strcmp(argv[i], "-om")==0 && i < argc-1){
-      values.fuzz = atoi(argv[i+1]);
-      i++;
-    }
-    else if(strcmp(argv[i], "-n_ang")==0 && i < argc-1){
-      values.n_ang = atoi(argv[i+1]);
-      i++;
-    }
-    else if(strcmp(argv[i], "-wave")==0 && i < argc-1){
-      if(argv[i+1][0] == 'w' || argv[i+1][0] == 'W') values.wave=WAVE_WHISTLER;
-      else if(argv[i+1][0] == 'p' || argv[i+1][0] == 'P') values.wave=WAVE_PLASMA;
-      else if(argv[i+1][0] == 'o' || argv[i+1][0] == 'O') values.wave=WAVE_O;
-      i++;
-    }
-    else if(strcmp(argv[i], "-ang")==0 && i < argc-1 && !extr){
-      if(argv[i+1][0] == 'd' || argv[i+1][0] == 'D') values.ang=FUNCTION_DELTA;
-      else if(argv[i+1][0] == 'g' || argv[i+1][0] == 'G') values.ang=FUNCTION_GAUSS;
-      else if(argv[i+1][0] == 'i' || argv[i+1][0] == 'I') values.ang=FUNCTION_ISO;
-      i++;
-    }
-    else if(strcmp(argv[i], "-extr")==0){
-      values.ang = FUNCTION_NULL;
-      extr = true;
-      //This _overrides_ -ang
-    }
-    else if(strcmp(argv[i], "-mask")==0){
-      values.mask = true;
-    }
-    else if(strcmp(argv[i], "-smooth")==0 && i < argc-1){
-      values.smth = atoi(argv[i+1]);
-      i++;
-    }else{
+    }else if(!((strlen(argv[i]) > 0) && argv[i][0] == HANDLED_ARG[0])){
       std::cout<<"UNKNOWN OPTION " <<argv[i]<<'\n';
     }
   }
   if(values.file_out == "" && values.file_in != "") values.file_out = append_into_string(values.file_in, "_spectrum");
   //catch accidental overwriting request
   if(values.file_out == values.file_in) values.file_out = append_into_string(values.file_in, "_spectrum");
-  if(values.smth < 0) values.smth = 0;
   return values;
 
 }

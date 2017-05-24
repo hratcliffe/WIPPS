@@ -226,7 +226,7 @@ pro plot_growth_lin_scale, growths, colours=colours, outfile=outfile, zero_line=
 
 END
 
-pro plot_pancake_distribs, distribs, nrm=nrm, line_vals=line_vals, line_cols=line_cols, outfile=outfile, colorbar=colorbar,  _extra=_extra
+pro plot_pancake_distribs, distribs, nrm=nrm, line_vals=line_vals, line_cols=line_cols, outfile=outfile, colorbar=colorbar, smth=smth,  _extra=_extra
   ;Plot 4 time distributions with overlaid pancake lines
   common consts, q0, m0, v0, kb, mu0, epsilon0, h_planck
   common omega_share, om_ce, om_pe
@@ -250,7 +250,8 @@ pro plot_pancake_distribs, distribs, nrm=nrm, line_vals=line_vals, line_cols=lin
   FOR j =0, n_distribs-1 DO BEGIN
     ax_nrm = abs(distribs[j].axes.x[1]-distribs[j].axes.x[0])/m0*abs(distribs[j].axes.y[1]-distribs[j].axes.y[0])/m0
     IF( j EQ 0) THEN norm_to_one = max(distribs[j].data)
-    contour, alog10(distribs[j].data/norm_to_one), distribs[j].axes.x/m0/v0, distribs[j].axes.y/m0/v0, /iso, nlev=40, /fi, xrange=[-0.5, 0.5], yrange=[-0.6, 0.6], /xsty, /ysty, xtitle='p!Dx!N/(mc)', ytitle='p!Dy!N/(mc)', title='t = '+string(format='(f6.3)', distribs[j].time[0], /print)+' s', color=0, zrange=zran, /zsty, _extra=_extra
+    IF(KEYWORD_SET(smth)) THEN data = gauss_smooth(distribs[j].data, smth) ELSE data = distribs[j].data
+    contour, alog10(data/norm_to_one), distribs[j].axes.x/m0/v0, distribs[j].axes.y/m0/v0, /iso, nlev=40, /fi, xrange=[-0.5, 0.5], yrange=[-0.6, 0.6], /xsty, /ysty, xtitle='p!Dx!N/(mc)', ytitle='p!Dy!N/(mc)', title='t = '+string(format='(f6.3)', distribs[j].time[0], /print)+' s', color=0, zrange=zran, /zsty, _extra=_extra
     IF(add_lines && j GT 0) THEN BEGIN
       FOR i=0, n_lines -1 DO BEGIN
         line = pancake_curves(om_ce/om_pe, line_vals[i])

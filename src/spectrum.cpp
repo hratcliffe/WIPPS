@@ -332,8 +332,8 @@ bool spectrum::make_angle_distrib(my_type std_dev){
   
     for(size_t i=0; i<len; ++i) set_g_element(i,0.0);
     val = 1.0/(get_ang_axis_element(1)-get_ang_axis_element(0));
-    int zero = where(get_angle_axis(len), len, 0.0);
-    //Set_element checks bnds automagically
+    int zero = where_angle(0.0);
+    //Set_element checks bnds automatically
     set_g_element(zero, val);
 
   }else if(function_type == FUNCTION_GAUSS){
@@ -744,6 +744,20 @@ int spectrum::where_omega(my_type omega){
 
 }
 
+int spectrum::where_angle(my_type ang){
+/** \brief Find where angle axis exceeds ang
+*
+*Finds where spectrum angle exceeds the value of ang
+@param ang Value of ang to find
+@return Index where angle axis exceeds given value
+*/
+  int index;
+  size_t len;
+  const my_type * ang_axis = get_angle_axis(len);
+  index = where(ang_axis, len, ang);
+  return index;
+}
+
 my_type spectrum::get_omega(my_type k, int wave_type, bool deriv, my_type theta){
 /** \brief Gets omega for given k
 *
@@ -960,7 +974,7 @@ bool spectrum::truncate_x(my_type x_min, my_type x_max){
   om_len =  (g_is_angle_only? 1 : get_omega_length());
   
   if(x_min > TAN_MIN){
-    index = where(get_angle_axis(len), len, x_min);
+    index = where_angle(x_min);
     if(index != -1){
       for(size_t i=0; i< (size_t)index; i++){
         for(size_t j=0; j< om_len; j++){
@@ -971,7 +985,7 @@ bool spectrum::truncate_x(my_type x_min, my_type x_max){
   
   }
   if(x_max < TAN_MAX){
-    index = where(get_angle_axis(len), len, x_max);
+    index = where_angle(x_max);
     if(index != -1){
       for(size_t i=index; i< len; i++){
         for(size_t j=0; j< om_len; j++){

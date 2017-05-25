@@ -60,30 +60,26 @@ class spectrum{
 
 /******** Access helper functions ****/
   int where_omega(my_type omega);
+  int where_angle(my_type ang);
 
 /********Spectrum operation helpers ****/
   void convert_FFT_to_integral();
 
-/********Access wrappers ****/
-/** \ingroup spectAcc 
-*@{ */
-  /** \brief Get frequency axis 
+/********Private Access wrappers ****/
+  /** \brief Get frequency axis
   *
-  *NB do not muck with this pointer. It's provided for ease of using where but is a const my_type * for a reason
+  *This is provided for ease of use, but in almost all cases, the accessor functions or spectrum::where_omega(my_type) should be used
   @param[out] len Length of axis
   @return Pointer to omega axis 
-  \todo Remove
   */
   const my_type * get_omega_axis(size_t &len){return B_omega_array.get_axis(0, len);}
   /** \brief Get angle axis 
   *
-  *NB do not muck with this pointer. It's provided for ease of using where but is a const my_type * for a reason
+  *This is provided for ease of use, but in almost all cases, the accessor functions or spectrum::where_angle(my_type) should be used
   @param[out] len Length of axis
   @return Pointer to angle axis 
-  \todo Replace with where_angle function
   */
   const my_type * get_angle_axis(size_t &len){return g_angle_array.get_axis(1, len);}
-/** @} */
 
 public:
   enum class part{B, ang};

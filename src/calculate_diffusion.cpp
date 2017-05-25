@@ -82,6 +82,10 @@ int main(int argc, char *argv[]){
   if(cmd_line_args.is_list){
     per_proc = std::ceil( (float) cmd_line_args.file_list.size() / (float) mpi_info.n_procs);
   }
+  if(cmd_line_args.file_list.size() == 0){
+    my_error_print("ERROR: No input files given!");
+    exit(1);
+  }
 
   /* Get constants from deck and share to other procs*/
   if(mpi_info.rank == 0) get_deck_constants(cmd_line_args.file_prefix);
@@ -226,7 +230,8 @@ diff_cmd_line special_command_line(int argc, char *argv[]){
   values.ang = spec_vals.ang;
   values.ang_sd = spec_vals.ang_sd;
 
-  for(int i = 1; i < argc; i++){
+  int i = 1;
+  while(i < argc){
     if(strcmp(argv[i], "-f")==0 && i < argc-1){
       values.file_prefix = argv[i+1];
       i++;
@@ -256,6 +261,7 @@ diff_cmd_line special_command_line(int argc, char *argv[]){
     }else if(!((strlen(argv[i]) > 0) && argv[i][0] == HANDLED_ARG[0])){
       std::cout<<"UNKNOWN OPTION " <<argv[i]<<'\n';
     }
+    i++;
   }
   if(values.d[0] >MAX_SIZE){
     values.d[0] = MAX_SIZE;

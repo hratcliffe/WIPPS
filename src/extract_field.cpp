@@ -123,7 +123,8 @@ extractor_args extractor_process_command_line(int argc, char *argv[]){
   values.flat_dim = -1;
   values.file_out = "";
   
-  for(int i=1; i< argc; i++){
+  int i = 1;
+  while(i < argc){
     if(strcmp(argv[i], "-flatten")==0 && i < argc-1){
       values.flat_dim = atoi(argv[i+1]);
       strcpy(argv[i], HANDLED_ARG);
@@ -135,6 +136,7 @@ extractor_args extractor_process_command_line(int argc, char *argv[]){
       strcpy(argv[i+1], HANDLED_ARG);
       i++;
     }
+    i++;
   }
   
   return values;

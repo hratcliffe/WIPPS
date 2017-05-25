@@ -179,7 +179,8 @@ setup_args process_command_line(int argc, char *argv[]){
   values.file_prefix = "./files/";
   values.block = "ex";
 
-  for(int i=1; i< argc; i++){
+  int i = 1;
+  while(i < argc){
     if(strcmp(argv[i], "-f")==0 && i < argc-1){
       values.file_prefix = argv[i+1];
       i++;
@@ -232,6 +233,7 @@ setup_args process_command_line(int argc, char *argv[]){
     else if(!((strlen(argv[i]) > 0) && argv[i][0] == HANDLED_ARG[0])){
       my_print("UNKNOWN OPTION "+mk_str(argv[i]), 0);
     }
+    i++;
   }
 
   if(values.space[0] == -1 && values.space[1] == -1 && values.n_space == -1){
@@ -275,7 +277,8 @@ spect_args spect_process_command_line(int argc, char *argv[]){
   
   bool extr = false;
   
-  for(int i=1; i< argc; i++){
+  int i = 1;
+  while(i < argc){
     if(strcmp(argv[i], "-om")==0 && i < argc-1){
       values.fuzz = atoi(argv[i+1]);
       strcpy(argv[i], HANDLED_ARG);
@@ -324,6 +327,7 @@ spect_args spect_process_command_line(int argc, char *argv[]){
       strcpy(argv[i+1], HANDLED_ARG);
       i++;
     }
+    i++;
   }
   if(values.smth < 0) values.smth = 0;
   return values;
@@ -434,7 +438,8 @@ std::vector<std::string> process_filelist(int argc, char *argv[]){
 */
 
   std::vector<std::string> names;
-  for(int i=0; i< argc; i++){
+  int i = 1;
+  while(i < argc){
     if(((strcmp(argv[i], "-Finput")==0)||(strcmp(argv[i], "-Sinput")==0)) && i < argc-1){
       while(i<argc-1 && argv[i+1][0]!= '-' && argv[i+1][0] != HANDLED_ARG[0]){
         //Checks if next argument is a new flag
@@ -442,6 +447,7 @@ std::vector<std::string> process_filelist(int argc, char *argv[]){
         i++;
       }
     }
+    i++;
   }
   extract_space_part(names[0]);
 

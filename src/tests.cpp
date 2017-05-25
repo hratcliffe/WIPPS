@@ -72,7 +72,8 @@ void tests::set_runtime_flags(int argc, char *argv[]){
 
   std::string current_flag;
   int val = 0;
-  for(int i = 0; i < argc; i++){
+  int i = 1;
+  while(i < argc){
     current_flag = argv[i];
     if(argv[i][0] == '-') current_flag = current_flag.substr(1, current_flag.size());
     else continue;
@@ -82,6 +83,7 @@ void tests::set_runtime_flags(int argc, char *argv[]){
       i++;
     }
     runtime_flags[str_to_lower(current_flag)] = val;
+    i++;
   }
 }
 

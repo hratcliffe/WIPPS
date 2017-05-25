@@ -376,7 +376,8 @@ g_args g_command_line(int argc, char * argv[]){
   extra_cmd_line.spect_file = "";
   extra_cmd_line.outfile = "growth.dat";
   
-  for(int i=1; i< argc; i++){
+  int i = 1;
+  while(i < argc){
     if(strcmp(argv[i], "-s")==0 && i < argc-1){
       extra_cmd_line.spect_file = argv[i+1];
       extra_cmd_line.real = true;
@@ -390,6 +391,7 @@ g_args g_command_line(int argc, char * argv[]){
       strcpy(argv[i+1], HANDLED_ARG);
       i++;
     }
+    i++;
   }
   return extra_cmd_line;
 

@@ -113,7 +113,8 @@ cutout_args cutout_process_command_line(int argc, char *argv[]){
   values.file_in = "";
   values.file_out = "";
 
-  for(int i=1; i< argc; i++){
+  int i = 1;
+  while(i < argc){
     if(strcmp(argv[i], "-f")==0 && i < argc-1){
       values.file_prefix = argv[i+1];
       i++;
@@ -134,7 +135,7 @@ cutout_args cutout_process_command_line(int argc, char *argv[]){
       }
     }
     else std::cout<<"UNKNOWN OPTION " <<argv[i]<<'\n';
-
+    i++;
   }
   if(values.file_out == "" && values.file_in != "") values.file_out = append_into_string(values.file_in, "_trim");
   

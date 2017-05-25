@@ -103,7 +103,7 @@ int main(int argc, char *argv[]){
     contr.get_current_spectrum()->generate_spectrum(data_in, my_args.fuzz, my_args.ang, my_args.ang_sd);
   }
   //Do smoothing
-  if(my_args.smth >1) contr.get_current_spectrum()->smooth_B(my_args.smth);
+  if(my_args.smth > 1) contr.get_current_spectrum()->smooth_B(my_args.smth);
   //Write output
   std::fstream outfile;
   outfile.open(my_args.file_prefix+my_args.file_out, std::ios::binary|std::ios::out);
@@ -128,7 +128,6 @@ fft_spect_args fft_spect_process_command_line(int argc, char *argv[]){
 /** \brief Process special command line args
 *
 *Process the fft utility arguments. Expects full list and no more.
-\todo Change all command line loops to while, not for construct
 \todo Change to a protected integer conversion
 */
 
@@ -147,7 +146,8 @@ fft_spect_args fft_spect_process_command_line(int argc, char *argv[]){
   values.ang = spec_vals.ang;
   values.ang_sd = spec_vals.ang_sd;
   
-  for(int i=1; i< argc; i++){
+  int i = 1;
+  while(i < argc){
     if(strcmp(argv[i], "-f")==0 && i < argc-1){
       values.file_prefix = argv[i+1];
       i++;
@@ -162,6 +162,7 @@ fft_spect_args fft_spect_process_command_line(int argc, char *argv[]){
     }else if(!((strlen(argv[i]) > 0) && argv[i][0] == HANDLED_ARG[0])){
       std::cout<<"UNKNOWN OPTION " <<argv[i]<<'\n';
     }
+    i++;
   }
   if(values.file_out == "" && values.file_in != "") values.file_out = append_into_string(values.file_in, "_spectrum");
   //catch accidental overwriting request

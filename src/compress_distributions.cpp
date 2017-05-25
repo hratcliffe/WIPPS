@@ -145,7 +145,8 @@ dist_cmd_line special_command_line(int argc, char *argv[]){
   values.dump = 0;
   values.blocks = -1;
 
-  for(int i=1; i< argc; i++){
+  int i = 1;
+  while(i < argc){
     if(strcmp(argv[i], "-f")==0 && i < argc-1){
       values.file_prefix = argv[i+1];
       i++;
@@ -165,7 +166,7 @@ dist_cmd_line special_command_line(int argc, char *argv[]){
       i++;
     }
     else my_error_print(std::string("UNKNOWN OPTION ")+argv[i]);
-    
+    i++;
   }
   return values;
 }

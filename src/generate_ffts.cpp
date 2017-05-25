@@ -246,7 +246,8 @@ gen_cmd_line special_command_line(int argc, char *argv[]){
   values.flat_fft_min = 0.0;
   values.flat_fft_max = 0.0;
   
-  for(int i=1; i< argc; i++){
+  int i = 1;
+  while(i < argc){
     if(strcmp(argv[i], "-flat_dat")==0 && i < argc-1){
       values.flat_dim = atoi(argv[i+1]);
       strcpy(argv[i], HANDLED_ARG);
@@ -275,7 +276,7 @@ gen_cmd_line special_command_line(int argc, char *argv[]){
       strcpy(argv[i], HANDLED_ARG);
 
     }
-
+    i++;
   }
   
   return values;

@@ -22,7 +22,7 @@
 *Requires an input directory and an input fft'd data file. The output is either specified, or is the input file with _spectrum appended before the extension. The "wave" option specifies the wave mode by single-character key (w, p, o) and defaults to Whistler. A "fuzz" parameter controlling how tight a band around the dispersion curve can be supplied as a percentage, default is 10%. Spectra contain both frequency and angle data, the n_ang, ang and extra flags control this. FFTs may not stay compatible cross-code version, so we do a version check first.
 \verbinclude help_f.txt
 \author Heather Ratcliffe \date 12/08/2016
-\todo Allow std-dev to be set from cmd line
+\todo Add per-util target to makefile
 */
 
 const char PER_UTIL_HELP_ID = 'f';/**<ID to identify help file for this utility*/
@@ -34,6 +34,7 @@ struct fft_spect_args{
   int fuzz;/**<Fuzz for spectral cutout*/
   int smth;/**<Smoothing width for output spectrum*/
   size_t n_ang;/**<Number of angles for output spectrum*/
+  float ang_sd;/**< Width for angular function (if applicable)*/
   int wave;/**<Wave type ID (see support.h WAVE_* )*/
   int ang;/**< Angular function type (can be FUNCTION_NULL) */
   bool mask;/**< Flag to output spectrum extraction mask to file also*/
@@ -93,14 +94,13 @@ int main(int argc, char *argv[]){
   contr.set_plasma_B0(B_ref);
 
   data_array * mask;
-
   if(my_args.mask){
     //Mask requested, create array for it and call
     mask = new data_array();
     mask->clone_empty(data_in);
-    contr.get_current_spectrum()->generate_spectrum(data_in, my_args.fuzz, my_args.ang, DEFAULT_SPECTRUM_ANG_STDDEV, mask);
+    contr.get_current_spectrum()->generate_spectrum(data_in, my_args.fuzz, my_args.ang, my_args.ang_sd, mask);
   }else{
-    contr.get_current_spectrum()->generate_spectrum(data_in, my_args.fuzz, my_args.ang);
+    contr.get_current_spectrum()->generate_spectrum(data_in, my_args.fuzz, my_args.ang, my_args.ang_sd);
   }
   //Do smoothing
   if(my_args.smth >1) contr.get_current_spectrum()->smooth_B(my_args.smth);
@@ -128,6 +128,8 @@ fft_spect_args fft_spect_process_command_line(int argc, char *argv[]){
 /** \brief Process special command line args
 *
 *Process the fft utility arguments. Expects full list and no more.
+\todo Change all command line loops to while, not for construct
+\todo Change to a protected integer conversion
 */
 
   fft_spect_args values;
@@ -143,6 +145,7 @@ fft_spect_args fft_spect_process_command_line(int argc, char *argv[]){
   values.n_ang = spec_vals.n_ang;
   values.wave = spec_vals.wave;
   values.ang = spec_vals.ang;
+  values.ang_sd = spec_vals.ang_sd;
   
   for(int i=1; i< argc; i++){
     if(strcmp(argv[i], "-f")==0 && i < argc-1){

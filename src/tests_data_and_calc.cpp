@@ -651,7 +651,7 @@ int test_entity_spectrum::basic_tests2(){
   std::fstream outfile, infile;
   size_t len = 0;
   my_type total_error = 0.0;
-  test_contr->get_current_spectrum()->generate_spectrum(test_dat_fft ,10, FUNCTION_GAUSS);
+  test_contr->get_current_spectrum()->generate_spectrum(test_dat_fft ,10, FUNCTION_GAUSS, DEFAULT_SPECTRUM_ANG_STDDEV);
 
   test_spect = data_array(file_prefix + "spectrum.dat");
   if(test_spect.is_good()){
@@ -1073,7 +1073,7 @@ int test_entity_levelone::basic_tests(size_t n_dims_in, int flatten_on, bool has
 
   test_contr->set_plasma_B0(dat.B_ref);
   test_contr->add_spectrum(space_dim, DEFAULT_N_ANG, true);
-  test_contr->get_current_spectrum()->generate_spectrum(dat_fft);
+  test_contr->get_current_spectrum()->generate_spectrum(dat_fft, 10, FUNCTION_GAUSS, DEFAULT_SPECTRUM_ANG_STDDEV);
   
   n_dims = dat_fft.get_dims();
   //Set cutout limits on FFT

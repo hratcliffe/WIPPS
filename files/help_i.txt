@@ -14,6 +14,7 @@ If supplying FFTS with -Finput the following args can be given:
 -om <int> Percent "fuzz" around dispersion curve (default 10%)
 -n_ang <int> Number of angles to use (default set in support.h)
 -ang <int> Angular function to generate *D*elta, *G*auss, *I*so (default Delta) N-D data (N, space dims, >1) is then flattened in other dims
+-ang_w <float> Width of angular function (stddev for Gaussian, width for iso etc)
 -extr Extract angles from Data (N>1) only. Flatten data to 2 spatial dims and extract angular dependence. Overrides -ang
 -smooth <int> Smooth the intermediate B spectrum using this boxcar width
 

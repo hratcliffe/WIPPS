@@ -271,6 +271,7 @@ spect_args spect_process_command_line(int argc, char *argv[]){
   values.n_ang = DEFAULT_N_ANG;
   values.wave = WAVE_WHISTLER;
   values.ang = FUNCTION_DELTA;
+  values.ang_sd = DEFAULT_SPECTRUM_ANG_STDDEV;
   
   bool extr = false;
   
@@ -286,8 +287,12 @@ spect_args spect_process_command_line(int argc, char *argv[]){
       strcpy(argv[i], HANDLED_ARG);
       strcpy(argv[i+1], HANDLED_ARG);
       i++;
-    }
-    else if(strcmp(argv[i], "-wave")==0 && i < argc-1){
+    }else if(strcmp(argv[i], "-ang_w")==0 && i < argc-1){
+      values.ang_sd = atof(argv[i+1]);
+      strcpy(argv[i], HANDLED_ARG);
+      strcpy(argv[i+1], HANDLED_ARG);
+      i++;
+    }else if(strcmp(argv[i], "-wave")==0 && i < argc-1){
       if(argv[i+1][0] == 'w' || argv[i+1][0] == 'W') values.wave=WAVE_WHISTLER;
       else if(argv[i+1][0] == 'p' || argv[i+1][0] == 'P') values.wave=WAVE_PLASMA;
       else if(argv[i+1][0] == 'o' || argv[i+1][0] == 'O') values.wave=WAVE_O;

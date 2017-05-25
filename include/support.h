@@ -194,6 +194,7 @@ struct spect_args{
   size_t n_ang;/**<Number of angles for output spectrum*/
   int wave;/**<Wave type ID (see support.h WAVE_* )*/
   int ang;/**< Angular function type (can be FUNCTION_NULL) */
+  float ang_sd;/**< Width for angular function (if applicable)*/
   bool mask;/**< Flag to output spectrum extraction mask to file also*/
 };
 

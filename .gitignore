@@ -12,6 +12,7 @@ calculate_diffusion
 FFT_to_spectrum
 compress_distributions
 calculate_growth
+extract_field
 *.txt
 Derivations.*
 *.dat

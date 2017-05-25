@@ -46,6 +46,7 @@ struct diff_cmd_line{
   size_t n_ang;/**<Number of angles for output spectrum*/
   int wave;/**<Wave type ID (see support.h WAVE_* )*/
   int ang;/**< Angular function type (can be FUNCTION_NULL) */
+  float ang_sd;/**< Width for angular function (if applicable)*/
 };/**< \brief Command line arguments for diffusion calculation utility*/
 
 diff_cmd_line special_command_line(int argc, char *argv[]);
@@ -138,7 +139,7 @@ int main(int argc, char *argv[]){
         if(dat_fft.get_dims() == 3 && cmd_line_args.ang != FUNCTION_NULL){
           dat_fft = dat_fft.total(1);
         }
-        contr.get_current_spectrum()->generate_spectrum(dat_fft, cmd_line_args.fuzz, cmd_line_args.ang);
+        contr.get_current_spectrum()->generate_spectrum(dat_fft, cmd_line_args.fuzz, cmd_line_args.ang, cmd_line_args.ang_sd);
       }else{
         //Read spectrum file
         err = contr.add_spectrum(filename);
@@ -207,7 +208,7 @@ diff_cmd_line special_command_line(int argc, char *argv[]){
 */
 
   diff_cmd_line values;
-  //Default values
+  //Default values for args not inherited from spec_process
   values.file_prefix = "./files/";
   values.ref = 0;
   values.ref_name = "";
@@ -223,6 +224,7 @@ diff_cmd_line special_command_line(int argc, char *argv[]){
   values.n_ang = spec_vals.n_ang;
   values.wave = spec_vals.wave;
   values.ang = spec_vals.ang;
+  values.ang_sd = spec_vals.ang_sd;
 
   for(int i = 1; i < argc; i++){
     if(strcmp(argv[i], "-f")==0 && i < argc-1){

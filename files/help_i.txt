@@ -3,6 +3,8 @@ Command line options:
 -f <string> Prefix for all input files, including directory
 -d <int int> Dimension of D to generate
 -ref <int/string> EITHER a reference SDF file number (default 0) giving an sdf file containing Bx data or a WIPPS filename default (Bx) containing an array of Bx data. -f argument is prepended as usual
+-om_lims <float float> Limits of omega/omega_ce to truncate spectrum before calculation
+-ang_lims <float float> Limits of tan(theta) to truncate spectrum before calculation
 
 Supply one and only one of:
 -Finput <string ...> Start from [list of] FFT files

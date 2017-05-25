@@ -47,6 +47,8 @@ struct diff_cmd_line{
   int wave;/**<Wave type ID (see support.h WAVE_* )*/
   int ang;/**< Angular function type (can be FUNCTION_NULL) */
   float ang_sd;/**< Width for angular function (if applicable)*/
+  std::vector<float> ang_lims;/**<Truncation limits for angle*/
+  std::vector<float> om_lims;/**<Truncation limits for omega*/
 };/**< \brief Command line arguments for diffusion calculation utility*/
 
 diff_cmd_line special_command_line(int argc, char *argv[]);
@@ -158,11 +160,17 @@ int main(int argc, char *argv[]){
         spec_norm *= spec_norm;
       }
       calc_type om_ce = contr.get_plasma().get_omega_ref("ce");
-    /** \todo Add truncation limits from cmd line */
+
       if(spec_norm > 0){
         contr.get_current_spectrum()->apply(spectrum::part::B, divide, spec_norm);
       }else{
         my_error_print("Erroneous spectrum normalisation constant. Proceeeding unnormalised");
+      }
+      if(cmd_line_args.om_lims.size() > 1){
+        contr.get_current_spectrum()->truncate_om(cmd_line_args.om_lims[0]*om_ce, cmd_line_args.om_lims[1]*om_ce);
+      }
+      if(cmd_line_args.ang_lims.size() > 1){
+        contr.get_current_spectrum()->truncate_x(cmd_line_args.ang_lims[0], cmd_line_args.ang_lims[1]);
       }
     }else{
       continue;
@@ -258,6 +266,14 @@ diff_cmd_line special_command_line(int argc, char *argv[]){
       while(i<argc-1 && argv[i+1][0]!= '-' && argv[i+1][0]!=HANDLED_ARG[0]) i++;
       if(tmp -i >= 1 ) i--;
       //Go back one so that loop advance leaves us in correct place, but not if we didn't skip on at all or we'd infinite loop
+    }else if((strcmp(argv[i], "-om_lims")==0) && i < argc-2){
+        values.om_lims.push_back(atof(argv[i+1]));
+        values.om_lims.push_back(atof(argv[i+2]));
+        i += 2;
+    }else if((strcmp(argv[i], "-ang_lims")==0) && i < argc-2){
+        values.ang_lims.push_back(atof(argv[i+1]));
+        values.ang_lims.push_back(atof(argv[i+2]));
+        i += 2;
     }else if(!((strlen(argv[i]) > 0) && argv[i][0] == HANDLED_ARG[0])){
       std::cout<<"UNKNOWN OPTION " <<argv[i]<<'\n';
     }

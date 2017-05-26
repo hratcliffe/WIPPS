@@ -623,7 +623,6 @@ int test_entity_get_and_fft::run(){
 *
 *Reads a test sdf file, stores into data array and runs fft. Test data should be a sine curve with one major frequency which is then checked. Note frequency is hard coded to match that produced by ./files/sin.deck
 @return Error code
-\todo Diagnose segfault in one_d when block is not found in file
 */
 
   int err = TEST_PASSED;
@@ -656,8 +655,13 @@ int test_entity_get_and_fft::one_d(){
   //Get the dimensions from file
   size_t n_dims;
   std::vector<size_t> dims;
-  test_rdr->read_dims(n_dims, dims);
+  bool rd_err = test_rdr->read_dims(n_dims, dims);
 
+  if(rd_err){
+    err |= TEST_ASSERT_FAIL;
+    test_bed->report_info("Error reading file or block", 1);
+    return err;
+  }
   space_in[1] = dims[0];
 
   if(n_dims != 1){
@@ -765,8 +769,13 @@ int test_entity_get_and_fft::two_d(){
 
   size_t n_dims;
   std::vector<size_t> dims;
-  test_rdr->read_dims(n_dims, dims);
+  bool rd_err = test_rdr->read_dims(n_dims, dims);
 
+  if(rd_err){
+    err |= TEST_ASSERT_FAIL;
+    test_bed->report_info("Error reading file or block", 1);
+    return err;
+  }
   space_in[1] = dims[0];
   int space_size = space_in[1]-space_in[0];
   //This is accumulated data and time dim is omitted by get_dims

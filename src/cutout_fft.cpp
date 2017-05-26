@@ -130,11 +130,11 @@ cutout_args cutout_process_command_line(int argc, char *argv[]){
     else if(strcmp(argv[i], "-lims")==0 && i < argc-1){
       while(i<argc-1 && (argv[i+1][0]!= '-'  || ((argv[i+1][1] >='0' && argv[i+1][1] <='9') || argv[i+1][1] =='.'))){
         //Checks if next argument is a new flag, but allows negative numbers
-        values.limits.push_back(atof(argv[i+1]));
+        values.limits.push_back(checked_strtof(argv[i+1]));
         i++;
       }
     }
-    else std::cout<<"UNKNOWN OPTION " <<argv[i]<<'\n';
+    else my_error_print(std::string("UNKNOWN OPTION ")+argv[i]);
     i++;
   }
   if(values.file_out == "" && values.file_in != "") values.file_out = append_into_string(values.file_in, "_trim");

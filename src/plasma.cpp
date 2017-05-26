@@ -102,24 +102,28 @@ On error we continue using defaults set below
       if(!parse_err){
         name = str_to_lower(name);
         if(name == "mass" && val.find('*') == std::string::npos){
-          pmass[block_num] = atof(val.c_str());
+          pmass[block_num] = checked_strtof(val.c_str());
         }else if(name == "mass"){
           //Find which mass is relative to
           pos = val.find('*');
-          tail = val.substr(pos+1, val.size());
-          head = val.substr(0, pos);
-          trim_string(tail);
-          tail = str_to_lower(tail);
-          trim_string(head);
-          if(tail == "me") pmass[block_num] = atof(val.c_str())* me;
-          else if(tail == "mp") pmass[block_num] = atof(val.c_str())* mp;
-        
+          if(pos != std::string::npos){
+            tail = val.substr(pos+1, val.size());
+            head = val.substr(0, pos);
+            trim_string(tail);
+            tail = str_to_lower(tail);
+            trim_string(head);
+            val[pos] = 0;
+          }
+          if(tail == "me") pmass[block_num] = checked_strtof(val.c_str())* me;
+          else if(tail == "mp") pmass[block_num] = checked_strtof(val.c_str())* mp;
+          else pmass[block_num] = checked_strtof(val.c_str());
+          
         }else if(name == "charge"){
-          pcharge[block_num] = atof(val.c_str()) * q0;
+          pcharge[block_num] = checked_strtof(val.c_str()) * q0;
         }else if(name == "dens"){
-          pdens[block_num] = atof(val.c_str()) * ref_dens;
+          pdens[block_num] = checked_strtof(val.c_str()) * ref_dens;
         }else if(name == "v_th"){
-          pvth[block_num] = atof(val.c_str())*v0;
+          pvth[block_num] = checked_strtof(val.c_str())*v0;
         }
       }
     }

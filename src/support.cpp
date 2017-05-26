@@ -14,7 +14,6 @@
 #include <map>
 #include <cstdlib>
 #include <regex>
-
 #include "support.h"
 #include "data_array.h"
 #include "reader.h"
@@ -142,7 +141,7 @@ void get_deck_constants(std::string file_prefix){
 
     parse_err = parse_name_val(lines[i], name, val);
     if(parse_err) continue;
-    val_f = atof(val.c_str());
+    val_f = checked_strtof(val.c_str());
   
     if(name == OMEGA_CE) my_const.omega_ce = val_f;
     else if(name == OMEGA_PE) my_const.omega_pe = val_f;
@@ -186,24 +185,24 @@ setup_args process_command_line(int argc, char *argv[]){
       i++;
     }
     else if(strcmp(argv[i], "-start")==0 && i < argc-1){
-      if(atoi(argv[i+1]) >= 0){
-        values.time[0] = atoi(argv[i+1]);
+      if(checked_strtol(argv[i+1], true) >= 0){
+        values.time[0] = checked_strtol(argv[i+1]);
       }else{
         my_error_print("Start cannot be negative!!!!!!");
       }
       i++;
     }
     else if(strcmp(argv[i], "-end")==0 && i < argc-1){
-      if(atoi(argv[i+1]) >= 0){
-        values.time[1] = atoi(argv[i+1]);
+      if(checked_strtol(argv[i+1], true) >= 0){
+        values.time[1] = checked_strtol(argv[i+1]);
       }else{
         my_error_print("End cannot be negative!!!!!");
       }
       i++;
     }
     else if(strcmp(argv[i], "-rows")==0 && i < argc-1){
-      if(atoi(argv[i+1]) >= 0){
-        values.time[2] = atoi(argv[i+1]);
+      if(checked_strtol(argv[i+1], true) >= 0){
+        values.time[2] = checked_strtol(argv[i+1]);
       }else{
         my_error_print("Rows cannot be negative!!!!!");
       }
@@ -214,24 +213,24 @@ setup_args process_command_line(int argc, char *argv[]){
       i++;
     }
     else if(strcmp(argv[i], "-n")==0 && i < argc-1){
-      if(atoi(argv[i+1]) >= 0){
-        values.n_space = atoi(argv[i+1]);
+      if(checked_strtol(argv[i+1], true) >= 0){
+        values.n_space = checked_strtol(argv[i+1]);
       }else{
         my_error_print("N cannot be negative!!!!!");
       }
       i++;
     }
     else if(strcmp(argv[i], "-space")==0 && i < argc-2){
-      if(atoi(argv[i+1]) >= 0 && atoi(argv[i+2]) >= 0){
-        values.space[0] = atoi(argv[i+1]);
-        values.space[1] = atoi(argv[i+2]);
+      if(checked_strtol(argv[i+1], true) >= 0 && checked_strtol(argv[i+2], true) >= 0){
+        values.space[0] = checked_strtol(argv[i+1]);
+        values.space[1] = checked_strtol(argv[i+2]);
       }else{
         my_error_print("Space cannot be negative!!!!!");
       }
       i+=2;
     }
     else if(!((strlen(argv[i]) > 0) && argv[i][0] == HANDLED_ARG[0])){
-      my_print("UNKNOWN OPTION "+mk_str(argv[i]), 0);
+      my_error_print("UNKNOWN OPTION "+mk_str(argv[i]), 0);
     }
     i++;
   }
@@ -280,18 +279,18 @@ spect_args spect_process_command_line(int argc, char *argv[]){
   int i = 1;
   while(i < argc){
     if(strcmp(argv[i], "-om")==0 && i < argc-1){
-      values.fuzz = atoi(argv[i+1]);
+      values.fuzz = checked_strtol(argv[i+1]);
       strcpy(argv[i], HANDLED_ARG);
       strcpy(argv[i+1], HANDLED_ARG);
       i++;
     }
     else if(strcmp(argv[i], "-n_ang")==0 && i < argc-1){
-      values.n_ang = atoi(argv[i+1]);
+      values.n_ang = checked_strtol(argv[i+1]);
       strcpy(argv[i], HANDLED_ARG);
       strcpy(argv[i+1], HANDLED_ARG);
       i++;
     }else if(strcmp(argv[i], "-ang_w")==0 && i < argc-1){
-      values.ang_sd = atof(argv[i+1]);
+      values.ang_sd = checked_strtof(argv[i+1]);
       strcpy(argv[i], HANDLED_ARG);
       strcpy(argv[i+1], HANDLED_ARG);
       i++;
@@ -322,7 +321,7 @@ spect_args spect_process_command_line(int argc, char *argv[]){
       strcpy(argv[i], HANDLED_ARG);
     }
     else if(strcmp(argv[i], "-smooth")==0 && i < argc-1){
-      values.smth = atoi(argv[i+1]);
+      values.smth = checked_strtol(argv[i+1]);
       strcpy(argv[i], HANDLED_ARG);
       strcpy(argv[i+1], HANDLED_ARG);
       i++;
@@ -411,8 +410,8 @@ std::pair<int, int> extract_space_part(std::string name){
   posb = name.find_last_of('_');
   posa = (name.substr(0, posb)).find_last_of('_');
   posc = name.find_last_of('.');
-  space0 = atoi((name.substr(posa+1, posb-posa-1)).c_str());
-  space1 = atoi((name.substr(posb+1, name.size()-posc)).c_str());
+  space0 = checked_strtol((name.substr(posa+1, posb-posa-1)).c_str(), true);
+  space1 = checked_strtol((name.substr(posb+1, name.size()-posc)).c_str(), true);
   return std::make_pair(space0, space1);
 }
 
@@ -427,7 +426,7 @@ int extract_num_time_part(std::string name){
   posa = (name.substr(0, posb)).find_last_of('_');
   posb = (name.substr(0, posa)).find_last_of('_');
 
-  return atoi((name.substr(posb+1, posb-posa-1)).c_str());
+  return checked_strtol((name.substr(posb+1, posb-posa-1)).c_str(), true);
 }
 
 std::vector<std::string> process_filelist(int argc, char *argv[]){
@@ -810,6 +809,33 @@ void trim_string(std::string &str, char ch){
   if(str.find_first_not_of(ch) !=std::string::npos) tmp = str.substr(0, str.find_last_not_of(ch)+1);
   str=tmp;
 
+}
+
+long checked_strtol(const char * str, bool quiet){
+/** \brief Convert c-string to long
+*
+* Converts c_str to long and reports out-of-range or erroneous characters
+*/
+  char * end;
+  long value = strtol(str, &end, 10);
+  if(!quiet){
+    size_t str_end = strlen(str);
+    if(str+str_end != end) my_print("WARNING: extra characters in number string "+std::string(str));
+  }
+  return value;
+}
+float checked_strtof(const char * str, bool quiet){
+/** \brief Convert c-string to float
+*
+* Converts c_str to float and reports out-of-range or erroneous characters
+*/
+  char * end;
+  float value = strtof(str, &end);
+  if(!quiet){
+    size_t str_end = strlen(str);
+    if(str+str_end != end) my_print("WARNING: extra characters in number string "+std::string(str));
+  }
+  return value;
 }
 
 std::string replace_char(std::string str_in, char ch, char repl){

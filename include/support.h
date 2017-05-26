@@ -286,6 +286,8 @@ std::string mk_str(float i, bool noexp=0);/**<Converts float to string*/
 std::string mk_str(long double i, bool noexp=0);/**<Converts long double to string*/
 std::string mk_str(char * str);/**<Convert C string to std::string*/
 void trim_string(std::string &str, char ch=' '); /**< Trim all leading/trailing ch's from str*/
+long checked_strtol(const char * str, bool quiet=false);
+float checked_strtof(const char * str, bool quiet=false);
 std::string replace_char(std::string str_in, char ch, char repl);/**<Replace all occurences of character ch in string*/
 std::string append_into_string(const std::string &in, const std::string &infix);
 bool parse_name_val(std::string in, std::string &name, std::string &val);

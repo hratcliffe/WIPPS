@@ -245,16 +245,16 @@ diff_cmd_line special_command_line(int argc, char *argv[]){
       i++;
     }
     else if(strcmp(argv[i], "-d")==0 && i < argc-2){
-      if(atoi(argv[i+1]) >= 0 && atoi(argv[i+2]) >= 0){
-        values.d[0] = atoi(argv[i+1]);
-        values.d[1] = atoi(argv[i+2]);
+      if(checked_strtol(argv[i+1], true) >= 0 && checked_strtol(argv[i+2], true) >= 0){
+        values.d[0] = checked_strtol(argv[i+1]);
+        values.d[1] = checked_strtol(argv[i+2]);
       }else{
         my_error_print("D not an integer or is negative!");
       }
       i+=2;
     }
     else if(strcmp(argv[i], "-ref")==0 && i < argc-1){
-      if(is_filenumber(argv[i+1])) values.ref = atoi(argv[i+1]);
+      if(is_filenumber(argv[i+1])) values.ref = checked_strtol(argv[i+1]);
       else values.ref_name = argv[i+1];
       i++;
     }
@@ -267,15 +267,15 @@ diff_cmd_line special_command_line(int argc, char *argv[]){
       if(tmp -i >= 1 ) i--;
       //Go back one so that loop advance leaves us in correct place, but not if we didn't skip on at all or we'd infinite loop
     }else if((strcmp(argv[i], "-om_lims")==0) && i < argc-2){
-        values.om_lims.push_back(atof(argv[i+1]));
-        values.om_lims.push_back(atof(argv[i+2]));
+        values.om_lims.push_back(checked_strtof(argv[i+1]));
+        values.om_lims.push_back(checked_strtof(argv[i+2]));
         i += 2;
     }else if((strcmp(argv[i], "-ang_lims")==0) && i < argc-2){
-        values.ang_lims.push_back(atof(argv[i+1]));
-        values.ang_lims.push_back(atof(argv[i+2]));
+        values.ang_lims.push_back(checked_strtof(argv[i+1]));
+        values.ang_lims.push_back(checked_strtof(argv[i+2]));
         i += 2;
     }else if(!((strlen(argv[i]) > 0) && argv[i][0] == HANDLED_ARG[0])){
-      std::cout<<"UNKNOWN OPTION " <<argv[i]<<'\n';
+      my_error_print(std::string("UNKNOWN OPTION ")+argv[i]);
     }
     i++;
   }

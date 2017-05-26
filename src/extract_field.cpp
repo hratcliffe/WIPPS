@@ -126,7 +126,7 @@ extractor_args extractor_process_command_line(int argc, char *argv[]){
   int i = 1;
   while(i < argc){
     if(strcmp(argv[i], "-flatten")==0 && i < argc-1){
-      values.flat_dim = atoi(argv[i+1]);
+      values.flat_dim = checked_strtol(argv[i+1]);
       strcpy(argv[i], HANDLED_ARG);
       strcpy(argv[i+1], HANDLED_ARG);
       i++;

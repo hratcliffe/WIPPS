@@ -79,7 +79,7 @@ void tests::set_runtime_flags(int argc, char *argv[]){
     else continue;
     val = 0;
     if(i < argc-1 && (argv[i+1][0] != '-'  || (argv[i+1][1] >='0' && argv[i+1][1] <='9'))){
-      val = atoi(argv[i+1]);
+      val = checked_strtol(argv[i+1]);
       i++;
     }
     runtime_flags[str_to_lower(current_flag)] = val;

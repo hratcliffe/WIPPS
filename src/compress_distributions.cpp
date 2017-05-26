@@ -158,11 +158,11 @@ dist_cmd_line special_command_line(int argc, char *argv[]){
       values.blocks = 0;
     }
     else if(strcmp(argv[i], "-dump")==0 && i < argc-1){
-      values.dump= atoi(argv[i+1]);
+      values.dump= checked_strtol(argv[i+1]);
       i++;
     }
     else if(strcmp(argv[i], "-x_blocks")==0 && i < argc-1){
-      values.blocks= atoi(argv[i+1]);
+      values.blocks= checked_strtol(argv[i+1]);
       i++;
     }
     else my_error_print(std::string("UNKNOWN OPTION ")+argv[i]);

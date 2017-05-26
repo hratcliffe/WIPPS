@@ -128,7 +128,6 @@ fft_spect_args fft_spect_process_command_line(int argc, char *argv[]){
 /** \brief Process special command line args
 *
 *Process the fft utility arguments. Expects full list and no more.
-\todo Change to a protected integer conversion
 */
 
   fft_spect_args values;
@@ -160,7 +159,7 @@ fft_spect_args fft_spect_process_command_line(int argc, char *argv[]){
       values.file_out = argv[i+1];
       i++;
     }else if(!((strlen(argv[i]) > 0) && argv[i][0] == HANDLED_ARG[0])){
-      std::cout<<"UNKNOWN OPTION " <<argv[i]<<'\n';
+      my_error_print(std::string("UNKNOWN OPTION ")+argv[i]);
     }
     i++;
   }

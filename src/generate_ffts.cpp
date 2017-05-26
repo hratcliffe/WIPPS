@@ -249,16 +249,16 @@ gen_cmd_line special_command_line(int argc, char *argv[]){
   int i = 1;
   while(i < argc){
     if(strcmp(argv[i], "-flat_dat")==0 && i < argc-1){
-      values.flat_dim = atoi(argv[i+1]);
+      values.flat_dim = checked_strtol(argv[i+1]);
       strcpy(argv[i], HANDLED_ARG);
       strcpy(argv[i+1], HANDLED_ARG);
       i++;
     }
     else if(strcmp(argv[i], "-flat_fft")==0  && i < argc-3){
-      values.flat_dim = atoi(argv[i+1]);
+      values.flat_dim = checked_strtol(argv[i+1]);
       values.flat_fft = true;
-      values.flat_fft_min = atof(argv[i+2]);
-      values.flat_fft_max = atof(argv[i+3]);
+      values.flat_fft_min = checked_strtof(argv[i+2]);
+      values.flat_fft_max = checked_strtof(argv[i+3]);
       strcpy(argv[i], HANDLED_ARG);
       strcpy(argv[i+1], HANDLED_ARG);
       strcpy(argv[i+2], HANDLED_ARG);
@@ -269,7 +269,7 @@ gen_cmd_line special_command_line(int argc, char *argv[]){
     else if(strcmp(argv[i], "-lims")==0 && i < argc-1){
       while(i<argc-1 && (argv[i+1][0]!= '-'  || ((argv[i+1][1] >='0' && argv[i+1][1] <='9') || argv[i+1][1] =='.'))){
         //Checks if next argument is a new flag, but allows negative numbers
-        values.limits.push_back(atof(argv[i+1]));
+        values.limits.push_back(checked_strtof(argv[i+1]));
         strcpy(argv[i], HANDLED_ARG);
         i++;
       }

@@ -54,7 +54,7 @@ bool non_thermal::configure_from_file(std::string file_prefix){
     if(!(strcmp(line.substr(0, CONSTANTS_END.size()).c_str(), CONSTANTS_END.c_str()))) break;
     parse_err = parse_name_val(line, name, val);
     if(parse_err) continue;
-    val_f = atof(val.c_str());
+    val_f = checked_strtof(val.c_str());
     parameters[name] = val_f;
   }
   infile.close();
@@ -157,7 +157,7 @@ bool non_thermal::configure_from_file(std::string file_prefix){
         parse_err = parse_name_val(line, name, val);
         if(!parse_err){
           name = str_to_lower(name);
-          if(name =="ncomps") ncomps = atoi(val.c_str());
+          if(name =="ncomps") ncomps = checked_strtol(val.c_str());
           else if(name =="nonrely"){
             if(val.size() >0 && val[0] == '1'){
               this->norely=1;

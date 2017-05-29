@@ -174,8 +174,14 @@ int reader::get_file_size(){
 /********Block manipulators ****/
 
 bool reader::change_block_id(std::string new_id){
-
-  if(is_field_block(new_id)){
+/** \brief  Change block id
+*
+*Change block id to new string
+@param new_id New id to set to
+@return Boolean true if value valid and set, false else
+*/
+  //We don't want to actually restrict to field blocks only, but we might want to allow only field or distribs if we can.
+  if(is_field_block(new_id) || true){
     strncpy(this->block_id, new_id.c_str(), ID_SIZE);
     return true;
   }else{

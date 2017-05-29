@@ -498,7 +498,6 @@ my_type get_ref_Bx(std::string file_prefix, size_t space_in[2], size_t time_0){
 @param file_prefix File path
 @param space_in Limits on x-dimension to slice out
 @param time_0 The dump time to read
-@param is_acc Whether these files use the accumulation extension to EPOCH
 @return Average bx over specified space range at given time
 */
   data_array bx = get_Bx(file_prefix, space_in, time_0);
@@ -511,7 +510,6 @@ data_array get_Bx(std::string file_prefix, size_t space_in[2], size_t time_0){
 @param file_prefix File path
 @param space_in Limits on x-dimension to slice out
 @param time_0 The dump time to read
-@param is_acc Whether these files use the accumulation extension to EPOCH
 @return data_array containing bx data
 \ext Add 3-D space handling!
 */

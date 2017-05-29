@@ -40,7 +40,7 @@ struct diff_cmd_line{
   bool is_spect;/**< Use spectrum list*/
   size_t ref;/**< Reference sdf file number to get Bx info from*/
   std::string ref_name;/**< Reference file name to use for Bx info*/
-  std::vector<std::string> file_list;
+  std::vector<std::string> file_list;/**< List of filenames to read */
   int fuzz;/**<Fuzz for spectral cutout*/
   int smth;/**<Smoothing width for output spectrum*/
   size_t n_ang;/**<Number of angles for output spectrum*/
@@ -205,6 +205,12 @@ int main(int argc, char *argv[]){
 }
 
 bool is_filenumber(char * str){
+/** \brief Check string is valid filenumber
+*
+*Checks string contains only digits, as filenumbers can't be negative or floats
+@param str String to check
+@return Boolean true if valid, false else
+*/
 //Filenumber would be positive int without any leading spaces
 
   for(size_t i=0; i< strlen(str); i++){

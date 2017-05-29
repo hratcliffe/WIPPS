@@ -82,6 +82,7 @@ class spectrum{
   const my_type * get_angle_axis(size_t &len){return g_angle_array.get_axis(1, len);}
 
 public:
+  /** Identifier for parts of spectrum, B^2(omega) or g(omega, angle)*/
   enum class part{B, ang};
   char block_id[ID_SIZE]; /**< The field name id from SDF file*/
   my_type time[2];/**< Time range over which data are taken*/
@@ -138,7 +139,10 @@ public:
 
   void apply(spectrum::part subarr, std::function<my_type(my_type arg)> func);
   void apply(spectrum::part subarr, std::function<my_type(my_type arg, my_type arg2)> func, my_type arg);
-  
+  /** \brief Re-do normalising of spectrum
+  *
+  * Recalculate norm_B and norm_g and some other stored norm data
+  */
   void renormalise(){this->init();}
   
 /********File IO ****/

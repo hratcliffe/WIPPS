@@ -698,6 +698,11 @@ int test_entity_spectrum::basic_tests2(){
 }
 
 void test_entity_spectrum::set_vals(spectrum& spect){
+/** \brief Set B and g to sample vals
+*
+* Sets B and g (assuming angle-is-function) to distinguishable vals
+@param spect Spectrum to set values of
+*/
 
   if(!spect.get_g_is_angle_only()) return;
 
@@ -1352,7 +1357,14 @@ int test_entity_d::full_D_tests(){
 }
 
 data_array test_entity_d::read_padie_data(bool single_n, int n, bool use_d_pp){
-
+/** \brief Read reference data
+*
+* Read data from reference PADIE output files into a new data array
+@param single_n Read data for a single resonance
+@param n The resonant n to read if single_n set
+@param use_d_pp Return d_pp data rather than d_alpha alpha
+@return New data array containing reference data
+*/
   std::string padie_dir = "./files/PadieTestData/";
   std::string filestart = "Data";
   std::string fileend = "", filename;

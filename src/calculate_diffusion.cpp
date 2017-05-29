@@ -62,6 +62,7 @@ bool is_filenumber(char * str);
   @return System error code */
 
 int main(int argc, char *argv[]){
+/** \todo Create a skeleton utility as example for making a new one*/
 
   bool err;
   size_t per_proc = 1;
@@ -108,7 +109,7 @@ int main(int argc, char *argv[]){
     Bx = data_array(cmd_line_args.file_prefix +cmd_line_args.ref_name);
   }
 
-  controller contr = controller(cmd_line_args.file_prefix);
+  controller contr(cmd_line_args.file_prefix);
 
   //---------------- Now we loop over blocks per proc-------
   for(size_t block_num = 0; block_num < per_proc; block_num++){

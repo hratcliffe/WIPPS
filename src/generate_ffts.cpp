@@ -82,12 +82,8 @@ int main(int argc, char *argv[]){
   my_print("Processing "+mk_str(cmd_line_args.per_proc)+" blocks per core", mpi_info.rank);
   my_print("Input "+cmd_line_args.file_prefix, mpi_info.rank);
 
-//  char block_id[ID_SIZE];
-//  strcpy(block_id, cmd_line_args.block.c_str());
-
-/** \todo Refactor to reader not reader* */
-  reader * my_reader = new reader(cmd_line_args.file_prefix, cmd_line_args.block,cmd_line_args.time[0]);
-  if(my_reader->current_block_is_accum()) cmd_line_args.use_row_time = true;
+  reader my_reader = reader(cmd_line_args.file_prefix, cmd_line_args.block,cmd_line_args.time[0]);
+  if(my_reader.current_block_is_accum()) cmd_line_args.use_row_time = true;
 
   //Get all dimensions
   int n_tims;
@@ -102,7 +98,7 @@ int main(int argc, char *argv[]){
 
   size_t n_dims;
   std::vector<size_t> dims;
-  err = my_reader->read_dims(n_dims, dims);
+  err = my_reader.read_dims(n_dims, dims);
   if(err){
     my_error_print("File read error, aborting", mpi_info.rank);
     safe_exit();
@@ -127,7 +123,7 @@ int main(int argc, char *argv[]){
     MPI_Barrier(MPI_COMM_WORLD);
     //--------------THIS will slightly slow down some cores to match the slowest. But it makes output easier. Consider removing if many blocks
     data_array dat;
-    if(n_dims ==1 || (n_dims ==2 && my_reader->current_block_is_accum())){
+    if(n_dims ==1 || (n_dims ==2 && my_reader.current_block_is_accum())){
       dat = data_array(space_dim, n_tims);
     }else if(n_dims == 2){
       dat = data_array(space_dim, dims[1], n_tims);
@@ -144,7 +140,7 @@ int main(int argc, char *argv[]){
       return 0;
     }
 
-    err = my_reader->read_data(dat, cmd_line_args.time, my_space);
+    err = my_reader.read_data(dat, cmd_line_args.time, my_space);
     //IMPORTANT: we use the same array for each space block. So if we had insufficient files etc this will truncate the array ONLY ONCE
     
     if(err == 1){
@@ -223,7 +219,6 @@ int main(int argc, char *argv[]){
   
   logfile.close();
   //Cleanup objects etc
-  delete my_reader;
   delete contr;
 
   ADD_FFTW(cleanup());

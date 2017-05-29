@@ -64,7 +64,7 @@ int main(int argc, char *argv[]){
   log_code_constants(my_args.file_prefix);
   /* Do this so we have the spectrum wavetype and angle codes*/
 
-  controller contr = controller(my_args.file_prefix);
+  controller contr(my_args.file_prefix);
     //For spectrum we need a plasma to dictate dispersion, so we go via controller
 
   //Check version compatibility.

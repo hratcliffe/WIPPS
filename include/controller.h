@@ -122,8 +122,9 @@ typedef std::pair<spectrum*, diffusion_coeff*> spect_D_pair;/**< Link spectrum a
 /** \brief Controls plasma, spectrum and d_coeff objects and their connections
 *
 *This is the public facing class controlling plasma, spectrum and d_coeff objects. It makes sure there is a plasma to provide needed functions for the latters and keeps each D_coeff attached to the spectrum used to generate it. Should also be responsible for supplying D's in order to whatever does the bounce-averaging.
-*Because a spectrum is meaningless without a plasma, and  a diffusion coefficient meaningless without both a plasma and a spectrum, the controller class is the only thing allowed to create or destroy spectra and diffusion coefficients. Plasma's have other purposes so are not restricted in this way. When a new spectrum is created, the get_current_spectrum is set to refer to it. Any subsequent add_d operation will update the D linked to this spectrum.
+*Because a spectrum is meaningless without a plasma, and  a diffusion coefficient meaningless without both a plasma and a spectrum, the controller class is the only thing allowed to create or destroy spectra and diffusion coefficients. Plasma's have other purposes so are not restricted in this way. When a new spectrum is created, the get_current_spectrum is set to refer to it. Any subsequent add_d operation will update the D linked to this spectrum. Note: currently controllers aren't fully implemented as objects, so work with them as pointers.
 * @author Heather Ratcliffe @date 19/11/2015 \ingroup cls
+\ext Consider adding copy and move constructors etc
 */
 class controller{
   plasma my_plas; /**< Plasma object*/
@@ -139,6 +140,9 @@ public:
 
 /********Basic setup functions ****/
   explicit controller(std::string file_prefix);
+  /* The following disallows copying and moving, because we need a proper deep copy of the contents of spect_D_list and d_specials_list to do so, and right now there's no need*/
+  controller(const controller &src) = delete;
+  controller(const controller &&src) = delete;
   void clear_all();
   ~controller();
   bool is_good(){return my_plas.is_good();}/**< Whether controller is fully setup @return Boolean true for good state, false else*/

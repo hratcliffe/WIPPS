@@ -945,7 +945,7 @@ Set runtime_flag "level_one" to perform full level-one testing
   int err = TEST_PASSED;
 
   if(test_bed->runtime_flags.count("level_one") != 0){
-    strncpy(block_id, "ay", ID_SIZE);
+    block_id = "ax";
     file_prefix = "./files/l1/l1";
     space_in[0] = 0;
     space_in[1] = 1024;
@@ -966,7 +966,7 @@ Set runtime_flag "level_one" to perform full level-one testing
 
     if(!test_bed->check_for_abort(err)){
       file_prefix = "./files/2dtest/";
-      strncpy(block_id, "ey", ID_SIZE);
+      block_id = "ey";
       space_in[0] = 0;
       space_in[1] = 1024;
       time_in[0] = 0;

@@ -34,14 +34,13 @@ reader::reader(){
   
 }
 
-reader::reader(std::string file_prefix_in,  const char * block_id_in, int ref_file_num_in){
+reader::reader(std::string file_prefix_in,  const std::string block_id_in, int ref_file_num_in){
 /** \brief Create reader
 *
 *Sets up ids, sets n_chars etc. NOTE block_id_in and n_chars must be correctly set before any reads are done. Use update_ref_filenum(int num) and change_block_id(std::string new_id) to set these after construction.
 @param file_prefix_in File prefix to prepend to all file names
-@param block_id_in String containing desired block id (e.g. ex)
+@param block_id_in String containing desired block id (e.g. ex) Note only the first ID_SIZE-1 chars are kept
 @param ref_file_num_in Reference file number to use for reading dimensions etc
-\todo Move to string arg?
 */
   //Set up some generic things
   time_range[0]=0; time_range[1]=0; time_range[2]=0;
@@ -49,11 +48,11 @@ reader::reader(std::string file_prefix_in,  const char * block_id_in, int ref_fi
   memset((void *) block_id, 0, ID_SIZE*sizeof(char));
 
   //Setup the specifics
-  if(block_id_in){
-    if(is_field_block(std::string(block_id_in))){
-      strncpy(this->block_id, block_id_in, ID_SIZE);
+  if(block_id_in != ""){
+    if(is_field_block(block_id_in)){
+      strncpy(this->block_id, block_id_in.c_str(), ID_SIZE-1);
     }else{
-      my_error_print("Warning! Block name "+std::string(block_id_in)+" is not a field", mpi_info.rank);
+      my_error_print("Warning! Block name "+block_id_in+" is not a field", mpi_info.rank);
     }
   }
   this->file_prefix = file_prefix_in;
@@ -177,12 +176,12 @@ bool reader::change_block_id(std::string new_id){
 /** \brief  Change block id
 *
 *Change block id to new string
-@param new_id New id to set to
+@param new_id String containing desired block id (e.g. ex) Note only the first ID_SIZE-1 chars are kept
 @return Boolean true if value valid and set, false else
 */
   //We don't want to actually restrict to field blocks only, but we might want to allow only field or distribs if we can.
   if(is_field_block(new_id) || true){
-    strncpy(this->block_id, new_id.c_str(), ID_SIZE);
+    strncpy(this->block_id, new_id.c_str(), ID_SIZE-1);
     return true;
   }else{
     return false;

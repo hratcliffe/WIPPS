@@ -77,7 +77,8 @@ class test_entity_levelone: public test_entity{
     std::string file_prefix;/**< File prefix prepended to all test files*/
     size_t time_in[3];/**< Time specs for data to read*/
     size_t space_in[2];/**< Space specs for data to read*/
-    char block_id[ID_SIZE];/**< Name of block to read*/
+//    char block_id[ID_SIZE];/**< Name of block to read*/
+    std::string block_id;/**< Name of block to read*/
     int n_tims;/**<Number of times to read*/
     int setup();
     int basic_tests(size_t n_dims_in, int flatten_on, bool has_freq, std::string outfile_tag = "", int total_fft = -1, my_type band_min = 0.0, my_type band_max = 0.0);

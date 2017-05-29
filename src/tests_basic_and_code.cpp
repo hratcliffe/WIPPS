@@ -25,10 +25,8 @@
 test_entity_reader::test_entity_reader(){
 /** \brief Setup reader test*/
   name = "reader class";
-  char block_id[ID_SIZE]= "run_info";
-  test_rdr = new reader("./files/test", block_id);
-  char block_id2[ID_SIZE] = "ax";
-  accum_reader = new reader("./files/accum", block_id2);
+  test_rdr = new reader("./files/test", "run_info");
+  accum_reader = new reader("./files/accum", "ax");
 }
 test_entity_reader::~test_entity_reader(){
 /** \brief Teardown reader test*/
@@ -628,12 +626,12 @@ int test_entity_get_and_fft::run(){
   int err = TEST_PASSED;
   
   std::string block = "ex";
-  test_rdr = new reader("./files/sin", block.c_str());
+  test_rdr = new reader("./files/sin", block);
   err |= one_d();
 
   if(test_rdr) delete test_rdr;
   block = "ax";
-  test_rdr = new reader("./files/sinAcc", block.c_str());
+  test_rdr = new reader("./files/sinAcc", block);
   err |= two_d();
 
   return err;

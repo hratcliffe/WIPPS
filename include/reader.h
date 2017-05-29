@@ -46,10 +46,9 @@ public:
   size_t space_range[2];/**< Space range in x to extract*/
   int time_range[3];/**< Time range to extract*/
   char block_id[ID_SIZE];/**< Name of block to extract*/
-
 /********Basic setup and allocation functions ****/
   explicit reader();
-  explicit reader(std::string file_prefix_in,  const char * block_id_in=nullptr, int ref_file_num_in=0);
+  explicit reader(std::string file_prefix_in,  const std::string block_id_in="", int ref_file_num_in=0);
   
 /********Filename and file manipulators ****/
   void update_ref_filenum(int num);

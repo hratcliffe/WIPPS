@@ -52,7 +52,7 @@ int main(int argc, char *argv[]){
   process_command_line_help_arg(argc, argv, PER_UTIL_HELP_ID);
   dist_cmd_line my_args = special_command_line(argc, argv);
 
-  char id[ID_SIZE] = "Distrib";
+  std::string id = "Distrib";
   reader my_reader = reader(my_args.file_prefix, id, my_args.dump);
 
   std::string special_tag = "dist_fn";

@@ -82,10 +82,11 @@ int main(int argc, char *argv[]){
   my_print("Processing "+mk_str(cmd_line_args.per_proc)+" blocks per core", mpi_info.rank);
   my_print("Input "+cmd_line_args.file_prefix, mpi_info.rank);
 
-  char block_id[ID_SIZE];
-  strcpy(block_id, cmd_line_args.block.c_str());
+//  char block_id[ID_SIZE];
+//  strcpy(block_id, cmd_line_args.block.c_str());
 
-  reader * my_reader = new reader(cmd_line_args.file_prefix, block_id,cmd_line_args.time[0]);
+/** \todo Refactor to reader not reader* */
+  reader * my_reader = new reader(cmd_line_args.file_prefix, cmd_line_args.block,cmd_line_args.time[0]);
   if(my_reader->current_block_is_accum()) cmd_line_args.use_row_time = true;
 
   //Get all dimensions
@@ -202,8 +203,7 @@ int main(int argc, char *argv[]){
     else if(extra_args.flat_dim >=0) flat_tag ="_fFFT"+ mk_str(extra_args.flat_dim);
     
     time_str = mk_str(dat_fft.time[0], true)+"_"+mk_str(n_tims);
-    std::string block = block_id;
-    filename = cmd_line_args.file_prefix+"FFT_"+block +"_"+time_str+"_"+mk_str(dat_fft.space[0])+"_"+mk_str(dat_fft.space[1]) + flat_tag+".dat";
+    filename = cmd_line_args.file_prefix+"FFT_"+ cmd_line_args.block +"_"+time_str+"_"+mk_str(dat_fft.space[0])+"_"+mk_str(dat_fft.space[1]) + flat_tag+".dat";
     std::fstream file;
     file.open(filename.c_str(),std::ios::out|std::ios::binary);
     if(file.is_open()){

@@ -446,6 +446,11 @@ bool spectrum::generate_spectrum(data_array &parent, int om_fuzz, int angle_type
     my_error_print("Spectrum object invalid. Returning", mpi_info.rank);
     return 1;
   }
+  if(parent.get_dims() == 0 || parent.get_dims(0) != this->get_omega_length()){
+    my_error_print("0-dim of parent must match omega_length", mpi_info.rank);
+    return 1;
+  }
+
 
   if(parent.is_good() && g_is_angle_only){
     //Require parent to be 2-D

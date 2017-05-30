@@ -106,7 +106,7 @@ int main(int argc, char *argv[]){
       spectrum * my_spect = contr->get_current_spectrum();
       if(my_spect->get_B_dims() < 1){
       //Wrap in quotes so we highlight stray trailing whitespace etc
-        my_error_print("Invalid or missing spectrum file '"+cmd_line_args.file_prefix+filelist[0]+"'");
+        my_error_print("Invalid or missing spectrum file '"+cmd_line_args.file_prefix+filelist[0]+"'", mpi_info.rank);
       }
       //We read spectra which may be either E or B, so call it F
       data_array F_prev, F_curr;
@@ -117,8 +117,8 @@ int main(int argc, char *argv[]){
       my_type delta_t = 0.0;
       
       for(size_t i=0; i<filelist.size(); i++){
-        if(i > 0) my_print("Differencing "+filelist[i-1]+" and "+filelist[i]);
-        else my_print("Differencing noise estimate and "+filelist[i]);
+        if(i > 0) my_print("Differencing "+filelist[i-1]+" and "+filelist[i], mpi_info.rank);
+        else my_print("Differencing noise estimate and "+filelist[i], mpi_info.rank);
         contr->delete_current_spectrum();
         filename = cmd_line_args.file_prefix+ filelist[i];
         //Check version compatibility.
@@ -127,11 +127,11 @@ int main(int argc, char *argv[]){
         }
         contr->add_spectrum(filename);
         if(my_spect->get_B_dims() < 1){
-          my_error_print("Invalid or missing spectrum file '"+cmd_line_args.file_prefix+filelist[i]+"'");
+          my_error_print("Invalid or missing spectrum file '"+cmd_line_args.file_prefix+filelist[i]+"'", mpi_info.rank);
           continue;
         }else if(my_spect->get_B_dims(0) < 3){
           //We use first few els in special case below, and < 3 els will never be useful growth rate
-          my_error_print("Invalid field in '"+cmd_line_args.file_prefix+filelist[i]+"'");
+          my_error_print("Invalid field in '"+cmd_line_args.file_prefix+filelist[i]+"'", mpi_info.rank);
           continue;
         }
         //Read and ln F for this step
@@ -148,7 +148,7 @@ int main(int argc, char *argv[]){
         //We need some sort of estimate of the spectrum "noise" to eliminate this in the first file. Then we assume F(t_0) = ref_val. Perhaps should average raw not logged, but this will do.
           calc_type ref_val = estimate_spectrum_noise(*my_spect);
           ref_val = log_function(ref_val);
-          my_print("Noise estimate: "+mk_str(ref_val));
+          my_print("Noise estimate: "+mk_str(ref_val), mpi_info.rank);
           std::function<calc_type(calc_type)> minus_const_function = [ref_val](calc_type el) -> calc_type { return el - ref_val; } ;
           numeric_data.apply(minus_const_function);
           delta_t =(numeric_data.time[1] + numeric_data.time[0])/2.0;
@@ -221,8 +221,8 @@ int main(int argc, char *argv[]){
   err |=write_growth_closer(cmd_line_args.file_prefix, n_momenta, min_v, max_v, file);
 
   file.close();
-  if(!err) my_print("Written in "+filename);
-  else my_error_print("Error writing to "+filename);
+  if(!err) my_print("Written in "+filename, mpi_info.rank);
+  else my_error_print("Error writing to "+filename, mpi_info.rank);
   dump_distrib(my_elec, cmd_line_args.file_prefix+"NonThermalDump.dat");
   safe_exit();
 

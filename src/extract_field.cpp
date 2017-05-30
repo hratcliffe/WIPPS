@@ -107,7 +107,7 @@ int main(int argc, char ** argv){
       file.close();
       my_print("Field "+std::string(cmd_line_args.block)+ " output in "+filename, mpi_info.rank);
     }else{
-      my_error_print("Failed to read file");
+      my_error_print("Failed to read file", mpi_info.rank);
     }
   }
 }

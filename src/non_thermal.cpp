@@ -72,11 +72,11 @@ bool non_thermal::configure_from_file(std::string file_prefix){
   end:
   etc where the RHS's are the string names in the deck and the function is "max", "kappa", "lookup" etc. ALL LOWER CASE. this then defines a plasma from deck constants*/
   
-  my_print("Reading "+file_prefix+"nonthermal.conf");
+  my_print("Reading "+file_prefix+"nonthermal.conf", mpi_info.rank);
   infile.open(file_prefix+"nonthermal.conf");
   if(!infile){
     //Default to using a Bimaxwellian.
-    my_print("Using generic bimaxwellian electrons");
+    my_print("Using generic bimaxwellian electrons", mpi_info.rank);
 
     auto tmp_fn = std::bind(bimax, std::placeholders::_1, std::placeholders::_2, parameters[VPAR], parameters[VPERP], parameters[DENS_RAT]);
     f_p_private.push_back(tmp_fn);
@@ -108,8 +108,8 @@ bool non_thermal::configure_from_file(std::string file_prefix){
         function = str_to_lower(function);
         if(function == "max"){
           //Check we have all params
-          my_print("Adding component '"+block_name+"'");
-          for(auto nam : {dens, vpar, vperp}) if(!parameters.count(nam)) my_error_print("Param "+nam+" not found!!!");
+          my_print("Adding component '"+block_name+"'", mpi_info.rank);
+          for(auto nam : {dens, vpar, vperp}) if(!parameters.count(nam)) my_error_print("Param "+nam+" not found!!!", mpi_info.rank);
 
           calc_type a_par = std::sqrt(2.0)*parameters[vpar];
           if(!this->norely) a_par/= std::sqrt(1.0 - std::pow(parameters[vpar]/v0, 2));
@@ -124,8 +124,8 @@ bool non_thermal::configure_from_file(std::string file_prefix){
         }
         else if(function =="kappa"){
           //Check we have all params
-          my_print("Adding component '"+block_name+"'");
-          for(auto nam : {dens, vpar, vperp, kappa}) if(!parameters.count(nam)) my_error_print("Param "+nam+" not found!!!");
+          my_print("Adding component '"+block_name+"'", mpi_info.rank);
+          for(auto nam : {dens, vpar, vperp, kappa}) if(!parameters.count(nam)) my_error_print("Param "+nam+" not found!!!", mpi_info.rank);
 
           tmp_fn = std::bind(bikappa, std::placeholders::_1, std::placeholders::_2, parameters[kappa], parameters[vpar], parameters[vperp], parameters[dens]);
           f_p_private.push_back(tmp_fn);
@@ -133,7 +133,7 @@ bool non_thermal::configure_from_file(std::string file_prefix){
 
         }else if(function=="lookup"){
           //Check we have all params
-          my_print("Adding component '"+block_name+"'");
+          my_print("Adding component '"+block_name+"'", mpi_info.rank);
           tmp_fn = configure_lookup(file_prefix, lookup, this);
           //Lookup config can fail and return empty function: we don't want to keep this
           if(tmp_fn){
@@ -142,7 +142,7 @@ bool non_thermal::configure_from_file(std::string file_prefix){
           }
         }
         //Report and reset for next block
-        if(function_set) my_print("Configured function "+function);
+        if(function_set) my_print("Configured function "+function, mpi_info.rank);
         block_num ++;
         function=""; dens=""; vpar=""; vperp="";kappa="", lookup="";
         //Stop after ncomps blocks
@@ -161,10 +161,10 @@ bool non_thermal::configure_from_file(std::string file_prefix){
           else if(name =="nonrely"){
             if(val.size() >0 && val[0] == '1'){
               this->norely=1;
-              my_print("Using nonrelativistic calculation!");
+              my_print("Using nonrelativistic calculation!", mpi_info.rank);
             }
           }else{
-            my_error_print("!!!!!Unknown name "+name);
+            my_error_print("!!!!!Unknown name "+name, mpi_info.rank);
           }
           
         }
@@ -182,7 +182,7 @@ bool non_thermal::configure_from_file(std::string file_prefix){
           else if(name =="vperp") vperp = val;
           else if(name =="kappa") kappa = val;
           else if(name =="lookup") lookup = val;
-          else my_error_print("!!!!Unknown name "+name);
+          else my_error_print("!!!!Unknown name "+name, mpi_info.rank);
         }
       }
       
@@ -397,7 +397,7 @@ std::function<calc_type(calc_type p_par, calc_type p_perp)> configure_lookup(std
 @return A function which can be used to lookup the table values found in file
 */
 
-  my_print("Configuring lookup from "+file_prefix+file);
+  my_print("Configuring lookup from "+file_prefix+file, mpi_info.rank);
   std::function<calc_type(calc_type p_par, calc_type p_perp)> bound_lookup;
 
   calc_type p_par_ax_min, p_perp_ax_min;
@@ -410,7 +410,7 @@ std::function<calc_type(calc_type p_par, calc_type p_perp)> configure_lookup(std
   std::ifstream infile;
   
   if(sep){
-    my_print("Detected seperable lookup");
+    my_print("Detected seperable lookup", mpi_info.rank);
     std::string file_par, file_perp;
     file_par = file.substr(0, file.find_first_of(','));
     file_perp = file.substr(file.find_first_of(',')+1, file.size());
@@ -429,13 +429,13 @@ std::function<calc_type(calc_type p_par, calc_type p_perp)> configure_lookup(std
       size_t total =1;
       for(size_t i=1; i< par_dims.size(); i++) total *=par_dims[i];
       if(par_dims.size() != 1 || total > 1){
-        my_error_print("Error, seperable array read is not 1-D");
+        my_error_print("Error, seperable array read is not 1-D", mpi_info.rank);
         return bound_lookup;
       }
       total=1;
       for(size_t i=1; i< perp_dims.size(); i++) total *= perp_dims[i];
       if(perp_dims.size() != 1 || total > 1){
-        my_error_print("Error, seperable array read is not 1-D");
+        my_error_print("Error, seperable array read is not 1-D", mpi_info.rank);
         return bound_lookup;
       }
       par_sz = par_dims[0];
@@ -459,7 +459,7 @@ std::function<calc_type(calc_type p_par, calc_type p_perp)> configure_lookup(std
         if( (perp_axes[j+1]-perp_axes[j] - dp_perp_ax) > GEN_PRECISION*v0) err=1;
     }
     if(err){
-      my_error_print("Error, axes are not linear");
+      my_error_print("Error, axes are not linear", mpi_info.rank);
       return bound_lookup;
     }
     free(par_axes);
@@ -468,7 +468,7 @@ std::function<calc_type(calc_type p_par, calc_type p_perp)> configure_lookup(std
     tot_els = par_sz + perp_sz;
     my_type * tmp = (my_type *) realloc((void*) par_data, tot_els*sizeof(my_type));
     if(!tmp){
-      my_error_print("Error allocating memory");
+      my_error_print("Error allocating memory", mpi_info.rank);
       return bound_lookup;
     }
     //Copy perp data over
@@ -494,7 +494,7 @@ std::function<calc_type(calc_type p_par, calc_type p_perp)> configure_lookup(std
       size_t total =1;
       for(size_t i=2; i< dims.size(); i++) total *=dims[i];
       if(dims.size() != 2 || total > 1){
-        my_error_print("Error, array read is not 2-D");
+        my_error_print("Error, array read is not 2-D", mpi_info.rank);
         return bound_lookup;
       }
       par_sz = dims[0];
@@ -516,7 +516,7 @@ std::function<calc_type(calc_type p_par, calc_type p_perp)> configure_lookup(std
         if( (axes[par_sz+j+1]-axes[par_sz+j] - dp_perp_ax) > GEN_PRECISION*v0) err=1;
     }
     if(err){
-      my_error_print("Error, axes are not linear");
+      my_error_print("Error, axes are not linear", mpi_info.rank);
       return bound_lookup;
     }
     free(axes);

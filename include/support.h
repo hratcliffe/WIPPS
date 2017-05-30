@@ -179,7 +179,7 @@ struct setup_args{
   bool use_row_time;/**<Whether to use time[2] for sizing*/
   int space[2];/**< Local space block start and end*/
   std::string block;/**< Block ID to use (ex, bz etc)*/
-  std::string file_prefix;/**< Prefix part of SDF file names*/
+  std::string file_prefix;/**< Prefix part of file names*/
   int n_space;/**< Number of space blocks in global x direction*/
   size_t per_proc;/**< Resulting number of space blocks per proc*/
 };
@@ -271,10 +271,10 @@ inline calc_type gamma_rel(calc_type v){
 std::string read_wipps_version_string(std::string filename);
 bool check_wipps_version(std::string filename);
 
-void my_print(std::string text, int rank=0, int rank_to_write=0, bool noreturn=false);
-void my_print(std::fstream * handle, std::string text, int rank=0, int rank_to_write=0, bool noreturn=false);
-void my_error_print(std::string text, int rank=0, int rank_to_write=0, bool noreturn=false);
-void my_error_print(std::fstream * handle, std::string text, int rank=0, int rank_to_write=0, bool noreturn=false);
+void my_print(std::string text, int rank, int rank_to_write=0, bool noreturn=false);
+void my_print(std::fstream * handle, std::string text, int rank, int rank_to_write=0, bool noreturn=false);
+void my_error_print(std::string text, int rank, int rank_to_write=0, bool noreturn=false);
+void my_error_print(std::fstream * handle, std::string text, int rank, int rank_to_write=0, bool noreturn=false);
 
 /********String handling helpers ****/
 std::string mk_str(int i);/**<Converts int to string*/

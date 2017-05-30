@@ -205,7 +205,7 @@ std::vector<std::pair<std::string, std::string> > reader::list_blocks(){
   std::vector<std::pair<std::string, std::string> > list;
 
   if(!handle){
-    my_error_print("Error reading file "+file_name);
+    my_error_print("Error reading file "+file_name, mpi_info.rank);
     return list;
   }
   sdf_read_blocklist(handle);

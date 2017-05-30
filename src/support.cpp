@@ -150,7 +150,7 @@ void get_deck_constants(std::string file_prefix){
   }
 
   if(tmp_rat != 0.0 || tmp_rath !=0.0){
-    my_print("Modifying density to " + mk_str(1.0+tmp_rat+tmp_rath, true));
+    my_print("Modifying density to " + mk_str(1.0+tmp_rat+tmp_rath, true), mpi_info.rank);
     my_const.omega_pe *= std::sqrt(1.0+tmp_rat+tmp_rath);
     my_const.dens_factor = 1.0+ tmp_rat+tmp_rath;
     
@@ -188,7 +188,7 @@ setup_args process_command_line(int argc, char *argv[]){
       if(checked_strtol(argv[i+1], true) >= 0){
         values.time[0] = checked_strtol(argv[i+1]);
       }else{
-        my_error_print("Start cannot be negative!!!!!!");
+        my_error_print("Start cannot be negative!!!!!!", mpi_info.rank);
       }
       i++;
     }
@@ -196,7 +196,7 @@ setup_args process_command_line(int argc, char *argv[]){
       if(checked_strtol(argv[i+1], true) >= 0){
         values.time[1] = checked_strtol(argv[i+1]);
       }else{
-        my_error_print("End cannot be negative!!!!!");
+        my_error_print("End cannot be negative!!!!!", mpi_info.rank);
       }
       i++;
     }
@@ -204,7 +204,7 @@ setup_args process_command_line(int argc, char *argv[]){
       if(checked_strtol(argv[i+1], true) >= 0){
         values.time[2] = checked_strtol(argv[i+1]);
       }else{
-        my_error_print("Rows cannot be negative!!!!!");
+        my_error_print("Rows cannot be negative!!!!!", mpi_info.rank);
       }
       i++;
     }
@@ -216,7 +216,7 @@ setup_args process_command_line(int argc, char *argv[]){
       if(checked_strtol(argv[i+1], true) >= 0){
         values.n_space = checked_strtol(argv[i+1]);
       }else{
-        my_error_print("N cannot be negative!!!!!");
+        my_error_print("n cannot be negative!!!!!", mpi_info.rank);
       }
       i++;
     }
@@ -225,12 +225,12 @@ setup_args process_command_line(int argc, char *argv[]){
         values.space[0] = checked_strtol(argv[i+1]);
         values.space[1] = checked_strtol(argv[i+2]);
       }else{
-        my_error_print("Space cannot be negative!!!!!");
+        my_error_print("Space cannot be negative!!!!!", mpi_info.rank);
       }
       i+=2;
     }
     else if(!((strlen(argv[i]) > 0) && argv[i][0] == HANDLED_ARG[0])){
-      my_error_print("UNKNOWN OPTION "+mk_str(argv[i]), 0);
+      my_error_print("UNKNOWN OPTION "+mk_str(argv[i]), mpi_info.rank);
     }
     i++;
   }
@@ -359,7 +359,7 @@ void print_help(char code){
   halp.open(file);
   if(!halp){
     //File not found!
-    my_print("Help file "+file+" not found", 0);
+    my_print("Help file "+file+" not found", mpi_info.rank);
     return;
   }
   if(mpi_info.rank == 0 && halp){
@@ -513,7 +513,7 @@ data_array get_Bx(std::string file_prefix, size_t space_in[2], size_t time_0){
 @return data_array containing bx data
 \ext Add 3-D space handling!
 */
-  my_print("Getting ref B");
+  my_print("Getting ref B", mpi_info.rank);
   
   reader bx_reader = reader(file_prefix);
   //We use this to get the local average B field
@@ -656,7 +656,7 @@ std::string read_wipps_version_string(std::string filename){
   std::fstream infile;
   infile.open(filename, std::ios::in|std::ios::binary);
   if(!infile.good()){
-    my_error_print("File open or access error");
+    my_error_print("File open or access error", mpi_info.rank);
     return "";
   }
   char tmp_vers[GIT_VERSION_SIZE];
@@ -677,7 +677,7 @@ bool check_wipps_version(std::string filename){
 
   std::string wipps_version = read_wipps_version_string(filename);
   if(compare_as_version_string(wipps_version) != 0){
-    my_error_print("Warning, a different code version was used to write this file. Data may be incompatible");
+    my_error_print("Warning, a different code version was used to write this file. Data may be incompatible", mpi_info.rank);
     return 0;
   }
   return 1;
@@ -818,7 +818,7 @@ long checked_strtol(const char * str, bool quiet){
   long value = strtol(str, &end, 10);
   if(!quiet){
     size_t str_end = strlen(str);
-    if(str+str_end != end) my_print("WARNING: extra characters in number string "+std::string(str));
+    if(str+str_end != end) my_print("WARNING: extra characters in number string "+std::string(str), mpi_info.rank);
   }
   return value;
 }
@@ -831,7 +831,7 @@ float checked_strtof(const char * str, bool quiet){
   float value = strtof(str, &end);
   if(!quiet){
     size_t str_end = strlen(str);
-    if(str+str_end != end) my_print("WARNING: extra characters in number string "+std::string(str));
+    if(str+str_end != end) my_print("WARNING: extra characters in number string "+std::string(str), mpi_info.rank);
   }
   return value;
 }

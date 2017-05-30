@@ -96,7 +96,7 @@ data_array::data_array(std::string filename){
   std::fstream infile;
   infile.open(filename, std::ios::in|std::ios::binary);
   if(!infile.is_open()){
-    my_error_print("File open or access error");
+    my_error_print("File open or access error", mpi_info.rank);
     return;
   }
 

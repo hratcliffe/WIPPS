@@ -854,7 +854,7 @@ std::vector<size_t> my_array::read_dims_from_file(std::fstream &file){
   my_type verf=0.0;
 
   if(!file.good()){
-    my_error_print("File access error");
+    my_error_print("File access error", mpi_info.rank);
     return dims_vec;
   }
 

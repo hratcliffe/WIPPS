@@ -445,7 +445,7 @@ my_type solve_mirror_latitude(my_type alpha_eq, bool print_iters){
   
   my_type s4alpha = std::pow(sin(alpha_eq), 4);
   for(size_t iter = 0; iter < max_iter; iter++){
-    if(print_iters) my_print(mk_str(iter)+' '+mk_str(last_solution)+' '+mk_str(acos(std::sqrt(last_solution))*180.0/pi));
+    if(print_iters) my_print(mk_str(iter)+' '+mk_str(last_solution)+' '+mk_str(acos(std::sqrt(last_solution))*180.0/pi), mpi_info.rank);
     next_solution = Newton_Raphson_iteration(last_solution, s4alpha);
     if(std::abs(acos(std::sqrt(last_solution)) - acos(std::sqrt(next_solution))) < precision) break;
     last_solution = next_solution;

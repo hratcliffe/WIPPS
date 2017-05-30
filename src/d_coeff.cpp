@@ -277,7 +277,7 @@ d_report diffusion_coeff::calculate(D_type_spec type_of_D, bool quiet){
 #ifdef DEBUG_ALL
           //Sanity checking...
           if(my_mu.cone_ang < theta){
-            my_error_print("Solution outside expected resonance cone, error! ");
+            my_error_print("Solution outside expected resonance cone, error! ", mpi_info.rank);
             throw std::domain_error("Solution outside resonance cone");
             continue;
         }
@@ -381,7 +381,7 @@ Get D element by values of p and alpha by looking up those values in the axes an
 */
   if(this->get_dims() != 2){
 #ifdef DEBUG_DIMS
-    my_error_print("Wrong dimensions, attempting 2 with "+mk_str(this->get_dims()));
+    my_error_print("Wrong dimensions, attempting 2 with "+mk_str(this->get_dims()), mpi_info.rank);
 #endif
     return 0.0;
   }

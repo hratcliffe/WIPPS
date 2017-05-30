@@ -18,6 +18,7 @@
 \verbinclude help_d.txt
 \author Heather Ratcliffe \date 09/09/2016
 \caveat This utility only works for 2-D distributions right now.
+\todo This should be a single-core util
 */
 
 const char PER_UTIL_HELP_ID = 'd';/**<ID to identify help file for this utility*/
@@ -64,9 +65,9 @@ int main(int argc, char *argv[]){
       if(special_tag.compare(blocks[i].first.substr(0, special_tag.size())) ==0) dist_blocks.push_back(blocks[i]);
     }
   }
-  if(dist_blocks.size() == 0) my_print("No distribution functions found");
+  if(dist_blocks.size() == 0) my_print("No distribution functions found", mpi_info.rank);
   if(my_args.list){
-    for(size_t i=0; i< dist_blocks.size(); i++) my_print(dist_blocks[i].first);
+    for(size_t i=0; i< dist_blocks.size(); i++) my_print(dist_blocks[i].first, mpi_info.rank);
     exit(0);
   }
   //Now we extract any distributions and flatten them on x into the specified number of blocks, and output
@@ -83,20 +84,20 @@ int main(int argc, char *argv[]){
     }
     dat = data_array(n_dims_act, dims_arr);
     if(!dat.is_good()){
-      my_error_print("Error allocating array for "+dist_blocks[i].second+", skipping");
+      my_error_print("Error allocating array for "+dist_blocks[i].second+", skipping", mpi_info.rank);
       continue;
     }
     
     err = my_reader.read_distrib(dat, dist_blocks[i].second, my_args.dump);
     if(err){
-      my_error_print("Error reading distrib "+dist_blocks[i].second);
+      my_error_print("Error reading distrib "+dist_blocks[i].second, mpi_info.rank);
       continue;
     }
     std::fstream file;
     size_t trim_size = 8; //Len of "dist_fn/" leading part
     std::string tag = replace_char((dist_blocks[i].first).substr(trim_size, std::string::npos), '/', '_');
     std::string filename = my_args.file_prefix+tag+'_'+mk_str(my_args.dump) +".dat";
-    my_print("Writing "+dist_blocks[i].second);
+    my_print("Writing "+dist_blocks[i].second, mpi_info.rank);
     file.open(filename.c_str(),std::ios::out|std::ios::binary);
 
     if(my_args.blocks ==-1){
@@ -125,7 +126,7 @@ int main(int argc, char *argv[]){
       dat.write_closer(file);
     }
 
-    my_print("Closing");
+    my_print("Closing", mpi_info.rank);
     file.close();
   }
 
@@ -165,7 +166,7 @@ dist_cmd_line special_command_line(int argc, char *argv[]){
       values.blocks= checked_strtol(argv[i+1]);
       i++;
     }
-    else my_error_print(std::string("UNKNOWN OPTION ")+argv[i]);
+    else my_error_print(std::string("UNKNOWN OPTION ")+argv[i], mpi_info.rank);
     i++;
   }
   return values;

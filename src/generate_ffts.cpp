@@ -157,7 +157,7 @@ int main(int argc, char *argv[]){
     std::vector<my_type> lims;
     if(extra_args.limits.size() != 0){
       int do_flat = (extra_args.flat_dim>=0);
-      if(extra_args.limits.size() != 2*(dat.get_dims() - do_flat)) my_print("Please supply 2 limits per dimension. Output will be untrimmed");
+      if(extra_args.limits.size() != 2*(dat.get_dims() - do_flat)) my_print("Please supply 2 limits per dimension. Output will be untrimmed", mpi_info.rank);
       else{
         lims = extra_args.limits;
         //Check for -1 to avoid overflow in second comparison

@@ -134,7 +134,7 @@ cutout_args cutout_process_command_line(int argc, char *argv[]){
         i++;
       }
     }
-    else my_error_print(std::string("UNKNOWN OPTION ")+argv[i]);
+    else my_error_print(std::string("UNKNOWN OPTION ")+argv[i], mpi_info.rank);
     i++;
   }
   if(values.file_out == "" && values.file_in != "") values.file_out = append_into_string(values.file_in, "_trim");

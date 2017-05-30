@@ -86,7 +86,7 @@ int main(int argc, char *argv[]){
     per_proc = std::ceil( (float) cmd_line_args.file_list.size() / (float) mpi_info.n_procs);
   }
   if(cmd_line_args.file_list.size() == 0){
-    my_error_print("ERROR: No input files given!");
+    my_error_print("ERROR: No input files given!", mpi_info.rank);
     exit(1);
   }
 
@@ -127,7 +127,7 @@ int main(int argc, char *argv[]){
       if(!cmd_line_args.is_spect){
         dat_fft = data_array(filename);
         if(!dat_fft.is_good()){
-          my_error_print("Failed to read "+filename);
+          my_error_print("Failed to read "+filename, mpi_info.rank);
           continue;
         }
         //Have an FFT, need a spectrum
@@ -151,7 +151,7 @@ int main(int argc, char *argv[]){
         //Read spectrum file
         err = contr.add_spectrum(filename);
         if(err){
-          my_error_print("Failed to read "+filename);
+          my_error_print("Failed to read "+filename, mpi_info.rank);
           continue;
         }
         if(contr.get_current_spectrum()->space[1] > 1) spec_norm = 0.5 * std::pow(contr.get_current_spectrum()->space[1], 2);
@@ -165,7 +165,7 @@ int main(int argc, char *argv[]){
       if(spec_norm > 0){
         contr.get_current_spectrum()->apply(spectrum::part::B, divide, spec_norm);
       }else{
-        my_error_print("Erroneous spectrum normalisation constant. Proceeeding unnormalised");
+        my_error_print("Erroneous spectrum normalisation constant. Proceeeding unnormalised", mpi_info.rank);
       }
       if(cmd_line_args.om_lims.size() > 1){
         contr.get_current_spectrum()->truncate_om(cmd_line_args.om_lims[0]*om_ce, cmd_line_args.om_lims[1]*om_ce);
@@ -256,7 +256,7 @@ diff_cmd_line special_command_line(int argc, char *argv[]){
         values.d[0] = checked_strtol(argv[i+1]);
         values.d[1] = checked_strtol(argv[i+2]);
       }else{
-        my_error_print("D not an integer or is negative!");
+        my_error_print("D not an integer or is negative!", mpi_info.rank);
       }
       i+=2;
     }
@@ -282,7 +282,7 @@ diff_cmd_line special_command_line(int argc, char *argv[]){
         values.ang_lims.push_back(checked_strtof(argv[i+2]));
         i += 2;
     }else if(!((strlen(argv[i]) > 0) && argv[i][0] == HANDLED_ARG[0])){
-      my_error_print(std::string("UNKNOWN OPTION ")+argv[i]);
+      my_error_print(std::string("UNKNOWN OPTION ")+argv[i], mpi_info.rank);
     }
     i++;
   }
@@ -295,7 +295,7 @@ diff_cmd_line special_command_line(int argc, char *argv[]){
     my_error_print("WARNING: Requested size exceeds MAXSIZE", mpi_info.rank);
   }
 
-  if(!values.is_list) my_error_print(std::string("Specify either -Sinput or -Finput"));
+  if(!values.is_list) my_error_print(std::string("Specify either -Sinput or -Finput"), mpi_info.rank);
 
     //If using a file-list extract the names
     if(values.is_list){

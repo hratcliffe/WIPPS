@@ -75,7 +75,7 @@ int main(int argc, char *argv[]){
   data_array data_in = data_array(my_args.file_prefix+my_args.file_in);
 
   if(!data_in.is_good()){
-      my_error_print("Data array allocation failed. Aborting.");
+      my_error_print("Data array allocation failed. Aborting.", mpi_info.rank);
       return 0;
   }
 
@@ -159,7 +159,7 @@ fft_spect_args fft_spect_process_command_line(int argc, char *argv[]){
       values.file_out = argv[i+1];
       i++;
     }else if(!((strlen(argv[i]) > 0) && argv[i][0] == HANDLED_ARG[0])){
-      my_error_print(std::string("UNKNOWN OPTION ")+argv[i]);
+      my_error_print(std::string("UNKNOWN OPTION ")+argv[i], mpi_info.rank);
     }
     i++;
   }

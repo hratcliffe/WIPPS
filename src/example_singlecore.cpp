@@ -59,7 +59,7 @@ int main(int argc, char *argv[]){
 
   //Do work only on root
   if(mpi_info.rank == 0){
-  
+    //Read constants from a file called [file_path//deck.status]
     get_deck_constants(cmd_line_args.file_prefix);
 
     //Check version compatibility of input data file. If anything is changed that affects how code should operate, this can be used to adapt for it

@@ -120,7 +120,5 @@ Some of the core code uses these, none of the stuff in use should.
 *
 *The major classes we use, dealing with data, physics etc
 @}
-
-\todo .idlstartup find out how to use env var to get relative path to ./files
 */
 

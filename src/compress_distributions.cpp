@@ -18,7 +18,6 @@
 \verbinclude help_d.txt
 \author Heather Ratcliffe \date 09/09/2016
 \caveat This utility only works for 2-D distributions right now.
-\todo This should be a single-core util
 */
 
 const char PER_UTIL_HELP_ID = 'd';/**<ID to identify help file for this utility*/
@@ -49,7 +48,11 @@ int main(int argc, char *argv[]){
     std::cout<< "Error initialising MPI. ABORTING!";
     return 1;
   }
-  
+  if(mpi_info.n_procs > 1){
+    my_print("Utility uses one core only!", mpi_info.rank);
+    exit(1);
+  }
+
   process_command_line_help_arg(argc, argv, PER_UTIL_HELP_ID);
   dist_cmd_line my_args = special_command_line(argc, argv);
 

@@ -329,7 +329,7 @@ template<typename T> T interpolate_nearest(T axis[2], T vals[2], T target);
 inline my_type subtract(my_type lhs, my_type rhs){return lhs - rhs;}/**< Element-wise subtraction*/
 inline my_type add(my_type lhs, my_type rhs){return lhs + rhs;}/**< Element-wise addition*/
 inline my_type divide(my_type lhs, my_type rhs){return lhs/rhs;}/**< Element-wise division*/
-inline my_type multiply(my_type lhs, my_type rhs){return lhs*rhs;/**< Element-wise multiplication*/}
+inline my_type multiply(my_type lhs, my_type rhs){return lhs*rhs;}/**< Element-wise multiplication*/
 /** @} */
 
 /** @} */

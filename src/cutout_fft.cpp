@@ -54,6 +54,7 @@ int main(int argc, char *argv[]){
   my_print("Code is running on "+mk_str(mpi_info.n_procs)+" processing elements.", mpi_info.rank);
   if(mpi_info.n_procs > 1){
     my_print("Utility uses one core only!", mpi_info.rank);
+    exit(1);
   }
   
   process_command_line_help_arg(argc, argv, PER_UTIL_HELP_ID);

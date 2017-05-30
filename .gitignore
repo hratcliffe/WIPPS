@@ -2,8 +2,8 @@ SDF/
 obj/
 html/
 latex/
-files/l1/
-files/2dtest/
+files/tests/l1/
+files/tests/2dtest/
 files/tmp_tests/
 main
 generate_ffts

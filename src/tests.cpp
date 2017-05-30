@@ -91,6 +91,7 @@ void tests::add_test(test_entity * test){
 /** Adds a test to the list to be performed
 @param test Pointer to test object to add. Object will be deleted on completion */
   test_list.push_back(test);
+  report_info("  Added "+test->name, 2);
 }
 
 bool tests::run_tests(){
@@ -304,8 +305,10 @@ void tests::setup_tests(){
 /** \brief Setup test bed
 *
 *Opens reporting file, creates temporary dir. Then instantiates all the test objects and adds them into the test_list
+\todo Clean up error codes
+\todo Clean up printing verbosities
 */
-  set_verbosity(1);
+  set_verbosity(max_verbos);//"All" info is printed during setup
 
   outfile = new std::fstream();
   outfile->open(filename.c_str(), std::ios::out);

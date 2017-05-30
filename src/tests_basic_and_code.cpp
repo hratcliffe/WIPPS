@@ -25,8 +25,8 @@
 test_entity_reader::test_entity_reader(){
 /** \brief Setup reader test*/
   name = "reader class";
-  test_rdr = new reader("./files/test", "run_info");
-  accum_reader = new reader("./files/accum", "ax");
+  test_rdr = new reader(tests_src_dir + "test", "run_info");
+  accum_reader = new reader(tests_src_dir + "accum", "ax");
 }
 test_entity_reader::~test_entity_reader(){
 /** \brief Teardown reader test*/
@@ -619,19 +619,23 @@ test_entity_get_and_fft::~test_entity_get_and_fft(){
 int test_entity_get_and_fft::run(){
 /** \brief Checks full read and fft procedure
 *
-*Reads a test sdf file, stores into data array and runs fft. Test data should be a sine curve with one major frequency which is then checked. Note frequency is hard coded to match that produced by ./files/sin.deck
+*Reads a test sdf file, stores into data array and runs fft. Test data should be a sine curve with one major frequency which is then checked. Note frequency is hard coded to match that produced by sin.deck
 @return Error code
 */
 
   int err = TEST_PASSED;
+
+  //If no other src files, use the constants from testdeck.status
+  get_deck_constants(tests_src_dir + "test");
+  share_consts();
   
   std::string block = "ex";
-  test_rdr = new reader("./files/sin", block);
+  test_rdr = new reader(tests_src_dir + "sin", block);
   err |= one_d();
 
   if(test_rdr) delete test_rdr;
   block = "ax";
-  test_rdr = new reader("./files/sinAcc", block);
+  test_rdr = new reader(tests_src_dir + "sinAcc", block);
   err |= two_d();
 
   return err;

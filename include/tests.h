@@ -54,6 +54,7 @@ const calc_type LOW_PRECISION = 5e-3;/**< Constant for equality at low precision
 const int max_verbos = 4;/**<Verbosity range for messages*/
 const std::string filename = "tests.log";/**<Test log file*/
 const std::string tests_tmp_dir ="./files/tmp_tests/";/**< Temporary directory for test output.*/
+const std::string tests_src_dir ="./files/tests/";/**< Directory for test input files.*/
 
 
 /**\brief Testing instance

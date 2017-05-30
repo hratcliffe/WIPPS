@@ -4,7 +4,7 @@
 #Will call generate_FFTs with series of parameters
 
 #These generally constant on one run-----------------------------------
-program='./generate_ffts'
+program='../generate_ffts'
 rows=512
 #Number of times Power of 2 means better FFT performance
 fil_pref=$1

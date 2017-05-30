@@ -29,7 +29,7 @@
 \todo Makefile doc creation into script
 \todo Create scrips directory with useful stuff like level-one scrips etc
 \todo Allow private or not docs
-\todo Move help files, test files etc to subdirs of files
+\todo Add install recipe to makefile
 */
 
 /** \defgroup utils Available programs
@@ -74,12 +74,10 @@ int main(int argc, char *argv[]){
 #ifdef RUN_TESTS_AND_EXIT
   my_print("Running tests", mpi_info.rank);
 
-  if(mpi_info.rank == 0) get_deck_constants("./files/test");
-  share_consts();
-  log_code_constants("./files/test");
+  log_code_constants("./tests");
 
   test_bed = new tests();
-  test_bed->set_verbosity(2);
+  test_bed->set_verbosity(3);
   test_bed->set_runtime_flags(argc, argv);
   int err = test_bed->run_tests();
   delete test_bed;

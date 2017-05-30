@@ -15,11 +15,16 @@
 plasma::plasma(std::string file_prefix, my_type Bx_local){
 /** \brief Set up plasma
 *
-*Sets up components from {file_prefix}plasma.conf. If a Bx_local is given, store and calc local cyclotron frequency from this. Else use the cyclotron frequency from deck constants.
+*Sets up components from {file_prefix}plasma.conf. If a Bx_local is given, store and calc local cyclotron frequency from this. Else use the cyclotron frequency from deck constants. IMPORTANT: Make sure my_consts is defined (read_deck and share_consts) before creating plasma!
 @param file_prefix File prefix prepended to all files read
 @param Bx_local Local x-component of magnetic field
 */
 
+  if(my_const.omega_ce == 0){
+    my_error_print("!!! Reference om_ce is zero!", mpi_info.rank);
+    is_setup = p_state::p_none;
+    return;
+  }
   //Set up plasma components
   plasma_state state = configure_from_file(file_prefix);
   

@@ -32,7 +32,11 @@ test_entity_plasma::test_entity_plasma(){
 *Create plasma object from file
 */
   name = "plasma";
-  plas = new plasma("./files/test");
+  //Have to set-up deck constants before creating plasma
+  get_deck_constants(tests_src_dir + "test");
+  share_consts();
+
+  plas = new plasma(tests_src_dir + "test");
 
 }
 test_entity_plasma::~test_entity_plasma(){
@@ -48,7 +52,13 @@ int test_entity_plasma::run(){
 */
 
   int err = TEST_PASSED;
-  
+  get_deck_constants(tests_src_dir + "test");
+  share_consts();
+  if(!plas->is_good()){
+    err |= TEST_ASSERT_FAIL;
+    return err;
+  }
+
   err |= analytic_dispersion();
   err |= high_density();
   err |= resonant_freq();
@@ -522,7 +532,7 @@ The reason for using the better dispersion solver is a) to avoid any numerical d
 test_entity_spectrum::test_entity_spectrum(){
 /** \brief Setup spectrum tests*/
   name = "spectrum checks";
-  file_prefix = "./files/";
+  file_prefix = tests_src_dir;
 }
 test_entity_spectrum::~test_entity_spectrum(){
 /**\brief Teardown spectrum tests*/
@@ -532,15 +542,13 @@ test_entity_spectrum::~test_entity_spectrum(){
 int test_entity_spectrum::run(){
 /** \brief Test spectrum extraction
 *
-* This tests the dispersion relation approximations are OK (plain and vg). Check test spectrum makes sense. Test extraction of a spectrum from data. Note data does not come from files, but from a test file which is already written as a data array using ./files/generate_fftd.pro which makes FFT_data.dat with the FFTd data and spectrum.dat with a derived spectrum to check against.
+* This tests the dispersion relation approximations are OK (plain and vg). Check test spectrum makes sense. Test extraction of a spectrum from data. Note data does not come from files, but from a test file which is already written as a data array using generate_fftd.pro which makes FFT_data.dat with the FFTd data and spectrum.dat with a derived spectrum to check against.
 @return Error code
 */
 
   int err = TEST_PASSED;
 
-  //Use a different deck.status file...
-  deck_constants const_tmp = my_const;
-  if(mpi_info.rank == 0) get_deck_constants(file_prefix);
+  get_deck_constants(file_prefix);
   share_consts();
 
   err|= setup();
@@ -549,9 +557,6 @@ int test_entity_spectrum::run(){
   if(!test_bed->check_for_abort(err)) err|= technical_tests();
   if(!test_bed->check_for_abort(err)) err|= albertGs_tests();
   
-  my_const = const_tmp;
-  share_consts();
-
   return err;
 
 }
@@ -946,7 +951,7 @@ Set runtime_flag "level_one" to perform full level-one testing
 
   if(test_bed->runtime_flags.count("level_one") != 0){
     block_id = "ax";
-    file_prefix = "./files/l1/l1";
+    file_prefix = tests_src_dir + "l1/l1";
     space_in[0] = 0;
     space_in[1] = 1024;
     time_in[0] = 0;
@@ -965,7 +970,7 @@ Set runtime_flag "level_one" to perform full level-one testing
     }
 
     if(!test_bed->check_for_abort(err)){
-      file_prefix = "./files/2dtest/";
+      file_prefix = tests_src_dir + "2dtest/";
       block_id = "ey";
       space_in[0] = 0;
       space_in[1] = 1024;
@@ -1160,7 +1165,7 @@ test_entity_d::test_entity_d(){
 /**  \brief Setup tests for dffusion calculation
 */
   name = "D checks";
-  file_prefix = "./files/d_test";
+  file_prefix = tests_src_dir + "d_test";
   test_contr = nullptr;
   partial_disable_for_valgrind = false;
 
@@ -1365,7 +1370,7 @@ data_array test_entity_d::read_padie_data(bool single_n, int n, bool use_d_pp){
 @param use_d_pp Return d_pp data rather than d_alpha alpha
 @return New data array containing reference data
 */
-  std::string padie_dir = "./files/PadieTestData/";
+  std::string padie_dir = tests_src_dir + "PadieTestData/";
   std::string filestart = "Data";
   std::string fileend = "", filename;
 
@@ -1387,7 +1392,11 @@ data_array test_entity_d::read_padie_data(bool single_n, int n, bool use_d_pp){
 test_entity_bounce::test_entity_bounce(){
 /** \brief Setup tests for bounce averaging*/
   name = "bounce averaging";
-  file_prefix = "./files/";
+  file_prefix = tests_src_dir;
+  //Have to set-up deck constants before creating plasma
+  get_deck_constants(tests_src_dir + "test");
+  share_consts();
+
   test_contr = new controller(file_prefix);
 }
 test_entity_bounce::~test_entity_bounce(){
@@ -1556,7 +1565,7 @@ int test_entity_nonthermal::run(){
   int err = TEST_PASSED;
   
   //Setup single Max non-thermal
-  non_thermal * my_elec = new non_thermal("./files/test");
+  non_thermal * my_elec = new non_thermal(tests_src_dir + "test");
 
   calc_type a_par = std::sqrt(2.0)*my_elec->get_v_par() / std::sqrt(1.0 - std::pow(my_elec->get_v_par()/v0, 2));
   calc_type a_perp_sq = 2.0*std::pow(my_elec->get_v_perp(), 2)/(1.0 - 2.0*std::pow(my_elec->get_v_perp()/v0, 2));
@@ -1616,8 +1625,8 @@ int test_entity_nonthermal::test_lookup(){
 */
   int err = TEST_PASSED;
   
-  non_thermal * my_elec_an = new non_thermal("./files/an");
-  non_thermal * my_elec_lookup = new non_thermal("./files/lookup");
+  non_thermal * my_elec_an = new non_thermal(tests_src_dir + "an");
+  non_thermal * my_elec_lookup = new non_thermal(tests_src_dir + "lookup");
 
   calc_type f_an, f_lookup, p_par, p_perp;
   const size_t n_tests = 100;

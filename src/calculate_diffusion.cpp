@@ -62,7 +62,6 @@ bool is_filenumber(char * str);
   @return System error code */
 
 int main(int argc, char *argv[]){
-/** \todo Create a skeleton utility as example for making a new one*/
 
   bool err;
   size_t per_proc = 1;

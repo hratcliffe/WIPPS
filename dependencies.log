@@ -105,6 +105,19 @@ src/tests_data_and_calc.cpp\
   include/non_thermal.h\
   include/valgrind.h\
 
+obj/example_singlecore.o:\
+src/example_singlecore.cpp\
+  include/main.h\
+  include/support.h\
+  include/reader.h\
+  include/data_array.h\
+  include/my_array.h\
+  include/d_coeff.h\
+  include/controller.h\
+  include/plasma.h\
+  include/spectrum.h\
+  include/tests.h\
+
 obj/main.o:\
 src/main.cpp\
   include/main.h\

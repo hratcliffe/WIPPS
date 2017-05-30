@@ -70,6 +70,8 @@ endif
 
 SOURCE = my_array.cpp data_array.cpp d_coeff.cpp spectrum.cpp plasma.cpp reader.cpp controller.cpp non_thermal.cpp support.cpp tests.cpp tests_basic_and_code.cpp tests_data_and_calc.cpp
 #list of all other cpp files. These are assumed to have both a cpp and h pairing
+EGSOURCE = example_singlecore.cpp example_multicore.cpp
+#Example main programs
 
 INCLS := $(SOURCE:.cpp=.h)
 OBJS := $(SOURCE:.cpp=.o)
@@ -179,6 +181,7 @@ UTILS :=$(UTILSSOURCE:.cpp=)
 UTILSOBJS := $(UTILSSOURCE:.cpp=.o)
 UTILSOBJS := $(addprefix $(OBJDIR)/, $(UTILSOBJS))
 UTILSSOURCE := $(addprefix $(SRCDIR)/, $(UTILSSOURCE))
+EGSOURCE := $(addprefix $(SRCDIR)/, $(EGSOURCE))
 
 #Add the main.h header explicitly
 INCLS += "main.h"
@@ -217,7 +220,17 @@ echo_usr:
 #Build the utilities. Each <FILE>.cpp in UTILSOBJ is assumed to create a main program which will be named <FILE>
 utils : $(UTILSOBJS) $(OBJS) update_docs
 	@for var in $(UTILSOBJS); do name=$$(basename $$(basename $$var .o )) && echo "Building" $$name "....." && $(CC) $(LFLAGS) $(INCLUDE) $(OBJS) $$var $(LIB) -o $$name;done
+
+example_singlecore : $(OBJDIR)/example_singlecore.o $(OBJS) FORCE
+	$(CC) $(LFLAGS) $(INCLUDE) $(OBJS) $(OBJDIR)/example_singlecore.o $(LIB) -o example_singlecore
+
+example_multicore : $(OBJDIR)/example_multicore.o $(OBJS) FORCE
+	$(CC) $(LFLAGS) $(INCLUDE) $(OBJS) $(OBJDIR)/example_multicore.o $(LIB) -o example_multicore
 #====================================================================
+
+.PHONY: FORCE
+FORCE:
+
 .PHONY: debug
 #testing makefile commands ;)
 debug :
@@ -250,7 +263,7 @@ echo_deps : process_deps.sh
 	@touch dependencies.log
 	@rm dependencies.log
   #touch so must exist before rm
-	@for var in $(SOURCE) $(MAINSOURCE) $(UTILSSOURCE); do $(CC) $(INCLUDE) $(DEPSFLAGS) -MM $$var |fmt -1 >> dependencies.log 2>&1;\
+	@for var in $(SOURCE) $(MAINSOURCE) $(UTILSSOURCE) $(EGSOURCE); do $(CC) $(INCLUDE) $(DEPSFLAGS) -MM $$var |fmt -1 >> dependencies.log 2>&1;\
     done
   #-M dumps dependencies to file, -MM excludes system headers;
   #Recursive dependencies are also resolved under gcc

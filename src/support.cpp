@@ -691,6 +691,7 @@ void my_print(std::string text, int rank, int rank_to_write, bool noreturn){
 @param rank Rank of this processor
 @param rank_to_write Which rank should do the printing, default 0. Set to -1 to print from all
 @param noreturn Set to not output a line break after text
+\todo Check what happens when multi-cores print....
 */
   if(rank == rank_to_write || rank_to_write == -1){
   

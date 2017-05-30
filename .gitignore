@@ -13,6 +13,8 @@ FFT_to_spectrum
 compress_distributions
 calculate_growth
 extract_field
+example_*
+Roots
 *.txt
 Derivations.*
 *.dat

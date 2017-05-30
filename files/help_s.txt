@@ -1,0 +1,8 @@
+Command line options:
+-h Show help
+-f <string> Path for for all input files (full or relative) e.g. deck.status and plasma.conf
+-in <string> Input file
+-num <int> A number
+
+Sample usage:
+./example_singlecore -f ./files -in my_file.dat -num 2

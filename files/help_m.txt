@@ -1,0 +1,8 @@
+Command line options:
+-h Show help
+-f <string> Path for for all input files (full or relative) e.g. deck.status and plasma.conf
+-num <int> A number
+-files <string ...> Filenames to read
+
+Sample usage:
+mpiexec -n 2 ./example_multicore -f ./files -files my_file.dat my_file2.dat -num 2

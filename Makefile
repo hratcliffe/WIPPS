@@ -159,10 +159,13 @@ endif
 #Linker flag for SDF libraries
 LIB += -ldl
 #REFERENCED_BY_RELATION = YES
+#SHOW_USED_FILES        = YES
+#SOURCE_BROWSER         = YES
+#VERBATIM_HEADERS
 ifeq ($(strip $(DOCS)),full)
-  SED_STR_Docs = sed -i.bak 's/\(EXTRACT_PRIVATE *=\) *[A-Z]*/\1 YES/' Doxyfile; sed -i.bak 's/\(REFERENCED_BY_RELATION *=\) *[A-Z]*/\1 YES/' Doxyfile
+  SED_STR_Docs = sed -i.bak 's/\(EXTRACT_PRIVATE *=\) *[A-Z]*/\1 YES/' Doxyfile; sed -i.bak 's/\(REFERENCED_BY_RELATION *=\) *[A-Z]*/\1 YES/' Doxyfile; sed -i.bak 's/\(SHOW_USED_FILES *=\) *[A-Z]*/\1 YES/' Doxyfile; sed -i.bak 's/\(SOURCE_BROWSER *=\) *[A-Z]*/\1 YES/' Doxyfile; sed -i.bak 's/\(VERBATIM_HEADERS *=\) *[A-Z]*/\1 YES/' Doxyfile
 else ifeq ($(strip $(DOCS)),user)
-  SED_STR_Docs = sed -i.bak 's/\(EXTRACT_PRIVATE *=\) *[A-Z]*/\1 NO/' Doxyfile; sed -i.bak 's/\(REFERENCED_BY_RELATION *=\) *[A-Z]*/\1 NO/' Doxyfile
+  SED_STR_Docs = sed -i.bak 's/\(EXTRACT_PRIVATE *=\) *[A-Z]*/\1 NO/' Doxyfile; sed -i.bak 's/\(REFERENCED_BY_RELATION *=\) *[A-Z]*/\1 NO/' Doxyfile; sed -i.bak 's/\(SHOW_USED_FILES *=\) *[A-Z]*/\1 NO/' Doxyfile; sed -i.bak 's/\(SOURCE_BROWSER *=\) *[A-Z]*/\1 NO/' Doxyfile; sed -i.bak 's/\(VERBATIM_HEADERS *=\) *[A-Z]*/\1 NO/' Doxyfile
 else ifdef DOCS
   $(error Unknown DOCS)
 endif

@@ -158,13 +158,11 @@ endif
 
 #Linker flag for SDF libraries
 LIB += -ldl
-
+#REFERENCED_BY_RELATION = YES
 ifeq ($(strip $(DOCS)),full)
-  $(info full)
-  SED_STR_Docs = sed -i.bak 's/\(EXTRACT_PRIVATE *= *\)[A-Z]*/\1 YES/' Doxyfile
+  SED_STR_Docs = sed -i.bak 's/\(EXTRACT_PRIVATE *=\) *[A-Z]*/\1 YES/' Doxyfile; sed -i.bak 's/\(REFERENCED_BY_RELATION *=\) *[A-Z]*/\1 YES/' Doxyfile
 else ifeq ($(strip $(DOCS)),user)
-  $(info user)
-  SED_STR_Docs = sed -i.bak 's/\(EXTRACT_PRIVATE *= *\)[A-Z]*/\1 NO/' Doxyfile
+  SED_STR_Docs = sed -i.bak 's/\(EXTRACT_PRIVATE *=\) *[A-Z]*/\1 NO/' Doxyfile; sed -i.bak 's/\(REFERENCED_BY_RELATION *=\) *[A-Z]*/\1 NO/' Doxyfile
 else ifdef DOCS
   $(error Unknown DOCS)
 endif
@@ -191,7 +189,7 @@ WARN_STR = "**************Run make clean before changing MODE or TYPE. Run echo_
 
 #=========================Main rules=================================
 #The main file, main.cpp can be compiled in normal or test mode. Target below for utils also compiles a series of other main programs.
-default : echo_float echo_warning $(OBJS) $(OBJDIR)/main.o $(SDFPATH)/lib/libsdfc.a update_docs
+default : echo_float echo_warning $(OBJS) $(OBJDIR)/main.o $(SDFPATH)/lib/libsdfc.a
 	$(CC) $(LFLAGS) $(INCLUDE) $(OBJS) $(OBJDIR)/main.o $(LIB) -o main
 	@echo $(WARN_STR)
 
@@ -218,7 +216,7 @@ echo_usr:
 	@echo $(USR)
 
 #Build the utilities. Each <FILE>.cpp in UTILSOBJ is assumed to create a main program which will be named <FILE>
-utils : $(UTILSOBJS) $(OBJS) update_docs
+utils : $(UTILSOBJS) $(OBJS)
 	@for var in $(UTILSOBJS); do name=$$(basename $$(basename $$var .o )) && echo "Building" $$name "....." && $(CC) $(LFLAGS) $(INCLUDE) $(OBJS) $$var $(LIB) -o $$name;done
 
 example_singlecore : $(OBJDIR)/example_singlecore.o $(OBJS) FORCE
@@ -322,7 +320,7 @@ veryclean: cleandocs
 	@rm -rf $(OBJDIR)
 	@rm $(SDFPATH)/lib/libsdfc.a
 
-docs:
+docs: update_docs
 	@echo Running Doxygen...
-	@if ! [[ `which Doxygen` ]]; then echo "Doxygen not found"; else printf "Options:\nType: ";egrep ' USE_FLOAT' ./Doxyfile >>/dev/null && echo "Float" || echo "Double";printf "Mode: ";egrep '[ \t]+RUN_TESTS_AND_EXIT' ./Doxyfile >>/dev/null && echo "Test"; echo; ./generate_runtime_flags.sh; doxygen Doxyfile 1> Doxy.log 2> Doxy.log.tmp; echo "Error Output:" >> Doxy.log; cat Doxy.log.tmp >> Doxy.log; rm Doxy.log.tmp; echo Processing Doxygen output...; ./redox.sh; echo Running pdftex...; cd latex ; make &> ../docs.log; cd ..; echo "Docs built. See Doxy.log and docs.log for details"; fi
+	@if ! [[ `which Doxygen` ]]; then echo "Doxygen not found"; else printf "Options:\nType: ";egrep ' USE_FLOAT' ./Doxyfile >>/dev/null && echo "Float" || echo "Double";printf "Mode: ";egrep '[ \t]+RUN_TESTS_AND_EXIT' ./Doxyfile >>/dev/null && echo "Test" || echo "";printf "Docs: ";egrep -e "REFERENCED_BY_RELATION[ ]*\=[ ]*NO" ./Doxyfile >>/dev/null && echo "User" || echo "Full"; ./generate_runtime_flags.sh; doxygen Doxyfile 1> Doxy.log 2> Doxy.log.tmp; echo "Error Output:" >> Doxy.log; cat Doxy.log.tmp >> Doxy.log; rm Doxy.log.tmp; echo Processing Doxygen output...; ./redox.sh; echo Running pdftex...; cd latex ; make &> ../docs.log; cd ..; echo "Docs built. See Doxy.log and docs.log for details"; fi
 

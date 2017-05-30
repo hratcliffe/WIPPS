@@ -63,6 +63,7 @@ int main(int argc, char *argv[]){
     get_deck_constants(cmd_line_args.file_prefix);
 
     //Check version compatibility of input data file. If anything is changed that affects how code should operate, this can be used to adapt for it
+    //Can find whether version is earlier or later than a given spec
     if(!check_wipps_version(cmd_line_args.file_prefix+cmd_line_args.file_in)){
       //exit(1);//Uncomment to exit at this point if required
     }

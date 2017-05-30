@@ -28,7 +28,6 @@
 /**
 \todo Makefile doc creation into script
 \todo Create scrips directory with useful stuff like level-one scrips etc
-\todo Allow private or not docs, also dev-docs including the "referenced from" and stuff
 \todo Add install recipe to makefile
 */
 

@@ -2,7 +2,10 @@
 \usepackage[lmargin = 3cm, rmargin = 3cm]{geometry}
 \usepackage{amsmath}
 \usepackage{hyperref}
+\usepackage[]{changepage}
 \title{Derivations of Diffusion coefficient factors}
+
+\newcommand{\answer}[1]{\begin{adjustwidth}{3em}{0em}#1\end{adjustwidth}}
 
 \begin{document}
 \tableofcontents
@@ -16,8 +19,6 @@ Doppler resonance condition:
 \begin{equation}
 \omega -k_\parallel v_\parallel = \frac{n \Omega_e}{\gamma}
 \end{equation}
-
-
 
 \section{Resonant frequencies in high-density approximation}
 Start from Stix Equation 2.45 for the Right hand mode, noting that $\Omega_c$ contains the \emph{sign} of the particle charge:
@@ -374,7 +375,7 @@ FOR THE $m^2$ note that the duplicate of Lyons in Glauert/Horne doesn't have the
 
 NB NB I think this is because they use $g(\theta)$ vs $g(\tan(\theta))$ respectively!!
 
-\section{Evauluation of resonant frequencies}
+\section{Evaluation of resonant frequencies}
 
 \begin{verbatim}
   a = (vel_cos - 1.0) * gamma_sq;
@@ -383,6 +384,116 @@ NB NB I think this is because they use $g(\theta)$ vs $g(\tan(\theta))$ respecti
          std::pow(om_pe_loc/om_ce_ref, 2)*vel_cos*gamma_sq);
   d = -n*n*std::pow(om_ce/om_ce_ref, 3)*cos_th;
 \end{verbatim}
+
+\section{Full evaluation of resonant frequencies}
+The previous section showed the cubic polynomial to be solved to find the resonant frequency in the high-density limit. Here we show the end result for the full, 10th order, version.
+
+\subsection{Coefficients in polynomial for omega}
+From Clare's notes we have the following
+\[ A \mu^4 - B \mu^2 + C = 0\]
+and the contributions from each term broken down by powers of omega are:
+\begin{align}
+\omega^{10} \mathrm{coeff} :& A_{n6}\mu_{n4}^4 
+&+ B_{n6}\mu_{n2}^2 
+&+  C_{n8}\notag\\
+\omega^{9} \mathrm{coeff} :& A_{n6}\mu_{n3}^4 
+&+ B_{n6}\mu_{n1}^2
+&\notag\\
+\omega^{8} \mathrm{coeff} :& A_{n6}\mu_{n2}^4 + A_{n4}\mu_{n4}^4 
+&+ B_{n6}\mu_{n0}^2+ B_{n4}\mu_{n2}^2 
+&+  C_{n6}\notag\\
+\omega^{7} \mathrm{coeff} :& A_{n6}\mu_{n1}^4 + A_{n4}\mu_{n3}^4 
+&+ B_{n4}\mu_{n1}^2
+& \notag\\
+\omega^{6} \mathrm{coeff} :& A_{n6}\mu_{n0}^4 + A_{n4}\mu_{n2}^4 + A_{n2}\mu_{n4}^4 
+&+ B_{n4}\mu_{n0}^2 + B_{n2}\mu_{n2}^2 
+&+  C_{n4}\notag\\
+\omega^{5} \mathrm{coeff} :& A_{n4}\mu_{n1}^4 + A_{n2}\mu_{n3}^4 
+&+ B_{n2}\mu_{n1}^2
+& \notag\\
+\omega^{4} \mathrm{coeff} :& A_{n4}\mu_{n0}^4 + A_{n2}\mu_{n2}^4 + A_{n0}\mu_{n4}^4 
+&+ B_{n2}\mu_{n0}^2 + B_{n0}\mu_{n2}^2 
+&+  C_{n2}\notag\\
+\omega^{3} \mathrm{coeff} :& A_{n2}\mu_{n1}^4 + A_{n0}\mu_{n2}^4 
+&+ B_{n0}\mu_{n1}^2&\notag\\
+\omega^{2} \mathrm{coeff} :& A_{n2}\mu_{n0}^4 + A_{n0}\mu_{n2}^4 
+&+ B_{n0}\mu_{n0}^2&\notag\\
+\omega^{1} \mathrm{coeff} :& A_{n0}\mu_{n1}^4 + A_{n0}\mu_{n1}^4
+&&\notag\\
+\omega^{0} \mathrm{coeff} :& A_{n0}\mu_{n0}^4
+&&\notag
+\end{align}
+
+with
+\begin{align}
+A_{n6} &=  1\notag\\
+A_{n4} &= -\omega_p^2 \cos^2\psi - (\Omega_e^2 + \Omega_i^2) - \omega_p^2\sin^2 \psi \notag\\
+A_{n2} &= \Omega_e^2\Omega_i^2 + \omega_p^2 (\Omega_e^2 +\Omega_i^2)\cos^2\psi - \sin^2 \psi (\omega_{pe}^2\Omega_i^2 + \omega_{pi}^2\Omega_e^2) \notag\\
+A_{n0} &= -\omega_p^2\Omega_e^2 \Omega_i^2 \cos^2 \psi
+\end{align}
+
+\begin{align}
+B_{n6} &= 2\notag\\
+B_{n4} &= -2 (\Omega_e^2 +\Omega_i^2) - 4 \omega_p^2\notag\\
+B_{n2} &= 2\Omega_e^2\Omega_i^2 + (2+\sin^2 \psi)(\omega_{pe}^2 \Omega_i^2 + \omega_{pi}^2\Omega_e^2) + 2(\omega_{pe}^4 + \omega_{pi}^4) + 4 \omega_{pe}^2\omega_{pi}^2 +\omega_p^2(\Omega_e^2 + \Omega_i^2)(1+\cos^2\psi)\notag\\
+B_{n0} &= -2\omega_{pe}^4\Omega_i^2 - 2\omega_{pi}^4 \Omega_e^2 - \omega_p^2\Omega_e^2\Omega_i^2(1+\cos^2 \psi) + \omega_{pe}^2\omega_{pi}^2( (1+\cos^2\psi)(\Omega_e-\Omega_i)^2 - 4 \Omega_e\Omega_i)
+\end{align}
+and
+\begin{align}
+C_{n8} &= 1\notag\\
+C_{n6} &= -\Omega_e^2 -\Omega_i^2 - 3\omega_p^2\notag\\
+C_{n4} &= 3\omega_p^4 + \omega_p^2(\Omega_e - \Omega_i)^2 + \Omega_e^2\Omega_i^2\notag\\
+C_{n2} &= -\omega_p^2 (\Omega_e\Omega_i - \omega_p^2)^2
+\end{align}
+
+where $\omega_p^2 = \omega_{pe}^2 + \omega_{pi}^2$. For $\mu$ we can expand out the terms using
+\[ L = \frac{c^2}{\gamma^2 v_\parallel^2 \cos^2\psi}\]
+as
+\begin{align}
+\mu_{n4}^4 &= L^2 \gamma^4 \notag\\
+\mu_{n3}^4 &= -4 L^2 n \gamma^3 \Omega_e \notag\\
+\mu_{n2}^4 &= 6L^2 n^2 \gamma^2 \Omega_e^2 \notag\\
+\mu_{n1}^4 &= - 4 L^2 n^3 \gamma \Omega_e^3 \notag\\
+\mu_{n0}^4 &= L^2 n^4 \Omega_e^4
+\end{align}
+
+and
+\begin{align}
+\mu_{n2}^2 &= L \gamma^2 \notag\\
+\mu_{n1}^2 &= -2 L n \gamma \Omega_e \notag\\
+\mu_{n0}^2 &= L n^2 \Omega_e^2
+\end{align}
+
+\subsection{Coefficients in ion-negligible form}
+
+When the ion frequencies are negligible with respect to the electron frequencies, we can simplify the $A, B, C$ expressions significantly. Assuming $\omega, \omega_{pe}, \Omega_e \gg \omega_{pi}, \Omega_i$ gives 
+
+\begin{align}
+A_{n6} &=  1\notag\\
+A_{n4} &= -\omega_{pe}^2- \Omega_e^2  \notag\\
+A_{n2} &= \omega_{pe}^2 \Omega_e^2\cos^2\psi \notag\\
+A_{n0} &= 0
+\end{align}
+
+\begin{align}
+B_{n6} &= 2\notag\\
+B_{n4} &= -2 \Omega_e^2 - 4 \omega_{pe}^2\notag\\
+B_{n2} &=   2 \omega_{pe}^4 + \omega_{pe}^2 \Omega_e^2 (1+\cos^2\psi)\notag\\
+B_{n0} &= 0
+\end{align}
+and
+\begin{align}
+C_{n8} &= 1\notag\\
+C_{n6} &= -\Omega_e^2 - 3\omega_{pe}^2\notag\\
+C_{n4} &= 3\omega_{pe}^4 + \omega_{pe}^2 \Omega_e^2 \notag\\
+C_{n2} &= -\omega_{pe}^6
+\end{align}
+
+\subsection{Rescaling to keep terms order 1}
+Since this is a 10th order polynomial in a large number, the high powers involved are troublesome for numerical solutions. So we prefer to solve an equation where all terms are order 1. In particular, we want to solve for $\omega/\omega_{ref}$ using the cyclotron and plasma frequencies similarly reduced. Therefore we:
+multiply the coefficient for $\omega^m$ by $\omega_{ref}^m$; divide the entire equation by $\omega_{ref}^{l}$ where $l$ is chosen to get the terms to be generally amenable; rewrite in terms of the normalised frequencies $\tilde{\omega}_{pe} = \omega_{pe}/\omega_{ref}$ etc. Taking just $l=10$ we just replace all the frequencies in $\mu$ and in $A, B,C$ with their normalised versions. 
+
+\subsection{Notes on polynomial solvers}
 
 \section{Calculation of D}
 \subsection{Breakdown of terms}

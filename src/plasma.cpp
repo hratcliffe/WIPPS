@@ -10,6 +10,7 @@
 //Provides Bessel functions, erf, and many more
 #include <boost/math/special_functions/sign.hpp>
 #include "plasma.h"
+#include "resonance_poly.h"
 
 /********Basic setup and allocation functions ****/
 plasma::plasma(std::string file_prefix, my_type Bx_local){
@@ -39,6 +40,7 @@ plasma::plasma(std::string file_prefix, my_type Bx_local){
   this->om_ce_local = std::abs(q0) * B0 / me;
 
   is_setup = state;
+  this->full_poly = new NR_poly(om_ce_local, my_const.omega_pe, om_ce_ref);
 }
 
 plasma_state plasma::configure_from_file(std::string file_prefix){
@@ -518,6 +520,61 @@ std::vector<calc_type> plasma::get_resonant_omega(calc_type theta, calc_type v_p
   cn = d/a;
 
   ret_vec = cubic_solve(an, bn, cn);
+
+  //Restore om_ce_ref factor and delete any entries > om_ce as these aren't whistler modes. Also delete answers which are "zero"
+  for(size_t i=0; i<ret_vec.size(); ++i) ret_vec[i] *= om_ce_ref;
+  for(size_t i=0; i<ret_vec.size(); ++i){
+    if(std::abs(ret_vec[i]) > std::abs(om_ce) || std::abs(ret_vec[i]) < GEN_PRECISION){
+      ret_vec.erase(ret_vec.begin() + i);
+      --i;
+    }
+  }
+
+  return ret_vec;
+
+}
+
+std::vector<calc_type> plasma::get_resonant_omega_full(calc_type theta, calc_type v_par, calc_type gamma_particle, int n)const{
+/** \brief Solve plasma dispersion and doppler resonance simultaneously
+*
+*Obtains solutions of the Doppler resonance condition omega - k_par v_par = -n Omega_ce and the Whistler mode dispersion relation simultaneously. Assumes pure electron-proton plasma and uses cubic_solve. ONLY solutions between -om_ce_local and om_ce_local, excluding omega = 0, are considered. "Zero" solutions are those less than the GEN_PRECISION constant in support.h.
+*
+*Note that since k_parallel and v_parallel in resonant condition are signed, we will get multiple entries of ± omega for the corresponding ±k and ±n. These should be handled by the calling code, as k may or may not be handled with both signs
+@param theta Wave normal angle 
+@param v_par Particle velocity to solve with 
+@param gamma_particle Relativistic gamma for resonant particle
+@param n Resonance number
+@return Vector of solutions for resonant omega, or empty vector if no solutions are found
+*/
+
+#ifdef DEBUG_ALL
+  //Argument preconditions. Check only in debug mode for speed
+  if(std::abs(v_par) >= v0) my_error_print("!!!!!!!!Error in get_resonant_omega, velocity (v_par="+mk_str(v_par)+") out of range!!!!!!", 0);
+  if(gamma_particle < 1.0) my_error_print("!!!!!!!!Error in get_resonant_omega, particle gamma (gamma_particle="+mk_str(gamma_particle)+") out of range!!!!!!", 0);
+#endif
+
+  std::vector<calc_type> ret_vec, cubic_guesses;
+  calc_type om_ce = this->get_omega_ref("ce");
+  calc_type om_pe_loc = this->get_omega_ref("pe");
+  calc_type om_ce_ref = this->get_omega_ref("c0");
+  if(std::abs(v_par) < tiny_calc_type){
+    if( n == 1 || n == -1 ) ret_vec.push_back(om_ce*n);
+    return ret_vec;
+  }
+  //We let n=0 fall through even though we can handle it quicker because it's simpler code. We do exclude omega "=" zero solutions below though.
+
+  //First attempt we just recalculate every time
+
+  full_poly->calculate_coeffs_no_ion(theta, v_par, n, gamma_particle);
+  cubic_guesses = this->get_resonant_omega(theta, v_par, gamma_particle, n);
+  NR_poly callable_poly = *full_poly;
+  double nrResult;
+  for(size_t i = 0; i < cubic_guesses.size(); i++){
+    nrResult = boost::math::tools::newton_raphson_iterate(callable_poly, cubic_guesses[i]*0.9/om_ce_ref, 0.6*cubic_guesses[i]/om_ce_ref, 1.0, 20);
+    ret_vec.push_back(nrResult);
+//    std::cout<<"NR returns "<<nrResult*om_ce_ref<<'\n';
+//    std::cout<<"NR method found root matching to "<<(nrResult*om_ce_ref/cubic_guesses[i] - 1.0)*100.0<<" %"<<'\n';
+  }
 
   //Restore om_ce_ref factor and delete any entries > om_ce as these aren't whistler modes. Also delete answers which are "zero"
   for(size_t i=0; i<ret_vec.size(); ++i) ret_vec[i] *= om_ce_ref;

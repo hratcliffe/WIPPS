@@ -62,6 +62,7 @@ int test_entity_plasma::run(){
   err |= analytic_dispersion();
   err |= high_density();
   err |= resonant_freq();
+  err |= resonant_freq_poly();
   err |= other_modes();
   err |= phi_dom();
 
@@ -312,7 +313,75 @@ int test_entity_plasma::resonant_freq(){
             //This should match the high-density mu solution almost exactly, once we remove the leading 1.0
             if(std::abs(my_mu.mu - std::sqrt(mu_tmp2 - 1.0))/std::sqrt(mu_tmp2 - 1.0) > NUM_PRECISION){
               err|=TEST_WRONG_RESULT;
-              test_bed->report_info("Mismatched full mu solution  in resonant solver, error " + mk_str(std::abs(my_mu.mu-std::sqrt(mu_tmp2-1.0))/std::sqrt(mu_tmp2-1.0)*100.0, true)+'%', 2);
+              test_bed->report_info("Mismatched full mu solution in resonant solver, error " + mk_str(std::abs(my_mu.mu-std::sqrt(mu_tmp2-1.0))/std::sqrt(mu_tmp2-1.0)*100.0, true)+'%', 2);
+            }
+          }
+        }
+      }
+    }
+  }
+  test_bed->report_info("Mu error count: "+mk_str(err_count), 2);
+  return err;
+
+}
+
+int test_entity_plasma::resonant_freq_poly(){
+/** \brief Check resonant frequency solver
+*
+*Checks the returned resonant frequencies from the high-density and full polynomials have full solutions and match to reasonable degree
+@return Error code
+*/
+
+  int err=TEST_PASSED;
+  int n_tests = 10;
+  std::vector<calc_type> results, HD_results;
+  mu_dmudom my_mu;
+  int err_count = 0;
+  calc_type x, v_par, n, om_ce_local, om_pe_local, om_ce_signed;
+  om_ce_local = plas->get_omega_ref("ce");
+  om_pe_local = plas->get_omega_ref("pe");
+  om_ce_signed = - std::abs(om_ce_local);
+  calc_type cos_theta, mu_tmp1, mu_tmp2;
+  calc_type gamma;
+
+  test_bed->report_info("Testing resonant frequency polynomial solver", 1);
+
+  //Check the n=0 and v=0 degenerate cases
+  //Zero angle, zero velocity, any n, expect empty result
+  results = plas->get_resonant_omega_full(0.0, 0.0, 1.0, -1);
+  if(results.size() != 1 && (results[0]/om_ce_local - 1.0 > PRECISION)){
+    test_bed->report_info("Erroneous solution when v=0 in resonant frequency solver", 2);
+    err |= TEST_WRONG_RESULT;
+  }
+  
+  //Check over the range of cases
+  //Loop over particle velocity, assuming propagation at alpha = pi/8 say
+  calc_type theta, test_angle = pi/8.0;
+  for(int ii=0; ii<n_tests; ii++){
+    v_par = (0.01 + 0.5*(float)ii/ (float)(n_tests+1))* v0;
+    //Loop over angles
+    for(int j=0; j< n_tests; j++){
+      x = 4.0 * (float) j / (float)(n_tests+1);
+      theta = std::atan(x);
+      cos_theta = std::cos(theta);
+      //Loop over n
+      for(int k=0; k< n_tests; k++){
+        n = -n_tests/2 + k*n_tests/2;
+        
+        gamma = gamma_rel(v_par/cos(test_angle));
+        
+        results = plas->get_resonant_omega_full(theta, v_par, gamma, n);
+        HD_results = plas->get_resonant_omega(theta, v_par, gamma, n);
+        if(results.size() != HD_results.size()){
+          err |= TEST_WRONG_RESULT;
+          test_bed->report_info("Mismatched solution numbers "+mk_str(results.size()) +" vs "+mk_str(HD_results.size()));
+        }else{
+
+          for(size_t i=0; i < results.size(); ++i){
+            if((results[i] - HD_results[i])/results[i] > 0.1){
+              err_count++;
+              err |= TEST_WRONG_RESULT;
+              test_bed->report_info("HD and full solution do not match, error "+mk_str((results[i] - HD_results[i])/results[i]), 2);
             }
           }
         }

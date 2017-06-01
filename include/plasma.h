@@ -11,6 +11,7 @@
 
 #include<vector>
 #include "support.h"
+#include "resonance_poly.h"
 
 
 class spectrum;
@@ -42,6 +43,9 @@ private:
   calc_type pcharge[ncomps];/**<Per species charge*/
   calc_type pdens[ncomps];/**<Per species density*/
   calc_type pvth[ncomps];/**<Per species thermal velocity*/
+
+  //resonance_poly * full_poly;
+  NR_poly * full_poly;
 
   plasma_state is_setup;/**<Check for validity*/
 /********Basic setup and allocation functions ****/
@@ -81,6 +85,7 @@ public:
   mu_dmudom get_high_dens_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int n, calc_type gamma_particle, bool skip_phi=false, bool Righthand=true)const;
 
   std::vector<calc_type> get_resonant_omega(calc_type theta, calc_type v_par, calc_type gamma_particle, int n)const;
+  std::vector<calc_type> get_resonant_omega_full(calc_type theta, calc_type v_par, calc_type gamma_particle, int n)const;
   calc_type get_dispersion(my_type k, int wave_type, bool reverse=0, bool deriv=0, my_type theta=0.0)const;
 // calc_type gamma_particle,
 };

@@ -68,7 +68,7 @@ ifndef NO_FFT
 endif
 #All of these are included in tarball. The former is built as default target. The latter are _ALL_ built under utils target. E.g. cutout.cpp -> cutout utility
 
-SOURCE = my_array.cpp data_array.cpp d_coeff.cpp spectrum.cpp plasma.cpp reader.cpp controller.cpp non_thermal.cpp support.cpp tests.cpp tests_basic_and_code.cpp tests_data_and_calc.cpp
+SOURCE = my_array.cpp data_array.cpp d_coeff.cpp spectrum.cpp plasma.cpp reader.cpp controller.cpp non_thermal.cpp support.cpp resonance_poly.cpp tests.cpp tests_basic_and_code.cpp tests_data_and_calc.cpp
 #list of all other cpp files. These are assumed to have both a cpp and h pairing
 EGSOURCE = example_singlecore.cpp example_multicore.cpp
 #Example main programs

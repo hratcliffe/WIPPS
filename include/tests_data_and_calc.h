@@ -37,6 +37,7 @@ class test_entity_plasma : public test_entity{
   private:
     plasma * plas;/**< Pointer to plasma object under test*/
     int resonant_freq();
+    int resonant_freq_poly();
     int high_density();
     int other_modes();
     int phi_dom();

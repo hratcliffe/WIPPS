@@ -167,7 +167,7 @@ calc_type plasma::get_omega_ref(std::string code)const{
 #ifdef DEBUG_ALL
   std::string codes = "c0 pe ce";
   //Argument preconditions. Check only in debug mode for speed
-  if(codes.find(code) == std::string::npos) my_error_print("!!!!!!!!Error in get_omega_ref, unknown code (code="+code+")!!!!!!", 0);
+  if(codes.find(code) == std::string::npos) my_error_print("!!!!!!!!Error in get_omega_ref, unknown code (code="+code+")!!!!!!", mpi_info.rank);
 #endif
   if(code == "c0") return this->om_ce_ref;
   if(code == "pe") return my_const.omega_pe;
@@ -207,9 +207,9 @@ mu_dmudom plasma::get_phi_mu_om(calc_type w, calc_type psi, calc_type alpha, int
  
 #ifdef DEBUG_ALL
   //Argument preconditions. Check only in debug mode for speed
-  if(psi < 0 || psi >= pi) my_error_print("!!!!!!!!Error in get_phi_mu_om, pitch angle (psi="+mk_str(psi)+") out of range!!!!!!", 0);
-  if(alpha < 0 || alpha >= pi) my_error_print("!!!!!!!!Error in get_phi_mu_om, particle pitch angle (alpha="+mk_str(alpha)+") out of range!!!!!!", 0);
-  if(gamma_particle < 1) my_error_print("!!!!!!!!Error in get_phi_mu_om, particle gamma (gamma_particle="+mk_str(gamma_particle)+") out of range!!!!!!", 0);
+  if(psi < 0 || psi >= pi) my_error_print("!!!!!!!!Error in get_phi_mu_om, pitch angle (psi="+mk_str(psi)+") out of range!!!!!!", mpi_info.rank);
+  if(alpha < 0 || alpha >= pi) my_error_print("!!!!!!!!Error in get_phi_mu_om, particle pitch angle (alpha="+mk_str(alpha)+") out of range!!!!!!", mpi_info.rank);
+  if(gamma_particle < 1) my_error_print("!!!!!!!!Error in get_phi_mu_om, particle gamma (gamma_particle="+mk_str(gamma_particle)+") out of range!!!!!!", mpi_info.rank);
   //I don't think there's an upper or lower bound on w we need to enforce
   //Nor any actual bounds on n
 #endif
@@ -252,9 +252,9 @@ mu_dmudom plasma::get_high_dens_phi_mu_om(calc_type w, calc_type psi, calc_type 
 
 #ifdef DEBUG_ALL
   //Argument preconditions. Check only in debug mode for speed
-  if(psi < 0 || psi >= pi) my_error_print("!!!!!!!!Error in get_high_dens_phi_mu_om, pitch angle (psi="+mk_str(psi)+") out of range!!!!!!", 0);
-  if(alpha < 0 || alpha >= pi) my_error_print("!!!!!!!!Error in get_high_dens_phi_mu_om, particle pitch angle (alpha="+mk_str(alpha)+") out of range!!!!!!", 0);
-  if(gamma_particle < 1) my_error_print("!!!!!!!!Error in get_high_dens_phi_mu_om, particle gamma (gamma_particle="+mk_str(gamma_particle)+") out of range!!!!!!", 0);
+  if(psi < 0 || psi >= pi) my_error_print("!!!!!!!!Error in get_high_dens_phi_mu_om, pitch angle (psi="+mk_str(psi)+") out of range!!!!!!", mpi_info.rank);
+  if(alpha < 0 || alpha >= pi) my_error_print("!!!!!!!!Error in get_high_dens_phi_mu_om, particle pitch angle (alpha="+mk_str(alpha)+") out of range!!!!!!", mpi_info.rank);
+  if(gamma_particle < 1) my_error_print("!!!!!!!!Error in get_high_dens_phi_mu_om, particle gamma (gamma_particle="+mk_str(gamma_particle)+") out of range!!!!!!", mpi_info.rank);
   //I don't think there's an upper or lower bound on w we need to enforce.
   //Nor any bounds on n
 #endif
@@ -473,8 +473,8 @@ std::vector<calc_type> plasma::get_resonant_omega(calc_type theta, calc_type v_p
 
 #ifdef DEBUG_ALL
   //Argument preconditions. Check only in debug mode for speed
-  if(std::abs(v_par) >= v0) my_error_print("!!!!!!!!Error in get_resonant_omega, velocity (v_par="+mk_str(v_par)+") out of range!!!!!!", 0);
-  if(gamma_particle < 1.0) my_error_print("!!!!!!!!Error in get_resonant_omega, particle gamma (gamma_particle="+mk_str(gamma_particle)+") out of range!!!!!!", 0);
+  if(std::abs(v_par) >= v0) my_error_print("!!!!!!!!Error in get_resonant_omega, velocity (v_par="+mk_str(v_par)+") out of range!!!!!!", mpi_info.rank);
+  if(gamma_particle < 1.0) my_error_print("!!!!!!!!Error in get_resonant_omega, particle gamma (gamma_particle="+mk_str(gamma_particle)+") out of range!!!!!!", mpi_info.rank);
 #endif
 
   std::vector<calc_type> ret_vec;
@@ -545,18 +545,21 @@ std::vector<calc_type> plasma::get_resonant_omega_full(calc_type theta, calc_typ
 @param gamma_particle Relativistic gamma for resonant particle
 @param n Resonance number
 @return Vector of solutions for resonant omega, or empty vector if no solutions are found
+\caveat I am assuming the solutions move but no more appear in the full equation. This may not be accurate, but we need a first guess for the solver
+\caveat We set a hard minimum for resonant frequencies of interest, NR_min_om
 */
 
 #ifdef DEBUG_ALL
   //Argument preconditions. Check only in debug mode for speed
-  if(std::abs(v_par) >= v0) my_error_print("!!!!!!!!Error in get_resonant_omega, velocity (v_par="+mk_str(v_par)+") out of range!!!!!!", 0);
-  if(gamma_particle < 1.0) my_error_print("!!!!!!!!Error in get_resonant_omega, particle gamma (gamma_particle="+mk_str(gamma_particle)+") out of range!!!!!!", 0);
+  if(std::abs(v_par) >= v0) my_error_print("!!!!!!!!Error in get_resonant_omega, velocity (v_par="+mk_str(v_par)+") out of range!!!!!!", mpi_info.rank);
+  if(gamma_particle < 1.0) my_error_print("!!!!!!!!Error in get_resonant_omega, particle gamma (gamma_particle="+mk_str(gamma_particle)+") out of range!!!!!!", mpi_info.rank);
 #endif
 
   std::vector<calc_type> ret_vec, cubic_guesses;
   calc_type om_ce = this->get_omega_ref("ce");
   calc_type om_pe_loc = this->get_omega_ref("pe");
   calc_type om_ce_ref = this->get_omega_ref("c0");
+
   if(std::abs(v_par) < tiny_calc_type){
     if( n == 1 || n == -1 ) ret_vec.push_back(om_ce*n);
     return ret_vec;
@@ -605,10 +608,10 @@ calc_type plasma::get_dispersion(my_type in, int wave_type, bool reverse, bool d
 
 #ifdef DEBUG_ALL
   //Argument preconditions. Check only in debug mode for speed
-  if(wave_type < WAVE_WHISTLER || wave_type > WAVE_X_LOW) my_error_print("!!!!!!!!Error in get_dispersion, wave_type unknown (wave_type="+mk_str(wave_type)+")!!!!!!", 0);
+  if(wave_type < WAVE_WHISTLER || wave_type > WAVE_X_LOW) my_error_print("!!!!!!!!Error in get_dispersion, wave_type unknown (wave_type="+mk_str(wave_type)+")!!!!!!", mpi_info.rank);
   //Theta is not conditioned because we reduce it below. This may change though
   //In is either a frequency or a wavenumber and thus has no limits, although may wish to add sanity limits
-  if((wave_type == WAVE_X_LOW || wave_type == WAVE_X_UP) && deriv) my_error_print("!!!!This path not yet implemented", 0);
+  if((wave_type == WAVE_X_LOW || wave_type == WAVE_X_UP) && deriv) my_error_print("!!!!This path not yet implemented", mpi_info.rank);
 #endif
 
 

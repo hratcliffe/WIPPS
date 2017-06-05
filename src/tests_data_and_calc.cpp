@@ -342,7 +342,7 @@ int test_entity_plasma::resonant_freq_poly(){
   om_pe_local = plas->get_omega_ref("pe");
   om_ce_signed = - std::abs(om_ce_local);
   calc_type cos_theta, mu_tmp1, mu_tmp2;
-  calc_type gamma;
+  calc_type gamma, tmp_result;
 
   test_bed->report_info("Testing resonant frequency polynomial solver", 1);
 
@@ -359,29 +359,54 @@ int test_entity_plasma::resonant_freq_poly(){
   calc_type theta, test_angle = pi/8.0;
   for(int ii=0; ii<n_tests; ii++){
     v_par = (0.01 + 0.5*(float)ii/ (float)(n_tests+1))* v0;
+    gamma = gamma_rel(v_par/cos(test_angle));
     //Loop over angles
     for(int j=0; j< n_tests; j++){
       x = 4.0 * (float) j / (float)(n_tests+1);
       theta = std::atan(x);
       cos_theta = std::cos(theta);
       //Loop over n
-      for(int k=0; k< n_tests; k++){
-        n = -n_tests/2 + k*n_tests/2;
-        
-        gamma = gamma_rel(v_par/cos(test_angle));
-        
+      for(int k = 0; k < n_tests; k++){
+        n = -5 + k*10/n_tests;
         results = plas->get_resonant_omega_full(theta, v_par, gamma, n);
         HD_results = plas->get_resonant_omega(theta, v_par, gamma, n);
+        //Remove any HD results outside the NR bounds
+        for(size_t nn = 0; nn < HD_results.size(); nn++){
+          if(HD_results[nn] > om_ce_local*NR_max_om || HD_results[nn] < om_ce_local*NR_min_om){
+            HD_results.erase(HD_results.begin() + nn);
+            nn--;
+          }
+        }
+        //This check just makes sure the solver is not mis-reporting solutions, by checking they are actually solutions to the resonant poly.
+        for(size_t i=0; i < results.size(); ++i){
+          if(!plas->check_resonant_omega_full(theta, v_par, gamma, n, results[i]/om_ce_local, tmp_result)){
+            test_bed->report_info("Non-root solution, value "+mk_str(results[i]));
+            err |= TEST_WRONG_RESULT;
+          }
+        }
+
         if(results.size() != HD_results.size()){
           err |= TEST_WRONG_RESULT;
           test_bed->report_info("Mismatched solution numbers "+mk_str(results.size()) +" vs "+mk_str(HD_results.size()));
         }else{
+          if(HD_results.size() > 1 && HD_results[0] > HD_results[1]){
+            //Reverse cubic solutions to ensure smaller is first
+            double tmp = HD_results[0];
+            HD_results[0] = HD_results[1];
+            HD_results[1] = tmp;
+          }
+          if(results.size() > 1 && results[0] > results[1]){
+            //Reverse solutions to ensure smaller is first
+            double tmp = results[0];
+            results[0] = results[1];
+            results[1] = tmp;
+          }
 
           for(size_t i=0; i < results.size(); ++i){
-            if((results[i] - HD_results[i])/results[i] > 0.1){
+            if(std::abs(results[i] - HD_results[i])/results[i] > 0.1){
               err_count++;
               err |= TEST_WRONG_RESULT;
-              test_bed->report_info("HD and full solution do not match, error "+mk_str((results[i] - HD_results[i])/results[i]), 2);
+              test_bed->report_info("HD and full solution do not match, error "+mk_str((results[i] - HD_results[i])/results[i], true) + " at "+mk_str(i), 2);
             }
           }
         }

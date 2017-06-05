@@ -19,6 +19,7 @@ plasma::plasma(std::string file_prefix, my_type Bx_local){
 *Sets up components from {file_prefix}plasma.conf. If a Bx_local is given, store and calc local cyclotron frequency from this. Else use the cyclotron frequency from deck constants. IMPORTANT: Make sure my_consts is defined (read_deck and share_consts) before creating plasma!
 @param file_prefix File prefix prepended to all files read
 @param Bx_local Local x-component of magnetic field
+\caveat The ion frequencies assume a single ion species right now
 */
 
   if(my_const.omega_ce == 0){
@@ -40,7 +41,10 @@ plasma::plasma(std::string file_prefix, my_type Bx_local){
   this->om_ce_local = std::abs(q0) * B0 / me;
 
   is_setup = state;
-  this->full_poly = new NR_poly(om_ce_local, my_const.omega_pe, om_ce_ref);
+  //Make sure the correct sign is used here, om_ce should INCLUDE sign of charge
+  //Assume equal number densities of protons and electrons
+  this->full_poly = new NR_poly(-std::abs(om_ce_local), my_const.omega_pe, om_ce_ref, om_ce_local*std::sqrt(me/mp), my_const.omega_pe*me/mp);
+
 }
 
 plasma_state plasma::configure_from_file(std::string file_prefix){
@@ -524,7 +528,8 @@ std::vector<calc_type> plasma::get_resonant_omega(calc_type theta, calc_type v_p
   //Restore om_ce_ref factor and delete any entries > om_ce as these aren't whistler modes. Also delete answers which are "zero"
   for(size_t i=0; i<ret_vec.size(); ++i) ret_vec[i] *= om_ce_ref;
   for(size_t i=0; i<ret_vec.size(); ++i){
-    if(std::abs(ret_vec[i]) > std::abs(om_ce) || std::abs(ret_vec[i]) < GEN_PRECISION){
+    //We could remove those outside the NR_[min/max]_om bounds, but then we can't use these as a base for the NR version. But we don't expect solutions to move through 0 or om_ce
+    if(std::abs(ret_vec[i]) > std::abs(om_ce)*NR_max_om || std::abs(ret_vec[i]) < GEN_PRECISION){
       ret_vec.erase(ret_vec.begin() + i);
       --i;
     }
@@ -568,21 +573,59 @@ std::vector<calc_type> plasma::get_resonant_omega_full(calc_type theta, calc_typ
 
   //First attempt we just recalculate every time
 
+//  full_poly->calculate_coeffs_full(theta, v_par, n, gamma_particle);
   full_poly->calculate_coeffs_no_ion(theta, v_par, n, gamma_particle);
+
   cubic_guesses = this->get_resonant_omega(theta, v_par, gamma_particle, n);
   NR_poly callable_poly = *full_poly;
-  double nrResult;
-  for(size_t i = 0; i < cubic_guesses.size(); i++){
-    nrResult = boost::math::tools::newton_raphson_iterate(callable_poly, cubic_guesses[i]*0.9/om_ce_ref, 0.6*cubic_guesses[i]/om_ce_ref, 1.0, 20);
-    ret_vec.push_back(nrResult);
-//    std::cout<<"NR returns "<<nrResult*om_ce_ref<<'\n';
-//    std::cout<<"NR method found root matching to "<<(nrResult*om_ce_ref/cubic_guesses[i] - 1.0)*100.0<<" %"<<'\n';
-  }
 
-  //Restore om_ce_ref factor and delete any entries > om_ce as these aren't whistler modes. Also delete answers which are "zero"
+  double nrResult, nrResult_first;
+  int smaller, larger;
+  std::pair<double, double> interval;
+  if(cubic_guesses.size() == 0){
+#ifdef DEBUG_ALL
+    //I think there should not be any non-matched roots, so I only try this in debug mode
+    //Check for sign change which would imply one root
+    if(callable_poly.sign_changes(NR_min_om, NR_max_om)){
+      nrResult = boost::math::tools::newton_raphson_iterate(callable_poly, 0.5, NR_min_om, NR_max_om, NR_digits);
+      if(callable_poly.is_root(nrResult)){
+        ret_vec.push_back(nrResult);
+      }
+    }
+#endif
+  }else if(cubic_guesses.size() == 1){
+    //Assume there's one root of full eqn too, so we just have to hunt one interval
+    //Strictly don't need to do this interval refinement and the NR method is not sped up by it. But
+    interval = std::make_pair(NR_min_om, NR_max_om);
+    interval = callable_poly.refine_interval(interval, 3);
+
+    nrResult = boost::math::tools::newton_raphson_iterate(callable_poly, cubic_guesses[0]/om_ce_ref, interval.first, interval.second, NR_digits);
+
+    if(callable_poly.is_root(nrResult)){
+      ret_vec.push_back(nrResult);
+    }
+  }else if(cubic_guesses.size() == 2){
+    //There's two roots
+    smaller = ((cubic_guesses[0] < cubic_guesses[1]) ? 0 : 1);
+    larger = 1 - smaller;
+    nrResult_first = boost::math::tools::newton_raphson_iterate(callable_poly, cubic_guesses[smaller]/om_ce_ref, NR_min_om, NR_max_om, NR_digits);
+    if(callable_poly.is_root(nrResult_first)) ret_vec.push_back(nrResult_first);
+    //Now hopefully that was the smaller root, so the other is larger
+      nrResult = boost::math::tools::newton_raphson_iterate(callable_poly, cubic_guesses[larger]/om_ce_ref, nrResult_first*1.001, NR_max_om, NR_digits);
+    //If we found the larger, is good, if not, perhaps we mis-selected in the first step and have the smaller yet to find
+    if(callable_poly.is_root(nrResult)){
+      ret_vec.push_back(nrResult);
+    }else{
+      //First try seems to have found larger root, look for smaller
+      nrResult = boost::math::tools::newton_raphson_iterate(callable_poly, cubic_guesses[smaller]/om_ce_ref, NR_min_om, nrResult_first*0.999, NR_digits);
+          if(callable_poly.is_root(nrResult)) ret_vec.push_back(nrResult);
+    }
+  }
+  
+  //Restore om_ce_ref factor and delete any entries > om_ce*NR_max_om as these aren't whistler modes. Also delete answers which are below NR_min_om
   for(size_t i=0; i<ret_vec.size(); ++i) ret_vec[i] *= om_ce_ref;
   for(size_t i=0; i<ret_vec.size(); ++i){
-    if(std::abs(ret_vec[i]) > std::abs(om_ce) || std::abs(ret_vec[i]) < GEN_PRECISION){
+    if(std::abs(ret_vec[i]) > std::abs(om_ce)*NR_max_om || std::abs(ret_vec[i]) < NR_min_om*std::abs(om_ce)){
       ret_vec.erase(ret_vec.begin() + i);
       --i;
     }
@@ -591,6 +634,60 @@ std::vector<calc_type> plasma::get_resonant_omega_full(calc_type theta, calc_typ
   return ret_vec;
 
 }
+
+bool plasma::check_resonant_omega(calc_type theta, calc_type v_par, calc_type gamma_particle, int n, calc_type omega, calc_type & result)const{
+
+  calc_type om_ce = this->get_omega_ref("ce");
+  calc_type om_pe_loc = this->get_omega_ref("pe");
+  calc_type om_ce_ref = this->get_omega_ref("c0");
+  calc_type signed_om_ce_slash_ref = - std::abs(om_ce/om_ce_ref);//Contains sign of electron charge
+
+  calc_type a, b, c, d;
+  calc_type an, bn, cn;
+  calc_type cos_th = std::cos(theta);
+  calc_type vel = v_par / v0;
+  calc_type calc_n = (calc_type) n;
+  //For clarity
+  calc_type vel_cos = std::pow(vel * cos_th, 2);//Product of the two, for simplicity in expressions. But note is not meaningful, theta is the wave angle
+
+  calc_type gamma_sq = gamma_particle * gamma_particle;
+
+  //Calculate coefficients
+  //To maintain best precision we solve for x = omega/omega_ce_ref so x ~ 1
+  a = (vel_cos - 1.0) * gamma_sq;
+
+  b = (vel_cos*cos_th*gamma_sq + 2.0*gamma_particle* calc_n - gamma_sq*cos_th)*signed_om_ce_slash_ref;
+
+  c = (2.0 * gamma_particle * calc_n * cos_th - calc_n * calc_n)* std::pow(signed_om_ce_slash_ref, 2) - std::pow(om_pe_loc/om_ce_ref, 2)*vel_cos*gamma_sq;
+
+  d = -calc_n*calc_n*std::pow(signed_om_ce_slash_ref, 3)*cos_th;
+  //Note: for n=0, d is 0. We covered v_par being zero above, so either omega = 0 and k_par = 0 or we have a normal solution, but with redundancy. We assume omega = 0 is an unhelpful solution to return. And for simplicity we don't do a special quadratic solution but just continue anyway
+
+  an = b/a;
+  bn = c/a;
+  cn = d/a;
+
+  result = std::pow(omega, 3) + an * std::pow(omega, 2) + bn * omega + cn;
+  calc_type res1, res2;
+  res1 = std::pow(omega*(1.0 - GEN_PRECISION), 3) + an * std::pow(omega*(1.0 - GEN_PRECISION), 2) + bn * omega*(1.0 - GEN_PRECISION) + cn;
+  res2 = std::pow(omega*(1.0 + GEN_PRECISION), 3) + an * std::pow(omega*(1.0 + GEN_PRECISION), 2) + bn * omega*(1.0 + GEN_PRECISION) + cn;
+  return (res1/res2 < 0);
+
+}
+
+bool plasma::check_resonant_omega_full(calc_type theta, calc_type v_par, calc_type gamma_particle, int n, calc_type omega, calc_type & result)const{
+
+  calc_type om_ce = this->get_omega_ref("ce");
+  calc_type om_pe_loc = this->get_omega_ref("pe");
+  calc_type om_ce_ref = this->get_omega_ref("c0");
+
+  NR_poly poly(-std::abs(om_ce), om_pe_loc, om_ce_ref);
+  poly.calculate_coeffs_no_ion(theta, v_par, n, gamma_particle);
+
+  result = poly(omega).first;
+  return poly.sign_changes(omega*(1.0 - GEN_PRECISION), omega*(1.0 + GEN_PRECISION));
+}
+
 
 calc_type plasma::get_dispersion(my_type in, int wave_type, bool reverse, bool deriv, my_type theta)const{
 /** \brief Solve analytic dispersion (approx)

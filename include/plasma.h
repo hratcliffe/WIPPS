@@ -13,6 +13,9 @@
 #include "support.h"
 #include "resonance_poly.h"
 
+const int NR_digits = 20;/**<Number of binary digits precision for NR solver*/
+const double NR_min_om = 0.05;/**<Minimum omega of interest. In general should be well below where waves are, but not too low or spurious solutions can arise due to near-cancellation of large terms in polynomial*/
+const double NR_max_om = 0.99;/**<Maximum omega of interest*/
 
 class spectrum;
 class diffusion_coeff;
@@ -86,6 +89,8 @@ public:
 
   std::vector<calc_type> get_resonant_omega(calc_type theta, calc_type v_par, calc_type gamma_particle, int n)const;
   std::vector<calc_type> get_resonant_omega_full(calc_type theta, calc_type v_par, calc_type gamma_particle, int n)const;
+  bool check_resonant_omega(calc_type theta, calc_type v_par, calc_type gamma_particle, int n, calc_type omega, calc_type & result)const;
+  bool check_resonant_omega_full(calc_type theta, calc_type v_par, calc_type gamma_particle, int n, calc_type omega, calc_type & result)const;
   calc_type get_dispersion(my_type k, int wave_type, bool reverse=0, bool deriv=0, my_type theta=0.0)const;
 // calc_type gamma_particle,
 };

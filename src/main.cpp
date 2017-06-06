@@ -26,8 +26,6 @@
 #include "spectrum.h"
 
 /**
-\todo Makefile doc creation into script
-\todo Create scrips directory with useful stuff like level-one scrips etc
 \todo Add install recipe to makefile
 \todo Since DOCS are now complex, consider just using two Doxyfiles...
 */

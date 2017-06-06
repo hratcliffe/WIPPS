@@ -86,6 +86,8 @@ OBJS := $(SOURCE:.cpp=.o)
 ##################Don't need to edit below here!######################
 INVOKEDFILE := $(lastword $(MAKEFILE_LIST))
 
+SCRPSDIR := ./files/scripts/
+
 DEPSFLAGS = -DRUN_TESTS_AND_EXIT
 #Dependency generation happens only once, so we want to include any code hidden in the RUN_TESTS... defined regions
 
@@ -158,18 +160,16 @@ endif
 
 #Linker flag for SDF libraries
 LIB += -ldl
-#REFERENCED_BY_RELATION = YES
-#SHOW_USED_FILES        = YES
-#SOURCE_BROWSER         = YES
-#VERBATIM_HEADERS
+
+#Check we have a valid DOCS selection and edit Doxyfile accordingly
 ifeq ($(strip $(DOCS)),full)
-  SED_STR_Docs = sed -i.bak 's/\(EXTRACT_PRIVATE *=\) *[A-Z]*/\1 YES/' Doxyfile; sed -i.bak 's/\(REFERENCED_BY_RELATION *=\) *[A-Z]*/\1 YES/' Doxyfile; sed -i.bak 's/\(SHOW_USED_FILES *=\) *[A-Z]*/\1 YES/' Doxyfile; sed -i.bak 's/\(SOURCE_BROWSER *=\) *[A-Z]*/\1 YES/' Doxyfile; sed -i.bak 's/\(VERBATIM_HEADERS *=\) *[A-Z]*/\1 YES/' Doxyfile
+  //SED_STR_Docs =
+  DOCS_SCRIPT := $(SCRPSDIR)"set_docs_full.sh"
 else ifeq ($(strip $(DOCS)),user)
-  SED_STR_Docs = sed -i.bak 's/\(EXTRACT_PRIVATE *=\) *[A-Z]*/\1 NO/' Doxyfile; sed -i.bak 's/\(REFERENCED_BY_RELATION *=\) *[A-Z]*/\1 NO/' Doxyfile; sed -i.bak 's/\(SHOW_USED_FILES *=\) *[A-Z]*/\1 NO/' Doxyfile; sed -i.bak 's/\(SOURCE_BROWSER *=\) *[A-Z]*/\1 NO/' Doxyfile; sed -i.bak 's/\(VERBATIM_HEADERS *=\) *[A-Z]*/\1 NO/' Doxyfile
+  DOCS_SCRIPT := $(SCRPSDIR)"set_docs_user.sh"
 else ifdef DOCS
   $(error Unknown DOCS)
 endif
-#Check we have a valid DOCS selection and edit Doxyfile accordingly
 #---------------------------------------------------------------------
 
 #add directory prefixes
@@ -203,11 +203,11 @@ $(SDFPATH)/lib/libsdfc.a :
 .PHONY: update_docs echo_warning echo_float echo_usr
 
 #Updates the Doxyfile according to selected options
-#Make docs will always build the docs according to the last build of main or utils
+#If no docs updates needed DOCS_SCRIPT is undefined and last line is a noop
 update_docs:
 	@$(SED_STR)
 	@$(SED_STR_Test)
-	@$(SED_STR_Docs)
+	@$(DOCS_SCRIPT)
 
 #Some reporting that should happen before building
 echo_warning:
@@ -259,7 +259,7 @@ dependencies.log :
 	@if [ ! -e dependencies.log ]; then echo "+++++++++++++++++Run make echo_deps to get correct file dependencies+++++++++"; fi
 
 #Do some basic autodependency generation
-echo_deps : process_deps.sh
+echo_deps : $(SCRPSDIR)process_deps.sh
 	@echo "Regenerating dependencies..."
 	@touch dependencies.log
 	@rm dependencies.log
@@ -269,7 +269,7 @@ echo_deps : process_deps.sh
   #-M dumps dependencies to file, -MM excludes system headers;
   #Recursive dependencies are also resolved under gcc
 	@cp dependencies.log dependencies.log.bak
-	@./process_deps.sh
+	@$(SCRPSDIR)process_deps.sh
   #post processing to fix up lines and remove irrelevant deps
 	@sed -i.bak 's,[a-zA-Z/_]*\.o,$(OBJDIR)\/&,' dependencies.log
   #prepend OBJDIR string
@@ -303,7 +303,7 @@ tar: dependencies.log
 
 #Tar up the runnable code, excluding build details and omitting test files etc. Includes IDL scripts,
 tar_built: utils
-	tar --no-recursion -cvzf Runnable.tgz $(UTILS) ./main ./files/help*.txt test_pars ./files/.idlstartup ./files/*.pro ./SDF/IDL/*
+	tar --no-recursion -cvzf Runnable.tgz $(UTILS) ./main ./files/help/*.txt test_pars .idlstartup ./files/IDL/* ./SDF/IDL/* ./scripts/*
 
 tar_docs:
 	tar -cvzf Docs.tgz WIPPS.html ./html/* ./latex/refman.pdf Derivations.pdf
@@ -325,5 +325,4 @@ veryclean: cleandocs
 
 docs: update_docs
 	@echo Running Doxygen...
-	@if ! [[ `which Doxygen` ]]; then echo "Doxygen not found"; else printf "Options:\nType: ";egrep ' USE_FLOAT' ./Doxyfile >>/dev/null && echo "Float" || echo "Double";printf "Mode: ";egrep '[ \t]+RUN_TESTS_AND_EXIT' ./Doxyfile >>/dev/null && echo "Test" || echo "";printf "Docs: ";egrep -e "REFERENCED_BY_RELATION[ ]*\=[ ]*NO" ./Doxyfile >>/dev/null && echo "User" || echo "Full"; ./generate_runtime_flags.sh; doxygen Doxyfile 1> Doxy.log 2> Doxy.log.tmp; echo "Error Output:" >> Doxy.log; cat Doxy.log.tmp >> Doxy.log; rm Doxy.log.tmp; echo Processing Doxygen output...; ./redox.sh; echo Running pdftex...; cd latex ; make &> ../docs.log; cd ..; echo "Docs built. See Doxy.log and docs.log for details"; fi
-
+	@ $(SCRPSDIR)make_docs.sh $(SCRPSDIR)

@@ -44,6 +44,8 @@
 
  * \section docs This Documentation
  * These docs describe all classes and methods under the \htmlonly <a href="annotated.html">Classes</a> \endhtmlonly \latexonly Classes \endlatexonly section. Helper functions, constants etc are grouped under \htmlonly <a href="modules.html">Modules</a>\endhtmlonly \latexonly Modules \endlatexonly. Assumptions and caveats within the code are collected under \ref caveats.
+ *
+ * Full and User docs are available. The former includes all private entities, function references, and a full source code listing. The latter does not. Change between these modes with `make DOCS=full` and `make DOCS=user`
 
  * \section build Building the Code
  * An install script is provided to build SDF, install fftw etc. For details run `./install --help`
@@ -72,7 +74,7 @@
 * By default, all compiles are at optimisation O3. To compile with O0 for testing or debugging, pass NO_OPT = 1 to the make command.
 
 *Consider adding tests for any significant additions or changes, and running the existing ones in this case. To include tests in this documentation, run
- `make MODE=test && make docs`. Similarly, to omit them, make without test mode
+ `make MODE=test docs`. Similarly, to omit them, make without test mode.
  
 \section cpp Minimally wrong description of C++ as used here
 *\subsection types Types and typedefs

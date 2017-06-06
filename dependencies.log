@@ -17,6 +17,7 @@ src/d_coeff.cpp\
   include/d_coeff.h\
   include/controller.h\
   include/plasma.h\
+  include/resonance_poly.h\
   include/data_array.h\
   include/my_array.h\
   include/spectrum.h\
@@ -26,6 +27,7 @@ obj/spectrum.o:\
 src/spectrum.cpp\
 include/plasma.h\
 include/support.h\
+  include/resonance_poly.h\
   include/spectrum.h\
   include/controller.h\
   include/data_array.h\
@@ -36,6 +38,7 @@ obj/plasma.o:\
 src/plasma.cpp\
   include/plasma.h\
   include/support.h\
+  include/resonance_poly.h\
 
 obj/reader.o:\
 src/reader.cpp\
@@ -49,6 +52,7 @@ src/controller.cpp\
   include/controller.h\
   include/support.h\
   include/plasma.h\
+  include/resonance_poly.h\
   include/data_array.h\
   include/my_array.h\
   include/d_coeff.h\
@@ -69,6 +73,11 @@ src/support.cpp\
   include/my_array.h\
   include/reader.h\
 
+obj/resonance_poly.o:\
+src/resonance_poly.cpp\
+include/resonance_poly.h\
+  include/support.h\
+
 obj/tests.o:\
 src/tests.cpp\
   include/tests.h\
@@ -80,6 +89,7 @@ src/tests.cpp\
   include/tests_data_and_calc.h\
   include/controller.h\
   include/plasma.h\
+  include/resonance_poly.h\
 
 obj/tests_basic_and_code.o:\
 src/tests_basic_and_code.cpp\
@@ -100,23 +110,11 @@ src/tests_data_and_calc.cpp\
   include/reader.h\
   include/controller.h\
   include/plasma.h\
+  include/resonance_poly.h\
   include/spectrum.h\
   include/d_coeff.h\
   include/non_thermal.h\
   include/valgrind.h\
-
-obj/example_singlecore.o:\
-src/example_singlecore.cpp\
-  include/main.h\
-  include/support.h\
-  include/reader.h\
-  include/data_array.h\
-  include/my_array.h\
-  include/d_coeff.h\
-  include/controller.h\
-  include/plasma.h\
-  include/spectrum.h\
-  include/tests.h\
 
 obj/main.o:\
 src/main.cpp\
@@ -125,6 +123,7 @@ src/main.cpp\
   include/reader.h\
   include/controller.h\
   include/plasma.h\
+  include/resonance_poly.h\
   include/data_array.h\
   include/my_array.h\
   include/d_coeff.h\
@@ -141,6 +140,7 @@ src/cutout_fft.cpp\
   include/d_coeff.h\
   include/controller.h\
   include/plasma.h\
+  include/resonance_poly.h\
   include/spectrum.h\
   include/tests.h\
 
@@ -151,6 +151,7 @@ include/support.h\
   include/my_array.h\
   include/controller.h\
   include/plasma.h\
+  include/resonance_poly.h\
   include/spectrum.h\
   include/tests.h\
 
@@ -166,6 +167,7 @@ obj/calculate_growth.o:\
 src/calculate_growth.cpp\
   include/support.h\
   include/plasma.h\
+  include/resonance_poly.h\
   include/my_array.h\
   include/spectrum.h\
   include/controller.h\
@@ -179,6 +181,7 @@ src/calculate_diffusion.cpp\
   include/reader.h\
   include/controller.h\
   include/plasma.h\
+  include/resonance_poly.h\
   include/data_array.h\
   include/my_array.h\
   include/d_coeff.h\
@@ -199,8 +202,37 @@ src/generate_ffts.cpp\
   include/reader.h\
   include/controller.h\
   include/plasma.h\
+  include/resonance_poly.h\
   include/data_array.h\
   include/my_array.h\
   include/d_coeff.h\
+  include/spectrum.h\
+  include/tests.h\
+
+obj/example_singlecore.o:\
+src/example_singlecore.cpp\
+  include/main.h\
+  include/support.h\
+  include/reader.h\
+  include/data_array.h\
+  include/my_array.h\
+  include/d_coeff.h\
+  include/controller.h\
+  include/plasma.h\
+  include/resonance_poly.h\
+  include/spectrum.h\
+  include/tests.h\
+
+obj/example_multicore.o:\
+src/example_multicore.cpp\
+  include/main.h\
+  include/support.h\
+  include/reader.h\
+  include/data_array.h\
+  include/my_array.h\
+  include/d_coeff.h\
+  include/controller.h\
+  include/plasma.h\
+  include/resonance_poly.h\
   include/spectrum.h\
   include/tests.h\

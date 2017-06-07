@@ -18,7 +18,7 @@ ifeq ($(UNAME_S),Linux)
 endif
 
 GIT_VERSION := $(shell git describe --always --tags | cut -c1-14)
-# This cleverness encodes the git commit version into the source so we can write version number into our data files
+# This encodes the git commit version into the source so we can write version number into our data files etc
 
 SRCDIR = src
 OBJDIR = obj
@@ -66,7 +66,7 @@ UTILSSOURCE := cutout_fft.cpp fft_to_spectrum.cpp compress_distributions.cpp cal
 ifndef NO_FFT
  UTILSSOURCE += generate_ffts.cpp
 endif
-#All of these are included in tarball. The former is built as default target. The latter are _ALL_ built under utils target. E.g. cutout.cpp -> cutout utility
+#All of these are included in tarball. The former is built as default target. The latter are _ALL_ built under utils target, or separately by name. E.g. cutout.cpp -> cutout utility
 
 SOURCE = my_array.cpp data_array.cpp d_coeff.cpp spectrum.cpp plasma.cpp reader.cpp controller.cpp non_thermal.cpp support.cpp resonance_poly.cpp tests.cpp tests_basic_and_code.cpp tests_data_and_calc.cpp
 #list of all other cpp files. These are assumed to have both a cpp and h pairing
@@ -77,7 +77,7 @@ INCLS := $(SOURCE:.cpp=.h)
 OBJS := $(SOURCE:.cpp=.o)
 #make lists of include and object files from SOURCE list
 
-#INCLS += support.h
+#INCLS += defs.h
 #Add files which are header only (no .cpp)
 #SOURCE += blank.cpp
 #Uncomment to add a source-only (no .h) file
@@ -222,6 +222,11 @@ echo_usr:
 utils : $(UTILSOBJS) $(OBJS)
 	@for var in $(UTILSOBJS); do name=$$(basename $$(basename $$var .o )) && echo "Building" $$name "....." && $(CC) $(LFLAGS) $(INCLUDE) $(OBJS) $$var $(LIB) -o $$name;done
 
+#Target for each util separately
+.SECONDEXPANSION:
+$(UTILS) : $(OBJS) $(OBJDIR)/$$@.o
+	$(CC) $(LFLAGS) $(INCLUDE) $(OBJS) $(OBJDIR)/$@.o $(LIB) -o $@
+
 example_singlecore : $(OBJDIR)/example_singlecore.o $(OBJS) FORCE
 	$(CC) $(LFLAGS) $(INCLUDE) $(OBJS) $(OBJDIR)/example_singlecore.o $(LIB) -o example_singlecore
 
@@ -231,23 +236,6 @@ example_multicore : $(OBJDIR)/example_multicore.o $(OBJS) FORCE
 
 .PHONY: FORCE
 FORCE:
-
-.PHONY: debug
-#testing makefile commands ;)
-debug :
-	@echo $(SOURCE)
-	@echo " "
-	@echo $(OBJS)
-	@echo " "
-	@echo $(MAINOBJS)
-	@echo " "
-	@echo $(UTILSOBJS)
-	@echo " "
-	@echo $(INCLS)
-	@echo " "
-	@echo $(CFLAGS)
-	@echo " "
-	@echo $(LIB)
 
 -include dependencies.log
 #Include the dependencies file we generate in echo_deps
@@ -286,7 +274,7 @@ $(OBJDIR)/%.o:./$(SRCDIR)/%.cpp
 	$(CC) $(CFLAGS)  $< -o $@
 #General rule to build any obj from corresponding cpp
 
-.PHONY : tar tar_built clean veryclean docs list cleandocs list_utils
+.PHONY : tar tar_built tar_docs clean veryclean docs list cleandocs list_utils
 
 list:
 	@$(MAKE) -pRrq -f $(INVOKEDFILE) : 2>/dev/null | awk -v RS= -F: '/^# File/,/^# Finished Make data base/ {if ($$1 !~ "^[#.]") {print $$1}}' | sort | egrep -v -e '^[^[:alnum:]]' -e '^$@$$' -v -e $(OBJDIR)
@@ -309,7 +297,7 @@ tar_docs:
 	tar -cvzf Docs.tgz WIPPS.html ./html/* ./latex/refman.pdf Derivations.pdf
 
 clean:
-	@rm -f main $(UTILS) $(OBJS) $(MAINOBJS) $(UTILSOBJS)
+	@rm -f main $(UTILS) $(OBJS) $(MAINOBJS) $(UTILSOBJS) example_singlecore example_multicore
 
 #Clean up all generated docs. Remove html and latex dirs
 cleandocs:

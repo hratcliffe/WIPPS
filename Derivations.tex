@@ -394,30 +394,30 @@ From Clare's notes we have the following
 and the contributions from each term broken down by powers of omega are:
 \begin{align}
 \omega^{10} \mathrm{coeff} :& A_{n6}\mu_{n4}^4 
-&+ B_{n6}\mu_{n2}^2 
+&- B_{n6}\mu_{n2}^2 
 &+  C_{n8}\notag\\
 \omega^{9} \mathrm{coeff} :& A_{n6}\mu_{n3}^4 
-&+ B_{n6}\mu_{n1}^2
+&- B_{n6}\mu_{n1}^2
 &\notag\\
 \omega^{8} \mathrm{coeff} :& A_{n6}\mu_{n2}^4 + A_{n4}\mu_{n4}^4 
-&+ B_{n6}\mu_{n0}^2+ B_{n4}\mu_{n2}^2 
+&- B_{n6}\mu_{n0}^2- B_{n4}\mu_{n2}^2 
 &+  C_{n6}\notag\\
 \omega^{7} \mathrm{coeff} :& A_{n6}\mu_{n1}^4 + A_{n4}\mu_{n3}^4 
-&+ B_{n4}\mu_{n1}^2
+&- B_{n4}\mu_{n1}^2
 & \notag\\
 \omega^{6} \mathrm{coeff} :& A_{n6}\mu_{n0}^4 + A_{n4}\mu_{n2}^4 + A_{n2}\mu_{n4}^4 
-&+ B_{n4}\mu_{n0}^2 + B_{n2}\mu_{n2}^2 
+&- B_{n4}\mu_{n0}^2 - B_{n2}\mu_{n2}^2 
 &+  C_{n4}\notag\\
 \omega^{5} \mathrm{coeff} :& A_{n4}\mu_{n1}^4 + A_{n2}\mu_{n3}^4 
-&+ B_{n2}\mu_{n1}^2
+&- B_{n2}\mu_{n1}^2
 & \notag\\
 \omega^{4} \mathrm{coeff} :& A_{n4}\mu_{n0}^4 + A_{n2}\mu_{n2}^4 + A_{n0}\mu_{n4}^4 
-&+ B_{n2}\mu_{n0}^2 + B_{n0}\mu_{n2}^2 
+&- B_{n2}\mu_{n0}^2 - B_{n0}\mu_{n2}^2 
 &+  C_{n2}\notag\\
 \omega^{3} \mathrm{coeff} :& A_{n2}\mu_{n1}^4 + A_{n0}\mu_{n2}^4 
-&+ B_{n0}\mu_{n1}^2&\notag\\
+&- B_{n0}\mu_{n1}^2&\notag\\
 \omega^{2} \mathrm{coeff} :& A_{n2}\mu_{n0}^4 + A_{n0}\mu_{n2}^4 
-&+ B_{n0}\mu_{n0}^2&\notag\\
+&- B_{n0}\mu_{n0}^2&\notag\\
 \omega^{1} \mathrm{coeff} :& A_{n0}\mu_{n1}^4 + A_{n0}\mu_{n1}^4
 &&\notag\\
 \omega^{0} \mathrm{coeff} :& A_{n0}\mu_{n0}^4
@@ -492,8 +492,6 @@ C_{n2} &= -\omega_{pe}^6
 \subsection{Rescaling to keep terms order 1}
 Since this is a 10th order polynomial in a large number, the high powers involved are troublesome for numerical solutions. So we prefer to solve an equation where all terms are order 1. In particular, we want to solve for $\omega/\omega_{ref}$ using the cyclotron and plasma frequencies similarly reduced. Therefore we:
 multiply the coefficient for $\omega^m$ by $\omega_{ref}^m$; divide the entire equation by $\omega_{ref}^{l}$ where $l$ is chosen to get the terms to be generally amenable; rewrite in terms of the normalised frequencies $\tilde{\omega}_{pe} = \omega_{pe}/\omega_{ref}$ etc. Taking just $l=10$ we just replace all the frequencies in $\mu$ and in $A, B,C$ with their normalised versions. 
-
-\subsection{Notes on polynomial solvers}
 
 \section{Calculation of D}
 \subsection{Breakdown of terms}

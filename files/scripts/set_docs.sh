@@ -15,8 +15,6 @@ case "$1" in
     newval=""
   ;;
 esac
-echo $1
-echo $newval
 
 if [ $noop -eq 0 ]; then
   sed -i.bak "s/\(EXTRACT_PRIVATE *=\) *[A-Z]*/\1 $newval/" Doxyfile

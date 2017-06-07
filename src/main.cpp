@@ -27,7 +27,6 @@
 
 /**
 \todo Add install recipe to makefile
-\todo Since DOCS are now complex, consider just using two Doxyfiles...
 */
 
 /** \defgroup utils Available programs

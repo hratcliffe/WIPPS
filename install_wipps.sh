@@ -10,6 +10,8 @@
 
 DOCSTRING=$'Script to assist in getting the code running.\nIf FFTW is installed somewhere locally, supply the path with --fftw-path <installed path>. If not, use --install-fftw <path-to-install> (must exist!) to install locally, or install with your package manager (apt, homebrew, etc). A system-install will be found automatically.\nTo build without FFTW (some functions unavailable!) use --no-fft.\nTo build ONLY a double or floating point version supply --double or --float (not both!) respectively.\nThe final version will be built using whatever is supplied in --build-args (use quotes to supply more than one). If --double or --float is given, TYPE will be set automatically. Otherwise float will be used, but an explicit TYPE in --build-args will override this. For example, --build-args "TYPE=float".\nUse --help to see this documentation.'
 
+#Path to other scripts etc needed
+scrpsdir=./files/scripts/
 
 #Process args
 FFTW_PATH=""
@@ -110,7 +112,7 @@ else
     if [ $NO_DOUBLE -eq 1 ]; then extra_args="--no-double";fi
     if [ $NO_FLOAT -eq 1 ]; then extra_args="--no-float";fi
 
-    ./install_fftw.sh $INSTALL_PATH $extra_args
+    $scrpsdir"install_fftw.sh" $INSTALL_PATH $extra_args
     if [ $? -ne 0 ]; then
       echo "Error building FFTW!!!!!"
       exit 1

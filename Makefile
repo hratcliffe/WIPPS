@@ -198,7 +198,7 @@ default : echo_float echo_warning $(OBJS) $(OBJDIR)/main.o $(SDFPATH)/lib/libsdf
 
 #Builds the SDF library if absent
 $(SDFPATH)/lib/libsdfc.a :
-	@./build_sdf.sh $(SDFPATH)
+	@$(SCRPSDIR)"build_sdf.sh" $(SDFPATH)
 
 .PHONY: update_docs echo_warning echo_float echo_usr
 
@@ -286,12 +286,12 @@ list_utils:
 
 #Refresh dependencies before building the tarball
 tar: dependencies.log
-	tar --no-recursion -cvzf Source.tgz $(SOURCE) $(INCLS) $(MAINSOURCE) $(UTILSSOURCE) ./files/* Makefile redox.sh process_deps.sh dependencies.log install ./install_fftw.sh ./build_sdf.sh Doxyfile test_pars
+	tar --no-recursion -cvzf Source.tgz $(SOURCE) $(INCLS) $(MAINSOURCE) $(UTILSSOURCE) $(EGSOURCE) ./files/IDL/ ./files/scripts/ ./files/help/ Makefile dependencies.log Doxyfile test_pars
 	tar -cvzf SDF.tgz ./SDF
 
 #Tar up the runnable code, excluding build details and omitting test files etc. Includes IDL scripts,
 tar_built: utils
-	tar --no-recursion -cvzf Runnable.tgz $(UTILS) ./main ./files/help/*.txt test_pars .idlstartup ./files/IDL/* ./SDF/IDL/* ./scripts/*
+	tar --no-recursion -cvzf Runnable.tgz $(UTILS) ./main ./files/help/ test_pars .idlstartup ./files/IDL/* ./SDF/IDL/ ./scripts/
 
 tar_docs:
 	tar -cvzf Docs.tgz WIPPS.html ./html/* ./latex/refman.pdf Derivations.pdf

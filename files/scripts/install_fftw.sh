@@ -27,7 +27,6 @@ if [ $DO_FLOAT -eq 1 ]; then
   echo "Building"
   make &> make_makef.log && rm make_makef.log 
   make install &> make_makefi.log && rm make_makefi.log
-  ls
   #Clean up
   make clean &> /dev/null
   if [ -e make_configf.log -o -e make_makef.log -o -e make_makefi.log ]; then 
@@ -45,7 +44,7 @@ if [ $DO_DOUBLE -eq 1 ]; then
     echo "Something went wrong installing double version, see "$1"fftw-$VERSION/make_*d.log" 
   fi
 fi
-if [ `ls $DIR/make_*[fd].log | wc -l` -gt 0 ]; then 
+if [ `ls $DIR/make_*[fd].log 2>/dev/null | wc -l` -gt 0 ]; then 
   exit 1
 fi
 

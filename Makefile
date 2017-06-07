@@ -162,11 +162,11 @@ endif
 LIB += -ldl
 
 #Check we have a valid DOCS selection and edit Doxyfile accordingly
+DOCS_SCRIPT := $(SCRPSDIR)"set_docs.sh"
 ifeq ($(strip $(DOCS)),full)
-  //SED_STR_Docs =
-  DOCS_SCRIPT := $(SCRPSDIR)"set_docs_full.sh"
+  DOCS_ARG="full"
 else ifeq ($(strip $(DOCS)),user)
-  DOCS_SCRIPT := $(SCRPSDIR)"set_docs_user.sh"
+  DOCS_ARG="user"
 else ifdef DOCS
   $(error Unknown DOCS)
 endif
@@ -203,11 +203,11 @@ $(SDFPATH)/lib/libsdfc.a :
 .PHONY: update_docs echo_warning echo_float echo_usr
 
 #Updates the Doxyfile according to selected options
-#If no docs updates needed DOCS_SCRIPT is undefined and last line is a noop
+#If no docs updates needed DOCS_ARG is undefined and DOCS_SCRIPT does nothing
 update_docs:
 	@$(SED_STR)
 	@$(SED_STR_Test)
-	@$(DOCS_SCRIPT)
+	@$(DOCS_SCRIPT) $(DOCS_ARG)
 
 #Some reporting that should happen before building
 echo_warning:
@@ -325,4 +325,4 @@ veryclean: cleandocs
 
 docs: update_docs
 	@echo Running Doxygen...
-	@ $(SCRPSDIR)make_docs.sh $(SCRPSDIR)
+	@ $(SCRPSDIR)make_docs.sh

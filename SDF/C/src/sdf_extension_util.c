@@ -1,6 +1,17 @@
+/*
+ * SDF (Self-Describing Format) Software Library
+ * Copyright (c) 2013-2016, SDF Development Team
+ *
+ * Distributed under the terms of the BSD 3-clause License.
+ * See the LICENSE file for details.
+ */
+
 #include <stdlib.h>
 #include <string.h>
 #include <dlfcn.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 #include <sdf_extension.h>
 #include <sdf_derived.h>
 #include <sdf.h>
@@ -16,6 +27,12 @@ void *sdf_extension_load(sdf_file_t *h)
 {
     sdf_extension_create_t *sdf_extension_create;
     void *p;
+    char *libname1 = "sdf_extension.so";
+    char *libname2 = "libsdf_extension.so";
+    char *path_env, *pathname, *path;
+    char *sep = ":;,";
+    int len;
+    struct stat sb;
 
     h->sdf_extension_version  = SDF_EXTENSION_VERSION;
     h->sdf_extension_revision = SDF_EXTENSION_REVISION;
@@ -27,7 +44,39 @@ void *sdf_extension_load(sdf_file_t *h)
 
     if (sdf_global_extension) return sdf_global_extension;
 
-    sdf_global_extension_dlhandle = dlopen("sdf_extension.so", RTLD_LAZY);
+    /*
+     * SDF_EXTENSION_PATH is a string separated by colon, semicolon or comma
+     * Each substring is examined in turn. If it is a file then we attempt to
+     * load it as a dynamic library. If it is a directory then we attempt to
+     * load a file named "sdf_extension.so" or "libsdf_extension.so" in that
+     * directory. The routine exits once a valid library is found.
+     */
+    path_env = getenv("SDF_EXTENSION_PATH");
+    if (path_env) {
+        len = strlen(path_env) + strlen(libname1) + strlen(libname2) + 2;
+        pathname = malloc(len);
+        for (path = strtok(path_env, sep); path; path = strtok(NULL, sep)) {
+            stat(path, &sb);
+            if (S_ISDIR(sb.st_mode)) {
+                snprintf(pathname, len, "%s/%s", path, libname1);
+                sdf_global_extension_dlhandle = dlopen(pathname, RTLD_LAZY);
+                if (!sdf_global_extension_dlhandle) {
+                    snprintf(pathname, len, "%s/%s", path, libname2);
+                    sdf_global_extension_dlhandle = dlopen(pathname, RTLD_LAZY);
+                }
+            } else if (S_ISREG(sb.st_mode)) {
+                sdf_global_extension_dlhandle = dlopen(path, RTLD_LAZY);
+            }
+            if (sdf_global_extension_dlhandle) break;
+        }
+        free(pathname);
+    }
+
+    if (!sdf_global_extension_dlhandle) {
+        sdf_global_extension_dlhandle = dlopen(libname1, RTLD_LAZY);
+        if (!sdf_global_extension_dlhandle)
+            sdf_global_extension_dlhandle = dlopen(libname2, RTLD_LAZY);
+    }
 
     if (!sdf_global_extension_dlhandle) {
         sdf_global_extension_failed = 1;
@@ -83,8 +132,8 @@ void sdf_extension_free_data(sdf_file_t *h)
     if (sdf_global_extension) {
         // Weird pointer copying required by ISO C
         p = dlsym(sdf_global_extension_dlhandle, "sdf_extension_free");
-        if ( !p )
-           return;
+        if (!p)
+            return;
         memcpy(&sdf_extension_free, &p, sizeof(p));
 
         sdf_extension_free(h);
@@ -149,8 +198,8 @@ int sdf_read_blocklist_all(sdf_file_t *h)
         b = next;
         next = b->next;
 
-        if (b->blocktype != SDF_BLOCKTYPE_PLAIN_DERIVED &&
-                b->blocktype == SDF_BLOCKTYPE_POINT_DERIVED) continue;
+        if (b->blocktype != SDF_BLOCKTYPE_PLAIN_DERIVED
+                && b->blocktype == SDF_BLOCKTYPE_POINT_DERIVED) continue;
 
         if (b->ndims > 0 || !b->mesh_id) continue;
 
@@ -175,4 +224,24 @@ int sdf_read_blocklist_all(sdf_file_t *h)
     }
 
     return 0;
+}
+
+
+void sdf_extension_print_version(sdf_file_t *h)
+{
+    int major, minor;
+    sdf_extension_t *ext;
+
+    // Retrieve the extended interface library from the plugin manager
+    sdf_extension_load(h);
+    ext = sdf_global_extension;
+
+    if (ext) {
+        ext->get_version(ext, &major, &minor);
+        printf("Loaded extension: %s-%d.%d\n", ext->get_name(ext), major, minor);
+    } else {
+        printf("No extension loaded\n");
+        if (sdf_global_extension_failed)
+            printf("%s\n", h->error_message);
+    }
 }

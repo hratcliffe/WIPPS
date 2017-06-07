@@ -1,3 +1,11 @@
+/*
+ * SDF (Self-Describing Format) Software Library
+ * Copyright (c) 2012-2016, SDF Development Team
+ *
+ * Distributed under the terms of the BSD 3-clause License.
+ * See the LICENSE file for details.
+ */
+
 /**
    @file sdf.h
 
@@ -5,7 +13,7 @@
    @details Routines for reading and writing SDF files.
    @author Dr Keith Bennett
    @date 15/02/2014
-   @version 14.0
+   @version 14.3
 */
 
 #ifndef _SDF_COMMON_H_
@@ -21,9 +29,9 @@
 #endif
 
 #define SDF_VERSION  1
-#define SDF_REVISION 2
+#define SDF_REVISION 4
 #define SDF_LIB_VERSION  14
-#define SDF_LIB_REVISION 0
+#define SDF_LIB_REVISION 3
 
 #define SDF_MAGIC "SDF1"
 
@@ -353,6 +361,7 @@ struct sdf_file {
     int array_count, fd, purge_duplicated_ids;
     /* Flag to add internal ghost cells for the VisIt reader */
     int internal_ghost_cells;
+    int ignore_nblocks;
 #ifdef PARALLEL
     MPI_File filehandle;
 #else
@@ -770,6 +779,17 @@ char *sdf_get_library_commit_id(void);
  */
 char *sdf_get_library_commit_date(void);
 
+
+/**
+ @brief Returns 1 if compiled with SDF_DEBUG and 0 otherwise
+ */
+int sdf_has_debug_info(void);
+
+
+/**
+ @brief Prints the name and version of any loaded extension modules
+ */
+void sdf_extension_print_version(sdf_file_t *h);
 
 #ifdef __cplusplus
 }

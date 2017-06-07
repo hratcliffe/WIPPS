@@ -1,3 +1,11 @@
+/*
+ * SDF (Self-Describing Format) Software Library
+ * Copyright (c) 2010-2016, SDF Development Team
+ *
+ * Distributed under the terms of the BSD 3-clause License.
+ * See the LICENSE file for details.
+ */
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -223,7 +231,7 @@ static int write_header(sdf_file_t *h)
 {
     int32_t int4;
     int errcode;
-    char padding[6];
+    char padding[5];
 
     errcode = 0;
 
@@ -286,8 +294,10 @@ static int write_header(sdf_file_t *h)
 
         errcode += sdf_write_bytes(h, &h->other_domains, 1);
 
-        memset(padding, 0, 6);
-        errcode += sdf_write_bytes(h, padding, 6);
+        errcode += sdf_write_bytes(h, &h->station_file, 1);
+
+        memset(padding, 0, 5);
+        errcode += sdf_write_bytes(h, padding, 5);
     }
 
     h->current_location = h->first_block_location;
@@ -468,10 +478,11 @@ static int write_stitched(sdf_file_t *h)
     // - meshid    CHARACTER(id_length)
     // - varids    ndims*CHARACTER(id_length)
 
-    b->info_length = h->block_header_length + SOI4 +
-            (b->ndims + 1) * h->id_length;
-    if (b->blocktype == SDF_BLOCKTYPE_STITCHED ||
-            b->blocktype == SDF_BLOCKTYPE_STITCHED_TENSOR) b->data_length = 0;
+    b->info_length = h->block_header_length + SOI4
+            + (b->ndims + 1) * h->id_length;
+    if (b->blocktype == SDF_BLOCKTYPE_STITCHED
+            || b->blocktype == SDF_BLOCKTYPE_STITCHED_TENSOR)
+        b->data_length = 0;
 
     // Write header
     errcode = write_block_header(h);
@@ -509,8 +520,8 @@ static int write_stitched_material(sdf_file_t *h)
     // - material_names ndims*CHARACTER(string_length)
     // - varids    ndims*CHARACTER(id_length)
 
-    //b->info_length = h->block_header_length + SOI4 +
-    //        (b->ndims + 1) * h->id_length + b->ndims * h->string_length;
+    //b->info_length = h->block_header_length + SOI4
+    //        + (b->ndims + 1) * h->id_length + b->ndims * h->string_length;
     if (b->blocktype == SDF_BLOCKTYPE_STITCHED_MATERIAL) b->data_length = 0;
 
     // Write header
@@ -557,8 +568,8 @@ static int write_stitched_matvar(sdf_file_t *h)
     // - matid     CHARACTER(id_length)
     // - varids    ndims*CHARACTER(id_length)
 
-    b->info_length = h->block_header_length + SOI4 +
-            (b->ndims + 2) * h->id_length;
+    b->info_length = h->block_header_length + SOI4
+            + (b->ndims + 2) * h->id_length;
     if (b->blocktype == SDF_BLOCKTYPE_STITCHED_MATVAR) b->data_length = 0;
 
     // Write header
@@ -607,8 +618,8 @@ static int write_stitched_species(sdf_file_t *h)
     // - specnames ndims*CHARACTER(string_length)
     // - varids    ndims*CHARACTER(id_length)
 
-    b->info_length = h->block_header_length + SOI4 +
-            (b->ndims + 2) * h->id_length + (b->ndims + 1) * h->string_length;
+    b->info_length = h->block_header_length + SOI4
+            + (b->ndims + 2) * h->id_length + (b->ndims + 1) * h->string_length;
     if (b->blocktype == SDF_BLOCKTYPE_STITCHED_SPECIES) b->data_length = 0;
 
     // Write header
@@ -657,8 +668,8 @@ static int write_stitched_obstacle_group(sdf_file_t *h)
     // - vfm_id         CHARACTER(id_length)
     // - obstacle_names ndims*CHARACTER(string_length)
 
-    b->info_length = h->block_header_length + SOI4 + 2 * h->id_length +
-            b->ndims * h->string_length;
+    b->info_length = h->block_header_length + SOI4 + 2 * h->id_length
+            + b->ndims * h->string_length;
     b->data_length = 0;
 
     // Write header
@@ -709,8 +720,8 @@ static int write_run_info_meta(sdf_file_t *h)
     // - iodate    INTEGER(i4)
     // - minor_rev INTEGER(i4)
 
-    b->info_length = h->block_header_length + 6 * SOI4 + SOI8 +
-            4 * h->string_length;
+    b->info_length = h->block_header_length + 6 * SOI4 + SOI8
+            + 4 * h->string_length;
     b->data_length = 0;
 
     // Write header
@@ -760,14 +771,14 @@ static int write_plain_mesh_meta(sdf_file_t *h)
 
 /*
     if (b->blocktype == SDF_BLOCKTYPE_LAGRANGIAN_MESH) {
-      b->nelements = b->ndims;
-      for (i=0; i < b->ndims; i++)
-          b->nelements *= b->dims[i];
+        b->nelements = b->ndims;
+        for (i=0; i < b->ndims; i++)
+            b->nelements *= b->dims[i];
     } else {
-      b->blocktype = SDF_BLOCKTYPE_PLAIN_MESH;
-      b->nelements = 0;
-      for (i=0; i < b->ndims; i++)
-          b->nelements += b->dims[i];
+        b->blocktype = SDF_BLOCKTYPE_PLAIN_MESH;
+        b->nelements = 0;
+        for (i=0; i < b->ndims; i++)
+            b->nelements += b->dims[i];
     }
 */
 
@@ -780,8 +791,8 @@ static int write_plain_mesh_meta(sdf_file_t *h)
     // - maxval    REAL(r8), DIMENSION(ndims)
     // - dims      INTEGER(i4), DIMENSION(ndims)
 
-    b->info_length = h->block_header_length + (b->ndims + 1) * SOI4 +
-            (3 * b->ndims) * SOF8 + 2 * b->ndims * h->id_length;
+    b->info_length = h->block_header_length + (b->ndims + 1) * SOI4
+            + (3 * b->ndims) * SOF8 + 2 * b->ndims * h->id_length;
     b->data_length = b->nelements * SDF_TYPE_SIZES[b->datatype];
 
     // Write header
@@ -836,8 +847,8 @@ static int write_plain_variable_meta(sdf_file_t *h)
     // - dims      INTEGER(i4), DIMENSION(ndims)
     // - stagger   INTEGER(i4)
 
-    b->info_length = h->block_header_length + (b->ndims + 1) * SOI4 + SOF8 +
-            2 * h->id_length;
+    b->info_length = h->block_header_length + (b->ndims + 1) * SOI4 + SOF8
+            + 2 * h->id_length;
     b->data_length = b->nelements * SDF_TYPE_SIZES[b->datatype];
 
     // Write header
@@ -888,8 +899,8 @@ static int write_point_mesh_meta(sdf_file_t *h)
     // - npoints   INTEGER(i8)
     // - speciesid CHARACTER(id_length)
 
-    b->info_length = h->block_header_length + SOI4 + SOI8 +
-            (3 * b->ndims) * SOF8 + (2 * b->ndims + 1) * h->id_length;
+    b->info_length = h->block_header_length + SOI4 + SOI8
+            + (3 * b->ndims) * SOF8 + (2 * b->ndims + 1) * h->id_length;
     b->data_length = b->nelements * SDF_TYPE_SIZES[b->datatype];
 
     // Write header
@@ -1109,8 +1120,8 @@ int64_t sdf_write_new_summary(sdf_file_t *h)
         summary_size = h->block_header_length + b->info_length;
         total_summary_size += summary_size;
         b->summary_block_start = b->block_start = h->current_location;
-        b->summary_next_block_location = b->next_block_location =
-            b->block_start + summary_size;
+        b->summary_next_block_location = b->next_block_location
+                = b->block_start + summary_size;
         errcode += write_meta(h);
     }
     sdf_truncate(h, h->current_location);
@@ -1124,7 +1135,8 @@ int64_t sdf_write_new_summary(sdf_file_t *h)
 
 
 static int sdf_write_header(sdf_file_t *h, char *code_name, int code_io_version,
-        int step, double time, char restart, int jobid1, int jobid2)
+        int step, double time, char restart, char station_file, int jobid1,
+        int jobid2)
 {
     int errcode = 0;
 
@@ -1136,6 +1148,7 @@ static int sdf_write_header(sdf_file_t *h, char *code_name, int code_io_version,
     h->restart_flag = restart;
     h->jobid1 = jobid1;
     h->jobid2 = jobid2;
+    h->station_file = station_file;
 
     return write_header(h);
 }

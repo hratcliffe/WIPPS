@@ -1,3 +1,11 @@
+/*
+ * SDF (Self-Describing Format) Software Library
+ * Copyright (c) 2014-2016, SDF Development Team
+ *
+ * Distributed under the terms of the BSD 3-clause License.
+ * See the LICENSE file for details.
+ */
+
 #include <string.h>
 #include <sdf.h>
 #include "sdf_helper.h"
@@ -21,8 +29,8 @@ int sdf_helper_read_data(sdf_file_t *h, sdf_block_t *b)
         }
     }
 
-    if (b->blocktype == SDF_BLOCKTYPE_PLAIN_DERIVED ||
-            b->blocktype == SDF_BLOCKTYPE_POINT_DERIVED) {
+    if (b->blocktype == SDF_BLOCKTYPE_PLAIN_DERIVED
+            || b->blocktype == SDF_BLOCKTYPE_POINT_DERIVED) {
 
         // Allocate derived variable data if required
         if (!b->data && !b->dont_allocate) {

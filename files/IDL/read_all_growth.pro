@@ -31,12 +31,7 @@ POINT_LUN, filenum, 0
 int_sz=1
 readu, filenum, int_sz
 
-;Read last element for final footer start
-tmp = FSTAT(filenum)
-POINT_LUN, filenum, (tmp.size - int_sz)
-end_pos = hdr.block_type
-readu, filenum, end_pos
-;This is now where the final closer should start
+end_pos = read_footer_start(filenum, hdr_info=hdr)
 
 ;Rewind file
 POINT_LUN, filenum, 0

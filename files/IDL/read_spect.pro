@@ -22,16 +22,12 @@ ENDIF
 
 hdr_end = hdr.block_type
 POINT_LUN, -filenum, hdr_end
-
 POINT_LUN, filenum, 0
 int_sz=1
 readu, filenum, int_sz
 
-tmp = FSTAT(filenum)
-POINT_LUN, filenum, (tmp.size - int_sz)
-file_end = tmp.size - int_sz
-start_pos = hdr.block_type
-readu, filenum, start_pos
+file_end = hdr.block_type
+start_pos = read_footer_start(filenum, hdr_info=hdr, file_end=file_end)
 
 POINT_LUN, filenum, hdr_end
 ;Grab int size and footer start
@@ -109,8 +105,7 @@ spect=create_struct(spect, {block:id_in})
 POINT_LUN, -filenum, next_pos
 
 ;If there is space for EXACTLY ONE int, should be smooth param
-
-IF next_pos EQ file_end - int_sz THEN BEGIN
+IF next_pos EQ file_end - int_sz OR next_pos EQ file_end - int_sz - 1 THEN BEGIN
   smth=hdr.block_type
   readu, filenum, smth
   spect=create_struct(spect, {smooth:smth})

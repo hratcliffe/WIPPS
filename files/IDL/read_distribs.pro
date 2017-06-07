@@ -31,11 +31,8 @@ POINT_LUN, filenum, 0
 int_sz=1
 readu, filenum, int_sz
 
-;Read last element for final footer start
-tmp = FSTAT(filenum)
-POINT_LUN, filenum, (tmp.size - int_sz)
-end_pos = hdr.block_type
-readu, filenum, end_pos
+file_sz = 0
+end_pos = read_footer_start(filenum, hdr_info=hdr, file_sz=file_sz)
 ;This is now where the final closer should start
 
 ;Rewind file
@@ -91,13 +88,13 @@ END
 ;Skip values in footer, just read the last bit
 readu, filenum, next_block
 ;If it seems to be a valid position, use it
-IF next_block GT end_pos AND next_block LT tmp.size THEN BEGIN
+IF next_block GT end_pos AND next_block LT file_sz THEN BEGIN
   POINT_LUN, filenum, next_block
 END
 readu, filenum, next_block
 POINT_LUN, -filenum, next_block
 ;Final ID may or may not be there
-IF(next_block LT tmp.size) THEN BEGIN
+IF(next_block LT file_sz) THEN BEGIN
   id_in = id_type
   readu, filenum, id_in
 ENDIF ELSE BEGIN

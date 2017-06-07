@@ -22,10 +22,8 @@ POINT_LUN, filenum, 0
 int_sz=1
 readu, filenum, int_sz
 
-tmp = FSTAT(filenum)
-POINT_LUN, filenum, (tmp.size - int_sz)
-start_pos = hdr.block_type
-readu, filenum, start_pos
+start_pos = read_footer_start(filenum, hdr_info=hdr)
+
 POINT_LUN, filenum, start_pos
 readu, filenum, start_pos
 id_type ='1234567891'

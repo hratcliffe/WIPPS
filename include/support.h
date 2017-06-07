@@ -276,6 +276,8 @@ void my_print(std::fstream * handle, std::string text, int rank, int rank_to_wri
 void my_error_print(std::string text, int rank, int rank_to_write=0, bool noreturn=false);
 void my_error_print(std::fstream * handle, std::string text, int rank, int rank_to_write=0, bool noreturn=false);
 
+size_t get_file_endpos(std::fstream &file);
+
 /********String handling helpers ****/
 std::string mk_str(int i);/**<Converts int to string*/
 std::string mk_str(size_t i); /**< Long int to string*/

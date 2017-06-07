@@ -97,8 +97,8 @@ spectrum::spectrum(std::string filename){
   bool err = 0, cont = 1;
   size_t end_block=0, next_block=0, om_sz = 0;
   size_t jump_pos=0, g_first_dim = 0;
-  file.seekg(-1*sizeof(size_t), file.end);
-  file.read((char*) &end_block, sizeof(size_t));
+
+  end_block = get_file_endpos(file);
   file.seekg(0, std::ios::beg);
 
   std::vector<size_t> dims = B_omega_array.read_dims_from_file(file);
@@ -174,7 +174,7 @@ spectrum::spectrum(std::string filename){
     //If we're done, this should be the
      if(next_block != end_block){
       //File is not done!
-      my_error_print("Excess arrays in file", mpi_info.rank);
+      my_error_print("Excess data in file", mpi_info.rank);
       cont = 0;
     }
   }
@@ -798,13 +798,13 @@ void spectrum::convert_FFT_to_integral(){
 *
 * Converts the data in B^2 so that its integral is power, assuming the source is an FFT. FFT's give the power at a frequency, so we have to divide by d_omega
 */
-
   my_type d_om;
-  if(get_omega_length() >= 2){
+  size_t len = get_omega_length();
+  if(len >= 2){
     d_om = std::abs(get_om_axis_element(1) - get_om_axis_element(0));
     set_B_element(0, get_B_element(0)/d_om/d_om);
   }
-  for(size_t i = 1; i < get_omega_length(); i++){
+  for(size_t i = 1; i < len; i++){
     d_om = std::abs(get_om_axis_element(i) - get_om_axis_element(i - 1));
     set_B_element(i, get_B_element(i)/d_om/d_om);
   }

@@ -51,9 +51,12 @@ int main(int argc, char *argv[]){
 
   //Calculate how many files per processor to work on
   size_t per_proc = std::ceil( (float) cmd_line_args.file_list.size() / (float) mpi_info.n_procs);
-  MPI_Barrier(MPI_COMM_WORLD);
+  
+  //Wait at this line until all processors reach it
+  //MPI_Barrier(MPI_COMM_WORLD);
   //Print from all cores, because of the -1 argument here
   my_print("This is processor " + mk_str(mpi_info.rank), mpi_info.rank, -1);
+  MPI_Barrier(MPI_COMM_WORLD);
 
   if(mpi_info.rank == 0) get_deck_constants(cmd_line_args.file_prefix);
 

@@ -25,10 +25,6 @@
 #include "d_coeff.h"
 #include "spectrum.h"
 
-/**
-\todo Add install recipe to makefile
-*/
-
 /** \defgroup utils Available programs
 *@{ 
 *\brief Top-level programs available

@@ -758,6 +758,27 @@ void my_error_print(std::fstream * handle, std::string text, int rank, int rank_
 
 }
 
+size_t get_file_endpos(std::fstream &file){
+/** \brief Read the final position marker from file
+*
+* Attemps to read the last number in file, which should give location of start of final footer data. 
+@param file Filestream to read
+@return Location of end position
+*/
+  size_t end_block, file_sz;
+  file.seekg(0, file.end);
+  file_sz = file.tellg();
+  file.seekg(-1*sizeof(size_t), file.end);
+  file.read((char*) &end_block, sizeof(size_t));
+
+  //We probably misread and that likely means a trailing new-line
+  if(end_block > file_sz){
+    file.seekg(-1*sizeof(size_t)-1, file.end);
+    file.read((char*) &end_block, sizeof(size_t));
+  }
+  return end_block;
+}
+
 /********String handling helpers ****/
 std::string mk_str(int i){
 

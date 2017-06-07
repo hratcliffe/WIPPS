@@ -1043,8 +1043,11 @@ Set runtime_flag "level_one" to perform full level-one testing
 
   int err = TEST_PASSED;
 
+  get_deck_constants(tests_src_dir + "test");
+  share_consts();
+
   if(test_bed->runtime_flags.count("level_one") != 0){
-    block_id = "ax";
+    block_id = "ay";
     file_prefix = tests_src_dir + "l1/l1";
     space_in[0] = 0;
     space_in[1] = 1024;
@@ -1177,7 +1180,7 @@ int test_entity_levelone::basic_tests(size_t n_dims_in, int flatten_on, bool has
 
   test_contr->set_plasma_B0(dat.B_ref);
   test_contr->add_spectrum(space_dim, DEFAULT_N_ANG, true);
-  test_contr->get_current_spectrum()->generate_spectrum(dat_fft, 10, FUNCTION_GAUSS, DEFAULT_SPECTRUM_ANG_STDDEV);
+  test_contr->get_current_spectrum()->generate_spectrum(dat_fft, 10, FUNCTION_DELTA, DEFAULT_SPECTRUM_ANG_STDDEV);
   
   n_dims = dat_fft.get_dims();
   //Set cutout limits on FFT
@@ -1229,6 +1232,7 @@ int test_entity_levelone::basic_tests(size_t n_dims_in, int flatten_on, bool has
   full_filename = append_into_string(full_filename, "_spectrum");
   filename = append_into_string(filename, "_spectrum");
   file.open(full_filename.c_str(),std::ios::out|std::ios::binary);
+test_contr->get_current_spectrum()->wave_id = 0;
   if(file.is_open()){
     test_contr->get_current_spectrum()->write_to_file(file);
     if(err2){

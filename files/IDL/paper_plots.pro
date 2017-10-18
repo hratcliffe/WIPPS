@@ -213,8 +213,8 @@ pro plot_growth_lin_scale, growths, colours=colours, outfile=outfile, zero_line=
   device, filename=outfile+'.eps', xsize=16, ysize=12, bits_per_pixel=64, /encaps, /color
 
   plot, growths[0].axes.x/om_ce, growths[0].data/om_ce, /nodata, xrange=[0.1, 1.0], /xsty, yrange=[-0.02, 0.06], /ysty,xtitle='!4x/x!3!Dce!N', ytitle='!4c/x!3!Dce!N', _extra =extr
-  FOR i=0, n_lines -1 DO oplot, growths[i].axes.x/om_ce, growths[i].data/om_ce, color=colours[i], line=styles[i]
-  IF(KEYWORD_SET(zero_line)) THEN oplot, [growths[0].axes.x[0]/om_ce, growths[0].axes.x[-1]/om_ce], [0, 0], line=1
+  FOR i=0, n_lines -1 DO oplot, growths[i].axes.x/om_ce, growths[i].data/om_ce, color=colours[i], line=styles[i], _extra=extr
+  IF(KEYWORD_SET(zero_line)) THEN oplot, [growths[0].axes.x[0]/om_ce, growths[0].axes.x[-1]/om_ce], [0, 0], line=1, _extra=extr
   device, /close
  
   set_plot, 'X'
@@ -276,7 +276,7 @@ pro plot_pancake_distribs, distribs, nrm=nrm, line_vals=line_vals, line_cols=lin
 
 END
 
-pro df_dp_eps, dist_arr, _extra=_extra, smth=smth, yspan=yspan, outfile=outfile, nrm=nrm, colours=colours, om_ax=om_ax, styles=styles
+pro df_dp_eps, dist_arr, _extra=_extra, smth=smth, yspan=yspan, outfile=outfile, nrm=nrm, colours=colours, om_ax=om_ax, styles=styles, om_vert=om_vert
 ;Plot deriv of distribution functions
 ;Expects array of data arrays each a distribution in X only...
 
@@ -299,12 +299,15 @@ pro df_dp_eps, dist_arr, _extra=_extra, smth=smth, yspan=yspan, outfile=outfile,
   ;Unpack xrange for later
   xran=[0, 0.5]
   IF(ISA(_extra, 'struct') && (where(TAG_NAMES(_extra) EQ 'XRANGE') NE -1)) THEN xran = _extra.xrange
+  IF(ISA(_extra, 'struct') && (where(TAG_NAMES(_extra) EQ 'YRANGE') NE -1)) THEN yran = _extra.yrange ELSE yran = [10.0^(max_y-yspan), 10.0^max_y]
   IF(KEYWORD_SET(om_ax)) THEN ymargin = [!y.margin[0], !y.margin[1]+1] ELSE ymargin = !y.margin
-  plot, dist_arr[0].axes.x/m0/v0, abs(smooth(deriv(dist_arr[0].axes.x/m0/v0, dist_arr[0].data), smth)), /ylog, xrange=xran, /xsty, yrange=[10.0^(max_y-yspan), 10.0^max_y], /ysty,ytitle='df/d(p!Dx!N/m!D0!Nc)', xtitle='p!Dx!N/(m!D0!Nc)', /nodata, _extra=_extra, ytickformat='Exponent_axis', ymargin=ymargin
+  IF(KEYWORD_SET(om_ax)) THEN xaxstyle = 9 ELSE xstyle = 1
+  plot, dist_arr[0].axes.x/m0/v0, abs(smooth(deriv(dist_arr[0].axes.x/m0/v0, dist_arr[0].data), smth)), /ylog, xrange=xran, xstyle=xaxstyle, yrange= yran, /ysty,ytitle='df/d(p!Dx!N/m!D0!Nc)', xtitle='p!Dx!N/(m!D0!Nc)', /nodata, _extra=_extra, ytickformat='Exponent_axis', ymargin=ymargin
   FOR i=0, dist_sz-1 DO oplot, dist_arr[i].axes.x/m0/v0, abs(smooth(deriv(dist_arr[i].axes.x/m0/v0, dist_arr[i].data/nrm), smth)), color=cols[i], line=styles[i]
+  IF(N_ELEMENTS(om_vert) GT 0) THEN plots, [om_vert, om_vert], yran, color=0, line=1
   xtikn = ceil((xran[1]-xran[0])*10)+1
   IF(ISA(_extra, 'struct') && (where(TAG_NAMES(_extra) EQ 'OM_TICKS') NE -1)) THEN xtikn = _extra.om_ticks
-  xtiks = findgen(xtikn)*(xran[1]-xran[0])/(xtikn-1)
+  IF(ISA(_extra, 'struct') && (where(TAG_NAMES(_extra) EQ 'OM_VALS') NE -1)) THEN xtiks = _extra.om_vals ELSE xtiks = findgen(xtikn)*(xran[1]-xran[0])/(xtikn-1)
   IF(KEYWORD_SET(om_ax)) THEN axis, xaxis=1, xtickformat='om_axis', xticks=xtikn-1, xtickv=xtiks, xtitle='!4x/x!3!Dce!N'
 
 ;  tims=fltarr(dist_sz)

@@ -12,6 +12,7 @@
 #include <iomanip>
 #include <cmath>
 #include <cstring>
+#include <limits>
 #include "plasma.h"
 #include "spectrum.h"
 

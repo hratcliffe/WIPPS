@@ -1,6 +1,5 @@
 #H Ratcliffe, University of Reading 2015-2017
 
-OMPI_MPICC=clang++
 CC = mpic++
 SDFPATH = ./SDF/C
 #Path to the SDF libraries.
@@ -17,32 +16,35 @@ ifeq ($(UNAME_S),Linux)
   USR = /usr
 endif
 
-GIT_VERSION := $(shell git describe --always --tags | cut -c1-14)
-# This encodes the git commit version into the source so we can write version number into our data files etc
-
 SRCDIR = src
 OBJDIR = obj
 INCLUDE = -I $(USR)/include/ -I $(SDFPATH)/include/ -I ./include/
 LIBSDF = $(SDFPATH)/lib/libsdfc.a
 LIB := $(LIBSDF)
 LIB += -L $(USR)/lib/
-LIBBOOST = -lboost_filesystem -lboost_system
+
+SCRPSDIR := ./files/scripts/
+
+#Pull in the version info
+-include $(SCRPSDIR)/VERSION
+#Pull in the config created by install_wipps.sh
+-include config
 
 #========Edit these for optimisation, debug options etc===============
-CFLAGS = -c $(INCLUDE) -DVERSION=\"$(GIT_VERSION)\" -std=c++0x -pedantic -DPARALLEL
+CFLAGS = -c $(INCLUDE) -DVERSION=\"$(GIT_VERSION)\" -std=c++11 -pedantic -DPARALLEL
 CFLAGS += -g
 OPTIMISE = -O3
 #Optimiser level for non-debug builds (debug includes test)
-
-#NO_FFT = 1
-#Uncomment to not use FFT libraries. Note FFT routines will be unavailable if set, as will certain utilities
 
 ifdef NO_FFT
   CFLAGS += -DNO_FFT
 endif
 
-#Path for FFTW libraries. Leave empty to use system install
-FFTW_PATH = ~/FFTW_testdir/fftw-3.3.4/
+ifndef NO_BOOST_LIBS
+  LIBBOOST = -lboost_filesystem -lboost_system
+else
+  LIBBOOST =
+endif
 
 DEBUG = -O0 -g -W -Wall -pedantic -D_GLIBCXX_DEBUG -Wextra
 #Comment/uncomment these to hide specific errors...
@@ -86,14 +88,13 @@ OBJS := $(SOURCE:.cpp=.o)
 ##################Don't need to edit below here!######################
 INVOKEDFILE := $(lastword $(MAKEFILE_LIST))
 
-SCRPSDIR := ./files/scripts/
-
 DEPSFLAGS = -DRUN_TESTS_AND_EXIT
 #Dependency generation happens only once, so we want to include any code hidden in the RUN_TESTS... defined regions
 
 #Add the FFTW_PATH to include path IFF it is non-empty
 ifneq ($(strip $(FFTW_PATH)),)
   INCLUDE += -I $(FFTW_PATH)
+  LFFTW = $(FFTW_PATH)/lib/libfftw3
 endif
 #$(info $(INCLUDE))
 
@@ -113,13 +114,21 @@ ifndef TYPE
 endif
 ifeq ($(strip $(TYPE)),double)
   ifndef NO_FFT
-    LIB += -lfftw3 -lm
+    ifdef LFFTW
+      LIB += $(LFFTW).a -lm
+    else
+      LIB += -lfftw3 -lm
+    endif
   else
     LIB += -lm
   endif
 else ifdef ISFLOAT
   ifndef NO_FFT
-    LIB += -lfftw3f -lm
+    ifdef LFFTW
+      LIB += $(LFFTW)f.a -lm
+    else
+      LIB += -lfftw3f -lm
+    endif
   else
     LIB += -lm
   endif
@@ -196,6 +205,8 @@ default : echo_float echo_warning $(OBJS) $(OBJDIR)/main.o $(SDFPATH)/lib/libsdf
 	$(CC) $(LFLAGS) $(INCLUDE) $(OBJS) $(OBJDIR)/main.o $(LIB) -o main
 	@echo $(WARN_STR)
 
+$(SCRPSDIR)/VERSION :
+	@$(SCRPSDIR)"get_version_string.sh"
 #Builds the SDF library if absent
 $(SDFPATH)/lib/libsdfc.a :
 	@$(SCRPSDIR)"build_sdf.sh" $(SDFPATH)
@@ -252,7 +263,7 @@ echo_deps : $(SCRPSDIR)process_deps.sh
 	@touch dependencies.log
 	@rm dependencies.log
   #touch so must exist before rm
-	@for var in $(SOURCE) $(MAINSOURCE) $(UTILSSOURCE) $(EGSOURCE); do $(CC) $(INCLUDE) $(DEPSFLAGS) -MM $$var |fmt -1 >> dependencies.log 2>&1;\
+	@for var in $(SOURCE) $(MAINSOURCE) $(UTILSSOURCE) $(EGSOURCE); do $(CC) $(INCLUDE) $(DEPSFLAGS) -std=c++11 -MM $$var |fmt -1 >> dependencies.log 2>&1;\
     done
   #-M dumps dependencies to file, -MM excludes system headers;
   #Recursive dependencies are also resolved under gcc

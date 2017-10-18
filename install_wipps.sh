@@ -4,6 +4,7 @@
 #Check for FFTW install and local install if necessary
 #Update FFTW path in Makefile
 #Set NO_FFT if necessary
+#Identify if boost filesystem is available
 #Build sdf libraries for first time
 #Build the test code and run it
 #Wipe and build with supplied build args
@@ -12,6 +13,10 @@ DOCSTRING=$'Script to assist in getting the code running.\nIf FFTW is installed 
 
 #Path to other scripts etc needed
 scrpsdir=./files/scripts/
+#Makefile to write config stuff to
+configfile=./config
+#Remove an existing config file content
+echo -n '' > $configfile
 
 #Process args
 FFTW_PATH=""
@@ -60,12 +65,9 @@ done
 
 MAKEFILE=Makefile
 
-#Based on NO_FFT we try and un/comment the makefile line.
+#Add config line for NO_FFT if required
 if [ $NO_FFT -eq 1 ]; then
-  sed -i.bak -e 's/\#NO_FFT = 1/NO_FFT = 1/' $MAKEFILE
-fi
-if [ $NO_FFT -eq 0 ]; then
-  sed -i.bak -e 's/^NO_FFT = 1/\#NO_FFT = 1/' $MAKEFILE
+  echo 'NO_FFT=1' >> $configfile
 fi
 
 #If we've been told to install we don't do anything with potential set FFTW_PATH
@@ -95,8 +97,8 @@ if [ $INSTALL_FFTW -eq 0 ]; then
       echo "Found FFTW files at "$FFTW_PATH
       if [ ! -e $FFTW_PATH/lib/libfftw3.a ]; then echo "No double library found, use only TYPE=float and float data or reinstall FFTW without --use-float"; fi
       if [ ! -e $FFTW_PATH/lib/libfftw3f.a ]; then echo "No float library found, use only TYPE=double and double data or reinstall FFTW with --use-float"; fi
-      #Now set the path in Makefile
-      sed -i.bak 's#FFTW_PATH =.*$#FFTW_PATH = '$FFTW_PATH'#' $MAKEFILE
+      #Now set the path in configfile
+      echo 'FFTW_PATH = '$FFTW_PATH >> $configfile
     else
       echo "Cannot find FFTW files at "$FFTW_PATH" Expecting ./include/fftw3.h and ./lib/libfftw3(f).a"
       echo "Check for correct path or try installing FFTW locally using ./configure --install-fftw <path to install>"
@@ -142,6 +144,16 @@ else
       exit 1
     fi
   fi
+fi
+
+echo "Checking for boost libraries"
+$scrpsdir/check_boost.sh &> /dev/null
+if [ $? -ne 0 ]; then
+  echo "Boost not found"
+  #Set config to not use Boost
+  echo "NO_BOOST_LIBS=1" >> $configfile
+else
+  echo "Boost OK"
 fi
 
 #Now build the test code and run it

@@ -16,7 +16,6 @@
 #include <vector>
 #include <map>
 #include "support.h"
-#include <boost/filesystem.hpp>
 /*
 check 2011 paper for whistler mode tests
 Bortnik, 

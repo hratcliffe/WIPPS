@@ -1,6 +1,6 @@
 //
 //  tests.cpp
-//  
+//
 //
 //  Created by Heather Ratcliffe on 10/11/2015.
 //
@@ -14,6 +14,9 @@
 #include <mpi.h>
 #include <unistd.h>
 #include <functional>
+#ifdef USE_BOOST_FILESYSTEM
+#include <boost/filesystem.hpp>
+#endif
 #include "tests.h"
 #include "tests_basic_and_code.h"
 #include "tests_data_and_calc.h"
@@ -31,6 +34,7 @@ void tests::create_test_outdir(){
 *
 * Creates the directory tests_tmp_dir for temporary test output. If the directory exists, nothing is done and the no_clean flag is set
 */
+#ifdef USE_BOOST_FILESYSTEM
   boost::filesystem::path dir(tests_tmp_dir.c_str());
   if(boost::filesystem::exists(dir)){
     no_clean = true;
@@ -38,6 +42,7 @@ void tests::create_test_outdir(){
     this->report_info("Creating temporary dir "+tests_tmp_dir, 0);
     boost::filesystem::create_directory(dir);
   }
+#endif
 }
 
 void tests::clean_test_outdir(bool no_clean){
@@ -46,11 +51,13 @@ void tests::clean_test_outdir(bool no_clean){
 * Removes contents and directory tests_tmp_dir, unless the no_clean parameter is set, when nothing is done. Note there may be other flags to consider so this is not as stupid as it seems. NB this writes to log file!
 @param no_clean If set, do nothing
 */
+#ifdef USE_BOOST_FILESYSTEM
   if(!no_clean){
     this->report_info("Removing temporary dir "+tests_tmp_dir, 0);
     boost::filesystem::path dir(tests_tmp_dir.c_str());
     boost::filesystem::remove_all(dir);
   }
+#endif
 }
 
 void tests::set_verbosity(size_t verb){
@@ -398,3 +405,4 @@ bool tests::set_userdef_error(int err_code, std::string message){
 }
 
 #endif
+
